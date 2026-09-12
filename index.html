@@ -2,796 +2,282 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Remi 4 Pemain</title>
+<title>AI Photo Translator - SOP Factory</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
-* {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background:
-        radial-gradient(circle at center, #08783f 0%, #075d32 45%, #043d22 100%);
-    color: white;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
-
-button {
-    font-family: inherit;
-}
-
-.header {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 15px;
-    background: rgba(0,0,0,.28);
-    border-bottom: 1px solid rgba(255,255,255,.15);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.title {
-    font-size: 21px;
-    font-weight: bold;
-}
-
-.subtitle {
-    font-size: 11px;
-    opacity: .75;
-    margin-top: 2px;
-}
-
-.header-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.btn {
-    border: none;
-    border-radius: 8px;
-    padding: 9px 12px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-    background: white;
-    color: #145c38;
-    box-shadow: 0 2px 5px rgba(0,0,0,.2);
-}
-
-.btn:active {
-    transform: scale(.96);
-}
-
-.btn.green {
-    background: #20c777;
-    color: white;
-}
-
-.btn.red {
-    background: #e74c3c;
-    color: white;
-}
-
-.btn.orange {
-    background: #f39c12;
-    color: white;
-}
-
-.btn.dark {
-    background: #263238;
-    color: white;
-}
-
-.game {
-    max-width: 1250px;
-    margin: auto;
-    padding: 12px;
-}
-
-/* PLAYER AREA */
-
-.players {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.player {
-    background: rgba(0,0,0,.22);
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 10px;
-    padding: 8px;
-    min-height: 70px;
-    transition: .2s;
-}
-
-.player.active {
-    border: 2px solid #ffe66d;
-    box-shadow: 0 0 15px rgba(255,230,109,.35);
-}
-
-.player-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.player-name {
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.player-status {
-    font-size: 11px;
-    opacity: .8;
-}
-
-.card-count {
-    display: flex;
-    gap: 3px;
-    margin-top: 6px;
-    min-height: 27px;
-    overflow: hidden;
-}
-
-.mini-card {
-    width: 20px;
-    height: 27px;
-    border-radius: 4px;
-    background: repeating-linear-gradient(
-        45deg,
-        #dce8ff,
-        #dce8ff 3px,
-        #3972c8 3px,
-        #3972c8 6px
-    );
-    border: 1px solid white;
-    flex-shrink: 0;
-}
-
-/* TABLE */
-
-.table {
-    background:
-        radial-gradient(circle at center, #0a8144, #056633);
-    border: 2px solid rgba(255,255,255,.12);
-    border-radius: 20px;
-    min-height: 360px;
-    padding: 15px;
-    box-shadow:
-        inset 0 0 40px rgba(0,0,0,.25),
-        0 8px 30px rgba(0,0,0,.2);
-}
-
-.turn-info {
-    text-align: center;
-    margin-bottom: 12px;
-}
-
-.turn-label {
-    font-size: 13px;
-    opacity: .8;
-}
-
-.turn-player {
-    font-size: 22px;
-    font-weight: bold;
-    color: #ffe66d;
-}
-
-/* DECK */
-
-.center-area {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 40px;
-    margin: 10px auto 20px;
-}
-
-.pile-wrapper {
-    text-align: center;
-}
-
-.pile-title {
-    font-size: 11px;
-    opacity: .8;
-    margin-bottom: 5px;
-}
-
-.pile {
-    width: 70px;
-    height: 100px;
-    border-radius: 9px;
-    cursor: pointer;
-    user-select: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0,0,0,.35);
-}
-
-.deck {
-    background:
-        repeating-linear-gradient(
-            45deg,
-            #dbe7ff,
-            #dbe7ff 4px,
-            #285ca8 4px,
-            #285ca8 8px
-        );
-    border: 3px solid white;
-}
-
-.deck-inner {
-    width: 53px;
-    height: 82px;
-    border: 2px solid white;
-    border-radius: 5px;
-}
-
-.discard {
-    background: white;
-    color: #111;
-    border: 2px solid #ddd;
-    position: relative;
-}
-
-.discard.red-card {
-    color: #d62828;
-}
-
-.empty-pile {
-    opacity: .35;
-}
-
-/* COMBOS */
-
-.combo-area {
-    margin-top: 15px;
-}
-
-.section-title {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 7px;
-    border-bottom: 1px solid rgba(255,255,255,.15);
-    padding-bottom: 5px;
-}
-
-.combos {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.combo {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-height: 76px;
-    background: rgba(0,0,0,.12);
-    border-radius: 9px;
-    padding: 6px;
-    overflow-x: auto;
-}
-
-.combo-label {
-    font-size: 10px;
-    opacity: .65;
-    min-width: 45px;
-}
-
-.empty-combo {
-    font-size: 12px;
-    opacity: .55;
-}
-
-/* CARD */
-
-.card {
-    width: 58px;
-    height: 82px;
-    border-radius: 7px;
-    background: white;
-    color: #111;
-    border: 2px solid #ddd;
-    box-shadow: 0 3px 7px rgba(0,0,0,.3);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 5px;
-    user-select: none;
-    touch-action: none;
-    position: relative;
-    flex-shrink: 0;
-    cursor: grab;
-}
-
-.card:active {
-    cursor: grabbing;
-}
-
-.card.red {
-    color: #d62828;
-}
-
-.card.black {
-    color: #111;
-}
-
-.card.selected {
-    transform: translateY(-13px);
-    border: 3px solid #ffd43b;
-    box-shadow: 0 7px 16px rgba(0,0,0,.5);
-}
-
-.card.dragging {
-    opacity: .55;
-    transform: scale(1.04);
-    z-index: 1000;
-}
-
-.card-corner {
-    font-size: 15px;
-    font-weight: bold;
-    line-height: 14px;
-}
-
-.card-center {
-    font-size: 24px;
-    text-align: center;
-    line-height: 25px;
-}
-
-.card-corner.bottom {
-    transform: rotate(180deg);
-    align-self: flex-end;
-}
-
-/* JOKER */
-
-.card.joker {
-    color: #7b2cbf;
-}
-
-.joker-symbol {
-    font-size: 26px;
-    text-align: center;
-}
-
-/* MY HAND */
-
-.my-area {
-    margin-top: 12px;
-    background: rgba(0,0,0,.28);
-    border-radius: 14px;
-    padding: 10px;
-}
-
-.my-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.my-name {
-    font-size: 16px;
-    font-weight: bold;
-    color: #ffe66d;
-}
-
-.hand-info {
-    font-size: 11px;
-    opacity: .7;
-}
-
-.hand-toolbar {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-}
-
-.hand {
-    min-height: 105px;
-    display: flex;
-    align-items: flex-end;
-    gap: 5px;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding: 15px 7px 8px;
-    scrollbar-width: thin;
-    scroll-behavior: smooth;
-}
-
-.hand::-webkit-scrollbar {
-    height: 6px;
-}
-
-.hand::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,.25);
-    border-radius: 10px;
-}
-
-/* CONTROLS */
-
-.controls {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 7px;
-    margin-top: 10px;
-}
-
-.control-btn {
-    border: none;
-    border-radius: 9px;
-    padding: 12px 6px;
-    font-weight: bold;
-    cursor: pointer;
-    background: white;
-    color: #164b32;
-}
-
-.control-btn:disabled {
-    opacity: .35;
-    cursor: not-allowed;
-}
-
-.control-btn.primary {
-    background: #20c777;
-    color: white;
-}
-
-.control-btn.warning {
-    background: #f5b041;
-    color: white;
-}
-
-.control-btn.danger {
-    background: #e74c3c;
-    color: white;
-}
-
-/* LOG */
-
-.log {
-    margin-top: 10px;
-    background: rgba(0,0,0,.2);
-    border-radius: 9px;
-    padding: 8px;
-    max-height: 100px;
-    overflow-y: auto;
-    font-size: 11px;
-    opacity: .8;
-}
-
-.log div {
-    padding: 2px 0;
-}
-
-/* MODAL */
-
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.72);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 5000;
-    padding: 15px;
-}
-
-.modal-overlay.show {
-    display: flex;
-}
-
-.modal {
-    width: min(500px, 100%);
-    max-height: 90vh;
-    overflow-y: auto;
-    background: #fff;
-    color: #222;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0 10px 50px rgba(0,0,0,.5);
-}
-
-.modal h2 {
-    margin-top: 0;
-    color: #145c38;
-}
-
-.modal p {
-    line-height: 1.55;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 7px;
-    justify-content: flex-end;
-    margin-top: 15px;
-    flex-wrap: wrap;
-}
-
-.pass-card {
-    text-align: center;
-    background: #f1f3f5;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 12px 0;
-}
-
-/* SCORE */
-
-.score-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-}
-
-.score-table th,
-.score-table td {
-    border-bottom: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-.score-table th {
-    background: #f0f0f0;
-}
-
-/* TOAST */
-
-.toast {
-    position: fixed;
-    left: 50%;
-    bottom: 25px;
-    transform: translateX(-50%) translateY(30px);
-    background: rgba(0,0,0,.85);
-    color: white;
-    padding: 10px 17px;
-    border-radius: 20px;
-    opacity: 0;
-    pointer-events: none;
-    transition: .25s;
-    z-index: 10000;
-    font-size: 13px;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-
-/* MOBILE */
-
-@media (max-width: 700px) {
-
-    .header {
-        height: auto;
-        min-height: 60px;
+    body {
+        font-family: Arial, sans-serif;
+        background:
+            radial-gradient(circle at top left, #dbeafe, transparent 35%),
+            radial-gradient(circle at bottom right, #dcfce7, transparent 35%),
+            #f8fafc;
+        min-height: 100vh;
     }
 
-    .title {
-        font-size: 17px;
+    .glass {
+        background: rgba(255,255,255,.88);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,.8);
+        box-shadow: 0 15px 40px rgba(15,23,42,.08);
     }
 
-    .header-actions .btn {
-        padding: 7px 8px;
-        font-size: 11px;
+    .drop-zone {
+        border: 2px dashed #94a3b8;
+        transition: .2s;
     }
 
-    .game {
-        padding: 7px;
+    .drop-zone:hover,
+    .drop-zone.dragover {
+        border-color: #2563eb;
+        background: #eff6ff;
     }
 
-    .table {
-        padding: 10px;
-        border-radius: 14px;
+    .preview-img {
+        max-height: 360px;
+        object-fit: contain;
     }
 
-    .center-area {
-        gap: 25px;
+    textarea {
+        resize: vertical;
     }
 
-    .pile {
-        width: 62px;
-        height: 88px;
-    }
-
-    .card {
-        width: 55px;
-        height: 78px;
-    }
-
-    .controls {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .hand {
-        gap: 4px;
-    }
-}
-
-@media (max-width: 420px) {
-
-    .players {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .player {
-        min-height: 64px;
-        padding: 6px;
-    }
-
-    .player-name {
-        font-size: 12px;
-    }
-
-    .mini-card {
-        width: 17px;
+    .loader {
+        width: 24px;
         height: 24px;
+        border: 3px solid #dbeafe;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
     }
 
-    .card {
-        width: 52px;
-        height: 74px;
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 
-    .card-corner {
-        font-size: 13px;
+    .confidence-bar {
+        height: 8px;
+        border-radius: 99px;
+        background: #e2e8f0;
+        overflow: hidden;
     }
 
-    .card-center {
-        font-size: 21px;
+    .confidence-fill {
+        height: 100%;
+        background: #2563eb;
+        transition: width .3s;
     }
 
-    .hand {
-        min-height: 95px;
+    .history-item {
+        transition: .2s;
     }
-}
+
+    .history-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(0,0,0,.06);
+    }
+
+    .dark-mode {
+        background: #0f172a;
+        color: #e2e8f0;
+    }
 </style>
 </head>
 
 <body>
 
-<header class="header">
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
 
-    <div>
-        <div class="title">🃏 Remi 4 Pemain</div>
-        <div class="subtitle">52 Kartu + 2 Joker • Pass & Play</div>
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl">
+                        🤖
+                    </div>
+
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold text-slate-800">
+                            AI Photo Translator
+                        </h1>
+
+                        <p class="text-xs md:text-sm text-slate-500">
+                            OCR + Translator untuk SOP Factory
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button
+                    onclick="showDictionary()"
+                    class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold">
+                    📚 Kamus
+                </button>
+
+                <button
+                    onclick="clearAll()"
+                    class="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold">
+                    🗑 Reset
+                </button>
+            </div>
+
+        </div>
     </div>
-
-    <div class="header-actions">
-        <button class="btn" onclick="showRules()">Aturan</button>
-        <button class="btn green" onclick="newGame()">Game Baru</button>
-    </div>
-
 </header>
 
-<main class="game">
 
-    <!-- PLAYERS -->
+<main class="max-w-7xl mx-auto px-4 py-6">
 
-    <section class="players">
+    <!-- INTRO -->
+    <section class="glass rounded-3xl p-5 md:p-7 mb-6">
 
-        <div class="player" id="playerBox0">
-            <div class="player-top">
-                <div class="player-name">👤 Pemain 1</div>
-                <div class="player-status" id="status0">Menunggu</div>
+        <div class="flex flex-col md:flex-row gap-5 md:items-center">
+
+            <div class="text-5xl">
+                📷
             </div>
-            <div class="card-count" id="count0"></div>
-        </div>
 
-        <div class="player" id="playerBox1">
-            <div class="player-top">
-                <div class="player-name">👤 Pemain 2</div>
-                <div class="player-status" id="status1">Menunggu</div>
-            </div>
-            <div class="card-count" id="count1"></div>
-        </div>
+            <div class="flex-1">
 
-        <div class="player" id="playerBox2">
-            <div class="player-top">
-                <div class="player-name">👤 Pemain 3</div>
-                <div class="player-status" id="status2">Menunggu</div>
-            </div>
-            <div class="card-count" id="count2"></div>
-        </div>
+                <h2 class="text-xl font-bold text-slate-800 mb-2">
+                    Terjemahkan SOP dari Foto
+                </h2>
 
-        <div class="player" id="playerBox3">
-            <div class="player-top">
-                <div class="player-name">👤 Pemain 4</div>
-                <div class="player-status" id="status3">Menunggu</div>
+                <p class="text-slate-600 text-sm leading-relaxed">
+                    Upload foto SOP Mandarin. Sistem akan membaca teks menggunakan OCR,
+                    kemudian menerjemahkannya ke Bahasa Indonesia.
+                    Kamu juga bisa memperbaiki hasil OCR sebelum diterjemahkan.
+                </p>
+
             </div>
-            <div class="card-count" id="count3"></div>
+
         </div>
 
     </section>
 
 
-    <!-- TABLE -->
+    <!-- UPLOAD -->
+    <section class="glass rounded-3xl p-5 mb-6">
 
-    <section class="table">
+        <div
+            id="dropZone"
+            class="drop-zone rounded-3xl p-8 md:p-12 text-center cursor-pointer">
 
-        <div class="turn-info">
-            <div class="turn-label">Giliran sekarang</div>
-            <div class="turn-player" id="turnPlayer">Pemain 1</div>
-        </div>
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/*"
+                capture="environment"
+                class="hidden">
 
-
-        <!-- DECK -->
-
-        <div class="center-area">
-
-            <div class="pile-wrapper">
-
-                <div class="pile-title">
-                    DECK
-                </div>
-
-                <div class="pile deck" onclick="drawFromDeck()">
-
-                    <div class="deck-inner"></div>
-
-                </div>
-
-                <div style="font-size:10px;margin-top:4px;" id="deckCount">
-                    54 kartu
-                </div>
-
+            <div class="text-6xl mb-4">
+                📸
             </div>
 
+            <h3 class="text-lg font-bold text-slate-800">
+                Upload Foto SOP
+            </h3>
 
-            <div class="pile-wrapper">
+            <p class="text-sm text-slate-500 mt-2">
+                Klik untuk memilih foto atau gunakan kamera HP
+            </p>
 
-                <div class="pile-title">
-                    BUANGAN
-                </div>
+            <button
+                onclick="document.getElementById('imageInput').click()"
+                class="mt-5 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg">
+                📷 Pilih Foto
+            </button>
 
-                <div class="pile discard" id="discardPile"
-                     onclick="drawFromDiscard()">
-
-                    <span id="discardText">-</span>
-
-                </div>
-
-                <div style="font-size:10px;margin-top:4px;">
-                    Klik untuk ambil
-                </div>
-
-            </div>
+            <p class="text-xs text-slate-400 mt-4">
+                JPG / PNG / WEBP
+            </p>
 
         </div>
 
+    </section>
 
-        <!-- COMBO AREA -->
 
-        <div class="combo-area">
+    <!-- IMAGE PREVIEW -->
+    <section
+        id="previewSection"
+        class="glass rounded-3xl p-5 mb-6 hidden">
 
-            <div class="section-title">
-                📋 Combo di Meja
-            </div>
+        <div class="flex items-center justify-between mb-4">
 
-            <div class="combos" id="combos">
+            <h2 class="font-bold text-lg">
+                🖼️ Foto
+            </h2>
 
-                <div class="combo">
-                    <div class="empty-combo">
-                        Belum ada combo.
+            <button
+                onclick="removeImage()"
+                class="text-sm text-red-600 hover:text-red-800">
+                Hapus foto
+            </button>
+
+        </div>
+
+        <div class="bg-slate-100 rounded-2xl p-3 text-center">
+            <img
+                id="previewImage"
+                class="preview-img mx-auto rounded-xl">
+        </div>
+
+        <div class="mt-5 flex flex-wrap gap-3">
+
+            <button
+                id="ocrButton"
+                onclick="startOCR()"
+                class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                🔎 Baca Foto
+            </button>
+
+            <button
+                onclick="rotateImage()"
+                class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
+                🔄 Putar
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- OCR STATUS -->
+    <section
+        id="ocrStatus"
+        class="glass rounded-3xl p-5 mb-6 hidden">
+
+        <div class="flex items-center gap-4">
+
+            <div class="loader"></div>
+
+            <div class="flex-1">
+
+                <div class="font-bold">
+                    Sedang membaca foto...
+                </div>
+
+                <div
+                    id="ocrStatusText"
+                    class="text-sm text-slate-500 mt-1">
+                    Menyiapkan OCR...
+                </div>
+
+                <div class="confidence-bar mt-3">
+                    <div
+                        id="ocrProgress"
+                        class="confidence-fill"
+                        style="width:0%">
                     </div>
                 </div>
 
@@ -802,131 +288,240 @@ button {
     </section>
 
 
-    <!-- MY HAND -->
+    <!-- WORKSPACE -->
+    <section
+        id="workspace"
+        class="grid lg:grid-cols-2 gap-6 hidden">
 
-    <section class="my-area">
 
-        <div class="my-header">
+        <!-- SOURCE -->
+        <div class="glass rounded-3xl p-5">
 
-            <div class="my-name" id="myName">
-                Kartu Pemain 1
+            <div class="flex items-center justify-between mb-4">
+
+                <div>
+                    <h2 class="font-bold text-lg text-slate-800">
+                        🇨🇳 Teks Mandarin
+                    </h2>
+
+                    <p class="text-xs text-slate-500">
+                        Hasil OCR dapat diperbaiki manual
+                    </p>
+                </div>
+
+                <button
+                    onclick="clearSource()"
+                    class="text-xs px-3 py-2 rounded-lg bg-red-50 text-red-600">
+                    Bersihkan
+                </button>
+
             </div>
 
-            <div class="hand-info" id="handInfo">
-                7 kartu
+            <textarea
+                id="sourceText"
+                rows="12"
+                class="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
+                placeholder="Teks Mandarin akan muncul di sini..."></textarea>
+
+
+            <div class="flex flex-wrap gap-2 mt-4">
+
+                <button
+                    onclick="translateText()"
+                    class="flex-1 min-w-[180px] px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                    🤖 Terjemahkan
+                </button>
+
+                <button
+                    onclick="copySource()"
+                    class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
+                    📋 Copy
+                </button>
+
             </div>
 
         </div>
 
 
-        <div class="hand-toolbar">
+        <!-- RESULT -->
+        <div class="glass rounded-3xl p-5">
 
-            <button class="btn" onclick="shuffleHand()">
-                🔀 Acak Kartu
-            </button>
+            <div class="flex items-center justify-between mb-4">
 
-            <button class="btn" onclick="sortHand()">
-                ↕ Urutkan
-            </button>
+                <div>
+                    <h2 class="font-bold text-lg text-slate-800">
+                        🇮🇩 Bahasa Indonesia
+                    </h2>
 
-            <button class="btn" onclick="clearSelection()">
-                ✕ Batal Pilih
-            </button>
+                    <p class="text-xs text-slate-500">
+                        Hasil terjemahan
+                    </p>
+                </div>
+
+                <button
+                    onclick="copyResult()"
+                    class="text-xs px-3 py-2 rounded-lg bg-green-50 text-green-700">
+                    📋 Copy
+                </button>
+
+            </div>
+
+
+            <textarea
+                id="resultText"
+                rows="12"
+                class="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-800"
+                placeholder="Hasil terjemahan akan muncul di sini..."></textarea>
+
+
+            <div class="mt-4 grid grid-cols-2 gap-3">
+
+                <button
+                    onclick="translateText()"
+                    class="px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold">
+                    🔄 Terjemahkan Lagi
+                </button>
+
+                <button
+                    onclick="saveHistory()"
+                    class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
+                    💾 Simpan
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- TOOLS -->
+    <section class="grid md:grid-cols-3 gap-4 mt-6">
+
+        <div class="glass rounded-2xl p-5">
+
+            <div class="text-3xl mb-3">
+                🔎
+            </div>
+
+            <h3 class="font-bold">
+                OCR
+            </h3>
+
+            <p class="text-sm text-slate-500 mt-2">
+                Membaca tulisan dari foto menggunakan OCR di browser.
+            </p>
 
         </div>
 
 
-        <div class="hand" id="hand">
+        <div class="glass rounded-2xl p-5">
+
+            <div class="text-3xl mb-3">
+                📚
+            </div>
+
+            <h3 class="font-bold">
+                Kamus SOP
+            </h3>
+
+            <p class="text-sm text-slate-500 mt-2">
+                Menggunakan istilah khusus yang umum digunakan pada SOP factory.
+            </p>
 
         </div>
 
 
-        <!-- CONTROLS -->
+        <div class="glass rounded-2xl p-5">
 
-        <div class="controls">
+            <div class="text-3xl mb-3">
+                🤖
+            </div>
+
+            <h3 class="font-bold">
+                AI Ready
+            </h3>
+
+            <p class="text-sm text-slate-500 mt-2">
+                Struktur sudah disiapkan agar nantinya dapat disambungkan ke AI API.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- HISTORY -->
+    <section class="glass rounded-3xl p-5 mt-6">
+
+        <div class="flex justify-between items-center mb-4">
+
+            <div>
+                <h2 class="font-bold text-lg">
+                    🕘 Riwayat
+                </h2>
+
+                <p class="text-xs text-slate-500">
+                    Tersimpan di browser ini
+                </p>
+            </div>
 
             <button
-                class="control-btn primary"
-                id="drawDeckBtn"
-                onclick="drawFromDeck()">
-                🂠 Ambil Deck
-            </button>
-
-            <button
-                class="control-btn warning"
-                id="drawDiscardBtn"
-                onclick="drawFromDiscard()">
-                🃏 Ambil Buangan
-            </button>
-
-            <button
-                class="control-btn"
-                id="comboBtn"
-                onclick="makeCombo()">
-                ➕ Buat Combo
-            </button>
-
-            <button
-                class="control-btn danger"
-                id="discardBtn"
-                onclick="discardSelected()">
-                🗑 Buang Kartu
+                onclick="clearHistory()"
+                class="text-xs px-3 py-2 rounded-lg bg-red-50 text-red-600">
+                Hapus Riwayat
             </button>
 
         </div>
 
+        <div
+            id="historyList"
+            class="space-y-3">
 
-        <div class="controls">
-
-            <button
-                class="control-btn primary"
-                id="declareBtn"
-                onclick="declareWin()"
-                style="grid-column:1/-1;">
-                🏆 DECLARE / MENANG
-            </button>
+            <div class="text-center py-8 text-slate-400 text-sm">
+                Belum ada riwayat.
+            </div>
 
         </div>
-
-
-        <!-- LOG -->
-
-        <div class="log" id="gameLog"></div>
 
     </section>
 
 </main>
 
 
-<!-- PASS MODAL -->
+<!-- DICTIONARY MODAL -->
+<div
+    id="dictionaryModal"
+    class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4">
 
-<div class="modal-overlay" id="passModal">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
 
-    <div class="modal">
+        <div class="p-5 border-b flex justify-between items-center">
 
-        <h2>🔄 Ganti Pemain</h2>
+            <div>
+                <h2 class="font-bold text-lg">
+                    📚 Kamus SOP Factory
+                </h2>
 
-        <div class="pass-card">
-
-            <div style="font-size:40px;">
-                🃏
+                <p class="text-xs text-slate-500">
+                    Istilah khusus untuk membantu terjemahan
+                </p>
             </div>
 
-            <p id="passText">
-                Serahkan perangkat ke Pemain 2.
-            </p>
-
-            <strong>
-                Pastikan pemain sebelumnya tidak melihat kartu Anda.
-            </strong>
+            <button
+                onclick="closeDictionary()"
+                class="w-9 h-9 rounded-full bg-slate-100">
+                ✕
+            </button>
 
         </div>
 
-        <div class="modal-actions">
 
-            <button class="btn green" onclick="continueTurn()">
-                Saya Siap
-            </button>
+        <div class="p-5 overflow-auto max-h-[70vh]">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3"
+                 id="dictionaryList">
+            </div>
 
         </div>
 
@@ -935,1129 +530,511 @@ button {
 </div>
 
 
-<!-- RULES MODAL -->
+<!-- TOAST -->
+<div
+    id="toast"
+    class="fixed bottom-5 right-5 z-[200] hidden">
 
-<div class="modal-overlay" id="rulesModal">
-
-    <div class="modal">
-
-        <h2>📖 Aturan Remi</h2>
-
-        <p>
-            <b>Jumlah pemain:</b> 4 orang.
-        </p>
-
-        <p>
-            <b>Kartu:</b> 52 kartu standar + 2 Joker = 54 kartu.
-        </p>
-
-        <p>
-            <b>Pembagian:</b> masing-masing pemain mendapatkan 7 kartu.
-        </p>
-
-        <p>
-            Setiap giliran pemain mengambil 1 kartu dari deck atau
-            tumpukan buangan, kemudian dapat membuat combo dan
-            harus membuang 1 kartu.
-        </p>
-
-        <p>
-            <b>SET:</b> 3 atau 4 kartu dengan angka/rank yang sama
-            tetapi jenis/simbol berbeda.
-        </p>
-
-        <p>
-            <b>RUN:</b> minimal 3 kartu berurutan dengan simbol yang sama.
-        </p>
-
-        <p>
-            As dianggap rendah: A-2-3.
-            A tidak bisa menjadi kartu setelah K.
-        </p>
-
-        <p>
-            <b>Joker:</b> dapat menggantikan kartu apa saja.
-            Maksimal 1 Joker dalam satu combo.
-        </p>
-
-        <p>
-            Untuk menang, seluruh kartu di tangan harus dapat
-            dibentuk menjadi combo yang valid.
-        </p>
-
-        <p>
-            <b>Nilai penalty:</b><br>
-            A = 1<br>
-            2–10 = sesuai angka<br>
-            J/Q/K = 10<br>
-            Joker = 0
-        </p>
-
-        <div class="modal-actions">
-
-            <button class="btn green"
-                    onclick="closeRules()">
-                Tutup
-            </button>
-
-        </div>
-
+    <div
+        id="toastContent"
+        class="bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl text-sm">
     </div>
 
-</div>
-
-
-<!-- RESULT MODAL -->
-
-<div class="modal-overlay" id="resultModal">
-
-    <div class="modal">
-
-        <h2 id="resultTitle">
-            🏆 Permainan Selesai
-        </h2>
-
-        <div id="resultContent"></div>
-
-        <div class="modal-actions">
-
-            <button class="btn green"
-                    onclick="newGame()">
-                Game Baru
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<div class="toast" id="toast">
-    Pesan
 </div>
 
 
 <script>
 
 /* =========================================================
-   DATA
+   DATABASE KAMUS SOP
 ========================================================= */
 
-const suits = [
-    {
-        symbol: "♠",
-        name: "Spade",
-        color: "black"
-    },
-    {
-        symbol: "♥",
-        name: "Heart",
-        color: "red"
-    },
-    {
-        symbol: "♦",
-        name: "Diamond",
-        color: "red"
-    },
-    {
-        symbol: "♣",
-        name: "Club",
-        color: "black"
-    }
-];
+const dictionary = {
 
-const ranks = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K"
-];
+    "电池盖": "battery cover",
+    "电池盖组件": "battery cover assembly",
 
-let deck = [];
-let discardPile = [];
+    "上盖": "top cover",
+    "上盖组件": "top cover assembly",
 
-let players = [
-    {
-        name: "Pemain 1",
-        hand: [],
-        combos: []
-    },
-    {
-        name: "Pemain 2",
-        hand: [],
-        combos: []
-    },
-    {
-        name: "Pemain 3",
-        hand: [],
-        combos: []
-    },
-    {
-        name: "Pemain 4",
-        hand: [],
-        combos: []
-    }
-];
+    "下盖": "bottom cover",
+    "下盖组件": "bottom cover assembly",
 
-let currentPlayer = 0;
+    "定位销": "pin positioning",
+    "定位针": "pin positioning",
 
-let hasDrawn = false;
+    "治具": "fixture",
+    "夹具": "fixture",
 
-let selectedCards = [];
+    "镊子": "tweezers",
+    "磁棒": "magnetic bar",
+    "磁铁棒": "magnetic bar",
 
-let draggedCardId = null;
+    "拆机棒": "disassembly stick",
+    "拆机工具": "disassembly stick",
 
-let gameStarted = false;
+    "酒精": "alkohol",
+    "无尘布": "kain microfiber",
+    "擦拭布": "kain microfiber",
+    "微纤维布": "kain microfiber",
+
+    "纸胶带": "tape kertas",
+    "胶带": "tape",
+    "保护胶带": "protective tape",
+
+    "屏幕": "layar",
+    "显示屏": "layar",
+
+    "手机": "unit",
+    "设备": "unit",
+
+    "螺丝": "screw",
+    "螺丝刀": "screwdriver",
+
+    "点胶": "gluing",
+    "涂胶": "gluing",
+    "喷胶": "spray glue",
+
+    "防水": "waterproof",
+    "气密性": "air tightness",
+    "气密测试": "air tightness test",
+
+    "清洁棚": "cleanshed",
+    "清洁间": "cleanshed",
+
+    "生产": "production",
+    "生产线": "production line",
+    "流水线": "production line",
+
+    "检查": "check",
+    "检验": "inspection",
+    "确认": "confirm",
+    "测试": "test",
+
+    "安装": "install",
+    "拆卸": "disassembly",
+    "取出": "remove",
+    "放入": "put",
+
+    "连接": "connect",
+    "断开": "disconnect",
+
+    "电池": "battery",
+    "摄像头": "camera",
+    "镜头": "lens",
+    "相机": "camera",
+
+    "螺丝孔": "screw hole",
+    "孔位": "hole position",
+
+    "NG": "NG",
+    "OK": "OK",
+    "不良": "NG",
+    "良品": "OK",
+
+    "注意": "attention",
+    "禁止": "prohibited",
+    "必须": "must",
+
+    "轻轻": "gently",
+    "小心": "carefully",
+
+    "完成": "complete",
+    "结束": "finish",
+
+    "员工": "operator",
+    "作业员": "operator",
+    "操作员": "operator",
+
+    "标准": "standard",
+    "作业标准": "work standard",
+    "作业指导书": "work instruction",
+
+    "步骤": "step",
+    "工序": "process",
+    "工位": "workstation",
+
+    "时间": "time",
+    "节拍": "cycle time",
+
+    "数量": "quantity",
+    "分钟": "minute",
+    "秒": "second",
+
+    "左": "left",
+    "右": "right",
+    "上": "upper",
+    "下": "lower",
+
+    "前": "front",
+    "后": "rear",
+
+    "里面": "inside",
+    "外面": "outside",
+
+    "然后": "then",
+    "最后": "finally",
+    "首先": "first",
+
+    "避免": "avoid",
+    "防止": "prevent",
+
+    "损坏": "damage",
+    "刮伤": "scratch",
+
+    "异物": "foreign material",
+    "灰尘": "dust",
+
+    "漏水": "water leakage",
+    "漏气": "air leakage",
+
+    "扫码": "scan barcode",
+    "扫描": "scan",
+    "条码": "barcode",
+    "二维码": "QR code",
+
+    "重量": "weight",
+    "称重": "weighing",
+
+    "包装": "packaging",
+    "包装盒": "packaging box",
+
+    "确认无误": "confirm there is no abnormality",
+    "安装到位": "install into position",
+    "检查是否到位": "check whether it is properly installed",
+    "确保": "ensure",
+    "保持": "keep",
+
+    "取": "take",
+    "拿": "take",
+    "放置": "place",
+
+    "压合": "press fitting",
+    "按压": "press",
+    "固定": "fix",
+    "锁紧": "tighten",
+
+    "松开": "loosen",
+    "打开": "open",
+    "关闭": "close"
+};
 
 
 /* =========================================================
-   CARD CREATION
+   VARIABLES
 ========================================================= */
 
-function createDeck() {
+let currentImage = null;
+let rotation = 0;
 
-    const cards = [];
+let historyData =
+    JSON.parse(localStorage.getItem("photoTranslatorHistory") || "[]");
 
-    for (const suit of suits) {
 
-        for (const rank of ranks) {
+/* =========================================================
+   ELEMENTS
+========================================================= */
 
-            cards.push({
-                id: cryptoRandomId(),
-                suit: suit.symbol,
-                suitName: suit.name,
-                color: suit.color,
-                rank: rank,
-                joker: false
-            });
+const imageInput =
+    document.getElementById("imageInput");
 
-        }
+const dropZone =
+    document.getElementById("dropZone");
 
+const previewSection =
+    document.getElementById("previewSection");
+
+const previewImage =
+    document.getElementById("previewImage");
+
+const workspace =
+    document.getElementById("workspace");
+
+const sourceText =
+    document.getElementById("sourceText");
+
+const resultText =
+    document.getElementById("resultText");
+
+
+/* =========================================================
+   UPLOAD
+========================================================= */
+
+imageInput.addEventListener("change", function(e) {
+
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+
+        showToast("File harus berupa gambar.");
+
+        return;
     }
 
-    cards.push({
-        id: cryptoRandomId(),
-        joker: true,
-        rank: "JOKER",
-        suit: "",
-        color: "red"
-    });
+    const reader = new FileReader();
 
-    cards.push({
-        id: cryptoRandomId(),
-        joker: true,
-        rank: "JOKER",
-        suit: "",
-        color: "black"
-    });
+    reader.onload = function(event) {
 
-    return cards;
-}
+        currentImage = event.target.result;
+
+        rotation = 0;
+
+        previewImage.src = currentImage;
+
+        previewSection.classList.remove("hidden");
+
+        workspace.classList.remove("hidden");
+
+        sourceText.value = "";
+
+        resultText.value = "";
+
+        showToast("Foto berhasil dimuat.");
+
+    };
+
+    reader.readAsDataURL(file);
+
+});
 
 
-function cryptoRandomId() {
+/* =========================================================
+   DRAG DROP
+========================================================= */
 
-    return Math.random()
-        .toString(36)
-        .substring(2, 10) +
-        Date.now().toString(36);
+dropZone.addEventListener("dragover", function(e) {
+
+    e.preventDefault();
+
+    dropZone.classList.add("dragover");
+
+});
+
+
+dropZone.addEventListener("dragleave", function() {
+
+    dropZone.classList.remove("dragover");
+
+});
+
+
+dropZone.addEventListener("drop", function(e) {
+
+    e.preventDefault();
+
+    dropZone.classList.remove("dragover");
+
+    const file = e.dataTransfer.files[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+
+        showToast("File harus berupa gambar.");
+
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+
+        currentImage = event.target.result;
+
+        rotation = 0;
+
+        previewImage.src = currentImage;
+
+        previewSection.classList.remove("hidden");
+
+        workspace.classList.remove("hidden");
+
+        sourceText.value = "";
+
+        resultText.value = "";
+
+    };
+
+    reader.readAsDataURL(file);
+
+});
+
+
+/* =========================================================
+   REMOVE IMAGE
+========================================================= */
+
+function removeImage() {
+
+    currentImage = null;
+
+    previewImage.src = "";
+
+    previewSection.classList.add("hidden");
+
+    workspace.classList.add("hidden");
+
+    imageInput.value = "";
 
 }
 
 
 /* =========================================================
-   SHUFFLE
+   ROTATE
 ========================================================= */
 
-function shuffle(array) {
+function rotateImage() {
 
-    for (let i = array.length - 1; i > 0; i--) {
+    if (!currentImage) return;
 
-        const j = Math.floor(
-            Math.random() * (i + 1)
-        );
+    rotation += 90;
 
-        [
-            array[i],
-            array[j]
-        ] = [
-            array[j],
-            array[i]
-        ];
+    if (rotation >= 360) {
+
+        rotation = 0;
 
     }
 
-    return array;
+    previewImage.style.transform =
+        `rotate(${rotation}deg)`;
 
 }
 
 
 /* =========================================================
-   NEW GAME
+   OCR
 ========================================================= */
 
-function newGame() {
+async function startOCR() {
 
-    deck = shuffle(createDeck());
+    if (!currentImage) {
 
-    discardPile = [];
+        showToast("Upload foto terlebih dahulu.");
 
-    players.forEach(player => {
+        return;
+    }
 
-        player.hand = [];
-        player.combos = [];
+    const status =
+        document.getElementById("ocrStatus");
 
-    });
+    const statusText =
+        document.getElementById("ocrStatusText");
 
-    currentPlayer = 0;
+    const progress =
+        document.getElementById("ocrProgress");
 
-    hasDrawn = false;
-
-    selectedCards = [];
-
-    gameStarted = true;
+    const button =
+        document.getElementById("ocrButton");
 
 
-    /* DEAL 7 CARDS */
+    status.classList.remove("hidden");
 
-    for (let round = 0; round < 7; round++) {
+    button.disabled = true;
 
-        for (let p = 0; p < 4; p++) {
+    button.classList.add("opacity-50");
 
-            players[p].hand.push(
-                deck.pop()
+    sourceText.value = "";
+
+    resultText.value = "";
+
+
+    try {
+
+        statusText.innerText =
+            "Menyiapkan OCR Mandarin...";
+
+        progress.style.width = "5%";
+
+
+        const result =
+            await Tesseract.recognize(
+                currentImage,
+                "chi_sim+eng",
+                {
+
+                    logger: function(info) {
+
+                        if (info.status) {
+
+                            statusText.innerText =
+                                info.status;
+
+                        }
+
+                        if (info.progress) {
+
+                            const percent =
+                                Math.round(
+                                    info.progress * 100
+                                );
+
+                            progress.style.width =
+                                percent + "%";
+                        }
+
+                    }
+
+                }
             );
 
-        }
 
-    }
-
-
-    /* FIRST DISCARD */
-
-    discardPile.push(
-        deck.pop()
-    );
+        let text =
+            result.data.text.trim();
 
 
-    logGame("Game baru dimulai.");
-
-    logGame(
-        "Giliran " +
-        players[currentPlayer].name
-    );
+        sourceText.value = text;
 
 
-    render();
+        progress.style.width = "100%";
 
-    showPassModal(
-        "Serahkan perangkat ke " +
-        players[currentPlayer].name +
-        "."
-    );
-
-}
+        statusText.innerText =
+            "OCR selesai.";
 
 
-/* =========================================================
-   RENDER
-========================================================= */
+        if (text) {
 
-function render() {
-
-    renderPlayers();
-
-    renderTable();
-
-    renderHand();
-
-    updateControls();
-
-}
-
-
-/* =========================================================
-   RENDER PLAYERS
-========================================================= */
-
-function renderPlayers() {
-
-    players.forEach((player, index) => {
-
-        const box =
-            document.getElementById(
-                "playerBox" + index
+            showToast(
+                "Teks berhasil dibaca dari foto."
             );
 
-        const status =
-            document.getElementById(
-                "status" + index
-            );
-
-        const count =
-            document.getElementById(
-                "count" + index
-            );
-
-
-        box.classList.toggle(
-            "active",
-            index === currentPlayer
-        );
-
-
-        if (index === currentPlayer) {
-
-            status.textContent =
-                "🎯 Giliran";
+            translateText();
 
         } else {
 
-            status.textContent =
-                "Menunggu";
-
-        }
-
-
-        count.innerHTML = "";
-
-
-        for (
-            let i = 0;
-            i < player.hand.length;
-            i++
-        ) {
-
-            const mini =
-                document.createElement("div");
-
-            mini.className = "mini-card";
-
-            count.appendChild(mini);
-
-        }
-
-    });
-
-}
-
-
-/* =========================================================
-   RENDER TABLE
-========================================================= */
-
-function renderTable() {
-
-    document.getElementById(
-        "turnPlayer"
-    ).textContent =
-        players[currentPlayer].name;
-
-
-    document.getElementById(
-        "deckCount"
-    ).textContent =
-        deck.length + " kartu";
-
-
-    const discard =
-        discardPile[
-            discardPile.length - 1
-        ];
-
-
-    const discardElement =
-        document.getElementById(
-            "discardPile"
-        );
-
-
-    if (discard) {
-
-        discardElement.innerHTML =
-            cardHTML(discard);
-
-        discardElement.classList.remove(
-            "empty-pile"
-        );
-
-    } else {
-
-        discardElement.innerHTML =
-            "<span>-</span>";
-
-        discardElement.classList.add(
-            "empty-pile"
-        );
-
-    }
-
-
-    const combosElement =
-        document.getElementById("combos");
-
-    combosElement.innerHTML = "";
-
-
-    let comboTotal = 0;
-
-
-    players.forEach(player => {
-
-        player.combos.forEach(combo => {
-
-            comboTotal++;
-
-            const comboDiv =
-                document.createElement("div");
-
-            comboDiv.className = "combo";
-
-
-            const label =
-                document.createElement("div");
-
-            label.className =
-                "combo-label";
-
-            label.textContent =
-                player.name;
-
-            comboDiv.appendChild(label);
-
-
-            combo.forEach(card => {
-
-                const temp =
-                    document.createElement("div");
-
-                temp.innerHTML =
-                    cardHTML(card);
-
-                comboDiv.appendChild(
-                    temp.firstElementChild
-                );
-
-            });
-
-
-            combosElement.appendChild(
-                comboDiv
-            );
-
-        });
-
-    });
-
-
-    if (comboTotal === 0) {
-
-        combosElement.innerHTML = `
-            <div class="combo">
-                <div class="empty-combo">
-                    Belum ada combo.
-                </div>
-            </div>
-        `;
-
-    }
-
-}
-
-
-/* =========================================================
-   RENDER HAND
-========================================================= */
-
-function renderHand() {
-
-    const player =
-        players[currentPlayer];
-
-
-    document.getElementById(
-        "myName"
-    ).textContent =
-        "🃏 " + player.name;
-
-
-    document.getElementById(
-        "handInfo"
-    ).textContent =
-        player.hand.length + " kartu";
-
-
-    const handElement =
-        document.getElementById("hand");
-
-
-    handElement.innerHTML = "";
-
-
-    player.hand.forEach((card, index) => {
-
-        const wrapper =
-            document.createElement("div");
-
-        wrapper.innerHTML =
-            cardHTML(card);
-
-
-        const cardElement =
-            wrapper.firstElementChild;
-
-
-        cardElement.dataset.index =
-            index;
-
-        cardElement.dataset.id =
-            card.id;
-
-
-        if (
-            selectedCards.includes(
-                card.id
-            )
-        ) {
-
-            cardElement.classList.add(
-                "selected"
+            showToast(
+                "OCR tidak menemukan teks. Coba foto lebih jelas."
             );
 
         }
 
 
-        /* CLICK */
+    } catch(error) {
 
-        cardElement.addEventListener(
-            "click",
-            function(e) {
+        console.error(error);
 
-                if (
-                    cardElement.dataset.dragMoved ===
-                    "true"
-                ) {
-
-                    cardElement.dataset.dragMoved =
-                        "false";
-
-                    return;
-
-                }
-
-                toggleSelect(card.id);
-
-            }
+        showToast(
+            "OCR gagal. Pastikan koneksi internet tersedia."
         );
 
+        statusText.innerText =
+            "OCR gagal.";
 
-        /* DRAG */
 
-        enableDrag(cardElement);
+    } finally {
 
+        setTimeout(() => {
 
-        handElement.appendChild(
-            cardElement
-        );
+            status.classList.add("hidden");
 
-    });
+        }, 1500);
 
-}
 
+        button.disabled = false;
 
-/* =========================================================
-   CARD HTML
-========================================================= */
-
-function cardHTML(card) {
-
-    if (card.joker) {
-
-        return `
-            <div class="card joker"
-                 data-id="${card.id}">
-
-                <div class="card-corner">
-                    🃏
-                </div>
-
-                <div class="joker-symbol">
-                    JOKER
-                </div>
-
-                <div class="card-corner bottom">
-                    🃏
-                </div>
-
-            </div>
-        `;
-
-    }
-
-
-    return `
-        <div class="card ${card.color}"
-             data-id="${card.id}">
-
-            <div class="card-corner">
-                ${card.rank}${card.suit}
-            </div>
-
-            <div class="card-center">
-                ${card.suit}
-            </div>
-
-            <div class="card-corner bottom">
-                ${card.rank}${card.suit}
-            </div>
-
-        </div>
-    `;
-
-}
-
-
-/* =========================================================
-   SELECT
-========================================================= */
-
-function toggleSelect(id) {
-
-    const index =
-        selectedCards.indexOf(id);
-
-
-    if (index >= 0) {
-
-        selectedCards.splice(index, 1);
-
-    } else {
-
-        selectedCards.push(id);
-
-    }
-
-
-    renderHand();
-
-}
-
-
-function clearSelection() {
-
-    selectedCards = [];
-
-    renderHand();
-
-}
-
-
-/* =========================================================
-   DRAG / REORDER HAND
-========================================================= */
-
-function enableDrag(element) {
-
-    let startX = 0;
-    let startY = 0;
-    let isDragging = false;
-    let moved = false;
-
-
-    element.addEventListener(
-        "pointerdown",
-        function(e) {
-
-            if (
-                e.button !== undefined &&
-                e.button !== 0
-            ) return;
-
-
-            startX = e.clientX;
-            startY = e.clientY;
-
-            isDragging = true;
-            moved = false;
-
-            draggedCardId =
-                element.dataset.id;
-
-            element.setPointerCapture(
-                e.pointerId
-            );
-
-        }
-    );
-
-
-    element.addEventListener(
-        "pointermove",
-        function(e) {
-
-            if (!isDragging) return;
-
-
-            const dx =
-                e.clientX - startX;
-
-            const dy =
-                e.clientY - startY;
-
-
-            if (
-                Math.abs(dx) > 6 ||
-                Math.abs(dy) > 6
-            ) {
-
-                moved = true;
-
-                element.dataset.dragMoved =
-                    "true";
-
-            }
-
-
-            if (moved) {
-
-                element.style.transform =
-                    `translate(${dx}px, -15px) scale(1.04)`;
-
-            }
-
-        }
-    );
-
-
-    element.addEventListener(
-        "pointerup",
-        function(e) {
-
-            if (!isDragging) return;
-
-            isDragging = false;
-
-
-            element.style.transform = "";
-
-
-            if (moved) {
-
-                reorderDraggedCard(
-                    draggedCardId,
-                    e.clientX
-                );
-
-            }
-
-            draggedCardId = null;
-
-        }
-    );
-
-
-    element.addEventListener(
-        "pointercancel",
-        function() {
-
-            isDragging = false;
-
-            element.style.transform = "";
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   REORDER CARD
-========================================================= */
-
-function reorderDraggedCard(
-    cardId,
-    pointerX
-) {
-
-    const player =
-        players[currentPlayer];
-
-
-    const oldIndex =
-        player.hand.findIndex(
-            c => c.id === cardId
-        );
-
-
-    if (oldIndex < 0) return;
-
-
-    const cards =
-        Array.from(
-            document.querySelectorAll(
-                "#hand .card"
-            )
-        );
-
-
-    let targetIndex =
-        player.hand.length - 1;
-
-
-    for (
-        let i = 0;
-        i < cards.length;
-        i++
-    ) {
-
-        const cardElement =
-            cards[i];
-
-
-        if (
-            cardElement.dataset.id ===
-            cardId
-        ) continue;
-
-
-        const rect =
-            cardElement.getBoundingClientRect();
-
-
-        const center =
-            rect.left +
-            rect.width / 2;
-
-
-        if (
-            pointerX < center
-        ) {
-
-            targetIndex = i;
-
-            break;
-
-        }
-
-    }
-
-
-    if (
-        targetIndex === oldIndex
-    ) {
-
-        renderHand();
-
-        return;
-
-    }
-
-
-    const movedCard =
-        player.hand.splice(
-            oldIndex,
-            1
-        )[0];
-
-
-    if (
-        targetIndex >
-        oldIndex
-    ) {
-
-        targetIndex--;
-
-    }
-
-
-    player.hand.splice(
-        targetIndex,
-        0,
-        movedCard
-    );
-
-
-    logGame(
-        players[currentPlayer].name +
-        " mengubah urutan kartu."
-    );
-
-
-    renderHand();
-
-}
-
-
-/* =========================================================
-   SHUFFLE HAND
-========================================================= */
-
-function shuffleHand() {
-
-    players[currentPlayer].hand =
-        shuffle(
-            players[currentPlayer].hand
-        );
-
-
-    logGame(
-        players[currentPlayer].name +
-        " mengacak kartu."
-    );
-
-
-    selectedCards = [];
-
-    renderHand();
-
-    toast("Kartu diacak 🔀");
-
-}
-
-
-/* =========================================================
-   SORT HAND
-========================================================= */
-
-function sortHand() {
-
-    const player =
-        players[currentPlayer];
-
-
-    const suitOrder = {
-        "♠": 0,
-        "♥": 1,
-        "♦": 2,
-        "♣": 3,
-        "": 4
-    };
-
-
-    const rankOrder = {
-        "A": 1,
-        "2": 2,
-        "3": 3,
-        "4": 4,
-        "5": 5,
-        "6": 6,
-        "7": 7,
-        "8": 8,
-        "9": 9,
-        "10": 10,
-        "J": 11,
-        "Q": 12,
-        "K": 13,
-        "JOKER": 14
-    };
-
-
-    player.hand.sort(
-        (a,b) => {
-
-            if (
-                suitOrder[a.suit] !==
-                suitOrder[b.suit]
-            ) {
-
-                return (
-                    suitOrder[a.suit] -
-                    suitOrder[b.suit]
-                );
-
-            }
-
-
-            return (
-                rankOrder[a.rank] -
-                rankOrder[b.rank]
-            );
-
-        }
-    );
-
-
-    selectedCards = [];
-
-    renderHand();
-
-    toast("Kartu diurutkan ↕");
-
-}
-
-
-/* =========================================================
-   DRAW DECK
-========================================================= */
-
-function drawFromDeck() {
-
-    if (!gameStarted) return;
-
-
-    if (currentPlayer !== undefined) {
-
-
-        if (hasDrawn) {
-
-            toast(
-                "Anda sudah mengambil kartu."
-            );
-
-            return;
-
-        }
-
-
-        if (deck.length === 0) {
-
-            recycleDiscard();
-
-        }
-
-
-        if (deck.length === 0) {
-
-            toast(
-                "Deck habis."
-            );
-
-            return;
-
-        }
-
-
-        const card =
-            deck.pop();
-
-
-        players[currentPlayer].hand.push(
-            card
-        );
-
-
-        hasDrawn = true;
-
-        selectedCards = [];
-
-
-        logGame(
-            players[currentPlayer].name +
-            " mengambil kartu dari deck."
-        );
-
-
-        render();
+        button.classList.remove("opacity-50");
 
     }
 
@@ -2065,1069 +1042,263 @@ function drawFromDeck() {
 
 
 /* =========================================================
-   DRAW DISCARD
+   TRANSLATOR
 ========================================================= */
 
-function drawFromDiscard() {
+function translateText() {
 
-    if (!gameStarted) return;
+    let text =
+        sourceText.value.trim();
 
 
-    if (hasDrawn) {
+    if (!text) {
 
-        toast(
-            "Anda sudah mengambil kartu."
+        showToast(
+            "Tidak ada teks untuk diterjemahkan."
         );
 
         return;
-
     }
 
 
-    if (
-        discardPile.length === 0
-    ) {
-
-        toast(
-            "Tidak ada kartu buangan."
-        );
-
-        return;
-
-    }
+    let result =
+        translateChinese(text);
 
 
-    const card =
-        discardPile.pop();
+    resultText.value =
+        result;
 
 
-    players[currentPlayer].hand.push(
-        card
-    );
-
-
-    hasDrawn = true;
-
-    selectedCards = [];
-
-
-    logGame(
-        players[currentPlayer].name +
-        " mengambil kartu buangan."
-    );
-
-
-    render();
-
-}
-
-
-/* =========================================================
-   RECYCLE DISCARD
-========================================================= */
-
-function recycleDiscard() {
-
-    if (
-        discardPile.length <= 1
-    ) return;
-
-
-    const top =
-        discardPile.pop();
-
-
-    deck = shuffle(
-        discardPile
-    );
-
-
-    discardPile = [top];
-
-
-    logGame(
-        "Kartu buangan dikocok kembali menjadi deck."
+    showToast(
+        "Terjemahan selesai."
     );
 
 }
 
 
 /* =========================================================
-   MAKE COMBO
+   SIMPLE CHINESE TRANSLATION
 ========================================================= */
 
-function makeCombo() {
+function translateChinese(text) {
 
-    if (!hasDrawn) {
-
-        toast(
-            "Ambil kartu terlebih dahulu."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        selectedCards.length < 3
-    ) {
-
-        toast(
-            "Pilih minimal 3 kartu."
-        );
-
-        return;
-
-    }
-
-
-    const player =
-        players[currentPlayer];
-
-
-    const selected =
-        player.hand.filter(
-            card =>
-                selectedCards.includes(
-                    card.id
-                )
-        );
-
-
-    if (
-        !isValidCombo(selected)
-    ) {
-
-        toast(
-            "Combo tidak valid."
-        );
-
-        return;
-
-    }
-
-
-    player.combos.push(
-        selected
-    );
-
-
-    player.hand =
-        player.hand.filter(
-            card =>
-                !selectedCards.includes(
-                    card.id
-                )
-        );
-
-
-    selectedCards = [];
-
-
-    logGame(
-        player.name +
-        " membuat combo " +
-        getComboType(selected) +
-        "."
-    );
-
-
-    render();
-
-
-    if (
-        player.hand.length === 0
-    ) {
-
-        finishGame(
-            currentPlayer
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   COMBO VALIDATION
-========================================================= */
-
-function isValidCombo(cards) {
-
-    if (
-        cards.length < 3
-    ) {
-
-        return false;
-
-    }
-
-
-    const jokers =
-        cards.filter(
-            c => c.joker
-        );
-
-
-    if (
-        jokers.length > 1
-    ) {
-
-        return false;
-
-    }
-
-
-    const normal =
-        cards.filter(
-            c => !c.joker
-        );
-
-
-    /* SET */
-
-    const ranksSame =
-        normal.length > 0 &&
-        normal.every(
-            c =>
-                c.rank ===
-                normal[0].rank
-        );
-
-
-    const suitsUnique =
-        new Set(
-            normal.map(
-                c => c.suit
-            )
-        ).size === normal.length;
-
-
-    if (
-        ranksSame &&
-        suitsUnique
-    ) {
-
-        return true;
-
-    }
-
-
-    /* RUN */
-
-    if (
-        normal.length === 0
-    ) {
-
-        return false;
-
-    }
-
-
-    const sameSuit =
-        normal.every(
-            c =>
-                c.suit ===
-                normal[0].suit
-        );
-
-
-    if (!sameSuit) {
-
-        return false;
-
-    }
-
-
-    const values =
-        normal.map(
-            cardValue
-        ).sort(
-            (a,b) => a - b
-        );
-
-
-    const unique =
-        new Set(values);
-
-
-    if (
-        unique.size !==
-        values.length
-    ) {
-
-        return false;
-
-    }
-
-
-    const min =
-        Math.min(...values);
-
-    const max =
-        Math.max(...values);
-
-
-    const needed =
-        max - min + 1;
-
-
-    const jokerCount =
-        jokers.length;
-
-
-    return (
-        needed ===
-        values.length + jokerCount
-    );
-
-}
-
-
-/* =========================================================
-   CARD VALUE
-========================================================= */
-
-function cardValue(card) {
-
-    if (card.rank === "A") return 1;
-
-    if (card.rank === "J") return 11;
-
-    if (card.rank === "Q") return 12;
-
-    if (card.rank === "K") return 13;
-
-    return parseInt(
-        card.rank
-    );
-
-}
-
-
-/* =========================================================
-   COMBO TYPE
-========================================================= */
-
-function getComboType(cards) {
-
-    const normal =
-        cards.filter(
-            c => !c.joker
-        );
-
-
-    const sameRank =
-        normal.length > 0 &&
-        normal.every(
-            c =>
-                c.rank ===
-                normal[0].rank
-        );
-
-
-    if (sameRank) {
-
-        return "SET";
-
-    }
-
-
-    return "RUN";
-
-}
-
-
-/* =========================================================
-   DISCARD
-========================================================= */
-
-function discardSelected() {
-
-    if (!hasDrawn) {
-
-        toast(
-            "Ambil kartu terlebih dahulu."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        selectedCards.length !== 1
-    ) {
-
-        toast(
-            "Pilih tepat 1 kartu untuk dibuang."
-        );
-
-        return;
-
-    }
-
-
-    const player =
-        players[currentPlayer];
-
-
-    const index =
-        player.hand.findIndex(
-            card =>
-                card.id ===
-                selectedCards[0]
-        );
-
-
-    if (index < 0) return;
-
-
-    const card =
-        player.hand.splice(
-            index,
-            1
-        )[0];
-
-
-    discardPile.push(card);
-
-
-    selectedCards = [];
-
-
-    logGame(
-        player.name +
-        " membuang " +
-        cardName(card) +
-        "."
-    );
-
-
-    hasDrawn = false;
-
-
-    render();
-
-
-    if (
-        player.hand.length === 0
-    ) {
-
-        finishGame(
-            currentPlayer
-        );
-
-        return;
-
-    }
-
-
-    nextPlayer();
-
-}
-
-
-/* =========================================================
-   DECLARE
-========================================================= */
-
-function declareWin() {
-
-    const player =
-        players[currentPlayer];
-
-
-    if (!hasDrawn) {
-
-        toast(
-            "Ambil kartu terlebih dahulu."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        player.hand.length === 0
-    ) {
-
-        finishGame(
-            currentPlayer
-        );
-
-        return;
-
-    }
-
-
-    if (
-        canDeclare(player.hand)
-    ) {
-
-        finishGame(
-            currentPlayer
-        );
-
-    } else {
-
-        toast(
-            "Kartu yang tersisa belum bisa menjadi combo lengkap."
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DECLARE VALIDATION
-========================================================= */
-
-function canDeclare(cards) {
-
-    if (
-        cards.length === 0
-    ) {
-
-        return true;
-
-    }
+    let result = text;
 
 
     /*
-       Cari kombinasi combo
-       menggunakan recursive backtracking.
+        Urutkan dari frasa terpanjang
+        supaya "确认无误" diproses
+        sebelum "确认".
     */
 
-    function search(
-        remaining
-    ) {
-
-        if (
-            remaining.length === 0
-        ) {
-
-            return true;
-
-        }
-
-
-        const first =
-            remaining[0];
-
-
-        const others =
-            remaining.slice(1);
-
-
-        /*
-           Ambil kombinasi 2 kartu tambahan
-           untuk combo minimum 3.
-        */
-
-        const combinations =
-            combinationsOf(
-                others,
-                2
-            );
-
-
-        for (
-            const pair
-            of combinations
-        ) {
-
-            const combo = [
-                first,
-                ...pair
-            ];
-
-
-            /*
-               Coba juga combo yang lebih besar
-               dengan kartu tambahan.
-            */
-
-            const candidates =
-                [combo];
-
-
-            if (
-                remaining.length >= 4
-            ) {
-
-                for (
-                    let i = 0;
-                    i < others.length;
-                    i++
-                ) {
-
-                    for (
-                        let j = i + 1;
-                        j < others.length;
-                        j++
-                    ) {
-
-                        for (
-                            let k = j + 1;
-                            k < others.length;
-                            k++
-                        ) {
-
-                            candidates.push([
-                                first,
-                                others[i],
-                                others[j],
-                                others[k]
-                            ]);
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-
-            for (
-                const candidate
-                of candidates
-            ) {
-
-                if (
-                    isValidCombo(candidate)
-                ) {
-
-                    const ids =
-                        new Set(
-                            candidate.map(
-                                c => c.id
-                            )
-                        );
-
-
-                    const rest =
-                        remaining.filter(
-                            c =>
-                                !ids.has(
-                                    c.id
-                                )
-                        );
-
-
-                    if (
-                        search(rest)
-                    ) {
-
-                        return true;
-
-                    }
-
-                }
-
-            }
-
-        }
-
-
-        return false;
-
-    }
-
-
-    return search(cards);
-
-}
-
-
-/* =========================================================
-   COMBINATIONS
-========================================================= */
-
-function combinationsOf(
-    array,
-    choose
-) {
-
-    const result = [];
-
-
-    function helper(
-        start,
-        current
-    ) {
-
-        if (
-            current.length ===
-            choose
-        ) {
-
-            result.push(
-                [...current]
-            );
-
-            return;
-
-        }
-
-
-        for (
-            let i = start;
-            i < array.length;
-            i++
-        ) {
-
-            current.push(
-                array[i]
-            );
-
-
-            helper(
-                i + 1,
-                current
-            );
-
-
-            current.pop();
-
-        }
-
-    }
-
-
-    helper(
-        0,
-        []
-    );
-
-
-    return result;
-
-}
-
-
-/* =========================================================
-   NEXT PLAYER
-========================================================= */
-
-function nextPlayer() {
-
-    currentPlayer =
-        (currentPlayer + 1) % 4;
-
-
-    selectedCards = [];
-
-    hasDrawn = false;
-
-
-    render();
-
-
-    showPassModal(
-        "Serahkan perangkat ke " +
-        players[currentPlayer].name +
-        "."
-    );
-
-}
-
-
-/* =========================================================
-   PASS MODAL
-========================================================= */
-
-function showPassModal(message) {
-
-    document.getElementById(
-        "passText"
-    ).textContent =
-        message;
-
-
-    document.getElementById(
-        "passModal"
-    ).classList.add("show");
-
-}
-
-
-function continueTurn() {
-
-    document.getElementById(
-        "passModal"
-    ).classList.remove("show");
-
-
-    render();
-
-}
-
-
-/* =========================================================
-   SCORE
-========================================================= */
-
-function cardPenalty(card) {
-
-    if (card.joker) return 0;
-
-    if (card.rank === "A") return 1;
-
-    if (
-        ["J","Q","K"].includes(
-            card.rank
-        )
-    ) {
-
-        return 10;
-
-    }
-
-    return parseInt(
-        card.rank
-    );
-
-}
-
-
-function playerPenalty(player) {
-
-    return player.hand.reduce(
-        (sum, card) =>
-            sum + cardPenalty(card),
-        0
-    );
-
-}
-
-
-/* =========================================================
-   FINISH GAME
-========================================================= */
-
-function finishGame(
-    winnerIndex
-) {
-
-    const winner =
-        players[winnerIndex];
-
-
-    let html = `
-
-        <p style="font-size:18px;text-align:center;">
-            🏆 <b>${winner.name}</b>
-            memenangkan permainan!
-        </p>
-
-        <table class="score-table">
-
-            <tr>
-                <th>Pemain</th>
-                <th>Sisa Kartu</th>
-                <th>Penalty</th>
-            </tr>
-
-    `;
-
-
-    players.forEach(
-        (player,index) => {
-
-            const penalty =
-                playerPenalty(player);
-
-
-            html += `
-
-                <tr>
-
-                    <td>
-                        ${player.name}
-                        ${
-                            index === winnerIndex
-                            ? " 🏆"
-                            : ""
-                        }
-                    </td>
-
-                    <td>
-                        ${player.hand.length}
-                    </td>
-
-                    <td>
-                        ${penalty}
-                    </td>
-
-                </tr>
-
-            `;
-
-        }
-    );
-
-
-    html += `
-        </table>
-    `;
-
-
-    document.getElementById(
-        "resultContent"
-    ).innerHTML =
-        html;
-
-
-    document.getElementById(
-        "resultModal"
-    ).classList.add("show");
-
-
-    logGame(
-        winner.name +
-        " memenangkan permainan!"
-    );
-
-}
-
-
-/* =========================================================
-   RULES
-========================================================= */
-
-function showRules() {
-
-    document.getElementById(
-        "rulesModal"
-    ).classList.add("show");
-
-}
-
-
-function closeRules() {
-
-    document.getElementById(
-        "rulesModal"
-    ).classList.remove("show");
-
-}
-
-
-/* =========================================================
-   CONTROLS
-========================================================= */
-
-function updateControls() {
-
-    const drawDeck =
-        document.getElementById(
-            "drawDeckBtn"
-        );
-
-    const drawDiscard =
-        document.getElementById(
-            "drawDiscardBtn"
-        );
-
-    const combo =
-        document.getElementById(
-            "comboBtn"
-        );
-
-    const discard =
-        document.getElementById(
-            "discardBtn"
-        );
-
-    const declare =
-        document.getElementById(
-            "declareBtn"
+    const keys =
+        Object.keys(dictionary)
+        .sort((a,b) =>
+            b.length - a.length
         );
 
 
-    if (!gameStarted) {
+    keys.forEach(function(chinese) {
 
-        drawDeck.disabled = true;
-        drawDiscard.disabled = true;
-        combo.disabled = true;
-        discard.disabled = true;
-        declare.disabled = true;
+        const indonesian =
+            dictionary[chinese];
+
+        result =
+            result.split(chinese)
+                   .join(indonesian);
+
+    });
+
+
+    /*
+        Beberapa pola kalimat SOP
+    */
+
+    result =
+        result.replace(
+            /请/g,
+            "Silakan "
+        );
+
+
+    result =
+        result.replace(
+            /将/g,
+            ""
+        );
+
+
+    result =
+        result.replace(
+            /进行/g,
+            ""
+        );
+
+
+    result =
+        result.replace(
+            /是否/g,
+            "apakah "
+        );
+
+
+    result =
+        result.replace(
+            /然后/g,
+            "Kemudian "
+        );
+
+
+    result =
+        result.replace(
+            /首先/g,
+            "Pertama, "
+        );
+
+
+    result =
+        result.replace(
+            /最后/g,
+            "Terakhir, "
+        );
+
+
+    result =
+        result.replace(
+            /并且/g,
+            "dan "
+        );
+
+
+    result =
+        result.replace(
+            /以及/g,
+            "dan "
+        );
+
+
+    result =
+        result.replace(
+            /如果/g,
+            "Jika "
+        );
+
+
+    result =
+        result.replace(
+            /必须/g,
+            "harus "
+        );
+
+
+    result =
+        result.replace(
+            /注意/g,
+            "Perhatian: "
+        );
+
+
+    result =
+        result.replace(
+            /确保/g,
+            "Pastikan "
+        );
+
+
+    result =
+        result.replace(
+            /避免/g,
+            "Hindari "
+        );
+
+
+    result =
+        result.replace(
+            /防止/g,
+            "Cegah "
+        );
+
+
+    /*
+        Bersihkan spasi berlebih
+    */
+
+    result =
+        result.replace(
+            /[ \t]+/g,
+            " "
+        );
+
+
+    result =
+        result.replace(
+            /\n\s*\n\s*\n/g,
+            "\n\n"
+        );
+
+
+    /*
+        Rapikan beberapa kata Inggris
+    */
+
+    result =
+        result.replace(
+            /battery cover assembly/gi,
+            "battery cover assembly"
+        );
+
+
+    result =
+        result.replace(
+            /top cover assembly/gi,
+            "top cover assembly"
+        );
+
+
+    return result.trim();
+
+}
+
+
+/* =========================================================
+   COPY
+========================================================= */
+
+async function copyText(text) {
+
+    if (!text) {
+
+        showToast("Tidak ada teks.");
 
         return;
-
     }
 
 
-    drawDeck.disabled =
-        hasDrawn ||
-        deck.length === 0;
+    try {
 
+        await navigator.clipboard.writeText(text);
 
-    drawDiscard.disabled =
-        hasDrawn ||
-        discardPile.length === 0;
-
-
-    combo.disabled =
-        !hasDrawn ||
-        selectedCards.length < 3;
-
-
-    discard.disabled =
-        !hasDrawn ||
-        selectedCards.length !== 1;
-
-
-    declare.disabled =
-        !hasDrawn;
-
-}
-
-
-/* =========================================================
-   LOG
-========================================================= */
-
-function logGame(text) {
-
-    const log =
-        document.getElementById(
-            "gameLog"
+        showToast(
+            "Berhasil disalin."
         );
 
+    } catch(error) {
 
-    const line =
-        document.createElement("div");
+        const temp =
+            document.createElement("textarea");
 
+        temp.value = text;
 
-    const time =
-        new Date().toLocaleTimeString(
-            "id-ID",
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
+        document.body.appendChild(temp);
 
+        temp.select();
 
-    line.textContent =
-        "[" + time + "] " + text;
+        document.execCommand("copy");
 
+        temp.remove();
 
-    log.prepend(line);
-
-
-    while (
-        log.children.length > 30
-    ) {
-
-        log.removeChild(
-            log.lastChild
+        showToast(
+            "Berhasil disalin."
         );
 
     }
@@ -3135,22 +1306,326 @@ function logGame(text) {
 }
 
 
-/* =========================================================
-   CARD NAME
-========================================================= */
+function copySource() {
 
-function cardName(card) {
-
-    if (card.joker) {
-
-        return "Joker";
-
-    }
-
-    return (
-        card.rank +
-        card.suit
+    copyText(
+        sourceText.value
     );
+
+}
+
+
+function copyResult() {
+
+    copyText(
+        resultText.value
+    );
+
+}
+
+
+/* =========================================================
+   CLEAR SOURCE
+========================================================= */
+
+function clearSource() {
+
+    sourceText.value = "";
+
+    resultText.value = "";
+
+}
+
+
+/* =========================================================
+   SAVE HISTORY
+========================================================= */
+
+function saveHistory() {
+
+    const source =
+        sourceText.value.trim();
+
+    const result =
+        resultText.value.trim();
+
+
+    if (!source || !result) {
+
+        showToast(
+            "Belum ada hasil untuk disimpan."
+        );
+
+        return;
+    }
+
+
+    const item = {
+
+        id: Date.now(),
+
+        date:
+            new Date().toLocaleString(
+                "id-ID"
+            ),
+
+        source: source,
+
+        result: result
+
+    };
+
+
+    historyData.unshift(item);
+
+
+    if (historyData.length > 30) {
+
+        historyData =
+            historyData.slice(0,30);
+
+    }
+
+
+    localStorage.setItem(
+        "photoTranslatorHistory",
+        JSON.stringify(historyData)
+    );
+
+
+    renderHistory();
+
+    showToast(
+        "Hasil berhasil disimpan."
+    );
+
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+function renderHistory() {
+
+    const container =
+        document.getElementById("historyList");
+
+
+    if (!historyData.length) {
+
+        container.innerHTML = `
+            <div class="text-center py-8 text-slate-400 text-sm">
+                Belum ada riwayat.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        historyData.map(item => `
+
+        <div class="history-item bg-white rounded-2xl border p-4">
+
+            <div class="flex justify-between gap-3">
+
+                <div class="text-xs text-slate-400">
+                    ${escapeHTML(item.date)}
+                </div>
+
+                <button
+                    onclick="deleteHistory(${item.id})"
+                    class="text-xs text-red-500">
+                    Hapus
+                </button>
+
+            </div>
+
+
+            <div class="grid md:grid-cols-2 gap-4 mt-3">
+
+                <div>
+
+                    <div class="text-xs font-bold text-blue-600 mb-1">
+                        🇨🇳 Mandarin
+                    </div>
+
+                    <div class="text-sm text-slate-700 whitespace-pre-wrap">
+                        ${escapeHTML(item.source)}
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <div class="text-xs font-bold text-green-600 mb-1">
+                        🇮🇩 Indonesia
+                    </div>
+
+                    <div class="text-sm text-slate-700 whitespace-pre-wrap">
+                        ${escapeHTML(item.result)}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <button
+                onclick="loadHistory(${item.id})"
+                class="mt-3 text-xs px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200">
+                ↩️ Gunakan lagi
+            </button>
+
+        </div>
+
+    `).join("");
+
+}
+
+
+function deleteHistory(id) {
+
+    historyData =
+        historyData.filter(
+            item => item.id !== id
+        );
+
+
+    localStorage.setItem(
+        "photoTranslatorHistory",
+        JSON.stringify(historyData)
+    );
+
+
+    renderHistory();
+
+}
+
+
+function loadHistory(id) {
+
+    const item =
+        historyData.find(
+            x => x.id === id
+        );
+
+
+    if (!item) return;
+
+
+    sourceText.value =
+        item.source;
+
+
+    resultText.value =
+        item.result;
+
+
+    workspace.classList.remove("hidden");
+
+
+    window.scrollTo({
+
+        top:
+            workspace.offsetTop - 80,
+
+        behavior:
+            "smooth"
+
+    });
+
+
+    showToast(
+        "Riwayat dimuat."
+    );
+
+}
+
+
+function clearHistory() {
+
+    if (!historyData.length) return;
+
+
+    if (
+        !confirm(
+            "Hapus semua riwayat?"
+        )
+    ) return;
+
+
+    historyData = [];
+
+
+    localStorage.removeItem(
+        "photoTranslatorHistory"
+    );
+
+
+    renderHistory();
+
+}
+
+
+/* =========================================================
+   DICTIONARY
+========================================================= */
+
+function showDictionary() {
+
+    const modal =
+        document.getElementById(
+            "dictionaryModal"
+        );
+
+
+    const list =
+        document.getElementById(
+            "dictionaryList"
+        );
+
+
+    list.innerHTML =
+        Object.entries(dictionary)
+        .map(([cn,id]) => `
+
+            <div class="border rounded-xl p-3">
+
+                <div class="font-bold text-slate-800">
+                    ${escapeHTML(cn)}
+                </div>
+
+                <div class="text-sm text-blue-600 mt-1">
+                    ${escapeHTML(id)}
+                </div>
+
+            </div>
+
+        `).join("");
+
+
+    modal.classList.remove("hidden");
+
+    modal.classList.add("flex");
+
+}
+
+
+function closeDictionary() {
+
+    const modal =
+        document.getElementById(
+            "dictionaryModal"
+        );
+
+
+    modal.classList.add("hidden");
+
+    modal.classList.remove("flex");
 
 }
 
@@ -3159,55 +1634,136 @@ function cardName(card) {
    TOAST
 ========================================================= */
 
-let toastTimer = null;
+function showToast(message) {
 
+    const toast =
+        document.getElementById("toast");
 
-function toast(message) {
-
-    const element =
+    const content =
         document.getElementById(
-            "toast"
+            "toastContent"
         );
 
 
-    element.textContent =
+    content.innerText =
         message;
 
 
-    element.classList.add(
-        "show"
-    );
+    toast.classList.remove("hidden");
 
 
     clearTimeout(
-        toastTimer
+        window.toastTimer
     );
 
 
-    toastTimer =
-        setTimeout(
-            () => {
+    window.toastTimer =
+        setTimeout(() => {
 
-                element.classList.remove(
-                    "show"
-                );
+            toast.classList.add("hidden");
 
-            },
-            1800
+        }, 2500);
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+function escapeHTML(text) {
+
+    return String(text)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
         );
 
 }
 
 
 /* =========================================================
-   START
+   CLEAR ALL
 ========================================================= */
 
-window.addEventListener(
-    "load",
-    function() {
+function clearAll() {
 
-        newGame();
+    if (
+        !confirm(
+            "Reset semua tampilan?"
+        )
+    ) return;
+
+
+    removeImage();
+
+    sourceText.value = "";
+
+    resultText.value = "";
+
+    document.getElementById(
+        "ocrStatus"
+    ).classList.add("hidden");
+
+
+    showToast(
+        "Tampilan sudah direset."
+    );
+
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+renderHistory();
+
+
+/* =========================================================
+   KEYBOARD SHORTCUT
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(e) {
+
+        /*
+            Ctrl + Enter
+            = Translate
+        */
+
+        if (
+            e.ctrlKey &&
+            e.key === "Enter"
+        ) {
+
+            e.preventDefault();
+
+            translateText();
+
+        }
 
     }
 );
