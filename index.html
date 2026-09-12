@@ -1,0 +1,2408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IE Engineer Toolkit</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f3f6fa;
+    color:#1f2937;
+}
+
+button,input,select,textarea{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.app{
+    display:flex;
+    min-height:100vh;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:250px;
+    background:#111827;
+    color:white;
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    overflow-y:auto;
+    z-index:1000;
+}
+
+.logo{
+    padding:22px 20px;
+    border-bottom:1px solid #374151;
+}
+
+.logo h1{
+    font-size:21px;
+}
+
+.logo p{
+    color:#9ca3af;
+    font-size:12px;
+    margin-top:5px;
+}
+
+.menu{
+    padding:12px;
+}
+
+.menu button{
+    width:100%;
+    border:0;
+    background:transparent;
+    color:#d1d5db;
+    text-align:left;
+    padding:12px 14px;
+    border-radius:8px;
+    margin-bottom:4px;
+    transition:.2s;
+}
+
+.menu button:hover,
+.menu button.active{
+    background:#2563eb;
+    color:white;
+}
+
+.menu-section{
+    color:#6b7280;
+    font-size:11px;
+    text-transform:uppercase;
+    margin:18px 12px 7px;
+}
+
+/* MAIN */
+.main{
+    margin-left:250px;
+    width:calc(100% - 250px);
+}
+
+.topbar{
+    background:white;
+    border-bottom:1px solid #e5e7eb;
+    padding:15px 25px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    position:sticky;
+    top:0;
+    z-index:900;
+}
+
+.topbar h2{
+    font-size:20px;
+}
+
+.topbar span{
+    font-size:13px;
+    color:#6b7280;
+}
+
+.content{
+    padding:25px;
+}
+
+/* PAGES */
+.page{
+    display:none;
+}
+
+.page.active{
+    display:block;
+}
+
+.page-title{
+    margin-bottom:20px;
+}
+
+.page-title h2{
+    font-size:25px;
+    margin-bottom:5px;
+}
+
+.page-title p{
+    color:#6b7280;
+    font-size:14px;
+}
+
+/* CARDS */
+.card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 7px rgba(0,0,0,.03);
+}
+
+.card h3{
+    margin-bottom:15px;
+    font-size:17px;
+}
+
+.grid{
+    display:grid;
+    gap:18px;
+}
+
+.grid-2{
+    grid-template-columns:repeat(2,1fr);
+}
+
+.grid-3{
+    grid-template-columns:repeat(3,1fr);
+}
+
+.grid-4{
+    grid-template-columns:repeat(4,1fr);
+}
+
+/* DASHBOARD */
+.stat{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:20px;
+}
+
+.stat .label{
+    color:#6b7280;
+    font-size:13px;
+}
+
+.stat .value{
+    font-size:27px;
+    font-weight:bold;
+    margin-top:8px;
+    color:#111827;
+}
+
+.stat .small{
+    font-size:12px;
+    color:#6b7280;
+    margin-top:5px;
+}
+
+/* FORM */
+.form-group{
+    margin-bottom:15px;
+}
+
+.form-group label{
+    display:block;
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:6px;
+}
+
+input,select,textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid #d1d5db;
+    border-radius:7px;
+    outline:none;
+    background:white;
+}
+
+input:focus,select:focus,textarea:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 2px rgba(37,99,235,.1);
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical;
+}
+
+/* BUTTON */
+.btn{
+    border:0;
+    border-radius:7px;
+    padding:10px 15px;
+    font-weight:bold;
+    transition:.2s;
+}
+
+.btn-primary{
+    background:#2563eb;
+    color:white;
+}
+
+.btn-primary:hover{
+    background:#1d4ed8;
+}
+
+.btn-success{
+    background:#16a34a;
+    color:white;
+}
+
+.btn-danger{
+    background:#dc2626;
+    color:white;
+}
+
+.btn-secondary{
+    background:#e5e7eb;
+    color:#111827;
+}
+
+.btn-warning{
+    background:#f59e0b;
+    color:white;
+}
+
+.button-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+/* RESULT */
+.result{
+    background:#eff6ff;
+    border:1px solid #bfdbfe;
+    border-radius:9px;
+    padding:16px;
+    margin-top:15px;
+}
+
+.result-title{
+    font-size:12px;
+    color:#1d4ed8;
+    font-weight:bold;
+}
+
+.result-value{
+    font-size:28px;
+    font-weight:bold;
+    margin-top:4px;
+    color:#1e3a8a;
+}
+
+.result-note{
+    font-size:12px;
+    color:#4b5563;
+    margin-top:5px;
+}
+
+/* TABLE */
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:700px;
+}
+
+th,td{
+    padding:11px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+    font-size:13px;
+}
+
+th{
+    background:#f9fafb;
+    font-weight:bold;
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:bold;
+}
+
+.badge-green{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-yellow{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.badge-red{
+    background:#fee2e2;
+    color:#991b1b;
+}
+
+.badge-blue{
+    background:#dbeafe;
+    color:#1e40af;
+}
+
+/* PROGRESS */
+.progress{
+    height:12px;
+    background:#e5e7eb;
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:8px;
+}
+
+.progress-bar{
+    height:100%;
+    background:#2563eb;
+    width:0%;
+}
+
+/* 4M1E */
+.analysis-box{
+    border:1px solid #e5e7eb;
+    border-radius:10px;
+    padding:15px;
+    background:#fafafa;
+}
+
+.analysis-box h4{
+    margin-bottom:8px;
+}
+
+/* MOBILE */
+.mobile-menu{
+    display:none;
+}
+
+@media(max-width:900px){
+
+    .sidebar{
+        transform:translateX(-100%);
+        transition:.25s;
+    }
+
+    .sidebar.open{
+        transform:translateX(0);
+    }
+
+    .main{
+        margin-left:0;
+        width:100%;
+    }
+
+    .mobile-menu{
+        display:block;
+        border:0;
+        background:#2563eb;
+        color:white;
+        border-radius:6px;
+        padding:7px 10px;
+        margin-right:10px;
+    }
+
+    .topbar{
+        padding:12px 15px;
+    }
+
+    .content{
+        padding:15px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4{
+        grid-template-columns:1fr;
+    }
+}
+
+/* PRINT */
+@media print{
+    .sidebar,.topbar,.no-print{
+        display:none!important;
+    }
+
+    .main{
+        margin:0;
+        width:100%;
+    }
+
+    .content{
+        padding:0;
+    }
+
+    .card{
+        box-shadow:none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+
+    <div class="logo">
+        <h1>⚙️ IE Engineer Toolkit</h1>
+        <p>Industrial Engineering Tools</p>
+    </div>
+
+    <div class="menu">
+
+        <div class="menu-section">Main</div>
+
+        <button class="menu-btn active" onclick="showPage('dashboard',this)">
+            🏠 Dashboard
+        </button>
+
+        <div class="menu-section">IE Calculator</div>
+
+        <button class="menu-btn" onclick="showPage('timestudy',this)">
+            ⏱️ Time Study
+        </button>
+
+        <button class="menu-btn" onclick="showPage('linebalance',this)">
+            ⚖️ Line Balancing
+        </button>
+
+        <button class="menu-btn" onclick="showPage('manpower',this)">
+            👷 Manpower
+        </button>
+
+        <button class="menu-btn" onclick="showPage('uph',this)">
+            📈 UPH Calculator
+        </button>
+
+        <button class="menu-btn" onclick="showPage('takt',this)">
+            🎯 Takt Time
+        </button>
+
+        <button class="menu-btn" onclick="showPage('saving',this)">
+            💰 Cost Saving
+        </button>
+
+        <button class="menu-btn" onclick="showPage('oee',this)">
+            📊 OEE
+        </button>
+
+        <div class="menu-section">Improvement</div>
+
+        <button class="menu-btn" onclick="showPage('fourm1e',this)">
+            🔧 4M1E Analysis
+        </button>
+
+        <button class="menu-btn" onclick="showPage('ecrs',this)">
+            ♻️ ECRS
+        </button>
+
+        <button class="menu-btn" onclick="showPage('sop',this)">
+            📝 SOP Generator
+        </button>
+
+        <button class="menu-btn" onclick="showPage('project',this)">
+            📋 Improvement Project
+        </button>
+
+    </div>
+</aside>
+
+
+<!-- MAIN -->
+<main class="main">
+
+<header class="topbar">
+    <div style="display:flex;align-items:center;">
+        <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+        <h2 id="topTitle">Dashboard</h2>
+    </div>
+
+    <span id="currentDate"></span>
+</header>
+
+
+<div class="content">
+
+
+<!-- ================= DASHBOARD ================= -->
+
+<section class="page active" id="dashboard">
+
+    <div class="page-title">
+        <h2>IE Engineer Toolkit</h2>
+        <p>Tools praktis untuk Industrial Engineering, process improvement dan production analysis.</p>
+    </div>
+
+    <div class="grid grid-4">
+
+        <div class="stat">
+            <div class="label">Improvement Project</div>
+            <div class="value" id="dashProjects">0</div>
+            <div class="small">Project tersimpan</div>
+        </div>
+
+        <div class="stat">
+            <div class="label">Total Saving / Month</div>
+            <div class="value" id="dashSaving">Rp 0</div>
+            <div class="small">Estimasi saving</div>
+        </div>
+
+        <div class="stat">
+            <div class="label">Total MP Reduction</div>
+            <div class="value" id="dashMP">0 MP</div>
+            <div class="small">Dari project</div>
+        </div>
+
+        <div class="stat">
+            <div class="label">Toolkit</div>
+            <div class="value">12+</div>
+            <div class="small">IE tools</div>
+        </div>
+
+    </div>
+
+
+    <div class="grid grid-2" style="margin-top:20px;">
+
+        <div class="card">
+            <h3>🚀 Quick Tools</h3>
+
+            <div class="button-row">
+                <button class="btn btn-primary" onclick="openTool('timestudy')">
+                    ⏱️ Time Study
+                </button>
+
+                <button class="btn btn-primary" onclick="openTool('linebalance')">
+                    ⚖️ Line Balance
+                </button>
+
+                <button class="btn btn-primary" onclick="openTool('manpower')">
+                    👷 Manpower
+                </button>
+
+                <button class="btn btn-primary" onclick="openTool('saving')">
+                    💰 Saving
+                </button>
+            </div>
+        </div>
+
+
+        <div class="card">
+            <h3>📌 Konsep Dasar IE</h3>
+
+            <p style="line-height:1.7;font-size:14px;">
+                <b>CT</b> = Cycle Time<br>
+                <b>UPH</b> = Unit Per Hour<br>
+                <b>SMH</b> = Standard Man Hour<br>
+                <b>MP</b> = Manpower<br>
+                <b>TT</b> = Takt Time<br>
+                <b>OEE</b> = Availability × Performance × Quality
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="card">
+        <h3>💡 Improvement Flow</h3>
+
+        <div class="grid grid-4">
+
+            <div class="analysis-box">
+                <h4>1. Observe</h4>
+                <p style="font-size:13px;">
+                    Lihat kondisi aktual di line.
+                </p>
+            </div>
+
+            <div class="analysis-box">
+                <h4>2. Measure</h4>
+                <p style="font-size:13px;">
+                    Time study, output, MP dan data kualitas.
+                </p>
+            </div>
+
+            <div class="analysis-box">
+                <h4>3. Analyze</h4>
+                <p style="font-size:13px;">
+                    Cari bottleneck dan root cause.
+                </p>
+            </div>
+
+            <div class="analysis-box">
+                <h4>4. Improve</h4>
+                <p style="font-size:13px;">
+                    ECRS, line balancing dan manpower optimization.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</section>
+
+
+<!-- ================= TIME STUDY ================= -->
+
+<section class="page" id="timestudy">
+
+<div class="page-title">
+    <h2>⏱️ Time Study</h2>
+    <p>Hitung average cycle time, normal time dan standard time.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input Time Study</h3>
+
+<div class="form-group">
+<label>Nama Process</label>
+<input id="tsProcess" placeholder="Contoh: Screw Tightening">
+</div>
+
+<div class="form-group">
+<label>Cycle 1 (detik)</label>
+<input type="number" id="ts1" value="10">
+</div>
+
+<div class="form-group">
+<label>Cycle 2 (detik)</label>
+<input type="number" id="ts2" value="10">
+</div>
+
+<div class="form-group">
+<label>Cycle 3 (detik)</label>
+<input type="number" id="ts3" value="10">
+</div>
+
+<div class="form-group">
+<label>Cycle 4 (detik)</label>
+<input type="number" id="ts4" value="10">
+</div>
+
+<div class="form-group">
+<label>Cycle 5 (detik)</label>
+<input type="number" id="ts5" value="10">
+</div>
+
+<div class="form-group">
+<label>Performance Rating (%)</label>
+<input type="number" id="tsRating" value="100">
+</div>
+
+<div class="form-group">
+<label>Allowance (%)</label>
+<input type="number" id="tsAllowance" value="10">
+</div>
+
+<button class="btn btn-primary" onclick="calculateTimeStudy()">
+Hitung Time Study
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">AVERAGE CT</div>
+<div class="result-value" id="tsAvg">0 s</div>
+</div>
+
+<div class="result">
+<div class="result-title">NORMAL TIME</div>
+<div class="result-value" id="tsNormal">0 s</div>
+</div>
+
+<div class="result">
+<div class="result-title">STANDARD TIME / SMH</div>
+<div class="result-value" id="tsStandard">0 s</div>
+<div class="result-note">
+SMH = Standard Time / 3600
+</div>
+</div>
+
+<div class="result">
+<div class="result-title">ESTIMATED UPH</div>
+<div class="result-value" id="tsUPH">0</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= LINE BALANCING ================= -->
+
+<section class="page" id="linebalance">
+
+<div class="page-title">
+<h2>⚖️ Line Balancing</h2>
+<p>Analisis sederhana balance efficiency berdasarkan station.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input</h3>
+
+<div class="form-group">
+<label>Target UPH</label>
+<input type="number" id="lbUPH" value="400">
+</div>
+
+<div class="form-group">
+<label>Jumlah Station</label>
+<input type="number" id="lbStation" value="5">
+</div>
+
+<div class="form-group">
+<label>Total Cycle Time semua station (detik)</label>
+<input type="number" id="lbTotalCT" value="40">
+</div>
+
+<div class="form-group">
+<label>Available Time / Hour (menit)</label>
+<input type="number" id="lbAvailable" value="60">
+</div>
+
+<button class="btn btn-primary" onclick="calculateLineBalance()">
+Hitung Balance
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">CYCLE TIME TARGET</div>
+<div class="result-value" id="lbCT">0 s</div>
+</div>
+
+<div class="result">
+<div class="result-title">THEORETICAL MINIMUM STATION</div>
+<div class="result-value" id="lbMinStation">0</div>
+</div>
+
+<div class="result">
+<div class="result-title">BALANCE EFFICIENCY</div>
+<div class="result-value" id="lbEfficiency">0%</div>
+</div>
+
+<div class="result">
+<div class="result-title">BALANCE LOSS</div>
+<div class="result-value" id="lbLoss">0%</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= MANPOWER ================= -->
+
+<section class="page" id="manpower">
+
+<div class="page-title">
+<h2>👷 Manpower Calculator</h2>
+<p>Estimasi kebutuhan manpower berdasarkan cycle time dan target output.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input</h3>
+
+<div class="form-group">
+<label>Target UPH</label>
+<input type="number" id="mpUPH" value="400">
+</div>
+
+<div class="form-group">
+<label>Cycle Time per Process (detik)</label>
+<input type="number" id="mpCT" value="8">
+</div>
+
+<div class="form-group">
+<label>Available Time / Hour (%)</label>
+<input type="number" id="mpAvail" value="100">
+</div>
+
+<button class="btn btn-primary" onclick="calculateMP()">
+Hitung MP
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">THEORETICAL MP</div>
+<div class="result-value" id="mpResult">0 MP</div>
+</div>
+
+<p style="font-size:13px;color:#6b7280;margin-top:15px;">
+Rumus sederhana:
+<br>
+MP = Target UPH × CT / 3600
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= UPH ================= -->
+
+<section class="page" id="uph">
+
+<div class="page-title">
+<h2>📈 UPH Calculator</h2>
+<p>Hitung output per hour berdasarkan cycle time dan manpower.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input</h3>
+
+<div class="form-group">
+<label>Cycle Time (detik)</label>
+<input type="number" id="uphCT" value="10">
+</div>
+
+<div class="form-group">
+<label>Manpower</label>
+<input type="number" id="uphMP" value="1">
+</div>
+
+<div class="form-group">
+<label>Efficiency (%)</label>
+<input type="number" id="uphEff" value="100">
+</div>
+
+<button class="btn btn-primary" onclick="calculateUPH()">
+Hitung UPH
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">ESTIMATED UPH</div>
+<div class="result-value" id="uphResult">0</div>
+</div>
+
+<div class="result">
+<div class="result-title">OUTPUT / 8 HOURS</div>
+<div class="result-value" id="uph8h">0</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= TAKT ================= -->
+
+<section class="page" id="takt">
+
+<div class="page-title">
+<h2>🎯 Takt Time</h2>
+<p>Hitung takt time berdasarkan available production time dan demand.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input</h3>
+
+<div class="form-group">
+<label>Available Production Time (menit/hari)</label>
+<input type="number" id="taktTime" value="480">
+</div>
+
+<div class="form-group">
+<label>Break / Loss Time (menit)</label>
+<input type="number" id="taktBreak" value="60">
+</div>
+
+<div class="form-group">
+<label>Daily Demand (unit)</label>
+<input type="number" id="taktDemand" value="400">
+</div>
+
+<button class="btn btn-primary" onclick="calculateTakt()">
+Hitung Takt Time
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">NET AVAILABLE TIME</div>
+<div class="result-value" id="taktNet">0 min</div>
+</div>
+
+<div class="result">
+<div class="result-title">TAKT TIME</div>
+<div class="result-value" id="taktResult">0 s/unit</div>
+</div>
+
+<div class="result">
+<div class="result-title">TARGET UPH</div>
+<div class="result-value" id="taktUPH">0</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= SAVING ================= -->
+
+<section class="page" id="saving">
+
+<div class="page-title">
+<h2>💰 Cost Saving</h2>
+<p>Hitung estimasi saving dari manpower reduction.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input Saving</h3>
+
+<div class="form-group">
+<label>MP Reduction</label>
+<input type="number" id="saveMP" value="3">
+</div>
+
+<div class="form-group">
+<label>Cost per MP / Month (Rp)</label>
+<input type="number" id="saveCost" value="5000000">
+</div>
+
+<div class="form-group">
+<label>Jig / Investment (Rp)</label>
+<input type="number" id="saveInvest" value="0">
+</div>
+
+<button class="btn btn-primary" onclick="calculateSaving()">
+Hitung Saving
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">MONTHLY SAVING</div>
+<div class="result-value" id="saveMonth">Rp 0</div>
+</div>
+
+<div class="result">
+<div class="result-title">YEARLY SAVING</div>
+<div class="result-value" id="saveYear">Rp 0</div>
+</div>
+
+<div class="result">
+<div class="result-title">PAYBACK PERIOD</div>
+<div class="result-value" id="savePayback">0 bulan</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= OEE ================= -->
+
+<section class="page" id="oee">
+
+<div class="page-title">
+<h2>📊 OEE Calculator</h2>
+<p>Overall Equipment Effectiveness.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Input</h3>
+
+<div class="form-group">
+<label>Planned Production Time (menit)</label>
+<input type="number" id="oeePlanned" value="480">
+</div>
+
+<div class="form-group">
+<label>Downtime (menit)</label>
+<input type="number" id="oeeDown" value="30">
+</div>
+
+<div class="form-group">
+<label>Total Output (unit)</label>
+<input type="number" id="oeeOutput" value="4000">
+</div>
+
+<div class="form-group">
+<label>Ideal Cycle Time (detik)</label>
+<input type="number" id="oeeICT" value="6">
+</div>
+
+<div class="form-group">
+<label>Good Output (unit)</label>
+<input type="number" id="oeeGood" value="3900">
+</div>
+
+<button class="btn btn-primary" onclick="calculateOEE()">
+Hitung OEE
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Result</h3>
+
+<div class="result">
+<div class="result-title">AVAILABILITY</div>
+<div class="result-value" id="oeeA">0%</div>
+</div>
+
+<div class="result">
+<div class="result-title">PERFORMANCE</div>
+<div class="result-value" id="oeeP">0%</div>
+</div>
+
+<div class="result">
+<div class="result-title">QUALITY</div>
+<div class="result-value" id="oeeQ">0%</div>
+</div>
+
+<div class="result">
+<div class="result-title">OEE</div>
+<div class="result-value" id="oeeResult">0%</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= 4M1E ================= -->
+
+<section class="page" id="fourm1e">
+
+<div class="page-title">
+<h2>🔧 4M1E Analysis</h2>
+<p>Analisis kemungkinan penyebab masalah berdasarkan 4M1E.</p>
+</div>
+
+<div class="card">
+
+<div class="form-group">
+<label>Problem / NG</label>
+<input id="problem4m" placeholder="Contoh: UPH tidak mencapai target">
+</div>
+
+<div class="grid grid-2">
+
+<div class="analysis-box">
+<h4>👤 Man</h4>
+<textarea id="man4m" placeholder="Skill, training, fatigue, operator..."></textarea>
+</div>
+
+<div class="analysis-box">
+<h4>⚙️ Machine</h4>
+<textarea id="machine4m" placeholder="Machine speed, breakdown, jig, tooling..."></textarea>
+</div>
+
+<div class="analysis-box">
+<h4>📦 Material</h4>
+<textarea id="material4m" placeholder="Material variation, shortage, dimension..."></textarea>
+</div>
+
+<div class="analysis-box">
+<h4>📋 Method</h4>
+<textarea id="method4m" placeholder="SOP, sequence, process flow..."></textarea>
+</div>
+
+<div class="analysis-box">
+<h4>🌏 Environment</h4>
+<textarea id="environment4m" placeholder="Temperature, lighting, layout, cleanliness..."></textarea>
+</div>
+
+<div class="analysis-box">
+<h4>🎯 Root Cause</h4>
+<textarea id="root4m" placeholder="Tuliskan root cause yang sudah tervalidasi..."></textarea>
+</div>
+
+</div>
+
+<br>
+
+<button class="btn btn-primary" onclick="print4M1E()">
+🖨️ Print Analysis
+</button>
+
+</div>
+
+</section>
+
+
+<!-- ================= ECRS ================= -->
+
+<section class="page" id="ecrs">
+
+<div class="page-title">
+<h2>♻️ ECRS</h2>
+<p>Eliminate, Combine, Rearrange, Simplify.</p>
+</div>
+
+<div class="grid grid-2">
+
+<div class="card">
+
+<h3>Improvement Analysis</h3>
+
+<div class="form-group">
+<label>Process</label>
+<input id="ecrsProcess" placeholder="Nama process">
+</div>
+
+<div class="form-group">
+<label>ELIMINATE</label>
+<textarea id="ecrsE" placeholder="Apa yang bisa dihilangkan?"></textarea>
+</div>
+
+<div class="form-group">
+<label>COMBINE</label>
+<textarea id="ecrsC" placeholder="Apa yang bisa digabung?"></textarea>
+</div>
+
+<div class="form-group">
+<label>REARRANGE</label>
+<textarea id="ecrsR" placeholder="Apa yang bisa diubah urutannya?"></textarea>
+</div>
+
+<div class="form-group">
+<label>SIMPLIFY</label>
+<textarea id="ecrsS" placeholder="Apa yang bisa disederhanakan?"></textarea>
+</div>
+
+<button class="btn btn-primary" onclick="generateECRS()">
+Generate Summary
+</button>
+
+</div>
+
+
+<div class="card">
+
+<h3>Summary</h3>
+
+<div id="ecrsResult" class="result">
+Belum ada analysis.
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= SOP ================= -->
+
+<section class="page" id="sop">
+
+<div class="page-title">
+<h2>📝 SOP Generator</h2>
+<p>Buat draft SOP sederhana berdasarkan process dan langkah kerja.</p>
+</div>
+
+<div class="card">
+
+<div class="grid grid-2">
+
+<div>
+
+<div class="form-group">
+<label>Process Name</label>
+<input id="sopProcess" placeholder="Contoh: Screw Tightening">
+</div>
+
+<div class="form-group">
+<label>Model / Product</label>
+<input id="sopModel" placeholder="Contoh: Cruiser-B4">
+</div>
+
+<div class="form-group">
+<label>Station</label>
+<input id="sopStation" placeholder="Contoh: Line 2 Station 05">
+</div>
+
+</div>
+
+<div>
+
+<div class="form-group">
+<label>Equipment / Jig</label>
+<input id="sopEquipment" placeholder="Equipment / Jig">
+</div>
+
+<div class="form-group">
+<label>Quality Point</label>
+<input id="sopQuality" placeholder="Critical quality point">
+</div>
+
+</div>
+
+</div>
+
+<div class="form-group">
+<label>Work Steps</label>
+<textarea id="sopSteps" placeholder="1. Ambil unit
+2. Pasang component
+3. Jalankan process
+4. Periksa hasil"></textarea>
+</div>
+
+<button class="btn btn-primary" onclick="generateSOP()">
+Generate SOP
+</button>
+
+<button class="btn btn-secondary" onclick="printSOP()">
+Print SOP
+</button>
+
+</div>
+
+
+<div class="card" id="sopPreview">
+
+<h3>SOP Preview</h3>
+
+<div id="sopOutput">
+Belum ada SOP.
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= PROJECT ================= -->
+
+<section class="page" id="project">
+
+<div class="page-title">
+<h2>📋 Improvement Project</h2>
+<p>Catat project improvement, manpower reduction dan saving.</p>
+</div>
+
+<div class="card">
+
+<h3>Tambah Project</h3>
+
+<div class="grid grid-3">
+
+<div class="form-group">
+<label>Project Name</label>
+<input id="projectName" placeholder="Contoh: Cruiser-B4 Line Balance">
+</div>
+
+<div class="form-group">
+<label>Model</label>
+<input id="projectModel" placeholder="Model">
+</div>
+
+<div class="form-group">
+<label>Process</label>
+<input id="projectProcess" placeholder="Process">
+</div>
+
+<div class="form-group">
+<label>Before UPH</label>
+<input type="number" id="projectBefore" placeholder="400">
+</div>
+
+<div class="form-group">
+<label>After UPH</label>
+<input type="number" id="projectAfter" placeholder="420">
+</div>
+
+<div class="form-group">
+<label>MP Reduction</label>
+<input type="number" id="projectMP" value="0">
+</div>
+
+<div class="form-group">
+<label>Saving / Month (Rp)</label>
+<input type="number" id="projectSaving" value="0">
+</div>
+
+<div class="form-group">
+<label>Status</label>
+<select id="projectStatus">
+<option>Planning</option>
+<option>Running</option>
+<option>Completed</option>
+<option>Hold</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Person / Team</label>
+<input id="projectPerson" placeholder="PIC / Team">
+</div>
+
+</div>
+
+<div class="form-group">
+<label>Improvement Description</label>
+<textarea id="projectDesc" placeholder="Jelaskan kondisi before, analysis, action dan result..."></textarea>
+</div>
+
+<button class="btn btn-primary" onclick="addProject()">
+＋ Simpan Project
+</button>
+
+</div>
+
+
+<div class="card">
+
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+<h3>Project List</h3>
+
+<div class="button-row">
+<button class="btn btn-success" onclick="exportCSV()">
+📥 Export CSV
+</button>
+
+<button class="btn btn-secondary" onclick="window.print()">
+🖨️ Print
+</button>
+
+<button class="btn btn-danger" onclick="clearProjects()">
+🗑️ Hapus Semua
+</button>
+</div>
+
+</div>
+
+<br>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Project</th>
+<th>Model</th>
+<th>Process</th>
+<th>UPH</th>
+<th>MP</th>
+<th>Saving/Month</th>
+<th>Status</th>
+<th>Aksi</th>
+</tr>
+</thead>
+
+<tbody id="projectTable">
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+
+
+</div>
+</main>
+
+</div>
+
+
+<script>
+
+/* ================= BASIC ================= */
+
+const pageTitles = {
+    dashboard:"Dashboard",
+    timestudy:"Time Study",
+    linebalance:"Line Balancing",
+    manpower:"Manpower",
+    uph:"UPH Calculator",
+    takt:"Takt Time",
+    saving:"Cost Saving",
+    oee:"OEE Calculator",
+    fourm1e:"4M1E Analysis",
+    ecrs:"ECRS",
+    sop:"SOP Generator",
+    project:"Improvement Project"
+};
+
+function showPage(page,button){
+
+    document.querySelectorAll(".page").forEach(p=>{
+        p.classList.remove("active");
+    });
+
+    document.getElementById(page).classList.add("active");
+
+    document.querySelectorAll(".menu-btn").forEach(b=>{
+        b.classList.remove("active");
+    });
+
+    if(button){
+        button.classList.add("active");
+    }
+
+    document.getElementById("topTitle").textContent =
+        pageTitles[page] || "IE Engineer Toolkit";
+
+    document.getElementById("sidebar").classList.remove("open");
+
+    if(page==="dashboard"){
+        updateDashboard();
+    }
+}
+
+function openTool(page){
+
+    const button = [...document.querySelectorAll(".menu-btn")]
+        .find(b=>b.getAttribute("onclick") &&
+        b.getAttribute("onclick").includes("'"+page+"'"));
+
+    showPage(page,button);
+}
+
+function toggleSidebar(){
+    document.getElementById("sidebar").classList.toggle("open");
+}
+
+function rupiah(value){
+
+    return "Rp " + Number(value || 0).toLocaleString("id-ID");
+}
+
+function number(value){
+
+    return Number(value) || 0;
+}
+
+function round(value,digits=2){
+
+    const p=Math.pow(10,digits);
+
+    return Math.round(value*p)/p;
+}
+
+function setValue(id,value){
+
+    document.getElementById(id).textContent=value;
+}
+
+
+/* ================= DATE ================= */
+
+function updateDate(){
+
+    const d=new Date();
+
+    document.getElementById("currentDate").textContent =
+        d.toLocaleDateString("id-ID",{
+            weekday:"long",
+            year:"numeric",
+            month:"long",
+            day:"numeric"
+        });
+}
+
+updateDate();
+
+
+/* ================= TIME STUDY ================= */
+
+function calculateTimeStudy(){
+
+    const cycles=[
+        number(document.getElementById("ts1").value),
+        number(document.getElementById("ts2").value),
+        number(document.getElementById("ts3").value),
+        number(document.getElementById("ts4").value),
+        number(document.getElementById("ts5").value)
+    ];
+
+    const valid=cycles.filter(v=>v>0);
+
+    if(valid.length===0){
+        alert("Masukkan data cycle time.");
+        return;
+    }
+
+    const avg=valid.reduce((a,b)=>a+b,0)/valid.length;
+
+    const rating=number(document.getElementById("tsRating").value);
+
+    const allowance=number(document.getElementById("tsAllowance").value);
+
+    const normal=avg*(rating/100);
+
+    const standard=normal*(1+allowance/100);
+
+    const uph=3600/standard;
+
+    setValue("tsAvg",round(avg)+" s");
+    setValue("tsNormal",round(normal)+" s");
+    setValue("tsStandard",round(standard)+" s");
+    setValue("tsUPH",Math.floor(uph)+" unit/h");
+
+}
+
+
+/* ================= LINE BALANCE ================= */
+
+function calculateLineBalance(){
+
+    const uph=number(document.getElementById("lbUPH").value);
+
+    const stations=number(document.getElementById("lbStation").value);
+
+    const totalCT=number(document.getElementById("lbTotalCT").value);
+
+    if(uph<=0 || stations<=0 || totalCT<=0){
+        alert("Periksa input.");
+        return;
+    }
+
+    const ct=3600/uph;
+
+    const minStation=Math.ceil(totalCT/ct);
+
+    const efficiency=(totalCT/(stations*ct))*100;
+
+    const loss=100-efficiency;
+
+    setValue("lbCT",round(ct)+" s");
+
+    setValue("lbMinStation",minStation);
+
+    setValue("lbEfficiency",round(efficiency)+"%");
+
+    setValue("lbLoss",round(loss)+"%");
+
+}
+
+
+/* ================= MANPOWER ================= */
+
+function calculateMP(){
+
+    const uph=number(document.getElementById("mpUPH").value);
+
+    const ct=number(document.getElementById("mpCT").value);
+
+    const avail=number(document.getElementById("mpAvail").value);
+
+    if(uph<=0 || ct<=0){
+        alert("Periksa input.");
+        return;
+    }
+
+    let mp=(uph*ct/3600);
+
+    if(avail>0){
+        mp=mp/(avail/100);
+    }
+
+    setValue("mpResult",round(mp,2)+" MP");
+
+}
+
+
+/* ================= UPH ================= */
+
+function calculateUPH(){
+
+    const ct=number(document.getElementById("uphCT").value);
+
+    const mp=number(document.getElementById("uphMP").value);
+
+    const eff=number(document.getElementById("uphEff").value);
+
+    if(ct<=0 || mp<=0){
+        alert("Periksa input.");
+        return;
+    }
+
+    const uph=(3600/ct)*mp*(eff/100);
+
+    setValue("uphResult",Math.floor(uph)+" unit/h");
+
+    setValue("uph8h",Math.floor(uph*8)+" unit");
+
+}
+
+
+/* ================= TAKT ================= */
+
+function calculateTakt(){
+
+    const available=number(document.getElementById("taktTime").value);
+
+    const breaks=number(document.getElementById("taktBreak").value);
+
+    const demand=number(document.getElementById("taktDemand").value);
+
+    if(demand<=0){
+        alert("Demand harus lebih dari 0.");
+        return;
+    }
+
+    const net=available-breaks;
+
+    const takt=(net*60)/demand;
+
+    const uph=demand/(net/60);
+
+    setValue("taktNet",round(net)+" min");
+
+    setValue("taktResult",round(takt)+" s/unit");
+
+    setValue("taktUPH",round(uph)+" unit/h");
+
+}
+
+
+/* ================= SAVING ================= */
+
+function calculateSaving(){
+
+    const mp=number(document.getElementById("saveMP").value);
+
+    const cost=number(document.getElementById("saveCost").value);
+
+    const investment=number(document.getElementById("saveInvest").value);
+
+    const monthly=mp*cost;
+
+    const yearly=monthly*12;
+
+    let payback=0;
+
+    if(monthly>0){
+        payback=investment/monthly;
+    }
+
+    setValue("saveMonth",rupiah(monthly));
+
+    setValue("saveYear",rupiah(yearly));
+
+    setValue(
+        "savePayback",
+        investment>0 ? round(payback,2)+" bulan" : "-"
+    );
+
+}
+
+
+/* ================= OEE ================= */
+
+function calculateOEE(){
+
+    const planned=number(document.getElementById("oeePlanned").value);
+
+    const downtime=number(document.getElementById("oeeDown").value);
+
+    const output=number(document.getElementById("oeeOutput").value);
+
+    const ict=number(document.getElementById("oeeICT").value);
+
+    const good=number(document.getElementById("oeeGood").value);
+
+    if(planned<=0 || output<=0 || ict<=0){
+        alert("Periksa input.");
+        return;
+    }
+
+    const run=planned-downtime;
+
+    const availability=run/planned;
+
+    const performance=(ict*output)/(run*60);
+
+    const quality=good/output;
+
+    const oee=availability*performance*quality;
+
+    setValue("oeeA",round(availability*100)+"%");
+
+    setValue("oeeP",round(performance*100)+"%");
+
+    setValue("oeeQ",round(quality*100)+"%");
+
+    setValue("oeeResult",round(oee*100)+"%");
+
+}
+
+
+/* ================= 4M1E ================= */
+
+function print4M1E(){
+
+    const problem=document.getElementById("problem4m").value;
+
+    const content=`
+
+        <h1>4M1E Analysis</h1>
+
+        <h2>Problem</h2>
+        <p>${escapeHTML(problem)}</p>
+
+        <h3>Man</h3>
+        <p>${escapeHTML(document.getElementById("man4m").value)}</p>
+
+        <h3>Machine</h3>
+        <p>${escapeHTML(document.getElementById("machine4m").value)}</p>
+
+        <h3>Material</h3>
+        <p>${escapeHTML(document.getElementById("material4m").value)}</p>
+
+        <h3>Method</h3>
+        <p>${escapeHTML(document.getElementById("method4m").value)}</p>
+
+        <h3>Environment</h3>
+        <p>${escapeHTML(document.getElementById("environment4m").value)}</p>
+
+        <h3>Root Cause</h3>
+        <p>${escapeHTML(document.getElementById("root4m").value)}</p>
+
+    `;
+
+    printWindow(content);
+}
+
+
+/* ================= ECRS ================= */
+
+function generateECRS(){
+
+    const process=document.getElementById("ecrsProcess").value;
+
+    const e=document.getElementById("ecrsE").value;
+
+    const c=document.getElementById("ecrsC").value;
+
+    const r=document.getElementById("ecrsR").value;
+
+    const s=document.getElementById("ecrsS").value;
+
+    document.getElementById("ecrsResult").innerHTML=`
+
+        <h3>${escapeHTML(process || "ECRS Analysis")}</h3>
+
+        <p><b>ELIMINATE</b><br>
+        ${escapeHTML(e || "-")}</p><br>
+
+        <p><b>COMBINE</b><br>
+        ${escapeHTML(c || "-")}</p><br>
+
+        <p><b>REARRANGE</b><br>
+        ${escapeHTML(r || "-")}</p><br>
+
+        <p><b>SIMPLIFY</b><br>
+        ${escapeHTML(s || "-")}</p>
+
+    `;
+
+}
+
+
+/* ================= SOP ================= */
+
+function generateSOP(){
+
+    const process=document.getElementById("sopProcess").value;
+
+    const model=document.getElementById("sopModel").value;
+
+    const station=document.getElementById("sopStation").value;
+
+    const equipment=document.getElementById("sopEquipment").value;
+
+    const quality=document.getElementById("sopQuality").value;
+
+    const steps=document.getElementById("sopSteps").value;
+
+    const formattedSteps=escapeHTML(steps)
+        .replace(/\n/g,"<br>");
+
+    document.getElementById("sopOutput").innerHTML=`
+
+        <div style="border:2px solid #111;padding:20px;">
+
+            <h2 style="text-align:center;margin-bottom:20px;">
+                STANDARD OPERATING PROCEDURE
+            </h2>
+
+            <table style="min-width:0;width:100%;">
+
+                <tr>
+                    <th>Process</th>
+                    <td>${escapeHTML(process)}</td>
+                </tr>
+
+                <tr>
+                    <th>Model / Product</th>
+                    <td>${escapeHTML(model)}</td>
+                </tr>
+
+                <tr>
+                    <th>Station</th>
+                    <td>${escapeHTML(station)}</td>
+                </tr>
+
+                <tr>
+                    <th>Equipment / Jig</th>
+                    <td>${escapeHTML(equipment)}</td>
+                </tr>
+
+                <tr>
+                    <th>Quality Point</th>
+                    <td>${escapeHTML(quality)}</td>
+                </tr>
+
+            </table>
+
+            <br>
+
+            <h3>Work Steps</h3>
+
+            <p style="line-height:1.8;">
+                ${formattedSteps}
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+function printSOP(){
+
+    const content=document.getElementById("sopOutput").innerHTML;
+
+    printWindow(content);
+
+}
+
+
+/* ================= PROJECT DATABASE ================= */
+
+function getProjects(){
+
+    try{
+
+        return JSON.parse(
+            localStorage.getItem("ieToolkitProjects")
+        ) || [];
+
+    }catch(e){
+
+        return [];
+
+    }
+
+}
+
+
+function saveProjects(projects){
+
+    localStorage.setItem(
+        "ieToolkitProjects",
+        JSON.stringify(projects)
+    );
+
+}
+
+
+function addProject(){
+
+    const name=document.getElementById("projectName").value.trim();
+
+    if(!name){
+        alert("Nama project wajib diisi.");
+        return;
+    }
+
+    const project={
+
+        id:Date.now(),
+
+        name:name,
+
+        model:document.getElementById("projectModel").value,
+
+        process:document.getElementById("projectProcess").value,
+
+        before:number(document.getElementById("projectBefore").value),
+
+        after:number(document.getElementById("projectAfter").value),
+
+        mp:number(document.getElementById("projectMP").value),
+
+        saving:number(document.getElementById("projectSaving").value),
+
+        status:document.getElementById("projectStatus").value,
+
+        person:document.getElementById("projectPerson").value,
+
+        desc:document.getElementById("projectDesc").value,
+
+        date:new Date().toLocaleDateString("id-ID")
+
+    };
+
+    const projects=getProjects();
+
+    projects.push(project);
+
+    saveProjects(projects);
+
+    renderProjects();
+
+    updateDashboard();
+
+    clearProjectForm();
+
+    alert("Project berhasil disimpan.");
+
+}
+
+
+function clearProjectForm(){
+
+    document.getElementById("projectName").value="";
+
+    document.getElementById("projectModel").value="";
+
+    document.getElementById("projectProcess").value="";
+
+    document.getElementById("projectBefore").value="";
+
+    document.getElementById("projectAfter").value="";
+
+    document.getElementById("projectMP").value="0";
+
+    document.getElementById("projectSaving").value="0";
+
+    document.getElementById("projectPerson").value="";
+
+    document.getElementById("projectDesc").value="";
+
+}
+
+
+function deleteProject(id){
+
+    if(!confirm("Hapus project ini?")){
+        return;
+    }
+
+    const projects=getProjects().filter(p=>p.id!==id);
+
+    saveProjects(projects);
+
+    renderProjects();
+
+    updateDashboard();
+
+}
+
+
+function clearProjects(){
+
+    if(!confirm("Hapus SEMUA project?")){
+        return;
+    }
+
+    localStorage.removeItem("ieToolkitProjects");
+
+    renderProjects();
+
+    updateDashboard();
+
+}
+
+
+function getStatusBadge(status){
+
+    if(status==="Completed"){
+        return '<span class="badge badge-green">Completed</span>';
+    }
+
+    if(status==="Running"){
+        return '<span class="badge badge-blue">Running</span>';
+    }
+
+    if(status==="Hold"){
+        return '<span class="badge badge-red">Hold</span>';
+    }
+
+    return '<span class="badge badge-yellow">Planning</span>';
+
+}
+
+
+function renderProjects(){
+
+    const tbody=document.getElementById("projectTable");
+
+    const projects=getProjects();
+
+    if(projects.length===0){
+
+        tbody.innerHTML=`
+            <tr>
+                <td colspan="8" style="text-align:center;color:#6b7280;">
+                    Belum ada project.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+    tbody.innerHTML=projects.map(p=>`
+
+        <tr>
+
+            <td>
+                <b>${escapeHTML(p.name)}</b>
+                <br>
+                <small>${p.date}</small>
+            </td>
+
+            <td>${escapeHTML(p.model)}</td>
+
+            <td>${escapeHTML(p.process)}</td>
+
+            <td>
+                ${p.before || 0}
+                →
+                <b>${p.after || 0}</b>
+            </td>
+
+            <td>
+                ${p.mp || 0} MP
+            </td>
+
+            <td>
+                ${rupiah(p.saving)}
+            </td>
+
+            <td>
+                ${getStatusBadge(p.status)}
+            </td>
+
+            <td>
+
+                <button
+                    class="btn btn-danger"
+                    style="padding:6px 9px;font-size:11px;"
+                    onclick="deleteProject(${p.id})">
+                    Hapus
+                </button>
+
+            </td>
+
+        </tr>
+
+    `).join("");
+
+}
+
+
+function updateDashboard(){
+
+    const projects=getProjects();
+
+    const totalSaving=projects.reduce(
+        (sum,p)=>sum+number(p.saving),0
+    );
+
+    const totalMP=projects.reduce(
+        (sum,p)=>sum+number(p.mp),0
+    );
+
+    document.getElementById("dashProjects").textContent=
+        projects.length;
+
+    document.getElementById("dashSaving").textContent=
+        rupiah(totalSaving);
+
+    document.getElementById("dashMP").textContent=
+        totalMP+" MP";
+
+}
+
+
+/* ================= CSV ================= */
+
+function exportCSV(){
+
+    const projects=getProjects();
+
+    if(projects.length===0){
+
+        alert("Belum ada project untuk diexport.");
+
+        return;
+
+    }
+
+    const header=[
+        "Tanggal",
+        "Project",
+        "Model",
+        "Process",
+        "Before UPH",
+        "After UPH",
+        "MP Reduction",
+        "Saving/Month",
+        "Status",
+        "PIC/Team",
+        "Description"
+    ];
+
+    const rows=projects.map(p=>[
+        p.date,
+        p.name,
+        p.model,
+        p.process,
+        p.before,
+        p.after,
+        p.mp,
+        p.saving,
+        p.status,
+        p.person,
+        p.desc
+    ]);
+
+    const csv=[
+        header,
+        ...rows
+    ]
+    .map(row=>row.map(csvEscape).join(","))
+    .join("\n");
+
+    const blob=new Blob(
+        ["\ufeff"+csv],
+        {type:"text/csv;charset=utf-8;"}
+    );
+
+    const url=URL.createObjectURL(blob);
+
+    const a=document.createElement("a");
+
+    a.href=url;
+
+    a.download=
+        "IE-Improvement-Projects-"+
+        new Date().toISOString().slice(0,10)+
+        ".csv";
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+function csvEscape(value){
+
+    const text=String(value ?? "");
+
+    if(
+        text.includes(",") ||
+        text.includes('"') ||
+        text.includes("\n")
+    ){
+
+        return '"'+text.replace(/"/g,'""')+'"';
+
+    }
+
+    return text;
+
+}
+
+
+/* ================= UTILITY ================= */
+
+function escapeHTML(value){
+
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+function printWindow(content){
+
+    const win=window.open(
+        "",
+        "_blank",
+        "width=900,height=700"
+    );
+
+    if(!win){
+
+        alert("Popup diblokir browser. Izinkan popup untuk halaman ini.");
+
+        return;
+
+    }
+
+    win.document.write(`
+
+        <!DOCTYPE html>
+
+        <html>
+
+        <head>
+
+            <title>IE Engineer Toolkit</title>
+
+            <style>
+
+                body{
+                    font-family:Arial,sans-serif;
+                    padding:30px;
+                    color:#111;
+                }
+
+                h1{
+                    margin-bottom:20px;
+                }
+
+                h2,h3{
+                    margin-top:20px;
+                }
+
+                table{
+                    border-collapse:collapse;
+                    width:100%;
+                }
+
+                th,td{
+                    border:1px solid #999;
+                    padding:8px;
+                    text-align:left;
+                }
+
+                p{
+                    line-height:1.6;
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            ${content}
+
+        </body>
+
+        </html>
+
+    `);
+
+    win.document.close();
+
+    setTimeout(()=>{
+        win.print();
+    },300);
+
+}
+
+
+/* ================= INIT ================= */
+
+renderProjects();
+
+updateDashboard();
+
+</script>
+
+</body>
+</html>
