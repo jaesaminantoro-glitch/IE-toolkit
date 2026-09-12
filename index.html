@@ -16,9 +16,10 @@ body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
     background:
-        radial-gradient(circle at center, #08783e 0%, #075f34 45%, #034c2a 100%);
+        radial-gradient(circle at center, #08783f 0%, #075d32 45%, #043d22 100%);
     color: white;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 button {
@@ -26,493 +27,512 @@ button {
 }
 
 .header {
-    background: rgba(0,0,0,.35);
-    padding: 12px 16px;
+    height: 64px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    padding: 8px 15px;
+    background: rgba(0,0,0,.28);
     border-bottom: 1px solid rgba(255,255,255,.15);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
-.logo {
-    font-size: 22px;
+.title {
+    font-size: 21px;
     font-weight: bold;
 }
 
-.header-info {
-    font-size: 13px;
-    text-align: right;
-    opacity: .9;
+.subtitle {
+    font-size: 11px;
+    opacity: .75;
+    margin-top: 2px;
 }
 
-.container {
-    width: 100%;
-    max-width: 1200px;
+.header-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    background: white;
+    color: #145c38;
+    box-shadow: 0 2px 5px rgba(0,0,0,.2);
+}
+
+.btn:active {
+    transform: scale(.96);
+}
+
+.btn.green {
+    background: #20c777;
+    color: white;
+}
+
+.btn.red {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn.orange {
+    background: #f39c12;
+    color: white;
+}
+
+.btn.dark {
+    background: #263238;
+    color: white;
+}
+
+.game {
+    max-width: 1250px;
     margin: auto;
     padding: 12px;
 }
 
-/* START SCREEN */
+/* PLAYER AREA */
 
-.start-screen {
-    max-width: 520px;
-    margin: 50px auto;
-    background: rgba(0,0,0,.35);
-    border: 1px solid rgba(255,255,255,.15);
-    border-radius: 20px;
-    padding: 28px;
-    text-align: center;
-    box-shadow: 0 15px 50px rgba(0,0,0,.3);
-}
-
-.start-screen h1 {
-    margin-top: 0;
-    font-size: 34px;
-}
-
-.start-screen p {
-    color: #d8f7e6;
-    line-height: 1.6;
-}
-
-.name-input {
-    width: 100%;
-    padding: 13px;
-    border: none;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    font-size: 16px;
-    outline: none;
-}
-
-.start-button {
-    width: 100%;
-    border: none;
-    border-radius: 10px;
-    padding: 14px;
-    background: #f5c542;
-    color: #222;
-    font-size: 17px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.start-button:hover {
-    filter: brightness(1.08);
-}
-
-/* GAME */
-
-.game {
-    display: none;
-}
-
-.turn-banner {
-    text-align: center;
-    background: rgba(255,255,255,.1);
-    border-radius: 12px;
-    padding: 10px;
-    margin-bottom: 10px;
-    font-weight: bold;
-}
-
-.turn-banner.active {
-    background: rgba(245,197,66,.22);
-    border: 1px solid rgba(245,197,66,.5);
-}
-
-.players-top {
+.players {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
-.player-box {
-    background: rgba(0,0,0,.24);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 12px;
-    padding: 10px;
+.player {
+    background: rgba(0,0,0,.22);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 10px;
+    padding: 8px;
+    min-height: 70px;
+    transition: .2s;
 }
 
-.player-box.active-player {
-    border: 2px solid #f5c542;
-    box-shadow: 0 0 18px rgba(245,197,66,.2);
+.player.active {
+    border: 2px solid #ffe66d;
+    box-shadow: 0 0 15px rgba(255,230,109,.35);
+}
+
+.player-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .player-name {
     font-weight: bold;
-    margin-bottom: 7px;
+    font-size: 14px;
+}
+
+.player-status {
+    font-size: 11px;
+    opacity: .8;
 }
 
 .card-count {
-    font-size: 13px;
-    opacity: .85;
-}
-
-.mini-cards {
     display: flex;
-    margin-top: 7px;
+    gap: 3px;
+    margin-top: 6px;
+    min-height: 27px;
     overflow: hidden;
-    min-height: 38px;
 }
 
 .mini-card {
-    width: 27px;
-    height: 38px;
-    margin-right: -10px;
-    border-radius: 5px;
+    width: 20px;
+    height: 27px;
+    border-radius: 4px;
+    background: repeating-linear-gradient(
+        45deg,
+        #dce8ff,
+        #dce8ff 3px,
+        #3972c8 3px,
+        #3972c8 6px
+    );
     border: 1px solid white;
-    background:
-        repeating-linear-gradient(
-            45deg,
-            #173b9c,
-            #173b9c 4px,
-            #ffffff 4px,
-            #ffffff 6px
-        );
+    flex-shrink: 0;
 }
 
 /* TABLE */
 
 .table {
     background:
-        radial-gradient(circle at center, #0c8a48 0%, #08743e 60%, #066337 100%);
-    border-radius: 22px;
-    border: 3px solid rgba(255,255,255,.12);
+        radial-gradient(circle at center, #0a8144, #056633);
+    border: 2px solid rgba(255,255,255,.12);
+    border-radius: 20px;
+    min-height: 360px;
     padding: 15px;
-    min-height: 330px;
-    position: relative;
     box-shadow:
-        inset 0 0 50px rgba(0,0,0,.25),
-        0 15px 35px rgba(0,0,0,.25);
+        inset 0 0 40px rgba(0,0,0,.25),
+        0 8px 30px rgba(0,0,0,.2);
 }
 
-.table-title {
+.turn-info {
     text-align: center;
-    font-size: 14px;
-    opacity: .75;
     margin-bottom: 12px;
 }
+
+.turn-label {
+    font-size: 13px;
+    opacity: .8;
+}
+
+.turn-player {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffe66d;
+}
+
+/* DECK */
 
 .center-area {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 35px;
-    margin: 25px 0;
+    align-items: flex-start;
+    gap: 40px;
+    margin: 10px auto 20px;
 }
 
-.deck-area,
-.discard-area {
+.pile-wrapper {
     text-align: center;
 }
 
-.area-label {
-    font-size: 12px;
+.pile-title {
+    font-size: 11px;
     opacity: .8;
-    margin-top: 6px;
+    margin-bottom: 5px;
 }
 
-.card {
+.pile {
     width: 70px;
-    height: 98px;
-    background: white;
-    color: #111;
+    height: 100px;
     border-radius: 9px;
-    border: 1px solid #bbb;
-    box-shadow: 0 4px 10px rgba(0,0,0,.25);
+    cursor: pointer;
+    user-select: none;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    user-select: none;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0,0,0,.35);
+}
+
+.deck {
+    background:
+        repeating-linear-gradient(
+            45deg,
+            #dbe7ff,
+            #dbe7ff 4px,
+            #285ca8 4px,
+            #285ca8 8px
+        );
+    border: 3px solid white;
+}
+
+.deck-inner {
+    width: 53px;
+    height: 82px;
+    border: 2px solid white;
+    border-radius: 5px;
+}
+
+.discard {
+    background: white;
+    color: #111;
+    border: 2px solid #ddd;
     position: relative;
 }
 
-.card .rank {
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 1;
+.discard.red-card {
+    color: #d62828;
 }
 
-.card .suit {
-    font-size: 30px;
-    line-height: 1;
-    margin-top: 3px;
+.empty-pile {
+    opacity: .35;
+}
+
+/* COMBOS */
+
+.combo-area {
+    margin-top: 15px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 7px;
+    border-bottom: 1px solid rgba(255,255,255,.15);
+    padding-bottom: 5px;
+}
+
+.combos {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.combo {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 76px;
+    background: rgba(0,0,0,.12);
+    border-radius: 9px;
+    padding: 6px;
+    overflow-x: auto;
+}
+
+.combo-label {
+    font-size: 10px;
+    opacity: .65;
+    min-width: 45px;
+}
+
+.empty-combo {
+    font-size: 12px;
+    opacity: .55;
+}
+
+/* CARD */
+
+.card {
+    width: 58px;
+    height: 82px;
+    border-radius: 7px;
+    background: white;
+    color: #111;
+    border: 2px solid #ddd;
+    box-shadow: 0 3px 7px rgba(0,0,0,.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 5px;
+    user-select: none;
+    touch-action: none;
+    position: relative;
+    flex-shrink: 0;
+    cursor: grab;
+}
+
+.card:active {
+    cursor: grabbing;
 }
 
 .card.red {
-    color: #d71920;
+    color: #d62828;
 }
 
 .card.black {
     color: #111;
 }
 
-.card.joker {
-    color: #7b21a8;
+.card.selected {
+    transform: translateY(-13px);
+    border: 3px solid #ffd43b;
+    box-shadow: 0 7px 16px rgba(0,0,0,.5);
 }
 
-.card.back {
-    background:
-        repeating-linear-gradient(
-            45deg,
-            #173b9c,
-            #173b9c 5px,
-            #f4f7ff 5px,
-            #f4f7ff 7px
-        );
-    color: white;
+.card.dragging {
+    opacity: .55;
+    transform: scale(1.04);
+    z-index: 1000;
 }
 
-.deck-card {
-    cursor: pointer;
-}
-
-.deck-card:hover {
-    transform: translateY(-3px);
-}
-
-.discard-card {
-    cursor: pointer;
-}
-
-.empty-card {
-    width: 70px;
-    height: 98px;
-    border: 2px dashed rgba(255,255,255,.25);
-    border-radius: 9px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 12px;
-    opacity: .7;
-}
-
-.deck-count {
-    margin-top: 5px;
-    font-size: 12px;
-}
-
-/* COMBOS */
-
-.combos-area {
-    margin-top: 15px;
-}
-
-.combos-title {
+.card-corner {
+    font-size: 15px;
     font-weight: bold;
-    margin-bottom: 7px;
-    font-size: 14px;
+    line-height: 14px;
 }
 
-.combo-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+.card-center {
+    font-size: 24px;
+    text-align: center;
+    line-height: 25px;
 }
 
-.combo {
-    background: rgba(0,0,0,.18);
-    padding: 8px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,.12);
+.card-corner.bottom {
+    transform: rotate(180deg);
+    align-self: flex-end;
 }
 
-.combo-label {
-    font-size: 11px;
-    opacity: .7;
-    margin-bottom: 4px;
+/* JOKER */
+
+.card.joker {
+    color: #7b2cbf;
 }
 
-.combo-cards {
-    display: flex;
+.joker-symbol {
+    font-size: 26px;
+    text-align: center;
 }
 
-.combo-cards .card {
-    width: 43px;
-    height: 60px;
-    margin-right: -6px;
-    border-radius: 6px;
-}
+/* MY HAND */
 
-.combo-cards .card .rank {
-    font-size: 16px;
-}
-
-.combo-cards .card .suit {
-    font-size: 18px;
-}
-
-/* HAND */
-
-.hand-section {
+.my-area {
     margin-top: 12px;
-    background: rgba(0,0,0,.25);
-    border-radius: 15px;
-    padding: 12px;
+    background: rgba(0,0,0,.28);
+    border-radius: 14px;
+    padding: 10px;
 }
 
-.hand-header {
+.my-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
-.hand-title {
-    font-size: 17px;
+.my-name {
+    font-size: 16px;
     font-weight: bold;
+    color: #ffe66d;
 }
 
 .hand-info {
-    font-size: 12px;
-    opacity: .75;
+    font-size: 11px;
+    opacity: .7;
+}
+
+.hand-toolbar {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
 .hand {
+    min-height: 105px;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 7px;
-    min-height: 108px;
+    align-items: flex-end;
+    gap: 5px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 15px 7px 8px;
+    scrollbar-width: thin;
+    scroll-behavior: smooth;
 }
 
-.hand .card {
-    cursor: pointer;
-    transition: .15s;
+.hand::-webkit-scrollbar {
+    height: 6px;
 }
 
-.hand .card:hover {
-    transform: translateY(-5px);
-}
-
-.hand .card.selected {
-    transform: translateY(-14px);
-    box-shadow: 0 8px 20px rgba(245,197,66,.55);
-    border: 3px solid #f5c542;
+.hand::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.25);
+    border-radius: 10px;
 }
 
 /* CONTROLS */
 
 .controls {
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+    margin-top: 10px;
 }
 
-.btn {
+.control-btn {
     border: none;
-    padding: 11px 15px;
     border-radius: 9px;
+    padding: 12px 6px;
     font-weight: bold;
     cursor: pointer;
-    background: #f5c542;
-    color: #222;
-    min-height: 42px;
+    background: white;
+    color: #164b32;
 }
 
-.btn:hover {
-    filter: brightness(1.08);
-}
-
-.btn:disabled {
-    opacity: .4;
+.control-btn:disabled {
+    opacity: .35;
     cursor: not-allowed;
 }
 
-.btn.secondary {
-    background: #e7edf3;
-    color: #222;
+.control-btn.primary {
+    background: #20c777;
+    color: white;
 }
 
-.btn.danger {
+.control-btn.warning {
+    background: #f5b041;
+    color: white;
+}
+
+.control-btn.danger {
     background: #e74c3c;
     color: white;
 }
 
-.btn.dark {
-    background: #25313a;
-    color: white;
-}
+/* LOG */
 
-.status {
+.log {
     margin-top: 10px;
-    text-align: center;
-    min-height: 22px;
-    font-size: 14px;
-    color: #ffe99a;
+    background: rgba(0,0,0,.2);
+    border-radius: 9px;
+    padding: 8px;
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 11px;
+    opacity: .8;
 }
 
-/* RULES */
-
-.rules {
-    margin-top: 15px;
-    background: rgba(0,0,0,.23);
-    border-radius: 15px;
-    padding: 15px;
-}
-
-.rules h3 {
-    margin-top: 0;
-}
-
-.rules ul {
-    margin-bottom: 0;
-    padding-left: 20px;
-}
-
-.rules li {
-    margin-bottom: 5px;
-    font-size: 13px;
-    line-height: 1.45;
+.log div {
+    padding: 2px 0;
 }
 
 /* MODAL */
 
 .modal-overlay {
-    display: none;
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,.72);
-    z-index: 500;
-    justify-content: center;
+    display: none;
     align-items: center;
+    justify-content: center;
+    z-index: 5000;
     padding: 15px;
 }
 
+.modal-overlay.show {
+    display: flex;
+}
+
 .modal {
-    width: 100%;
-    max-width: 500px;
-    background: #ffffff;
-    color: #222;
-    border-radius: 18px;
-    padding: 22px;
+    width: min(500px, 100%);
     max-height: 90vh;
     overflow-y: auto;
+    background: #fff;
+    color: #222;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 10px 50px rgba(0,0,0,.5);
 }
 
 .modal h2 {
     margin-top: 0;
+    color: #145c38;
 }
 
-.modal-buttons {
+.modal p {
+    line-height: 1.55;
+}
+
+.modal-actions {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 7px;
+    justify-content: flex-end;
     margin-top: 15px;
+    flex-wrap: wrap;
 }
 
-.modal-buttons button {
-    flex: 1;
+.pass-card {
+    text-align: center;
+    background: #f1f3f5;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 12px 0;
 }
 
 /* SCORE */
@@ -525,13 +545,13 @@ button {
 
 .score-table th,
 .score-table td {
-    padding: 8px;
     border-bottom: 1px solid #ddd;
+    padding: 8px;
     text-align: left;
 }
 
 .score-table th {
-    background: #f2f2f2;
+    background: #f0f0f0;
 }
 
 /* TOAST */
@@ -540,17 +560,16 @@ button {
     position: fixed;
     left: 50%;
     bottom: 25px;
-    transform: translateX(-50%) translateY(100px);
-    background: #222;
+    transform: translateX(-50%) translateY(30px);
+    background: rgba(0,0,0,.85);
     color: white;
-    padding: 11px 18px;
-    border-radius: 10px;
-    z-index: 1000;
-    transition: .25s;
+    padding: 10px 17px;
+    border-radius: 20px;
     opacity: 0;
     pointer-events: none;
-    max-width: 90%;
-    text-align: center;
+    transition: .25s;
+    z-index: 10000;
+    font-size: 13px;
 }
 
 .toast.show {
@@ -558,83 +577,91 @@ button {
     transform: translateX(-50%) translateY(0);
 }
 
-/* RESPONSIVE */
+/* MOBILE */
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 
     .header {
-        padding: 10px;
+        height: auto;
+        min-height: 60px;
     }
 
-    .logo {
-        font-size: 18px;
+    .title {
+        font-size: 17px;
     }
 
-    .header-info {
+    .header-actions .btn {
+        padding: 7px 8px;
         font-size: 11px;
     }
 
-    .container {
-        padding: 8px;
+    .game {
+        padding: 7px;
     }
 
     .table {
-        min-height: 300px;
         padding: 10px;
+        border-radius: 14px;
     }
 
     .center-area {
-        gap: 20px;
-        margin: 20px 0;
+        gap: 25px;
+    }
+
+    .pile {
+        width: 62px;
+        height: 88px;
     }
 
     .card {
-        width: 58px;
-        height: 82px;
+        width: 55px;
+        height: 78px;
     }
 
-    .card .rank {
-        font-size: 20px;
-    }
-
-    .card .suit {
-        font-size: 25px;
-    }
-
-    .empty-card {
-        width: 58px;
-        height: 82px;
+    .controls {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .hand {
-        gap: 5px;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 420px) {
+
+    .players {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .hand .card {
-        width: 50px;
-        height: 72px;
+    .player {
+        min-height: 64px;
+        padding: 6px;
     }
 
-    .hand .card .rank {
-        font-size: 18px;
+    .player-name {
+        font-size: 12px;
     }
 
-    .hand .card .suit {
-        font-size: 22px;
+    .mini-card {
+        width: 17px;
+        height: 24px;
     }
 
-    .btn {
-        padding: 10px 12px;
+    .card {
+        width: 52px;
+        height: 74px;
+    }
+
+    .card-corner {
         font-size: 13px;
     }
 
-    .start-screen {
-        margin: 25px auto;
-        padding: 20px;
+    .card-center {
+        font-size: 21px;
     }
 
-    .start-screen h1 {
-        font-size: 28px;
+    .hand {
+        min-height: 95px;
     }
 }
 </style>
@@ -643,314 +670,381 @@ button {
 <body>
 
 <header class="header">
-    <div class="logo">🃏 REMI 4 PEMAIN</div>
 
-    <div class="header-info">
-        <div id="roundInfo">Belum dimulai</div>
-        <div id="turnInfo">-</div>
+    <div>
+        <div class="title">🃏 Remi 4 Pemain</div>
+        <div class="subtitle">52 Kartu + 2 Joker • Pass & Play</div>
     </div>
+
+    <div class="header-actions">
+        <button class="btn" onclick="showRules()">Aturan</button>
+        <button class="btn green" onclick="newGame()">Game Baru</button>
+    </div>
+
 </header>
 
-
-<!-- START SCREEN -->
-
-<div id="startScreen" class="start-screen">
-
-    <h1>🃏 Remi 4 Pemain</h1>
-
-    <p>
-        Game Remi untuk 4 orang dalam satu perangkat.
-        Gunakan mode bergantian dan jangan melihat kartu pemain lain.
-    </p>
-
-    <input
-        id="name1"
-        class="name-input"
-        placeholder="Nama Pemain 1"
-        value="Pemain 1"
-    >
-
-    <input
-        id="name2"
-        class="name-input"
-        placeholder="Nama Pemain 2"
-        value="Pemain 2"
-    >
-
-    <input
-        id="name3"
-        class="name-input"
-        placeholder="Nama Pemain 3"
-        value="Pemain 3"
-    >
-
-    <input
-        id="name4"
-        class="name-input"
-        placeholder="Nama Pemain 4"
-        value="Pemain 4"
-    >
-
-    <button class="start-button" onclick="startGame()">
-        MULAI PERMAINAN
-    </button>
-
-</div>
-
-
-<!-- GAME -->
-
-<div id="game" class="game">
-
-<div class="container">
-
-    <div id="turnBanner" class="turn-banner">
-        Menunggu permainan...
-    </div>
-
+<main class="game">
 
     <!-- PLAYERS -->
 
-    <div class="players-top">
+    <section class="players">
 
-        <div id="playerBox2" class="player-box">
-            <div class="player-name" id="playerName2">Pemain 2</div>
-            <div class="card-count" id="count2">7 kartu</div>
-            <div class="mini-cards" id="mini2"></div>
+        <div class="player" id="playerBox0">
+            <div class="player-top">
+                <div class="player-name">👤 Pemain 1</div>
+                <div class="player-status" id="status0">Menunggu</div>
+            </div>
+            <div class="card-count" id="count0"></div>
         </div>
 
-        <div id="playerBox3" class="player-box">
-            <div class="player-name" id="playerName3">Pemain 3</div>
-            <div class="card-count" id="count3">7 kartu</div>
-            <div class="mini-cards" id="mini3"></div>
+        <div class="player" id="playerBox1">
+            <div class="player-top">
+                <div class="player-name">👤 Pemain 2</div>
+                <div class="player-status" id="status1">Menunggu</div>
+            </div>
+            <div class="card-count" id="count1"></div>
         </div>
 
-        <div id="playerBox4" class="player-box">
-            <div class="player-name" id="playerName4">Pemain 4</div>
-            <div class="card-count" id="count4">7 kartu</div>
-            <div class="mini-cards" id="mini4"></div>
+        <div class="player" id="playerBox2">
+            <div class="player-top">
+                <div class="player-name">👤 Pemain 3</div>
+                <div class="player-status" id="status2">Menunggu</div>
+            </div>
+            <div class="card-count" id="count2"></div>
         </div>
 
-        <div id="playerBox1" class="player-box">
-            <div class="player-name" id="playerName1">Pemain 1</div>
-            <div class="card-count" id="count1">7 kartu</div>
-            <div class="mini-cards" id="mini1"></div>
+        <div class="player" id="playerBox3">
+            <div class="player-top">
+                <div class="player-name">👤 Pemain 4</div>
+                <div class="player-status" id="status3">Menunggu</div>
+            </div>
+            <div class="card-count" id="count3"></div>
         </div>
 
-    </div>
+    </section>
 
 
     <!-- TABLE -->
 
-    <div class="table">
+    <section class="table">
 
-        <div class="table-title">
-            MEJA PERMAINAN
+        <div class="turn-info">
+            <div class="turn-label">Giliran sekarang</div>
+            <div class="turn-player" id="turnPlayer">Pemain 1</div>
         </div>
+
+
+        <!-- DECK -->
 
         <div class="center-area">
 
-            <div class="deck-area">
+            <div class="pile-wrapper">
 
-                <div id="deckCard" class="card back deck-card"
-                     onclick="drawFromDeck()">
+                <div class="pile-title">
+                    DECK
+                </div>
 
-                    <div style="font-size:30px;">🂠</div>
+                <div class="pile deck" onclick="drawFromDeck()">
+
+                    <div class="deck-inner"></div>
 
                 </div>
 
-                <div class="deck-count">
-                    Deck: <span id="deckCount">0</span>
-                </div>
-
-                <div class="area-label">
-                    AMBIL DECK
+                <div style="font-size:10px;margin-top:4px;" id="deckCount">
+                    54 kartu
                 </div>
 
             </div>
 
 
-            <div class="discard-area">
+            <div class="pile-wrapper">
 
-                <div id="discardCard">
-                    <div class="empty-card">
-                        Kosong
+                <div class="pile-title">
+                    BUANGAN
+                </div>
+
+                <div class="pile discard" id="discardPile"
+                     onclick="drawFromDiscard()">
+
+                    <span id="discardText">-</span>
+
+                </div>
+
+                <div style="font-size:10px;margin-top:4px;">
+                    Klik untuk ambil
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- COMBO AREA -->
+
+        <div class="combo-area">
+
+            <div class="section-title">
+                📋 Combo di Meja
+            </div>
+
+            <div class="combos" id="combos">
+
+                <div class="combo">
+                    <div class="empty-combo">
+                        Belum ada combo.
                     </div>
                 </div>
 
-                <div class="area-label">
-                    KARTU BUANGAN
-                </div>
+            </div>
 
+        </div>
+
+    </section>
+
+
+    <!-- MY HAND -->
+
+    <section class="my-area">
+
+        <div class="my-header">
+
+            <div class="my-name" id="myName">
+                Kartu Pemain 1
+            </div>
+
+            <div class="hand-info" id="handInfo">
+                7 kartu
             </div>
 
         </div>
 
 
-        <!-- COMBOS ON TABLE -->
+        <div class="hand-toolbar">
 
-        <div class="combos-area">
+            <button class="btn" onclick="shuffleHand()">
+                🔀 Acak Kartu
+            </button>
 
-            <div class="combos-title">
-                Kombinasi di Meja
-            </div>
+            <button class="btn" onclick="sortHand()">
+                ↕ Urutkan
+            </button>
 
-            <div id="comboList" class="combo-list">
-                <div style="font-size:12px;opacity:.6;">
-                    Belum ada kombinasi.
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- CURRENT PLAYER HAND -->
-
-    <div class="hand-section">
-
-        <div class="hand-header">
-
-            <div>
-                <div class="hand-title" id="currentPlayerName">
-                    Pemain 1
-                </div>
-
-                <div class="hand-info">
-                    Pilih kartu untuk membuang / membuat kombinasi
-                </div>
-            </div>
-
-            <div class="hand-info">
-                <span id="handCount">7</span> kartu
-            </div>
+            <button class="btn" onclick="clearSelection()">
+                ✕ Batal Pilih
+            </button>
 
         </div>
 
 
-        <div id="hand" class="hand"></div>
+        <div class="hand" id="hand">
+
+        </div>
+
+
+        <!-- CONTROLS -->
+
+        <div class="controls">
+
+            <button
+                class="control-btn primary"
+                id="drawDeckBtn"
+                onclick="drawFromDeck()">
+                🂠 Ambil Deck
+            </button>
+
+            <button
+                class="control-btn warning"
+                id="drawDiscardBtn"
+                onclick="drawFromDiscard()">
+                🃏 Ambil Buangan
+            </button>
+
+            <button
+                class="control-btn"
+                id="comboBtn"
+                onclick="makeCombo()">
+                ➕ Buat Combo
+            </button>
+
+            <button
+                class="control-btn danger"
+                id="discardBtn"
+                onclick="discardSelected()">
+                🗑 Buang Kartu
+            </button>
+
+        </div>
 
 
         <div class="controls">
 
             <button
-                id="drawDiscardBtn"
-                class="btn secondary"
-                onclick="drawFromDiscard()">
-                Ambil Buangan
-            </button>
-
-            <button
-                id="makeComboBtn"
-                class="btn dark"
-                onclick="makeCombo()"
-                disabled>
-                Buat Kombinasi
-            </button>
-
-            <button
-                id="discardBtn"
-                class="btn"
-                onclick="discardSelected()"
-                disabled>
-                Buang Kartu
-            </button>
-
-            <button
+                class="control-btn primary"
                 id="declareBtn"
-                class="btn"
-                onclick="declareWin()">
-                DECLARE
+                onclick="declareWin()"
+                style="grid-column:1/-1;">
+                🏆 DECLARE / MENANG
             </button>
 
         </div>
 
 
-        <div id="status" class="status">
-            Silakan ambil kartu dari deck atau buangan.
+        <!-- LOG -->
+
+        <div class="log" id="gameLog"></div>
+
+    </section>
+
+</main>
+
+
+<!-- PASS MODAL -->
+
+<div class="modal-overlay" id="passModal">
+
+    <div class="modal">
+
+        <h2>🔄 Ganti Pemain</h2>
+
+        <div class="pass-card">
+
+            <div style="font-size:40px;">
+                🃏
+            </div>
+
+            <p id="passText">
+                Serahkan perangkat ke Pemain 2.
+            </p>
+
+            <strong>
+                Pastikan pemain sebelumnya tidak melihat kartu Anda.
+            </strong>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button class="btn green" onclick="continueTurn()">
+                Saya Siap
+            </button>
+
         </div>
 
     </div>
 
+</div>
 
-    <!-- GAME CONTROLS -->
 
-    <div class="controls">
+<!-- RULES MODAL -->
 
-        <button class="btn secondary" onclick="showRules()">
-            📖 Aturan
-        </button>
+<div class="modal-overlay" id="rulesModal">
 
-        <button class="btn secondary" onclick="showScore()">
-            🏆 Skor
-        </button>
+    <div class="modal">
 
-        <button class="btn danger" onclick="newGame()">
-            🔄 Game Baru
-        </button>
+        <h2>📖 Aturan Remi</h2>
+
+        <p>
+            <b>Jumlah pemain:</b> 4 orang.
+        </p>
+
+        <p>
+            <b>Kartu:</b> 52 kartu standar + 2 Joker = 54 kartu.
+        </p>
+
+        <p>
+            <b>Pembagian:</b> masing-masing pemain mendapatkan 7 kartu.
+        </p>
+
+        <p>
+            Setiap giliran pemain mengambil 1 kartu dari deck atau
+            tumpukan buangan, kemudian dapat membuat combo dan
+            harus membuang 1 kartu.
+        </p>
+
+        <p>
+            <b>SET:</b> 3 atau 4 kartu dengan angka/rank yang sama
+            tetapi jenis/simbol berbeda.
+        </p>
+
+        <p>
+            <b>RUN:</b> minimal 3 kartu berurutan dengan simbol yang sama.
+        </p>
+
+        <p>
+            As dianggap rendah: A-2-3.
+            A tidak bisa menjadi kartu setelah K.
+        </p>
+
+        <p>
+            <b>Joker:</b> dapat menggantikan kartu apa saja.
+            Maksimal 1 Joker dalam satu combo.
+        </p>
+
+        <p>
+            Untuk menang, seluruh kartu di tangan harus dapat
+            dibentuk menjadi combo yang valid.
+        </p>
+
+        <p>
+            <b>Nilai penalty:</b><br>
+            A = 1<br>
+            2–10 = sesuai angka<br>
+            J/Q/K = 10<br>
+            Joker = 0
+        </p>
+
+        <div class="modal-actions">
+
+            <button class="btn green"
+                    onclick="closeRules()">
+                Tutup
+            </button>
+
+        </div>
 
     </div>
 
+</div>
 
-    <!-- RULES -->
 
-    <div class="rules">
+<!-- RESULT MODAL -->
 
-        <h3>📖 Aturan Singkat</h3>
+<div class="modal-overlay" id="resultModal">
 
-        <ul>
+    <div class="modal">
 
-            <li>4 pemain manusia.</li>
+        <h2 id="resultTitle">
+            🏆 Permainan Selesai
+        </h2>
 
-            <li>54 kartu: 52 kartu standar + 2 Joker.</li>
+        <div id="resultContent"></div>
 
-            <li>Setiap pemain mendapatkan 7 kartu.</li>
+        <div class="modal-actions">
 
-            <li>Setiap giliran: ambil 1 kartu, susun jika diperlukan, kemudian buang 1 kartu.</li>
+            <button class="btn green"
+                    onclick="newGame()">
+                Game Baru
+            </button>
 
-            <li>SET = 3 atau 4 kartu dengan angka yang sama.</li>
-
-            <li>RUN = minimal 3 kartu berurutan dengan simbol yang sama.</li>
-
-            <li>A hanya boleh digunakan sebagai kartu rendah: A-2-3.</li>
-
-            <li>Joker dapat menggantikan kartu apa pun.</li>
-
-            <li>Maksimal 1 Joker dalam satu kombinasi.</li>
-
-            <li>Pemain yang semua kartunya berhasil menjadi kombinasi dapat melakukan DECLARE.</li>
-
-            <li>J = 10 poin, Q = 10 poin, K = 10 poin, A = 1 poin.</li>
-
-        </ul>
+        </div>
 
     </div>
 
 </div>
 
+
+<div class="toast" id="toast">
+    Pesan
 </div>
-
-
-<!-- MODAL -->
-
-<div id="modalOverlay" class="modal-overlay">
-
-    <div class="modal" id="modalContent"></div>
-
-</div>
-
-
-<div id="toast" class="toast"></div>
 
 
 <script>
 
-/* ============================================================
-   REMI 4 PEMAIN
-   ============================================================ */
+/* =========================================================
+   DATA
+========================================================= */
 
-const SUITS = [
+const suits = [
     {
         symbol: "♠",
         name: "Spade",
@@ -973,7 +1067,7 @@ const SUITS = [
     }
 ];
 
-const RANKS = [
+const ranks = [
     "A",
     "2",
     "3",
@@ -989,11 +1083,31 @@ const RANKS = [
     "K"
 ];
 
-let players = [];
-
 let deck = [];
-
 let discardPile = [];
+
+let players = [
+    {
+        name: "Pemain 1",
+        hand: [],
+        combos: []
+    },
+    {
+        name: "Pemain 2",
+        hand: [],
+        combos: []
+    },
+    {
+        name: "Pemain 3",
+        hand: [],
+        combos: []
+    },
+    {
+        name: "Pemain 4",
+        hand: [],
+        combos: []
+    }
+];
 
 let currentPlayer = 0;
 
@@ -1001,32 +1115,24 @@ let hasDrawn = false;
 
 let selectedCards = [];
 
-let tableCombos = [];
-
-let roundNumber = 1;
+let draggedCardId = null;
 
 let gameStarted = false;
 
-let gameOver = false;
 
-let scores = [0, 0, 0, 0];
-
-let roundWinner = null;
-
-
-/* ============================================================
+/* =========================================================
    CARD CREATION
-   ============================================================ */
+========================================================= */
 
 function createDeck() {
 
-    let newDeck = [];
+    const cards = [];
 
-    for (let suit of SUITS) {
+    for (const suit of suits) {
 
-        for (let rank of RANKS) {
+        for (const rank of ranks) {
 
-            newDeck.push({
+            cards.push({
                 id: cryptoRandomId(),
                 suit: suit.symbol,
                 suitName: suit.name,
@@ -1039,25 +1145,23 @@ function createDeck() {
 
     }
 
-    newDeck.push({
+    cards.push({
         id: cryptoRandomId(),
-        suit: "",
-        suitName: "",
-        color: "joker",
+        joker: true,
         rank: "JOKER",
-        joker: true
+        suit: "",
+        color: "red"
     });
 
-    newDeck.push({
+    cards.push({
         id: cryptoRandomId(),
-        suit: "",
-        suitName: "",
-        color: "joker",
+        joker: true,
         rank: "JOKER",
-        joker: true
+        suit: "",
+        color: "black"
     });
 
-    return newDeck;
+    return cards;
 }
 
 
@@ -1065,24 +1169,31 @@ function cryptoRandomId() {
 
     return Math.random()
         .toString(36)
-        .substring(2) +
+        .substring(2, 10) +
         Date.now().toString(36);
 
 }
 
 
-/* ============================================================
+/* =========================================================
    SHUFFLE
-   ============================================================ */
+========================================================= */
 
 function shuffle(array) {
 
     for (let i = array.length - 1; i > 0; i--) {
 
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(
+            Math.random() * (i + 1)
+        );
 
-        [array[i], array[j]] =
-        [array[j], array[i]];
+        [
+            array[i],
+            array[j]
+        ] = [
+            array[j],
+            array[i]
+        ];
 
     }
 
@@ -1091,143 +1202,403 @@ function shuffle(array) {
 }
 
 
-/* ============================================================
-   START GAME
-   ============================================================ */
+/* =========================================================
+   NEW GAME
+========================================================= */
 
-function startGame() {
+function newGame() {
 
-    players = [
-
-        {
-            name: getName("name1", "Pemain 1"),
-            hand: []
-        },
-
-        {
-            name: getName("name2", "Pemain 2"),
-            hand: []
-        },
-
-        {
-            name: getName("name3", "Pemain 3"),
-            hand: []
-        },
-
-        {
-            name: getName("name4", "Pemain 4"),
-            hand: []
-        }
-
-    ];
-
-    scores = [0, 0, 0, 0];
-
-    roundNumber = 1;
-
-    startRound();
-
-    document.getElementById("startScreen").style.display = "none";
-
-    document.getElementById("game").style.display = "block";
-
-}
-
-
-function getName(id, fallback) {
-
-    const value =
-        document.getElementById(id).value.trim();
-
-    return value || fallback;
-
-}
-
-
-/* ============================================================
-   START ROUND
-   ============================================================ */
-
-function startRound() {
-
-    deck = createDeck();
-
-    shuffle(deck);
+    deck = shuffle(createDeck());
 
     discardPile = [];
 
-    tableCombos = [];
+    players.forEach(player => {
 
-    selectedCards = [];
+        player.hand = [];
+        player.combos = [];
+
+    });
+
+    currentPlayer = 0;
 
     hasDrawn = false;
 
-    gameOver = false;
+    selectedCards = [];
 
-    roundWinner = null;
-
-    for (let player of players) {
-
-        player.hand = [];
-
-    }
+    gameStarted = true;
 
 
-    /* BAGI 7 KARTU */
+    /* DEAL 7 CARDS */
 
-    for (let i = 0; i < 7; i++) {
+    for (let round = 0; round < 7; round++) {
 
         for (let p = 0; p < 4; p++) {
 
-            players[p].hand.push(deck.pop());
+            players[p].hand.push(
+                deck.pop()
+            );
 
         }
 
     }
 
 
-    /* KARTU BUANGAN PERTAMA */
+    /* FIRST DISCARD */
 
-    discardPile.push(deck.pop());
+    discardPile.push(
+        deck.pop()
+    );
 
 
-    currentPlayer = 0;
+    logGame("Game baru dimulai.");
 
-    gameStarted = true;
+    logGame(
+        "Giliran " +
+        players[currentPlayer].name
+    );
 
-    updateUI();
 
-    showToast(
+    render();
+
+    showPassModal(
+        "Serahkan perangkat ke " +
         players[currentPlayer].name +
-        " mulai terlebih dahulu."
+        "."
     );
 
 }
 
 
-/* ============================================================
-   CARD HTML
-   ============================================================ */
+/* =========================================================
+   RENDER
+========================================================= */
 
-function cardHTML(card, extraClass = "") {
+function render() {
 
-    if (!card) {
+    renderPlayers();
 
-        return `
-            <div class="empty-card">
-                Kosong
+    renderTable();
+
+    renderHand();
+
+    updateControls();
+
+}
+
+
+/* =========================================================
+   RENDER PLAYERS
+========================================================= */
+
+function renderPlayers() {
+
+    players.forEach((player, index) => {
+
+        const box =
+            document.getElementById(
+                "playerBox" + index
+            );
+
+        const status =
+            document.getElementById(
+                "status" + index
+            );
+
+        const count =
+            document.getElementById(
+                "count" + index
+            );
+
+
+        box.classList.toggle(
+            "active",
+            index === currentPlayer
+        );
+
+
+        if (index === currentPlayer) {
+
+            status.textContent =
+                "🎯 Giliran";
+
+        } else {
+
+            status.textContent =
+                "Menunggu";
+
+        }
+
+
+        count.innerHTML = "";
+
+
+        for (
+            let i = 0;
+            i < player.hand.length;
+            i++
+        ) {
+
+            const mini =
+                document.createElement("div");
+
+            mini.className = "mini-card";
+
+            count.appendChild(mini);
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   RENDER TABLE
+========================================================= */
+
+function renderTable() {
+
+    document.getElementById(
+        "turnPlayer"
+    ).textContent =
+        players[currentPlayer].name;
+
+
+    document.getElementById(
+        "deckCount"
+    ).textContent =
+        deck.length + " kartu";
+
+
+    const discard =
+        discardPile[
+            discardPile.length - 1
+        ];
+
+
+    const discardElement =
+        document.getElementById(
+            "discardPile"
+        );
+
+
+    if (discard) {
+
+        discardElement.innerHTML =
+            cardHTML(discard);
+
+        discardElement.classList.remove(
+            "empty-pile"
+        );
+
+    } else {
+
+        discardElement.innerHTML =
+            "<span>-</span>";
+
+        discardElement.classList.add(
+            "empty-pile"
+        );
+
+    }
+
+
+    const combosElement =
+        document.getElementById("combos");
+
+    combosElement.innerHTML = "";
+
+
+    let comboTotal = 0;
+
+
+    players.forEach(player => {
+
+        player.combos.forEach(combo => {
+
+            comboTotal++;
+
+            const comboDiv =
+                document.createElement("div");
+
+            comboDiv.className = "combo";
+
+
+            const label =
+                document.createElement("div");
+
+            label.className =
+                "combo-label";
+
+            label.textContent =
+                player.name;
+
+            comboDiv.appendChild(label);
+
+
+            combo.forEach(card => {
+
+                const temp =
+                    document.createElement("div");
+
+                temp.innerHTML =
+                    cardHTML(card);
+
+                comboDiv.appendChild(
+                    temp.firstElementChild
+                );
+
+            });
+
+
+            combosElement.appendChild(
+                comboDiv
+            );
+
+        });
+
+    });
+
+
+    if (comboTotal === 0) {
+
+        combosElement.innerHTML = `
+            <div class="combo">
+                <div class="empty-combo">
+                    Belum ada combo.
+                </div>
             </div>
         `;
 
     }
 
+}
+
+
+/* =========================================================
+   RENDER HAND
+========================================================= */
+
+function renderHand() {
+
+    const player =
+        players[currentPlayer];
+
+
+    document.getElementById(
+        "myName"
+    ).textContent =
+        "🃏 " + player.name;
+
+
+    document.getElementById(
+        "handInfo"
+    ).textContent =
+        player.hand.length + " kartu";
+
+
+    const handElement =
+        document.getElementById("hand");
+
+
+    handElement.innerHTML = "";
+
+
+    player.hand.forEach((card, index) => {
+
+        const wrapper =
+            document.createElement("div");
+
+        wrapper.innerHTML =
+            cardHTML(card);
+
+
+        const cardElement =
+            wrapper.firstElementChild;
+
+
+        cardElement.dataset.index =
+            index;
+
+        cardElement.dataset.id =
+            card.id;
+
+
+        if (
+            selectedCards.includes(
+                card.id
+            )
+        ) {
+
+            cardElement.classList.add(
+                "selected"
+            );
+
+        }
+
+
+        /* CLICK */
+
+        cardElement.addEventListener(
+            "click",
+            function(e) {
+
+                if (
+                    cardElement.dataset.dragMoved ===
+                    "true"
+                ) {
+
+                    cardElement.dataset.dragMoved =
+                        "false";
+
+                    return;
+
+                }
+
+                toggleSelect(card.id);
+
+            }
+        );
+
+
+        /* DRAG */
+
+        enableDrag(cardElement);
+
+
+        handElement.appendChild(
+            cardElement
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   CARD HTML
+========================================================= */
+
+function cardHTML(card) {
 
     if (card.joker) {
 
         return `
-            <div class="card joker ${extraClass}">
-                <div class="rank">JOKER</div>
-                <div class="suit">★</div>
+            <div class="card joker"
+                 data-id="${card.id}">
+
+                <div class="card-corner">
+                    🃏
+                </div>
+
+                <div class="joker-symbol">
+                    JOKER
+                </div>
+
+                <div class="card-corner bottom">
+                    🃏
+                </div>
+
             </div>
         `;
 
@@ -1235,128 +1606,32 @@ function cardHTML(card, extraClass = "") {
 
 
     return `
-        <div class="card ${card.color} ${extraClass}">
-            <div class="rank">${card.rank}</div>
-            <div class="suit">${card.suit}</div>
+        <div class="card ${card.color}"
+             data-id="${card.id}">
+
+            <div class="card-corner">
+                ${card.rank}${card.suit}
+            </div>
+
+            <div class="card-center">
+                ${card.suit}
+            </div>
+
+            <div class="card-corner bottom">
+                ${card.rank}${card.suit}
+            </div>
+
         </div>
     `;
 
 }
 
 
-/* ============================================================
-   UPDATE UI
-   ============================================================ */
+/* =========================================================
+   SELECT
+========================================================= */
 
-function updateUI() {
-
-    if (!gameStarted) return;
-
-
-    document.getElementById("roundInfo").textContent =
-        "Ronde " + roundNumber;
-
-
-    document.getElementById("turnInfo").textContent =
-        "Giliran: " +
-        players[currentPlayer].name;
-
-
-    document.getElementById("turnBanner").textContent =
-        "🎯 Giliran " +
-        players[currentPlayer].name;
-
-
-    document.getElementById("currentPlayerName").textContent =
-        "👤 " +
-        players[currentPlayer].name;
-
-
-    document.getElementById("handCount").textContent =
-        players[currentPlayer].hand.length;
-
-
-    document.getElementById("deckCount").textContent =
-        deck.length;
-
-
-    renderDiscard();
-
-    renderHand();
-
-    renderOtherPlayers();
-
-    renderCombos();
-
-    updateButtons();
-
-}
-
-
-/* ============================================================
-   RENDER HAND
-   ============================================================ */
-
-function renderHand() {
-
-    const handElement =
-        document.getElementById("hand");
-
-    handElement.innerHTML = "";
-
-
-    const hand =
-        players[currentPlayer].hand;
-
-
-    hand.forEach((card, index) => {
-
-        const wrapper =
-            document.createElement("div");
-
-        wrapper.innerHTML =
-            cardHTML(
-                card,
-                selectedCards.includes(card.id)
-                    ? "selected"
-                    : ""
-            );
-
-
-        const cardElement =
-            wrapper.firstElementChild;
-
-
-        cardElement.onclick = function() {
-
-            selectCard(card.id);
-
-        };
-
-
-        handElement.appendChild(cardElement);
-
-    });
-
-}
-
-
-/* ============================================================
-   SELECT CARD
-   ============================================================ */
-
-function selectCard(id) {
-
-    if (!hasDrawn || gameOver) {
-
-        showToast(
-            "Ambil kartu terlebih dahulu."
-        );
-
-        return;
-
-    }
-
+function toggleSelect(id) {
 
     const index =
         selectedCards.indexOf(id);
@@ -1375,76 +1650,432 @@ function selectCard(id) {
 
     renderHand();
 
-    updateButtons();
+}
+
+
+function clearSelection() {
+
+    selectedCards = [];
+
+    renderHand();
 
 }
 
 
-/* ============================================================
-   DRAW FROM DECK
-   ============================================================ */
+/* =========================================================
+   DRAG / REORDER HAND
+========================================================= */
 
-function drawFromDeck() {
+function enableDrag(element) {
 
-    if (gameOver) return;
-
-    if (hasDrawn) {
-
-        showToast(
-            "Anda sudah mengambil kartu pada giliran ini."
-        );
-
-        return;
-
-    }
+    let startX = 0;
+    let startY = 0;
+    let isDragging = false;
+    let moved = false;
 
 
-    if (deck.length === 0) {
+    element.addEventListener(
+        "pointerdown",
+        function(e) {
 
-        reshuffleDiscard();
+            if (
+                e.button !== undefined &&
+                e.button !== 0
+            ) return;
 
-        if (deck.length === 0) {
 
-            showToast(
-                "Tidak ada kartu yang bisa diambil."
+            startX = e.clientX;
+            startY = e.clientY;
+
+            isDragging = true;
+            moved = false;
+
+            draggedCardId =
+                element.dataset.id;
+
+            element.setPointerCapture(
+                e.pointerId
             );
 
-            return;
+        }
+    );
+
+
+    element.addEventListener(
+        "pointermove",
+        function(e) {
+
+            if (!isDragging) return;
+
+
+            const dx =
+                e.clientX - startX;
+
+            const dy =
+                e.clientY - startY;
+
+
+            if (
+                Math.abs(dx) > 6 ||
+                Math.abs(dy) > 6
+            ) {
+
+                moved = true;
+
+                element.dataset.dragMoved =
+                    "true";
+
+            }
+
+
+            if (moved) {
+
+                element.style.transform =
+                    `translate(${dx}px, -15px) scale(1.04)`;
+
+            }
+
+        }
+    );
+
+
+    element.addEventListener(
+        "pointerup",
+        function(e) {
+
+            if (!isDragging) return;
+
+            isDragging = false;
+
+
+            element.style.transform = "";
+
+
+            if (moved) {
+
+                reorderDraggedCard(
+                    draggedCardId,
+                    e.clientX
+                );
+
+            }
+
+            draggedCardId = null;
+
+        }
+    );
+
+
+    element.addEventListener(
+        "pointercancel",
+        function() {
+
+            isDragging = false;
+
+            element.style.transform = "";
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   REORDER CARD
+========================================================= */
+
+function reorderDraggedCard(
+    cardId,
+    pointerX
+) {
+
+    const player =
+        players[currentPlayer];
+
+
+    const oldIndex =
+        player.hand.findIndex(
+            c => c.id === cardId
+        );
+
+
+    if (oldIndex < 0) return;
+
+
+    const cards =
+        Array.from(
+            document.querySelectorAll(
+                "#hand .card"
+            )
+        );
+
+
+    let targetIndex =
+        player.hand.length - 1;
+
+
+    for (
+        let i = 0;
+        i < cards.length;
+        i++
+    ) {
+
+        const cardElement =
+            cards[i];
+
+
+        if (
+            cardElement.dataset.id ===
+            cardId
+        ) continue;
+
+
+        const rect =
+            cardElement.getBoundingClientRect();
+
+
+        const center =
+            rect.left +
+            rect.width / 2;
+
+
+        if (
+            pointerX < center
+        ) {
+
+            targetIndex = i;
+
+            break;
 
         }
 
     }
 
 
-    const card = deck.pop();
+    if (
+        targetIndex === oldIndex
+    ) {
 
-    players[currentPlayer].hand.push(card);
+        renderHand();
 
-    hasDrawn = true;
+        return;
 
-    selectedCards = [];
+    }
 
-    setStatus(
-        players[currentPlayer].name +
-        " mengambil kartu dari deck."
+
+    const movedCard =
+        player.hand.splice(
+            oldIndex,
+            1
+        )[0];
+
+
+    if (
+        targetIndex >
+        oldIndex
+    ) {
+
+        targetIndex--;
+
+    }
+
+
+    player.hand.splice(
+        targetIndex,
+        0,
+        movedCard
     );
 
-    updateUI();
+
+    logGame(
+        players[currentPlayer].name +
+        " mengubah urutan kartu."
+    );
+
+
+    renderHand();
 
 }
 
 
-/* ============================================================
-   DRAW FROM DISCARD
-   ============================================================ */
+/* =========================================================
+   SHUFFLE HAND
+========================================================= */
+
+function shuffleHand() {
+
+    players[currentPlayer].hand =
+        shuffle(
+            players[currentPlayer].hand
+        );
+
+
+    logGame(
+        players[currentPlayer].name +
+        " mengacak kartu."
+    );
+
+
+    selectedCards = [];
+
+    renderHand();
+
+    toast("Kartu diacak 🔀");
+
+}
+
+
+/* =========================================================
+   SORT HAND
+========================================================= */
+
+function sortHand() {
+
+    const player =
+        players[currentPlayer];
+
+
+    const suitOrder = {
+        "♠": 0,
+        "♥": 1,
+        "♦": 2,
+        "♣": 3,
+        "": 4
+    };
+
+
+    const rankOrder = {
+        "A": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9,
+        "10": 10,
+        "J": 11,
+        "Q": 12,
+        "K": 13,
+        "JOKER": 14
+    };
+
+
+    player.hand.sort(
+        (a,b) => {
+
+            if (
+                suitOrder[a.suit] !==
+                suitOrder[b.suit]
+            ) {
+
+                return (
+                    suitOrder[a.suit] -
+                    suitOrder[b.suit]
+                );
+
+            }
+
+
+            return (
+                rankOrder[a.rank] -
+                rankOrder[b.rank]
+            );
+
+        }
+    );
+
+
+    selectedCards = [];
+
+    renderHand();
+
+    toast("Kartu diurutkan ↕");
+
+}
+
+
+/* =========================================================
+   DRAW DECK
+========================================================= */
+
+function drawFromDeck() {
+
+    if (!gameStarted) return;
+
+
+    if (currentPlayer !== undefined) {
+
+
+        if (hasDrawn) {
+
+            toast(
+                "Anda sudah mengambil kartu."
+            );
+
+            return;
+
+        }
+
+
+        if (deck.length === 0) {
+
+            recycleDiscard();
+
+        }
+
+
+        if (deck.length === 0) {
+
+            toast(
+                "Deck habis."
+            );
+
+            return;
+
+        }
+
+
+        const card =
+            deck.pop();
+
+
+        players[currentPlayer].hand.push(
+            card
+        );
+
+
+        hasDrawn = true;
+
+        selectedCards = [];
+
+
+        logGame(
+            players[currentPlayer].name +
+            " mengambil kartu dari deck."
+        );
+
+
+        render();
+
+    }
+
+}
+
+
+/* =========================================================
+   DRAW DISCARD
+========================================================= */
 
 function drawFromDiscard() {
 
-    if (gameOver) return;
+    if (!gameStarted) return;
+
 
     if (hasDrawn) {
 
-        showToast(
+        toast(
             "Anda sudah mengambil kartu."
         );
 
@@ -1453,72 +2084,83 @@ function drawFromDiscard() {
     }
 
 
-    if (discardPile.length === 0) {
+    if (
+        discardPile.length === 0
+    ) {
 
-        showToast("Kartu buangan kosong.");
+        toast(
+            "Tidak ada kartu buangan."
+        );
 
         return;
 
     }
 
 
-    const card = discardPile.pop();
+    const card =
+        discardPile.pop();
 
-    players[currentPlayer].hand.push(card);
+
+    players[currentPlayer].hand.push(
+        card
+    );
+
 
     hasDrawn = true;
 
     selectedCards = [];
 
-    setStatus(
+
+    logGame(
         players[currentPlayer].name +
         " mengambil kartu buangan."
     );
 
-    updateUI();
+
+    render();
 
 }
 
 
-/* ============================================================
-   RESHUFFLE
-   ============================================================ */
+/* =========================================================
+   RECYCLE DISCARD
+========================================================= */
 
-function reshuffleDiscard() {
+function recycleDiscard() {
 
-    if (discardPile.length <= 1) return;
+    if (
+        discardPile.length <= 1
+    ) return;
 
 
-    const topCard =
+    const top =
         discardPile.pop();
 
 
-    deck = discardPile.splice(0);
-
-    shuffle(deck);
-
-    discardPile = [topCard];
+    deck = shuffle(
+        discardPile
+    );
 
 
-    showToast(
-        "Deck habis. Kartu buangan dikocok kembali."
+    discardPile = [top];
+
+
+    logGame(
+        "Kartu buangan dikocok kembali menjadi deck."
     );
 
 }
 
 
-/* ============================================================
-   DISCARD
-   ============================================================ */
+/* =========================================================
+   MAKE COMBO
+========================================================= */
 
-function discardSelected() {
-
-    if (gameOver) return;
-
+function makeCombo() {
 
     if (!hasDrawn) {
 
-        showToast(
+        toast(
             "Ambil kartu terlebih dahulu."
         );
 
@@ -1527,9 +2169,298 @@ function discardSelected() {
     }
 
 
-    if (selectedCards.length !== 1) {
+    if (
+        selectedCards.length < 3
+    ) {
 
-        showToast(
+        toast(
+            "Pilih minimal 3 kartu."
+        );
+
+        return;
+
+    }
+
+
+    const player =
+        players[currentPlayer];
+
+
+    const selected =
+        player.hand.filter(
+            card =>
+                selectedCards.includes(
+                    card.id
+                )
+        );
+
+
+    if (
+        !isValidCombo(selected)
+    ) {
+
+        toast(
+            "Combo tidak valid."
+        );
+
+        return;
+
+    }
+
+
+    player.combos.push(
+        selected
+    );
+
+
+    player.hand =
+        player.hand.filter(
+            card =>
+                !selectedCards.includes(
+                    card.id
+                )
+        );
+
+
+    selectedCards = [];
+
+
+    logGame(
+        player.name +
+        " membuat combo " +
+        getComboType(selected) +
+        "."
+    );
+
+
+    render();
+
+
+    if (
+        player.hand.length === 0
+    ) {
+
+        finishGame(
+            currentPlayer
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   COMBO VALIDATION
+========================================================= */
+
+function isValidCombo(cards) {
+
+    if (
+        cards.length < 3
+    ) {
+
+        return false;
+
+    }
+
+
+    const jokers =
+        cards.filter(
+            c => c.joker
+        );
+
+
+    if (
+        jokers.length > 1
+    ) {
+
+        return false;
+
+    }
+
+
+    const normal =
+        cards.filter(
+            c => !c.joker
+        );
+
+
+    /* SET */
+
+    const ranksSame =
+        normal.length > 0 &&
+        normal.every(
+            c =>
+                c.rank ===
+                normal[0].rank
+        );
+
+
+    const suitsUnique =
+        new Set(
+            normal.map(
+                c => c.suit
+            )
+        ).size === normal.length;
+
+
+    if (
+        ranksSame &&
+        suitsUnique
+    ) {
+
+        return true;
+
+    }
+
+
+    /* RUN */
+
+    if (
+        normal.length === 0
+    ) {
+
+        return false;
+
+    }
+
+
+    const sameSuit =
+        normal.every(
+            c =>
+                c.suit ===
+                normal[0].suit
+        );
+
+
+    if (!sameSuit) {
+
+        return false;
+
+    }
+
+
+    const values =
+        normal.map(
+            cardValue
+        ).sort(
+            (a,b) => a - b
+        );
+
+
+    const unique =
+        new Set(values);
+
+
+    if (
+        unique.size !==
+        values.length
+    ) {
+
+        return false;
+
+    }
+
+
+    const min =
+        Math.min(...values);
+
+    const max =
+        Math.max(...values);
+
+
+    const needed =
+        max - min + 1;
+
+
+    const jokerCount =
+        jokers.length;
+
+
+    return (
+        needed ===
+        values.length + jokerCount
+    );
+
+}
+
+
+/* =========================================================
+   CARD VALUE
+========================================================= */
+
+function cardValue(card) {
+
+    if (card.rank === "A") return 1;
+
+    if (card.rank === "J") return 11;
+
+    if (card.rank === "Q") return 12;
+
+    if (card.rank === "K") return 13;
+
+    return parseInt(
+        card.rank
+    );
+
+}
+
+
+/* =========================================================
+   COMBO TYPE
+========================================================= */
+
+function getComboType(cards) {
+
+    const normal =
+        cards.filter(
+            c => !c.joker
+        );
+
+
+    const sameRank =
+        normal.length > 0 &&
+        normal.every(
+            c =>
+                c.rank ===
+                normal[0].rank
+        );
+
+
+    if (sameRank) {
+
+        return "SET";
+
+    }
+
+
+    return "RUN";
+
+}
+
+
+/* =========================================================
+   DISCARD
+========================================================= */
+
+function discardSelected() {
+
+    if (!hasDrawn) {
+
+        toast(
+            "Ambil kartu terlebih dahulu."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        selectedCards.length !== 1
+    ) {
+
+        toast(
             "Pilih tepat 1 kartu untuk dibuang."
         );
 
@@ -1538,22 +2469,26 @@ function discardSelected() {
     }
 
 
-    const id = selectedCards[0];
-
-
-    const hand =
-        players[currentPlayer].hand;
+    const player =
+        players[currentPlayer];
 
 
     const index =
-        hand.findIndex(c => c.id === id);
+        player.hand.findIndex(
+            card =>
+                card.id ===
+                selectedCards[0]
+        );
 
 
-    if (index === -1) return;
+    if (index < 0) return;
 
 
     const card =
-        hand.splice(index, 1)[0];
+        player.hand.splice(
+            index,
+            1
+        )[0];
 
 
     discardPile.push(card);
@@ -1561,112 +2496,52 @@ function discardSelected() {
 
     selectedCards = [];
 
-    hasDrawn = false;
 
-
-    setStatus(
-        players[currentPlayer].name +
+    logGame(
+        player.name +
         " membuang " +
         cardName(card) +
         "."
     );
 
 
-    /* CEK MENANG */
+    hasDrawn = false;
 
-    if (checkCanDeclare(currentPlayer)) {
 
-        showToast(
-            players[currentPlayer].name +
-            " dapat melakukan DECLARE!"
+    render();
+
+
+    if (
+        player.hand.length === 0
+    ) {
+
+        finishGame(
+            currentPlayer
         );
+
+        return;
 
     }
 
 
-    nextTurn();
+    nextPlayer();
 
 }
 
 
-/* ============================================================
-   NEXT TURN
-   ============================================================ */
+/* =========================================================
+   DECLARE
+========================================================= */
 
-function nextTurn() {
-
-    currentPlayer =
-        (currentPlayer + 1) % 4;
-
-
-    hasDrawn = false;
-
-    selectedCards = [];
-
-
-    updateUI();
-
-
-    showPassModal();
-
-}
-
-
-/* ============================================================
-   PASS MODAL
-   ============================================================ */
-
-function showPassModal() {
-
-    if (gameOver) return;
-
+function declareWin() {
 
     const player =
         players[currentPlayer];
 
 
-    document.getElementById("modalContent").innerHTML = `
-
-        <h2>🔄 Giliran Berikutnya</h2>
-
-        <p>
-            Sekarang giliran:
-        </p>
-
-        <h2 style="text-align:center;">
-            👤 ${escapeHTML(player.name)}
-        </h2>
-
-        <p style="text-align:center;color:#666;">
-            Serahkan perangkat kepada ${escapeHTML(player.name)}.
-        </p>
-
-        <div class="modal-buttons">
-
-            <button
-                class="btn"
-                onclick="closeModal()">
-                SAYA SUDAH SIAP
-            </button>
-
-        </div>
-    `;
-
-
-    openModal();
-
-}
-
-
-/* ============================================================
-   MAKE COMBO
-   ============================================================ */
-
-function makeCombo() {
-
     if (!hasDrawn) {
 
-        showToast(
+        toast(
             "Ambil kartu terlebih dahulu."
         );
 
@@ -1675,335 +2550,47 @@ function makeCombo() {
     }
 
 
-    if (selectedCards.length < 3) {
+    if (
+        player.hand.length === 0
+    ) {
 
-        showToast(
-            "Minimal 3 kartu untuk membuat kombinasi."
+        finishGame(
+            currentPlayer
         );
 
         return;
 
     }
-
-
-    const selected =
-        players[currentPlayer].hand.filter(
-            card => selectedCards.includes(card.id)
-        );
-
-
-    const result =
-        validateCombo(selected);
-
-
-    if (!result.valid) {
-
-        showToast(result.message);
-
-        return;
-
-    }
-
-
-    /* Hapus dari tangan */
-
-    players[currentPlayer].hand =
-        players[currentPlayer].hand.filter(
-            card => !selectedCards.includes(card.id)
-        );
-
-
-    tableCombos.push({
-
-        owner: currentPlayer,
-
-        cards: selected,
-
-        type: result.type
-
-    });
-
-
-    selectedCards = [];
-
-
-    setStatus(
-        "Kombinasi " +
-        result.type +
-        " berhasil dibuat."
-    );
-
-
-    updateUI();
-
-}
-
-
-/* ============================================================
-   VALIDATE COMBO
-   ============================================================ */
-
-function validateCombo(cards) {
-
-    if (cards.length < 3) {
-
-        return {
-            valid: false,
-            message: "Minimal 3 kartu."
-        };
-
-    }
-
-
-    const jokerCount =
-        cards.filter(c => c.joker).length;
-
-
-    if (jokerCount > 1) {
-
-        return {
-            valid: false,
-            message:
-                "Maksimal 1 Joker dalam satu kombinasi."
-        };
-
-    }
-
-
-    const normalCards =
-        cards.filter(c => !c.joker);
-
-
-    /* SET */
-
-    const ranks =
-        normalCards.map(c => c.rank);
-
-
-    const sameRank =
-        ranks.length > 0 &&
-        ranks.every(r => r === ranks[0]);
-
-
-    const suits =
-        normalCards.map(c => c.suit);
-
-
-    const uniqueSuits =
-        new Set(suits);
 
 
     if (
-        sameRank &&
-        uniqueSuits.size === normalCards.length
+        canDeclare(player.hand)
     ) {
 
-        if (
-            normalCards.length + jokerCount <= 4
-        ) {
-
-            return {
-                valid: true,
-                type: "SET"
-            };
-
-        }
-
-    }
-
-
-    /* RUN */
-
-    if (normalCards.length > 0) {
-
-        const suit =
-            normalCards[0].suit;
-
-
-        const sameSuit =
-            normalCards.every(
-                c => c.suit === suit
-            );
-
-
-        if (sameSuit) {
-
-            const values =
-                normalCards.map(
-                    c => rankValue(c.rank)
-                ).sort(
-                    (a,b) => a-b
-                );
-
-
-            const noDuplicate =
-                new Set(values).size === values.length;
-
-
-            if (noDuplicate) {
-
-                let canRun = true;
-
-
-                for (
-                    let i = 1;
-                    i < values.length;
-                    i++
-                ) {
-
-                    if (
-                        values[i] !== values[i-1] + 1
-                    ) {
-
-                        canRun = false;
-
-                        break;
-
-                    }
-
-                }
-
-
-                /* Jika ada Joker, beri satu celah */
-
-                if (
-                    jokerCount === 1 &&
-                    values.length >= 2
-                ) {
-
-                    const gaps =
-                        values[values.length - 1] -
-                        values[0] + 1 -
-                        values.length;
-
-
-                    if (gaps === 1) {
-
-                        canRun = true;
-
-                    }
-
-                }
-
-
-                if (canRun) {
-
-                    return {
-                        valid: true,
-                        type: "RUN"
-                    };
-
-                }
-
-            }
-
-        }
-
-    }
-
-
-    return {
-        valid: false,
-        message:
-            "Kombinasi tidak valid. Gunakan SET atau RUN."
-    };
-
-}
-
-
-/* ============================================================
-   RANK VALUE
-   ============================================================ */
-
-function rankValue(rank) {
-
-    if (rank === "A") return 1;
-
-    if (rank === "J") return 11;
-
-    if (rank === "Q") return 12;
-
-    if (rank === "K") return 13;
-
-    return parseInt(rank);
-
-}
-
-
-/* ============================================================
-   DECLARE
-   ============================================================ */
-
-function declareWin() {
-
-    if (gameOver) return;
-
-
-    const player =
-        players[currentPlayer];
-
-
-    if (!hasDrawn) {
-
-        showToast(
-            "Untuk declare, Anda harus berada pada giliran dan sudah mengambil kartu."
+        finishGame(
+            currentPlayer
         );
 
-        return;
+    } else {
 
-    }
-
-
-    const valid =
-        checkCanDeclare(currentPlayer);
-
-
-    if (!valid) {
-
-        showToast(
-            "Kartu Anda belum semuanya menjadi kombinasi."
+        toast(
+            "Kartu yang tersisa belum bisa menjadi combo lengkap."
         );
 
-        return;
-
     }
-
-
-    roundWinner = currentPlayer;
-
-    gameOver = true;
-
-
-    scores[currentPlayer] += 0;
-
-
-    for (let i = 0; i < 4; i++) {
-
-        if (i === currentPlayer) continue;
-
-
-        scores[i] +=
-            calculatePenalty(players[i].hand);
-
-    }
-
-
-    showWinnerModal();
 
 }
 
 
-/* ============================================================
-   CHECK DECLARE
-   ============================================================ */
+/* =========================================================
+   DECLARE VALIDATION
+========================================================= */
 
-function checkCanDeclare(playerIndex) {
+function canDeclare(cards) {
 
-    const hand =
-        players[playerIndex].hand;
-
-
-    if (hand.length === 0) {
+    if (
+        cards.length === 0
+    ) {
 
         return true;
 
@@ -2011,75 +2598,134 @@ function checkCanDeclare(playerIndex) {
 
 
     /*
-       Kartu di tangan harus bisa dibagi
-       menjadi kombinasi SET/RUN.
+       Cari kombinasi combo
+       menggunakan recursive backtracking.
     */
 
-    return canPartitionIntoCombos(hand);
-
-}
-
-
-/* ============================================================
-   PARTITION COMBO
-   ============================================================ */
-
-function canPartitionIntoCombos(cards) {
-
-    if (cards.length === 0) {
-
-        return true;
-
-    }
-
-
-    if (cards.length < 3) {
-
-        return false;
-
-    }
-
-
-    const first = cards[0];
-
-
-    for (
-        let size = 3;
-        size <= Math.min(4, cards.length);
-        size++
+    function search(
+        remaining
     ) {
 
+        if (
+            remaining.length === 0
+        ) {
+
+            return true;
+
+        }
+
+
+        const first =
+            remaining[0];
+
+
+        const others =
+            remaining.slice(1);
+
+
+        /*
+           Ambil kombinasi 2 kartu tambahan
+           untuk combo minimum 3.
+        */
+
         const combinations =
-            combinationsIncludingFirst(
-                cards,
-                size,
-                first
+            combinationsOf(
+                others,
+                2
             );
 
 
-        for (let combo of combinations) {
+        for (
+            const pair
+            of combinations
+        ) {
 
-            if (validateCombo(combo).valid) {
-
-                const comboIds =
-                    new Set(
-                        combo.map(c => c.id)
-                    );
-
-
-                const remaining =
-                    cards.filter(
-                        c => !comboIds.has(c.id)
-                    );
+            const combo = [
+                first,
+                ...pair
+            ];
 
 
-                if (
-                    canPartitionIntoCombos(
-                        remaining
-                    )
+            /*
+               Coba juga combo yang lebih besar
+               dengan kartu tambahan.
+            */
+
+            const candidates =
+                [combo];
+
+
+            if (
+                remaining.length >= 4
+            ) {
+
+                for (
+                    let i = 0;
+                    i < others.length;
+                    i++
                 ) {
 
-                    return true;
+                    for (
+                        let j = i + 1;
+                        j < others.length;
+                        j++
+                    ) {
+
+                        for (
+                            let k = j + 1;
+                            k < others.length;
+                            k++
+                        ) {
+
+                            candidates.push([
+                                first,
+                                others[i],
+                                others[j],
+                                others[k]
+                            ]);
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+
+            for (
+                const candidate
+                of candidates
+            ) {
+
+                if (
+                    isValidCombo(candidate)
+                ) {
+
+                    const ids =
+                        new Set(
+                            candidate.map(
+                                c => c.id
+                            )
+                        );
+
+
+                    const rest =
+                        remaining.filter(
+                            c =>
+                                !ids.has(
+                                    c.id
+                                )
+                        );
+
+
+                    if (
+                        search(rest)
+                    ) {
+
+                        return true;
+
+                    }
 
                 }
 
@@ -2087,46 +2733,42 @@ function canPartitionIntoCombos(cards) {
 
         }
 
+
+        return false;
+
     }
 
 
-    return false;
+    return search(cards);
 
 }
 
 
-/* ============================================================
+/* =========================================================
    COMBINATIONS
-   ============================================================ */
+========================================================= */
 
-function combinationsIncludingFirst(
-    cards,
-    size,
-    first
+function combinationsOf(
+    array,
+    choose
 ) {
-
-    const others =
-        cards.filter(
-            c => c.id !== first.id
-        );
-
 
     const result = [];
 
 
-    function backtrack(
+    function helper(
         start,
         current
     ) {
 
         if (
-            current.length === size - 1
+            current.length ===
+            choose
         ) {
 
-            result.push([
-                first,
-                ...current
-            ]);
+            result.push(
+                [...current]
+            );
 
             return;
 
@@ -2135,16 +2777,20 @@ function combinationsIncludingFirst(
 
         for (
             let i = start;
-            i < others.length;
+            i < array.length;
             i++
         ) {
 
-            current.push(others[i]);
+            current.push(
+                array[i]
+            );
 
-            backtrack(
+
+            helper(
                 i + 1,
                 current
             );
+
 
             current.pop();
 
@@ -2153,455 +2799,169 @@ function combinationsIncludingFirst(
     }
 
 
-    backtrack(0, []);
+    helper(
+        0,
+        []
+    );
+
 
     return result;
 
 }
 
 
-/* ============================================================
-   PENALTY
-   ============================================================ */
+/* =========================================================
+   NEXT PLAYER
+========================================================= */
 
-function calculatePenalty(hand) {
+function nextPlayer() {
 
-    return hand.reduce(
-        (total, card) => {
-
-            if (card.joker) {
-
-                return total;
-
-            }
+    currentPlayer =
+        (currentPlayer + 1) % 4;
 
 
-            if (
-                card.rank === "J" ||
-                card.rank === "Q" ||
-                card.rank === "K"
-            ) {
+    selectedCards = [];
 
-                return total + 10;
-
-            }
+    hasDrawn = false;
 
 
-            if (card.rank === "A") {
-
-                return total + 1;
-
-            }
+    render();
 
 
-            return total +
-                parseInt(card.rank);
+    showPassModal(
+        "Serahkan perangkat ke " +
+        players[currentPlayer].name +
+        "."
+    );
 
-        },
+}
+
+
+/* =========================================================
+   PASS MODAL
+========================================================= */
+
+function showPassModal(message) {
+
+    document.getElementById(
+        "passText"
+    ).textContent =
+        message;
+
+
+    document.getElementById(
+        "passModal"
+    ).classList.add("show");
+
+}
+
+
+function continueTurn() {
+
+    document.getElementById(
+        "passModal"
+    ).classList.remove("show");
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   SCORE
+========================================================= */
+
+function cardPenalty(card) {
+
+    if (card.joker) return 0;
+
+    if (card.rank === "A") return 1;
+
+    if (
+        ["J","Q","K"].includes(
+            card.rank
+        )
+    ) {
+
+        return 10;
+
+    }
+
+    return parseInt(
+        card.rank
+    );
+
+}
+
+
+function playerPenalty(player) {
+
+    return player.hand.reduce(
+        (sum, card) =>
+            sum + cardPenalty(card),
         0
     );
 
 }
 
 
-/* ============================================================
-   RENDER DISCARD
-   ============================================================ */
-
-function renderDiscard() {
-
-    const element =
-        document.getElementById("discardCard");
-
-
-    if (discardPile.length === 0) {
-
-        element.innerHTML =
-            `<div class="empty-card">Kosong</div>`;
-
-        return;
-
-    }
-
-
-    const card =
-        discardPile[discardPile.length - 1];
-
-
-    element.innerHTML =
-        cardHTML(card, "discard-card");
-
-
-    element.firstElementChild.onclick =
-        function() {
-
-            drawFromDiscard();
-
-        };
-
-}
-
-
-/* ============================================================
-   RENDER OTHER PLAYERS
-   ============================================================ */
-
-function renderOtherPlayers() {
-
-    for (let i = 0; i < 4; i++) {
-
-        const player =
-            players[i];
-
-
-        document.getElementById(
-            "playerName" + (i + 1)
-        ).textContent =
-            "👤 " + player.name;
-
-
-        document.getElementById(
-            "count" + (i + 1)
-        ).textContent =
-            player.hand.length + " kartu";
-
-
-        const mini =
-            document.getElementById(
-                "mini" + (i + 1)
-            );
-
-
-        mini.innerHTML = "";
-
-
-        for (
-            let x = 0;
-            x < player.hand.length;
-            x++
-        ) {
-
-            mini.innerHTML +=
-                `<div class="mini-card"></div>`;
-
-        }
-
-
-        const box =
-            document.getElementById(
-                "playerBox" + (i + 1)
-            );
-
-
-        box.classList.toggle(
-            "active-player",
-            i === currentPlayer
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   RENDER COMBOS
-   ============================================================ */
-
-function renderCombos() {
-
-    const list =
-        document.getElementById("comboList");
-
-
-    if (tableCombos.length === 0) {
-
-        list.innerHTML =
-            `<div style="font-size:12px;opacity:.6;">
-                Belum ada kombinasi.
-             </div>`;
-
-        return;
-
-    }
-
-
-    list.innerHTML = "";
-
-
-    tableCombos.forEach(
-        (combo, index) => {
-
-            const wrapper =
-                document.createElement("div");
-
-            wrapper.className = "combo";
-
-
-            const owner =
-                players[combo.owner].name;
-
-
-            let cardsHTML = "";
-
-
-            combo.cards.forEach(
-                card => {
-
-                    cardsHTML +=
-                        cardHTML(card);
-
-                }
-            );
-
-
-            wrapper.innerHTML = `
-
-                <div class="combo-label">
-                    ${escapeHTML(owner)}
-                    • ${combo.type}
-                </div>
-
-                <div class="combo-cards">
-                    ${cardsHTML}
-                </div>
-
-            `;
-
-
-            list.appendChild(wrapper);
-
-        }
-    );
-
-}
-
-
-/* ============================================================
-   BUTTONS
-   ============================================================ */
-
-function updateButtons() {
-
-    const drawDiscardBtn =
-        document.getElementById(
-            "drawDiscardBtn"
-        );
-
-    const makeComboBtn =
-        document.getElementById(
-            "makeComboBtn"
-        );
-
-    const discardBtn =
-        document.getElementById(
-            "discardBtn"
-        );
-
-
-    drawDiscardBtn.disabled =
-        hasDrawn || gameOver;
-
-
-    makeComboBtn.disabled =
-        !hasDrawn ||
-        selectedCards.length < 3 ||
-        gameOver;
-
-
-    discardBtn.disabled =
-        !hasDrawn ||
-        selectedCards.length !== 1 ||
-        gameOver;
-
-}
-
-
-/* ============================================================
-   STATUS
-   ============================================================ */
-
-function setStatus(message) {
-
-    document.getElementById(
-        "status"
-    ).textContent = message;
-
-}
-
-
-/* ============================================================
-   WINNER MODAL
-   ============================================================ */
-
-function showWinnerModal() {
+/* =========================================================
+   FINISH GAME
+========================================================= */
+
+function finishGame(
+    winnerIndex
+) {
 
     const winner =
-        players[roundWinner];
+        players[winnerIndex];
 
 
     let html = `
 
-        <h2>🏆 RONDE SELESAI</h2>
-
-        <div style="
-            text-align:center;
-            font-size:24px;
-            margin:20px 0;
-        ">
-            👑 ${escapeHTML(winner.name)}
-        </div>
-
-        <p style="text-align:center;">
-            ${escapeHTML(winner.name)}
-            berhasil menyelesaikan semua kartu!
+        <p style="font-size:18px;text-align:center;">
+            🏆 <b>${winner.name}</b>
+            memenangkan permainan!
         </p>
 
-        <h3>Hasil Penalti</h3>
-
         <table class="score-table">
 
             <tr>
                 <th>Pemain</th>
-                <th>Kartu</th>
-                <th>Penalti</th>
+                <th>Sisa Kartu</th>
+                <th>Penalty</th>
             </tr>
+
     `;
 
 
-    for (let i = 0; i < 4; i++) {
+    players.forEach(
+        (player,index) => {
 
-        const penalty =
-            i === roundWinner
-                ? 0
-                : calculatePenalty(
-                    players[i].hand
-                );
+            const penalty =
+                playerPenalty(player);
 
-
-        html += `
-
-            <tr>
-
-                <td>
-                    ${escapeHTML(players[i].name)}
-                </td>
-
-                <td>
-                    ${players[i].hand.length}
-                </td>
-
-                <td>
-                    ${penalty}
-                </td>
-
-            </tr>
-
-        `;
-
-    }
-
-
-    html += `
-
-        </table>
-
-        <div class="modal-buttons">
-
-            <button
-                class="btn"
-                onclick="nextRound()">
-                ▶ RONDE BERIKUTNYA
-            </button>
-
-            <button
-                class="btn secondary"
-                onclick="showScore()">
-                🏆 LIHAT SKOR
-            </button>
-
-        </div>
-    `;
-
-
-    document.getElementById(
-        "modalContent"
-    ).innerHTML = html;
-
-
-    openModal();
-
-}
-
-
-/* ============================================================
-   NEXT ROUND
-   ============================================================ */
-
-function nextRound() {
-
-    closeModal();
-
-    roundNumber++;
-
-    startRound();
-
-}
-
-
-/* ============================================================
-   SCORE MODAL
-   ============================================================ */
-
-function showScore() {
-
-    let html = `
-
-        <h2>🏆 SKOR PERMAINAN</h2>
-
-        <table class="score-table">
-
-            <tr>
-                <th>Peringkat</th>
-                <th>Pemain</th>
-                <th>Penalti</th>
-            </tr>
-    `;
-
-
-    const ranking =
-        players
-            .map(
-                (p, i) => ({
-                    name: p.name,
-                    score: scores[i],
-                    index: i
-                })
-            )
-            .sort(
-                (a,b) =>
-                    a.score - b.score
-            );
-
-
-    ranking.forEach(
-        (player, index) => {
 
             html += `
 
                 <tr>
 
                     <td>
-                        ${index + 1}
+                        ${player.name}
+                        ${
+                            index === winnerIndex
+                            ? " 🏆"
+                            : ""
+                        }
                     </td>
 
                     <td>
-                        ${escapeHTML(
-                            player.name
-                        )}
+                        ${player.hand.length}
                     </td>
 
                     <td>
-                        ${player.score}
+                        ${penalty}
                     </td>
 
                 </tr>
@@ -2613,219 +2973,171 @@ function showScore() {
 
 
     html += `
-
         </table>
-
-        <p style="font-size:13px;color:#666;">
-            Semakin kecil total penalti,
-            semakin baik posisi pemain.
-        </p>
-
-        <div class="modal-buttons">
-
-            <button
-                class="btn"
-                onclick="closeModal()">
-                TUTUP
-            </button>
-
-        </div>
     `;
 
 
     document.getElementById(
-        "modalContent"
-    ).innerHTML = html;
+        "resultContent"
+    ).innerHTML =
+        html;
 
 
-    openModal();
+    document.getElementById(
+        "resultModal"
+    ).classList.add("show");
+
+
+    logGame(
+        winner.name +
+        " memenangkan permainan!"
+    );
 
 }
 
 
-/* ============================================================
-   RULES MODAL
-   ============================================================ */
+/* =========================================================
+   RULES
+========================================================= */
 
 function showRules() {
 
     document.getElementById(
-        "modalContent"
-    ).innerHTML = `
-
-        <h2>📖 Aturan Remi</h2>
-
-        <h3>Tujuan</h3>
-
-        <p>
-            Menjadi pemain pertama yang berhasil
-            menyusun seluruh kartu menjadi kombinasi
-            yang sah.
-        </p>
-
-        <h3>SET</h3>
-
-        <p>
-            3 atau 4 kartu dengan angka yang sama
-            dan simbol berbeda.
-        </p>
-
-        <p>
-            Contoh:
-            <b>7♠ 7♥ 7♦</b>
-        </p>
-
-        <h3>RUN</h3>
-
-        <p>
-            Minimal 3 kartu berurutan dengan
-            simbol yang sama.
-        </p>
-
-        <p>
-            Contoh:
-            <b>4♥ 5♥ 6♥</b>
-        </p>
-
-        <h3>Joker</h3>
-
-        <p>
-            Joker dapat menggantikan kartu apa pun.
-            Maksimal 1 Joker dalam satu kombinasi.
-        </p>
-
-        <h3>Ace</h3>
-
-        <p>
-            Ace hanya menjadi kartu rendah:
-            A-2-3.
-        </p>
-
-        <h3>Giliran</h3>
-
-        <p>
-            Ambil → Susun → Buang.
-        </p>
-
-        <h3>Nilai Penalti</h3>
-
-        <ul>
-
-            <li>A = 1</li>
-
-            <li>2–10 = sesuai angka</li>
-
-            <li>J = 10</li>
-
-            <li>Q = 10</li>
-
-            <li>K = 10</li>
-
-            <li>Joker = 0</li>
-
-        </ul>
-
-        <div class="modal-buttons">
-
-            <button
-                class="btn"
-                onclick="closeModal()">
-                TUTUP
-            </button>
-
-        </div>
-    `;
-
-
-    openModal();
+        "rulesModal"
+    ).classList.add("show");
 
 }
 
 
-/* ============================================================
-   NEW GAME
-   ============================================================ */
+function closeRules() {
 
-function newGame() {
+    document.getElementById(
+        "rulesModal"
+    ).classList.remove("show");
 
-    if (
-        !confirm(
-            "Mulai game baru? Skor akan direset."
-        )
-    ) {
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+function updateControls() {
+
+    const drawDeck =
+        document.getElementById(
+            "drawDeckBtn"
+        );
+
+    const drawDiscard =
+        document.getElementById(
+            "drawDiscardBtn"
+        );
+
+    const combo =
+        document.getElementById(
+            "comboBtn"
+        );
+
+    const discard =
+        document.getElementById(
+            "discardBtn"
+        );
+
+    const declare =
+        document.getElementById(
+            "declareBtn"
+        );
+
+
+    if (!gameStarted) {
+
+        drawDeck.disabled = true;
+        drawDiscard.disabled = true;
+        combo.disabled = true;
+        discard.disabled = true;
+        declare.disabled = true;
 
         return;
 
     }
 
 
-    closeModal();
-
-    scores = [0,0,0,0];
-
-    roundNumber = 1;
-
-    startRound();
-
-}
+    drawDeck.disabled =
+        hasDrawn ||
+        deck.length === 0;
 
 
-/* ============================================================
-   MODAL
-   ============================================================ */
-
-function openModal() {
-
-    document.getElementById(
-        "modalOverlay"
-    ).style.display = "flex";
-
-}
+    drawDiscard.disabled =
+        hasDrawn ||
+        discardPile.length === 0;
 
 
-function closeModal() {
+    combo.disabled =
+        !hasDrawn ||
+        selectedCards.length < 3;
 
-    document.getElementById(
-        "modalOverlay"
-    ).style.display = "none";
+
+    discard.disabled =
+        !hasDrawn ||
+        selectedCards.length !== 1;
+
+
+    declare.disabled =
+        !hasDrawn;
 
 }
 
 
-/* ============================================================
-   TOAST
-   ============================================================ */
+/* =========================================================
+   LOG
+========================================================= */
 
-function showToast(message) {
+function logGame(text) {
 
-    const toast =
-        document.getElementById("toast");
-
-
-    toast.textContent = message;
-
-    toast.classList.add("show");
-
-
-    clearTimeout(
-        window.toastTimer
-    );
-
-
-    window.toastTimer =
-        setTimeout(
-            () => {
-                toast.classList.remove("show");
-            },
-            2200
+    const log =
+        document.getElementById(
+            "gameLog"
         );
 
+
+    const line =
+        document.createElement("div");
+
+
+    const time =
+        new Date().toLocaleTimeString(
+            "id-ID",
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+
+    line.textContent =
+        "[" + time + "] " + text;
+
+
+    log.prepend(line);
+
+
+    while (
+        log.children.length > 30
+    ) {
+
+        log.removeChild(
+            log.lastChild
+        );
+
+    }
+
 }
 
 
-/* ============================================================
+/* =========================================================
    CARD NAME
-   ============================================================ */
+========================================================= */
 
 function cardName(card) {
 
@@ -2835,48 +3147,70 @@ function cardName(card) {
 
     }
 
-    return card.rank + card.suit;
-
-}
-
-
-/* ============================================================
-   ESCAPE HTML
-   ============================================================ */
-
-function escapeHTML(text) {
-
-    return text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-
-}
-
-
-/* ============================================================
-   CLOSE MODAL WHEN CLICK OUTSIDE
-   ============================================================ */
-
-document
-    .getElementById("modalOverlay")
-    .addEventListener(
-        "click",
-        function(event) {
-
-            if (
-                event.target ===
-                this
-            ) {
-
-                closeModal();
-
-            }
-
-        }
+    return (
+        card.rank +
+        card.suit
     );
+
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+let toastTimer = null;
+
+
+function toast(message) {
+
+    const element =
+        document.getElementById(
+            "toast"
+        );
+
+
+    element.textContent =
+        message;
+
+
+    element.classList.add(
+        "show"
+    );
+
+
+    clearTimeout(
+        toastTimer
+    );
+
+
+    toastTimer =
+        setTimeout(
+            () => {
+
+                element.classList.remove(
+                    "show"
+                );
+
+            },
+            1800
+        );
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+window.addEventListener(
+    "load",
+    function() {
+
+        newGame();
+
+    }
+);
 
 </script>
 
