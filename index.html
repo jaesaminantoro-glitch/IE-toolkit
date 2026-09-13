@@ -2,419 +2,2208 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IE All-in-One Translator</title>
-    <!-- Tesseract.js Library untuk OCR Gambar -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Sistem Manajemen Kas RT & Iuran Warga - Puri Avanti RT 1 RW 12</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SheetJS CDN for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
-            background-color: #f8f9fa;
-            color: #202124;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 12px;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden;
         }
-
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
-            height: fit-content;
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
         }
-
-        .header {
-            text-align: center;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #1a73e8;
-            margin-bottom: 16px;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
         }
-
-        .lang-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #f1f3f4;
-            border-radius: 12px;
-            padding: 6px 10px;
-            margin-bottom: 16px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
-
-        select {
-            flex: 1;
-            border: none;
-            background: transparent;
-            font-size: 0.95rem;
+        .tab-active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
             font-weight: 600;
-            color: #3c4043;
-            padding: 8px 4px;
-            outline: none;
-            text-align-last: center;
         }
-
-        .swap-btn {
-            background: #ffffff;
-            border: 1px solid #dadce0;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin: 0 6px;
+        .tab-inactive {
+            color: #64748b;
+            font-weight: 500;
         }
-
-        .media-tools {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .tool-btn {
-            flex: 1;
-            background: #e8f0fe;
-            color: #1a73e8;
-            border: 1px dashed #1a73e8;
-            border-radius: 12px;
-            padding: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .tool-btn.recording {
-            background: #fce8e6;
-            color: #d93025;
-            border-color: #d93025;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-
-        #imageInput {
-            display: none;
-        }
-
-        .preview-img {
-            max-width: 100%;
-            max-height: 120px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            display: none;
-            object-fit: contain;
-        }
-
-        .card-box {
-            background: #ffffff;
-            border: 1px solid #dadce0;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-box.output-theme {
-            background: #f8f9fa;
-        }
-
-        textarea {
-            width: 100%;
-            height: 100px;
-            border: none;
-            outline: none;
-            resize: none;
-            font-size: 1rem;
-            color: #202124;
-            background: transparent;
-        }
-
-        .actions-row {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 8px;
-            border-top: 1px solid #f1f3f4;
-            padding-top: 8px;
-        }
-
-        .icon-btn {
-            background: #f1f3f4;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #3c4043;
-            cursor: pointer;
-        }
-
-        .status {
-            font-size: 0.8rem;
-            color: #70757a;
-            text-align: center;
-            margin-top: 4px;
+        .admin-only.hidden { display:none !important; }
+        .readonly-overlay { pointer-events:none; opacity:.65; }
+        
+        th, td {
+            white-space: normal !important;
+            word-break: break-word;
         }
     </style>
+    <!-- Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-database-compat.js"></script>
 </head>
-<body>
+<body class="text-slate-800 min-h-screen flex flex-col overflow-x-hidden relative">
 
-    <div class="app-container">
-        <div class="header">IE All-in-One Translator</div>
+    <nav class="bg-blue-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex flex-col sm:flex-row justify-between items-center gap-2.5">
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm shadow-inner shrink-0">
+                        <i class="fas fa-building text-sm sm:text-lg"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h1 class="font-bold text-xs sm:text-base leading-tight truncate">Puri Avanti RT 01 RW 12</h1>
+                        <p class="text-blue-200 text-[10px] sm:text-xs truncate">Manajemen Keuangan & Status Iuran</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center shrink-0 sm:hidden">
+                    <button id="admin-login-btn-mb" onclick="openAdminLogin()" class="px-2 py-1 rounded-lg bg-white/15 text-xs font-semibold">
+                        <i class="fas fa-lock"></i>
+                    </button>
+                    <button id="admin-change-pin-btn-mb" onclick="openChangePin()" class="admin-only ml-1 px-2 py-1 rounded-lg bg-amber-500 text-xs font-semibold hidden">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    <button id="admin-logout-btn-mb" onclick="logoutAdmin()" class="admin-only ml-1 px-2 py-1 rounded-lg bg-rose-500 text-xs font-semibold hidden">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-center bg-blue-800/60 p-1 rounded-xl border border-blue-500/30 w-full sm:w-auto justify-center">
+                <button onclick="switchMainPage('dashboard')" id="nav-btn-dashboard" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-blue-800 shadow text-center">
+                    <i class="fas fa-chart-pie mr-1"></i> Kas & Transaksi
+                </button>
+                <button onclick="switchMainPage('houses')" id="nav-btn-houses" class="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-blue-100 hover:text-white hover:bg-white/10 relative text-center">
+                    <i class="fas fa-home mr-1"></i> Status Iuran
+                    <span id="unpaid-badge" class="ml-1 px-1.5 py-0.5 text-[9px] bg-rose-500 text-white rounded-full font-bold inline-block">0</span>
+                </button>
+            </div>
 
-        <!-- Selector Bahasa -->
-        <div class="lang-bar">
-            <select id="srcLang" onchange="processTranslation()">
-                <option value="auto">Deteksi Bahasa</option>
-                <option value="id" selected>Indonesia</option>
-                <option value="en">Inggris</option>
-                <option value="ja">Jepang</option>
-                <option value="zh-CN">Mandarin</option>
-                <option value="ar">Arab</option>
-            </select>
+            <div class="hidden sm:flex items-center">
+                <div class="text-xs font-medium text-blue-100 hidden lg:block mr-3" id="current-date"></div>
+                <button id="admin-login-btn" onclick="openAdminLogin()" class="ml-3 px-3 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-semibold">
+                    <i class="fas fa-lock mr-1"></i> Login Admin
+                </button>
+                <button id="admin-change-pin-btn" onclick="openChangePin()" class="admin-only ml-2 px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-semibold hidden">
+                    <i class="fas fa-key mr-1"></i> Ubah PIN
+                </button>
+                <button id="admin-logout-btn" onclick="logoutAdmin()" class="admin-only ml-2 px-3 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-xs font-semibold hidden">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
 
-            <button class="swap-btn" onclick="swapLangs()">⇄</button>
+    <main class="max-w-6xl mx-auto px-2 sm:px-4 py-4 flex-1 w-full space-y-4">
+        
+        <div id="firebase-status" class="text-[11px] text-slate-500 font-medium px-1"></div>
 
-            <select id="tgtLang" onchange="processTranslation()">
-                <option value="id">Indonesia</option>
-                <option value="en" selected>Inggris</option>
-                <option value="ja">Jepang</option>
-                <option value="zh-CN">Mandarin</option>
-                <option value="ar">Arab</option>
-            </select>
+        <!-- PANEL ADMIN: SIAPA YANG SEDANG ONLINE -->
+        <div id="admin-online-panel" class="admin-only bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hidden">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-2">
+                    <i class="fas fa-signal text-emerald-500 animate-pulse"></i> Pengunjung Sedang Membuka Web 
+                    <span id="online-count-badge" class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-bold">0 Online</span>
+                </h3>
+                <span class="text-[10px] text-slate-400">Pembaruan Real-time</span>
+            </div>
+            <div id="online-users-container" class="flex flex-wrap gap-2"></div>
         </div>
 
-        <!-- Tombol Input Gambar & Suara -->
-        <div class="media-tools">
-            <label for="imageInput" class="tool-btn">
-                📷 Foto / Galeri
-            </label>
-            <input type="file" id="imageInput" accept="image/*" onchange="processImage(event)">
+        <!-- DASHBOARD KAS & TRANSAKSI -->
+        <div id="page-dashboard" class="space-y-4 sm:space-y-6">
+            
+            <!-- TOMBOL AKORDION INFORMASI REKENING BANK & RINCIAN DANA -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <button onclick="toggleBankSection()" class="w-full p-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between transition-colors text-left">
+                    <span class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                        <i class="fas fa-university text-blue-600 text-[11px]"></i> Informasi Rekening Pembayaran RT & Rincian Alokasi Iuran Warga
+                    </span>
+                    <i id="bank-toggle-icon" class="fas fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                </button>
+                <div id="bank-section-content" class="p-3 border-t border-slate-100 hidden space-y-3">
+                    <div class="flex justify-between items-center pb-1 border-b border-slate-100">
+                        <span class="text-[11px] font-semibold text-slate-600">Daftar Rekening Tujuan:</span>
+                        <button onclick="openAddBankModal()" class="admin-only px-2 py-0.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold rounded transition-colors flex items-center gap-1 shadow-sm hidden">
+                            <i class="fas fa-plus"></i> Tambah Bank
+                        </button>
+                    </div>
+                    <div id="bank-accounts-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
 
-            <button id="micBtn" class="tool-btn" onclick="toggleSpeech()">
-                🎙️ Rekam Suara
-            </button>
-        </div>
+                    <!-- RINCIAN ALOKASI IURAN WARGA -->
+                    <div class="mt-3 pt-3 border-t border-slate-100">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1">
+                                <i class="fas fa-wallet text-emerald-600"></i> Rincian Alokasi Iuran Warga
+                            </h4>
+                            <button onclick="openAddAllocationModal()" class="admin-only px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-semibold rounded transition-colors flex items-center gap-1 shadow-sm hidden">
+                                <i class="fas fa-plus"></i> Tambah Rincian
+                            </button>
+                        </div>
+                        <div id="allocations-container" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                            <!-- Dinamis dimuat oleh JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <center><img id="imgPreview" class="preview-img" alt="Preview Gambar"></center>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5">
+                <div class="bg-gradient-to-br from-blue-700 to-indigo-800 text-white rounded-2xl p-4 sm:p-6 shadow-md relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] sm:text-xs uppercase tracking-wider text-blue-200 font-semibold">Total Saldo Kas RT</span>
+                            <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded text-white">Aktif</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1" id="total-balance">Rp 0</h2>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-white/20 flex justify-between items-center text-[11px] text-blue-100">
+                        <span>Status Kas</span>
+                        <span class="font-medium text-emerald-300 flex items-center gap-1"><i class="fas fa-check-circle"></i> Seimbang</span>
+                    </div>
+                </div>
 
-        <!-- Input Box Teks -->
-        <div class="card-box">
-            <textarea id="inputText" placeholder="Ketik, rekam suara, atau unggah foto..." oninput="handleInput()"></textarea>
-            <div class="actions-row">
-                <button class="icon-btn" onclick="speak('inputText', 'srcLang')">🔊 Suara</button>
-                <button class="icon-btn" onclick="clearAll()">🗑️ Hapus</button>
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] sm:text-xs uppercase tracking-wider text-slate-500 font-bold">Total Pemasukan</span>
+                            <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                <i class="fas fa-arrow-down text-xs"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-emerald-600" id="total-income">Rp 0</h3>
+                    </div>
+                    
+                    <div class="mt-3 pt-2 border-t border-slate-100 space-y-1 text-xs text-slate-600">
+                        <div class="flex justify-between text-[11px]">
+                            <span><i class="fas fa-money-bill-wave text-amber-500 w-3"></i> Tunai:</span>
+                            <span class="font-semibold text-slate-800" id="income-cash">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between text-[11px]">
+                            <span><i class="fas fa-university text-blue-500 w-3"></i> Mandiri:</span>
+                            <span class="font-semibold text-slate-800" id="income-mandiri">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between text-[11px]">
+                            <span><i class="fas fa-credit-card text-indigo-500 w-3"></i> BCA:</span>
+                            <span class="font-semibold text-slate-800" id="income-bca">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] sm:text-xs uppercase tracking-wider text-slate-500 font-bold">Total Pengeluaran</span>
+                            <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                                <i class="fas fa-arrow-up text-xs"></i>
+                            </div>
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-rose-600" id="total-expense">Rp 0</h3>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-slate-100 text-[10px] sm:text-xs text-slate-500 flex items-center gap-1.5">
+                        <i class="fas fa-info-circle text-blue-500 shrink-0"></i>
+                        <span>Tercatat & diverifikasi pengurus RT.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Input & Tabel Riwayat -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div id="transaction-form-container" class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6 flex flex-col admin-only hidden">
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2" id="form-title">
+                            <i class="fas fa-pen-to-square text-blue-600"></i> Catat Transaksi Baru
+                        </h3>
+                        <button type="button" id="btn-cancel-edit" onclick="cancelEditTransaction()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded-lg font-medium hidden">
+                            Batal
+                        </button>
+                    </div>
+
+                    <div id="form-type-switcher" class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-4">
+                        <button type="button" onclick="switchForm('income')" id="btn-form-income" class="py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1">
+                            <i class="fas fa-plus-circle"></i> Pemasukan
+                        </button>
+                        <button type="button" onclick="switchForm('expense')" id="btn-form-expense" class="py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+                            <i class="fas fa-minus-circle"></i> Pengeluaran
+                        </button>
+                    </div>
+
+                    <form id="form-income" class="space-y-3">
+                        <input type="hidden" id="inc-id" value="">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Transaksi <span class="text-rose-500">*</span></label>
+                            <input type="date" id="inc-date" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembayaran <span class="text-rose-500">*</span></label>
+                            <select id="inc-method" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                <option value="Cash">Cash / Tunai</option>
+                                <option value="Bank Mandiri">Bank Mandiri</option>
+                                <option value="Bank BCA">Bank BCA</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">No. Rumah / Blok Warga</label>
+                            <input type="text" id="inc-house" list="house-list" placeholder="Misal: A-01" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                            <datalist id="house-list"></datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Keperluan <span class="text-rose-500">*</span></label>
+                            <input type="text" id="inc-desc" placeholder="Misal: Iuran Kas Bulan September" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal (Rp) <span class="text-rose-500">*</span></label>
+                            <input type="number" id="inc-amount" min="1" placeholder="50000" oninput="updateAllocationPreview(this.value)" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+
+                        <!-- RINCIAN ALOKASI OTOMATIS DI BAWAH NOMINAL -->
+                        <div id="income-allocation-preview" class="p-2.5 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-1 text-[11px]">
+                            <div class="font-bold text-emerald-800 flex items-center justify-between">
+                                <span class="flex items-center gap-1"><i class="fas fa-wallet text-emerald-600"></i> Rincian Alokasi Dana:</span>
+                                <span id="preview-total-nominal" class="text-emerald-700">Rp 0</span>
+                            </div>
+                            <div id="preview-allocation-list" class="space-y-1 mt-1 text-slate-600">
+                                <span class="text-slate-400 italic">Masukkan nominal untuk melihat rincian...</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Upload Bukti Transaksi (Bisa > 1 Foto) <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <input type="file" id="inc-proof" accept="image/*" multiple onchange="handleFilesUpload('income')" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                            <div id="inc-preview-container" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+
+                        <button type="submit" id="inc-submit-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-2">
+                            <i class="fas fa-save"></i> Simpan Pemasukan
+                        </button>
+                    </form>
+
+                    <form id="form-expense" class="space-y-3 hidden">
+                        <input type="hidden" id="exp-id" value="">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Transaksi <span class="text-rose-500">*</span></label>
+                            <input type="date" id="exp-date" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Pengeluaran <span class="text-rose-500">*</span></label>
+                            <input type="text" id="exp-desc" placeholder="Misal: Perbaikan Lampu Jalan" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal Pengeluaran (Rp) <span class="text-rose-500">*</span></label>
+                            <input type="number" id="exp-amount" min="1" placeholder="150000" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-rose-500 outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Upload Bukti / Nota (Bisa > 1 Foto) <span class="text-slate-400 font-normal">(Opsional)</span></label>
+                            <input type="file" id="exp-proof" accept="image/*" multiple onchange="handleFilesUpload('expense')" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer">
+                            <div id="exp-preview-container" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+
+                        <button type="submit" id="exp-submit-btn" class="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm rounded-lg transition-colors shadow-sm flex items-center justify-center gap-1.5 mt-2">
+                            <i class="fas fa-save"></i> Simpan Pengeluaran
+                        </button>
+                    </form>
+                </div>
+
+                <div id="transaction-history-container" class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[520px]">
+                    <div class="flex items-center justify-between px-3 sm:px-6 pt-3 border-b border-slate-200 bg-slate-50/50">
+                        <div class="flex gap-4">
+                            <button onclick="switchDataTab('history')" id="tab-data-history" class="pb-2.5 text-xs sm:text-sm transition-all tab-active">
+                                <i class="fas fa-list-ul mr-1"></i> Buku Kas
+                            </button>
+                            <button onclick="switchDataTab('recap')" id="tab-data-recap" class="pb-2.5 text-xs sm:text-sm transition-all tab-inactive">
+                                <i class="fas fa-chart-line mr-1"></i> Rekap Bulanan
+                            </button>
+                        </div>
+                        <button onclick="exportToExcel()" class="mb-2 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                            <i class="fas fa-file-excel"></i> Ekspor Excel
+                        </button>
+                    </div>
+
+                    <div id="view-history" class="p-0 overflow-hidden flex-1 flex flex-col">
+                        <div class="p-2 sm:px-4 sm:py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-2 items-center justify-between">
+                            <div class="flex items-center gap-2 flex-1 min-w-[180px]">
+                                <div class="relative w-full">
+                                    <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    <input type="text" id="history-search-input" onkeyup="renderHistory()" placeholder="Cari keterangan / No. Rumah..." class="w-full pl-8 pr-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <select id="history-type-filter" onchange="renderHistory()" class="px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-white outline-none">
+                                    <option value="all">Semua Jenis</option>
+                                    <option value="income">Pemasukan</option>
+                                    <option value="expense">Pengeluaran</option>
+                                </select>
+                                <select id="history-method-filter" onchange="renderHistory()" class="px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-white outline-none">
+                                    <option value="all">Semua Metode</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank Mandiri">Mandiri</option>
+                                    <option value="Bank BCA">BCA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overflow-y-auto custom-scrollbar flex-1 p-2 sm:p-0">
+                            <table class="hidden sm:table w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider sticky top-0 shadow-sm border-b border-slate-200">
+                                        <th class="px-2 sm:px-3 py-2 font-semibold w-20">Tanggal</th>
+                                        <th class="px-2 sm:px-3 py-2 font-semibold w-16">Blok</th>
+                                        <th class="px-2 sm:px-3 py-2 font-semibold">Keterangan</th>
+                                        <th class="px-2 sm:px-3 py-2 font-semibold text-right w-24 sm:w-28 text-emerald-600">Pemasukan</th>
+                                        <th class="px-2 sm:px-3 py-2 font-semibold text-right w-24 sm:w-28 text-rose-600">Pengeluaran</th>
+                                        <th class="px-1 py-2 font-semibold text-center w-12">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+                            </table>
+                            
+                            <div id="history-mobile-list" class="sm:hidden space-y-2"></div>
+                        </div>
+                        <div id="history-empty" class="hidden flex-col items-center justify-center p-8 text-slate-400 my-auto">
+                            <i class="fas fa-inbox text-3xl mb-2 text-slate-300"></i>
+                            <p class="font-medium text-xs">Belum ada transaksi kas yang sesuai dengan pencarian.</p>
+                        </div>
+                    </div>
+
+                    <div id="view-recap" class="p-0 overflow-hidden hidden flex-1 flex-col">
+                        <div class="bg-blue-50/80 px-3 py-1.5 border-b border-blue-100 flex justify-between items-center text-[10px] sm:text-xs text-blue-800">
+                            <span><i class="fas fa-info-circle mr-1"></i> Akumulasi kas per periode bulan.</span>
+                        </div>
+                        <div class="overflow-y-auto custom-scrollbar flex-1">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-[10px] sm:text-xs uppercase tracking-wider sticky top-0 shadow-sm border-b border-slate-200">
+                                        <th class="px-3 py-2 font-semibold">Periode</th>
+                                        <th class="px-2 py-2 font-semibold text-right">Masuk</th>
+                                        <th class="px-2 py-2 font-semibold text-right">Keluar</th>
+                                        <th class="px-3 py-2 font-semibold text-right">Bersih</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recap-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+                            </table>
+                        </div>
+                        <div id="recap-empty" class="hidden flex-col items-center justify-center p-8 text-slate-400 my-auto">
+                            <i class="fas fa-chart-pie text-3xl mb-2 text-slate-300"></i>
+                            <p class="font-medium text-xs">Belum ada data rekapitulasi.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Output Box Hasil -->
-        <div class="card-box output-theme">
-            <textarea id="outputText" placeholder="Hasil terjemahan..." readonly></textarea>
-            <div class="actions-row">
-                <button class="icon-btn" onclick="speak('outputText', 'tgtLang')">🔊 Suara</button>
-                <button class="icon-btn" onclick="copyText()">📋 Salin</button>
+        <!-- DAFTAR RUMAH WARGA & STATUS IURAN -->
+        <div id="page-houses" class="hidden space-y-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                    <div class="text-slate-500 text-[10px] font-semibold uppercase">Total Warga</div>
+                    <h3 class="text-lg sm:text-2xl font-bold text-slate-800" id="stat-total-houses">0</h3>
+                </div>
+                
+                <div class="bg-emerald-50/70 rounded-xl p-3 border border-emerald-200/80 shadow-sm">
+                    <div class="text-emerald-700 text-[10px] font-semibold uppercase">Sudah Bayar</div>
+                    <h3 class="text-lg sm:text-2xl font-bold text-emerald-800" id="stat-paid-houses">0</h3>
+                </div>
+
+                <div class="bg-rose-50/70 rounded-xl p-3 border border-rose-200/80 shadow-sm">
+                    <div class="text-rose-700 text-[10px] font-semibold uppercase">Belum Bayar</div>
+                    <h3 class="text-lg sm:text-2xl font-bold text-rose-800" id="stat-unpaid-houses">0</h3>
+                </div>
+
+                <div class="bg-blue-50/70 rounded-xl p-3 border border-blue-200/80 shadow-sm">
+                    <div class="text-blue-700 text-[10px] font-semibold uppercase">Persentase</div>
+                    <h3 class="text-lg sm:text-2xl font-bold text-blue-800" id="stat-percentage">0%</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Periode Bulan</label>
+                        <input type="month" id="house-period-filter" onchange="renderHouseStatus()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-500 uppercase mb-0.5">Status Bayar</label>
+                        <select id="house-status-filter" onchange="renderHouseStatus()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium bg-slate-50">
+                            <option value="all">Semua</option>
+                            <option value="unpaid">Belum Bayar</option>
+                            <option value="paid">Sudah Bayar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="house-search-input" onkeyup="renderHouseStatus()" placeholder="Cari No. Rumah / Nama..." class="w-full pl-8 pr-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <button onclick="exportHouseStatusToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 shrink-0 shadow-sm">
+                        <i class="fas fa-file-excel"></i> Ekspor
+                    </button>
+                    <button onclick="openAddHouseModal()" class="admin-only px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 shrink-0 hidden">
+                        <i class="fas fa-plus"></i> Warga
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wider border-b border-slate-200">
+                                <th class="px-3 py-2 font-semibold">Rumah & Penghuni</th>
+                                <th class="px-2 py-2 font-semibold text-center w-20">Status</th>
+                                <th class="px-2 py-2 font-semibold text-right w-20">Bayar</th>
+                                <th class="px-2 py-2 font-semibold text-center w-16">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="houses-tbody" class="divide-y divide-slate-100 text-xs"></tbody>
+                    </table>
+                </div>
+                <div id="houses-empty" class="hidden flex-col items-center justify-center p-8 text-slate-400">
+                    <i class="fas fa-users-slash text-3xl mb-2 text-slate-300"></i>
+                    <p class="font-medium text-xs">Tidak ada data warga ditemukan.</p>
+                </div>
             </div>
         </div>
+    </main>
 
-        <div class="status" id="statusMsg">Siap menerjemahkan...</div>
+    <!-- Modal Tambah/Edit Rekening Bank -->
+    <div id="bank-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5" id="bank-modal-title">
+                    <i class="fas fa-university text-blue-600"></i> Tambah Rekening Bank
+                </h3>
+                <button onclick="closeBankModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <form id="form-bank" class="p-4 space-y-3">
+                <input type="hidden" id="modal-bank-id" value="">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Bank <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modal-bank-name" placeholder="Misal: Bank Mandiri / BCA" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nomor Rekening <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modal-bank-number" placeholder="Misal: 123000456789" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Atas Nama (Pemilik Rekening) <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modal-bank-holder" placeholder="Misal: Kas RT 01 Puri Avanti" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeBankModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-xs shadow-sm">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah/Edit Rincian Alokasi Iuran -->
+    <div id="allocation-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5" id="allocation-modal-title">
+                    <i class="fas fa-wallet text-emerald-600"></i> Tambah Rincian Alokasi
+                </h3>
+                <button onclick="closeAllocationModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <form id="form-allocation" class="p-4 space-y-3">
+                <input type="hidden" id="modal-allocation-id" value="">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Kategori / Keperluan <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modal-allocation-title" placeholder="Misal: Keamanan & Pos Satpam" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nominal (Rp) <span class="text-rose-500">*</span></label>
+                    <input type="number" id="modal-allocation-amount" min="0" placeholder="20000" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none font-semibold">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeAllocationModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-xs shadow-sm">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Data Warga -->
+    <div id="house-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5" id="house-modal-title">
+                    <i class="fas fa-home text-blue-600"></i> Tambah Data Warga
+                </h3>
+                <button onclick="closeHouseModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <form id="form-house" class="p-4 space-y-3">
+                <input type="hidden" id="modal-house-id" value="">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Blok / No. Rumah <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modal-house-no" placeholder="Misal: A-01" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none uppercase font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nama Pemilik / Penghuni <span class="text-rose-500">*</span></label>
+                    <input type="text" id="modal-house-owner" placeholder="Misal: Bpk. Bambang" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">No. WhatsApp / Telepon</label>
+                    <input type="tel" id="modal-house-phone" placeholder="Misal: 08123456789" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeHouseModal()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-xs shadow-sm">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Lihat Bukti Transaksi -->
+    <div id="proof-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <i class="fas fa-receipt text-blue-600"></i> Bukti Transaksi
+                </h3>
+                <button onclick="closeProofModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <div id="proof-images-container" class="p-4 overflow-y-auto custom-scrollbar flex flex-wrap gap-3 items-center justify-center bg-slate-900 min-h-[220px]"></div>
+            <div class="p-2 bg-slate-50 text-right">
+                <button onclick="closeProofModal()" class="px-3 py-1 bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Login Admin -->
+    <div id="admin-login-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl max-w-xs w-full overflow-hidden shadow-2xl">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                    <i class="fas fa-lock text-blue-600"></i> Login Pengurus RT
+                </h3>
+                <button onclick="closeAdminLogin()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <form onsubmit="handleAdminLogin(event)" class="p-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">PIN Admin <span class="text-rose-500">*</span></label>
+                    <input type="password" id="admin-pin" placeholder="Masukkan 6 digit PIN" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 outline-none tracking-widest text-center font-bold">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeAdminLogin()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-xs shadow-sm">Masuk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ubah PIN Admin -->
+    <div id="change-pin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 hidden">
+        <div class="bg-white rounded-2xl max-w-xs w-full overflow-hidden shadow-2xl">
+            <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                    <i class="fas fa-key text-amber-500"></i> Ubah PIN Admin
+                </h3>
+                <button onclick="closeChangePin()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fas fa-times text-base"></i>
+                </button>
+            </div>
+            <form onsubmit="handlePinChange(event)" class="p-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">PIN Lama <span class="text-rose-500">*</span></label>
+                    <input type="password" id="old-pin" placeholder="PIN Lama" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-amber-500 outline-none tracking-widest text-center font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">PIN Baru (6 Digit) <span class="text-rose-500">*</span></label>
+                    <input type="password" id="new-pin" placeholder="PIN Baru" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-amber-500 outline-none tracking-widest text-center font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Konfirmasi PIN Baru <span class="text-rose-500">*</span></label>
+                    <input type="password" id="confirm-pin" placeholder="Ulangi PIN Baru" required class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-amber-500 outline-none tracking-widest text-center font-bold">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeChangePin()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs">Batal</button>
+                    <button type="submit" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg text-xs shadow-sm">Simpan PIN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 -translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 z-[200] pointer-events-none text-xs">
+        <i id="toast-icon" class="fas fa-check-circle text-emerald-400 text-sm"></i>
+        <span id="toast-message" class="font-medium whitespace-nowrap">Notifikasi</span>
     </div>
 
     <script>
-        let timer;
-        let recognition;
-        let isRecording = false;
+        const defaultHousesArray = [
+            { houseNumber: 'A-01', ownerName: 'Bpk. Budi Santoso', phone: '08123456781' },
+            { houseNumber: 'A-02', ownerName: 'Ibu Siti Aminah', phone: '08123456782' },
+            { houseNumber: 'A-03', ownerName: 'Bpk. Ahmad Dahlan', phone: '' },
+            { houseNumber: 'A-04', ownerName: 'Bpk. Hendra Gunawan', phone: '08123456784' },
+            { houseNumber: 'A-05', ownerName: 'Ibu Ratna Dewi', phone: '' },
+            { houseNumber: 'B-01', ownerName: 'Bpk. Joko Widodo', phone: '08123456786' },
+            { houseNumber: 'B-02', ownerName: 'Bpk. Agus Yudhoyono', phone: '' },
+            { houseNumber: 'B-03', ownerName: 'Ibu Megawati', phone: '08123456788' },
+            { houseNumber: 'B-04', ownerName: 'Bpk. Prabowo Subianto', phone: '' },
+            { houseNumber: 'B-05', ownerName: 'Bpk. Anies Baswedan', phone: '' }
+        ];
 
-        // 1. Fitur Speech-to-Text (Rekam Suara)
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
+        const defaultBanksArray = [
+            { bankName: 'Bank Mandiri', accountNumber: '1230008899123', accountHolder: 'Kas RT 01 Puri Avanti' },
+            { bankName: 'Bank BCA', accountNumber: '8830112233', accountHolder: 'Bendahara RT 01' }
+        ];
 
-            recognition.onstart = function() {
-                isRecording = true;
-                const micBtn = document.getElementById('micBtn');
-                micBtn.classList.add('recording');
-                micBtn.innerHTML = '🛑 Mendengarkan...';
-                document.getElementById('statusMsg').textContent = 'Silakan bicara sekarang...';
-            };
+        const defaultAllocationsArray = [
+            { title: 'Keamanan & Pos Satpam', amount: 20000 },
+            { title: 'Kebersihan & Angkut Sampah', amount: 20000 },
+            { title: 'Kas Sosial & Perawatan RT', amount: 10000 }
+        ];
 
-            recognition.onresult = function(event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById('inputText').value = transcript;
-                document.getElementById('statusMsg').textContent = 'Suara terdeteksi! Menerjemahkan...';
-                processTranslation();
-            };
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5XIhdeyBJw4MDNebedRKDcjsVcuR1Zx8",
+            authDomain: "jaes-c1b52.firebaseapp.com",
+            databaseURL: "https://jaes-c1b52-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "jaes-c1b52",
+            storageBucket: "jaes-c1b52.firebasestorage.app",
+            messagingSenderId: "934203338301",
+            appId: "1:934203338301:web:2bd353cec0b3f127e48454",
+            measurementId: "G-QT5XKJSQ1X"
+        };
 
-            recognition.onerror = function(event) {
-                document.getElementById('statusMsg').textContent = 'Gagal merekam suara: ' + event.error;
-                stopRecordingUI();
-            };
+        let firebaseReady = false;
+        let firebaseDb = null;
+        let transactions = []; 
+        let houses = [];       
+        let bankAccounts = [];
+        let feeAllocations = [];
+        let editingTransactionId = null;
+        let userSessionId = 'User_' + Math.random().toString(36).substring(2, 8);
 
-            recognition.onend = function() {
-                stopRecordingUI();
-            };
-        } else {
-            document.getElementById('micBtn').style.display = 'none';
-        }
+        let currentIncomeProofs = [];
+        let currentExpenseProofs = [];
 
-        function toggleSpeech() {
-            if (!recognition) {
-                alert('Fitur perekam suara tidak didukung di browser ini.');
-                return;
-            }
+        const DEFAULT_ADMIN_PIN = '123456';
+        let ADMIN_PIN = localStorage.getItem('kasRtAdminPin') || DEFAULT_ADMIN_PIN;
+        let isAdmin = sessionStorage.getItem('kasRtIsAdmin') === 'true';
 
-            if (isRecording) {
-                recognition.stop();
+        const now = new Date();
+        const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+        window.toggleBankSection = function() {
+            const content = document.getElementById('bank-section-content');
+            const icon = document.getElementById('bank-toggle-icon');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
             } else {
-                let srcLang = document.getElementById('srcLang').value;
-                if (srcLang === 'auto') srcLang = 'id'; // Default ke ID jika auto
-                recognition.lang = srcLang;
-                recognition.start();
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
             }
+        };
+
+        function updateHouseDatalist() {
+            const datalist = document.getElementById('house-list');
+            if (!datalist) return;
+            datalist.innerHTML = houses.map(h => 
+                `<option value="${escapeHTML(h.houseNumber)}">${escapeHTML(h.houseNumber)} - ${escapeHTML(h.ownerName)}</option>`
+            ).join('');
         }
 
-        function stopRecordingUI() {
-            isRecording = false;
-            const micBtn = document.getElementById('micBtn');
-            micBtn.classList.remove('recording');
-            micBtn.innerHTML = '🎙️ Rekam Suara';
-        }
+        window.formatRupiah = function(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(number || 0);
+        };
 
-        // 2. Fitur OCR (Foto/Gambar)
-        async function processImage(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        window.formatDate = function(dateString) {
+            if (!dateString) return '-';
+            const d = new Date(dateString);
+            if (isNaN(d.getTime())) return dateString;
+            return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        };
 
-            const imgPreview = document.getElementById('imgPreview');
-            const status = document.getElementById('statusMsg');
-            const inputText = document.getElementById('inputText');
+        window.escapeHTML = function(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag));
+        };
 
-            imgPreview.src = URL.createObjectURL(file);
-            imgPreview.style.display = 'block';
+        let toastTimer;
+        window.showToast = function(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
 
-            status.textContent = 'Membaca tulisan dari gambar...';
-
-            try {
-                const result = await Tesseract.recognize(file, 'eng+ind');
-                const extractedText = result.data.text.trim();
-
-                if (extractedText) {
-                    inputText.value = extractedText;
-                    status.textContent = 'Tulisan terdeteksi! Menerjemahkan...';
-                    processTranslation();
-                } else {
-                    status.textContent = 'Tidak ada tulisan yang terdeteksi pada gambar.';
-                }
-            } catch (error) {
-                status.textContent = 'Gagal membaca gambar.';
+            toastMessage.textContent = message;
+            if (type === 'delete' || type === 'error') {
+                toastIcon.className = 'fas fa-exclamation-circle text-rose-400 text-sm';
+            } else {
+                toastIcon.className = 'fas fa-check-circle text-emerald-400 text-sm';
             }
-        }
 
-        // 3. Logika Terjemahan & Utilitas
-        function handleInput() {
-            document.getElementById('statusMsg').textContent = 'Mengetik...';
-            clearTimeout(timer);
-            timer = setTimeout(processTranslation, 500);
-        }
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('-translate-y-20', 'opacity-0');
+            }, 3000);
+        };
 
-        function processTranslation() {
-            const text = document.getElementById('inputText').value.trim();
-            const src = document.getElementById('srcLang').value;
-            const tgt = document.getElementById('tgtLang').value;
-            const output = document.getElementById('outputText');
-            const status = document.getElementById('statusMsg');
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`Berhasil menyalin: ${text}`);
+            }).catch(err => {
+                showToast('Gagal menyalin teks', 'error');
+            });
+        };
 
-            if (!text) {
-                output.value = '';
-                status.textContent = 'Siap menerjemahkan...';
+        window.switchMainPage = function(page) {
+            const pageDashboard = document.getElementById('page-dashboard');
+            const pageHouses = document.getElementById('page-houses');
+            const navBtnDash = document.getElementById('nav-btn-dashboard');
+            const navBtnHouses = document.getElementById('nav-btn-houses');
+
+            if (page === 'dashboard') {
+                pageDashboard.classList.remove('hidden');
+                pageHouses.classList.add('hidden');
+                navBtnDash.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-blue-800 shadow text-center";
+                navBtnHouses.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-blue-100 hover:text-white hover:bg-white/10 relative text-center";
+            } else {
+                pageDashboard.classList.add('hidden');
+                pageHouses.classList.remove('hidden');
+                navBtnHouses.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-blue-800 shadow text-center";
+                navBtnDash.className = "flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-blue-100 hover:text-white hover:bg-white/10 relative text-center";
+                renderHouseStatus();
+            }
+        };
+
+        window.switchMainView = window.switchMainPage;
+
+        window.switchForm = function(type) {
+            const formIncome = document.getElementById('form-income');
+            const formExpense = document.getElementById('form-expense');
+            const btnInc = document.getElementById('btn-form-income');
+            const btnExp = document.getElementById('btn-form-expense');
+
+            if (type === 'income') {
+                formIncome.classList.remove('hidden');
+                formExpense.classList.add('hidden');
+                btnInc.className = "py-1.5 text-xs font-bold rounded-lg transition-all bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1";
+                btnExp.className = "py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1";
+            } else {
+                formIncome.classList.add('hidden');
+                formExpense.classList.remove('hidden');
+                btnExp.className = "py-1.5 text-xs font-bold rounded-lg transition-all bg-rose-600 text-white shadow-sm flex items-center justify-center gap-1";
+                btnInc.className = "py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1";
+            }
+        };
+
+        let currentActiveTab = 'history';
+        window.switchDataTab = function(tab) {
+            currentActiveTab = tab;
+            const viewHistory = document.getElementById('view-history');
+            const viewRecap = document.getElementById('view-recap');
+            const tabHistory = document.getElementById('tab-data-history');
+            const tabRecap = document.getElementById('tab-data-recap');
+
+            if (tab === 'history') {
+                viewHistory.classList.remove('hidden');
+                viewHistory.classList.add('flex');
+                viewRecap.classList.add('hidden');
+                viewRecap.classList.remove('flex');
+                tabHistory.className = "pb-2.5 text-xs sm:text-sm transition-all tab-active";
+                tabRecap.className = "pb-2.5 text-xs sm:text-sm transition-all tab-inactive";
+            } else {
+                viewHistory.classList.add('hidden');
+                viewHistory.classList.remove('flex');
+                viewRecap.classList.remove('hidden');
+                viewRecap.classList.add('flex');
+                tabRecap.className = "pb-2.5 text-xs sm:text-sm transition-all tab-active";
+                tabHistory.className = "pb-2.5 text-xs sm:text-sm transition-all tab-inactive";
+                renderRecap();
+            }
+        };
+
+        window.updateAllocationPreview = function(val) {
+            const container = document.getElementById('preview-allocation-list');
+            const totalNominalEl = document.getElementById('preview-total-nominal');
+            const inputVal = parseFloat(val) || 0;
+            
+            totalNominalEl.textContent = formatRupiah(inputVal);
+
+            if (!feeAllocations || feeAllocations.length === 0) {
+                container.innerHTML = '<span class="text-slate-400 italic">Belum ada rincian alokasi terdaftar.</span>';
                 return;
             }
 
-            status.textContent = 'Menerjemahkan...';
+            const totalDefaultAlloc = feeAllocations.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${src}&tl=${tgt}&dt=t&q=${encodeURIComponent(text)}`;
+            let html = '';
+            feeAllocations.forEach(item => {
+                let allocatedAmount = 0;
+                if (totalDefaultAlloc > 0) {
+                    // Proporsional berdasarkan master alokasi, atau sesuaikan jika persis
+                    allocatedAmount = (parseFloat(item.amount) / totalDefaultAlloc) * inputVal;
+                }
+                html += `
+                    <div class="flex justify-between items-center text-xs py-0.5 border-b border-emerald-100/60 last:border-0">
+                        <span class="text-slate-700">• ${escapeHTML(item.title)}</span>
+                        <span class="font-bold text-emerald-800">${formatRupiah(Math.round(allocatedAmount))}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        };
 
-            fetch(url)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data[0]) {
-                        let result = data[0].map(item => item[0]).join('');
-                        output.value = result;
-                        status.textContent = 'Selesai menerjemahkan.';
+        window.handleFilesUpload = async function(type) {
+            const fileInput = document.getElementById(type === 'income' ? 'inc-proof' : 'exp-proof');
+            const files = fileInput.files;
+            if (!files || files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const base64 = await readFileAsBase64(files[i]);
+                if (base64) {
+                    if (type === 'income') {
+                        currentIncomeProofs.push(base64);
                     } else {
-                        status.textContent = 'Gagal menerjemahkan.';
+                        currentExpenseProofs.push(base64);
                     }
-                })
-                .catch(() => {
-                    status.textContent = 'Gagal terhubung. Pastikan internet aktif.';
-                });
-        }
+                }
+            }
+            fileInput.value = '';
+            renderPreviews(type);
+        };
 
-        function swapLangs() {
-            const src = document.getElementById('srcLang');
-            const tgt = document.getElementById('tgtLang');
-            if (src.value === 'auto') return;
-            const temp = src.value;
-            src.value = tgt.value;
-            tgt.value = temp;
-            processTranslation();
-        }
-
-        function copyText() {
-            const out = document.getElementById('outputText').value;
-            if (!out) return;
-            navigator.clipboard.writeText(out).then(() => {
-                alert('Teks berhasil disalin!');
+        function readFileAsBase64(file) {
+            return new Promise((resolve) => {
+                if (!file) {
+                    resolve('');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => resolve('');
+                reader.readAsDataURL(file);
             });
         }
 
-        function clearAll() {
-            document.getElementById('inputText').value = '';
-            document.getElementById('outputText').value = '';
-            document.getElementById('imageInput').value = '';
-            const imgPreview = document.getElementById('imgPreview');
-            imgPreview.src = '';
-            imgPreview.style.display = 'none';
-            document.getElementById('statusMsg').textContent = 'Siap menerjemahkan...';
+        window.renderPreviews = function(type) {
+            const container = document.getElementById(type === 'income' ? 'inc-preview-container' : 'exp-preview-container');
+            const list = type === 'income' ? currentIncomeProofs : currentExpenseProofs;
+            container.innerHTML = '';
+
+            list.forEach((imgSrc, index) => {
+                const wrap = document.createElement('div');
+                wrap.className = "relative w-16 h-16 rounded-lg overflow-hidden border border-slate-300 bg-slate-100 shrink-0 shadow-xs";
+                wrap.innerHTML = `
+                    <img src="${imgSrc}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeProofItem('${type}', ${index})" class="absolute top-0.5 right-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] shadow" title="Hapus foto">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(wrap);
+            });
+        };
+
+        window.removeProofItem = function(type, index) {
+            if (type === 'income') {
+                currentIncomeProofs.splice(index, 1);
+                renderPreviews('income');
+            } else {
+                currentExpenseProofs.splice(index, 1);
+                renderPreviews('expense');
+            }
+        };
+
+        window.renderBankAccounts = function() {
+            const container = document.getElementById('bank-accounts-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (bankAccounts.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-slate-400 col-span-full">Belum ada nomor rekening bank yang terdaftar.</p>';
+                return;
+            }
+
+            bankAccounts.forEach(b => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 shadow-xs";
+                card.innerHTML = `
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider">${escapeHTML(b.bankName)}</span>
+                            <span class="text-[10px] text-slate-400">•</span>
+                            <span class="text-[11px] text-slate-500 truncate">a.n. ${escapeHTML(b.accountHolder)}</span>
+                        </div>
+                        <div class="font-bold text-slate-800 text-xs tracking-wide">${escapeHTML(b.accountNumber)}</div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="copyToClipboard('${escapeHTML(b.accountNumber)}')" class="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded text-[10px] flex items-center gap-1 transition-colors" title="Salin No Rekening">
+                            <i class="fas fa-copy"></i> Salin
+                        </button>
+                        <button onclick="editBank('${b.id}')" class="admin-only text-slate-400 hover:text-amber-600 p-1 ${isAdmin ? '' : 'hidden'}" title="Edit Rekening">
+                            <i class="fas fa-pen text-[10px]"></i>
+                        </button>
+                        <button onclick="deleteBank('${b.id}')" class="admin-only text-slate-300 hover:text-rose-600 p-1 ${isAdmin ? '' : 'hidden'}" title="Hapus Rekening">
+                            <i class="fas fa-trash-alt text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        window.renderFeeAllocations = function() {
+            const container = document.getElementById('allocations-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (feeAllocations.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-slate-400 col-span-full">Belum ada rincian alokasi iuran.</p>';
+                return;
+            }
+
+            feeAllocations.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-2 rounded-lg border border-slate-200 flex items-center justify-between gap-2";
+                card.innerHTML = `
+                    <div class="min-w-0 flex-1">
+                        <span class="text-slate-500 block truncate">${escapeHTML(item.title)}</span>
+                        <strong class="text-slate-800 text-xs">${formatRupiah(item.amount)}</strong>
+                    </div>
+                    <div class="admin-only flex items-center gap-1 shrink-0 ${isAdmin ? '' : 'hidden'}">
+                        <button onclick="editAllocation('${item.id}')" class="text-slate-400 hover:text-amber-600 p-1" title="Edit Rincian">
+                            <i class="fas fa-pen text-[10px]"></i>
+                        </button>
+                        <button onclick="deleteAllocation('${item.id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Hapus Rincian">
+                            <i class="fas fa-trash-alt text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            // Update preview if input already has value
+            const currentAmount = document.getElementById('inc-amount').value;
+            if (currentAmount) updateAllocationPreview(currentAmount);
+        };
+
+        window.openAddBankModal = function() {
+            if (!requireAdmin()) return;
+            document.getElementById('modal-bank-id').value = '';
+            document.getElementById('modal-bank-name').value = '';
+            document.getElementById('modal-bank-number').value = '';
+            document.getElementById('modal-bank-holder').value = '';
+            document.getElementById('bank-modal-title').innerHTML = '<i class="fas fa-university text-blue-600"></i> Tambah Rekening Bank';
+            document.getElementById('bank-modal').classList.remove('hidden');
+        };
+
+        window.editBank = function(id) {
+            if (!requireAdmin()) return;
+            const bank = bankAccounts.find(b => b.id === id);
+            if (!bank) return;
+            document.getElementById('modal-bank-id').value = bank.id;
+            document.getElementById('modal-bank-name').value = bank.bankName || '';
+            document.getElementById('modal-bank-number').value = bank.accountNumber || '';
+            document.getElementById('modal-bank-holder').value = bank.accountHolder || '';
+            document.getElementById('bank-modal-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Edit Rekening Bank';
+            document.getElementById('bank-modal').classList.remove('hidden');
+        };
+
+        window.closeBankModal = function() {
+            document.getElementById('bank-modal').classList.add('hidden');
+        };
+
+        window.deleteBank = function(id) {
+            if (!requireAdmin()) return;
+            if (confirm('Hapus rekening bank ini?')) {
+                if (firebaseReady) {
+                    firebaseDb.ref(`kasRt/banks/${id}`).remove();
+                }
+                showToast('Rekening bank dihapus', 'delete');
+            }
+        };
+
+        window.openAddAllocationModal = function() {
+            if (!requireAdmin()) return;
+            document.getElementById('modal-allocation-id').value = '';
+            document.getElementById('modal-allocation-title').value = '';
+            document.getElementById('modal-allocation-amount').value = '';
+            document.getElementById('allocation-modal-title').innerHTML = '<i class="fas fa-wallet text-emerald-600"></i> Tambah Rincian Alokasi';
+            document.getElementById('allocation-modal').classList.remove('hidden');
+        };
+
+        window.editAllocation = function(id) {
+            if (!requireAdmin()) return;
+            const alloc = feeAllocations.find(a => a.id === id);
+            if (!alloc) return;
+            document.getElementById('modal-allocation-id').value = alloc.id;
+            document.getElementById('modal-allocation-title').value = alloc.title || '';
+            document.getElementById('modal-allocation-amount').value = alloc.amount || 0;
+            document.getElementById('allocation-modal-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Edit Rincian Alokasi';
+            document.getElementById('allocation-modal').classList.remove('hidden');
+        };
+
+        window.closeAllocationModal = function() {
+            document.getElementById('allocation-modal').classList.add('hidden');
+        };
+
+        window.deleteAllocation = function(id) {
+            if (!requireAdmin()) return;
+            if (confirm('Hapus rincian alokasi ini?')) {
+                if (firebaseReady) {
+                    firebaseDb.ref(`kasRt/allocations/${id}`).remove();
+                }
+                showToast('Rincian alokasi dihapus', 'delete');
+            }
+        };
+
+        window.renderDashboard = function() {
+            let totalInc = 0, incCash = 0, incMandiri = 0, incBca = 0, totalExp = 0;
+
+            transactions.forEach(t => {
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'income') {
+                    totalInc += amt;
+                    const m = (t.paymentMethod || 'Cash').toLowerCase();
+                    if (m.includes('mandiri')) incMandiri += amt;
+                    else if (m.includes('bca')) incBca += amt;
+                    else incCash += amt;
+                } else if (t.type === 'expense') {
+                    totalExp += amt;
+                }
+            });
+
+            document.getElementById('total-balance').textContent = formatRupiah(totalInc - totalExp);
+            document.getElementById('total-income').textContent = formatRupiah(totalInc);
+            document.getElementById('income-cash').textContent = formatRupiah(incCash);
+            document.getElementById('income-mandiri').textContent = formatRupiah(incMandiri);
+            document.getElementById('income-bca').textContent = formatRupiah(incBca);
+            document.getElementById('total-expense').textContent = formatRupiah(totalExp);
+        };
+
+        window.renderHistory = function() {
+            const tbody = document.getElementById('history-tbody');
+            const mobileList = document.getElementById('history-mobile-list');
+            const emptyEl = document.getElementById('history-empty');
+            
+            const searchQuery = (document.getElementById('history-search-input')?.value || '').toLowerCase().trim();
+            const typeFilter = document.getElementById('history-type-filter')?.value || 'all';
+            const methodFilter = document.getElementById('history-method-filter')?.value || 'all';
+
+            tbody.innerHTML = '';
+            mobileList.innerHTML = '';
+
+            if (transactions.length === 0) {
+                emptyEl.classList.remove('hidden');
+                emptyEl.classList.add('flex');
+                return;
+            }
+
+            const filteredTransactions = transactions.filter(t => {
+                const desc = (t.description || '').toLowerCase();
+                const house = (t.houseNumber || '').toLowerCase();
+                const matchSearch = desc.includes(searchQuery) || house.includes(searchQuery);
+                const matchType = typeFilter === 'all' || t.type === typeFilter;
+                
+                let matchMethod = true;
+                if (methodFilter !== 'all') {
+                    if (t.type === 'income') {
+                        matchMethod = (t.paymentMethod || 'Cash') === methodFilter;
+                    } else {
+                        matchMethod = false;
+                    }
+                }
+
+                return matchSearch && matchType && matchMethod;
+            });
+
+            if (filteredTransactions.length === 0) {
+                emptyEl.classList.remove('hidden');
+                emptyEl.classList.add('flex');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            emptyEl.classList.remove('flex');
+
+            const sorted = [...filteredTransactions].sort((a, b) => {
+                const dateDiff = new Date(b.date) - new Date(a.date);
+                if (dateDiff !== 0) return dateDiff;
+                return (b.id || '').localeCompare(a.id || '');
+            });
+
+            sorted.forEach(t => {
+                const isInc = t.type === 'income';
+
+                let methodBadge = '';
+                if (isInc) {
+                    const m = t.paymentMethod || 'Cash';
+                    let badgeBg = 'bg-slate-100 text-slate-700';
+                    if (m.includes('Mandiri')) badgeBg = 'bg-blue-100 text-blue-700';
+                    else if (m.includes('BCA')) badgeBg = 'bg-indigo-100 text-indigo-700';
+                    else badgeBg = 'bg-amber-100 text-amber-800';
+                    methodBadge = `<span class="inline-block px-1.5 py-0.2 text-[9px] rounded font-semibold ${badgeBg}">${escapeHTML(m)}</span>`;
+                }
+
+                let proofsCount = 0;
+                if (Array.isArray(t.proofs) && t.proofs.length > 0) {
+                    proofsCount = t.proofs.length;
+                } else if (t.proof) {
+                    proofsCount = 1;
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-2 sm:px-3 py-2 font-medium text-slate-500 text-[11px]">
+                        ${formatDate(t.date)}
+                    </td>
+                    <td class="px-2 sm:px-3 py-2">
+                        ${t.houseNumber ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-200 inline-block">${escapeHTML(t.houseNumber)}</span>` : '<span class="text-slate-300">-</span>'}
+                    </td>
+                    <td class="px-2 sm:px-3 py-2">
+                        <div class="font-semibold text-slate-800 text-xs sm:text-sm leading-tight">${escapeHTML(t.description)}</div>
+                        <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                            ${methodBadge}
+                            ${proofsCount > 0 
+                                ? `<button onclick="openProofModal('${t.id}')" class="text-blue-600 hover:text-blue-800 text-[10px] font-semibold underline flex items-center gap-0.5">
+                                    <i class="fas fa-image"></i> Bukti (${proofsCount})
+                                   </button>` 
+                                : ''}
+                        </div>
+                    </td>
+                    <td class="px-2 sm:px-3 py-2 text-right font-bold text-xs sm:text-sm text-emerald-600">
+                        ${isInc ? formatRupiah(t.amount) : '-'}
+                    </td>
+                    <td class="px-2 sm:px-3 py-2 text-right font-bold text-xs sm:text-sm text-rose-600">
+                        ${!isInc ? formatRupiah(t.amount) : '-'}
+                    </td>
+                    <td class="px-1 py-2 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="editTransaction('${t.id}')" class="admin-only text-slate-400 hover:text-amber-600 p-1 ${isAdmin ? '' : 'hidden'}">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteTransaction('${t.id}')" class="admin-only text-slate-300 hover:text-rose-600 p-1 ${isAdmin ? '' : 'hidden'}">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1.5";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-semibold text-slate-500"><i class="far fa-calendar-alt mr-1"></i>${formatDate(t.date)}</span>
+                            ${t.houseNumber ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-blue-200">${escapeHTML(t.houseNumber)}</span>` : ''}
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isInc ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                            ${isInc ? 'Pemasukan' : 'Pengeluaran'}
+                        </span>
+                    </div>
+                    <div class="font-semibold text-slate-800 text-xs leading-snug">
+                        ${escapeHTML(t.description)}
+                    </div>
+                    <div class="flex items-center justify-between pt-1.5 mt-0.5 border-t border-slate-100">
+                        <div class="text-[10px] font-medium text-slate-500">Nominal</div>
+                        <div class="font-extrabold text-xs ${isInc ? 'text-emerald-600' : 'text-rose-600'}">
+                            ${isInc ? '+' : '-'}${formatRupiah(t.amount)}
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-1 text-[10px]">
+                        <div class="flex items-center gap-2">
+                            ${methodBadge}
+                            ${proofsCount > 0 
+                                ? `<button onclick="openProofModal('${t.id}')" class="text-blue-600 font-medium underline flex items-center gap-1">
+                                    <i class="fas fa-image"></i> Bukti (${proofsCount})
+                                   </button>` 
+                                : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editTransaction('${t.id}')" class="admin-only text-slate-500 hover:text-amber-600 ${isAdmin ? '' : 'hidden'}">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                            <button onclick="deleteTransaction('${t.id}')" class="admin-only text-rose-500 hover:text-rose-700 ${isAdmin ? '' : 'hidden'}">
+                                <i class="fas fa-trash-alt"></i> Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+                mobileList.appendChild(card);
+            });
+        };
+
+        window.renderRecap = function() {
+            const tbody = document.getElementById('recap-tbody');
+            const emptyEl = document.getElementById('recap-empty');
+            tbody.innerHTML = '';
+
+            let tfoot = document.getElementById('recap-tfoot');
+            if (tfoot) tfoot.innerHTML = '';
+
+            if (transactions.length === 0) {
+                emptyEl.classList.remove('hidden');
+                emptyEl.classList.add('flex');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            emptyEl.classList.remove('flex');
+
+            const monthlyData = {};
+            let grandTotalIncome = 0;
+            let grandTotalExpense = 0;
+
+            transactions.forEach(t => {
+                const d = new Date(t.date);
+                if (isNaN(d.getTime())) return;
+                
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyData[key]) {
+                    monthlyData[key] = { income: 0, expense: 0, dateObj: new Date(d.getFullYear(), d.getMonth(), 1) };
+                }
+
+                const amt = parseFloat(t.amount) || 0;
+                if (t.type === 'income') {
+                    monthlyData[key].income += amt;
+                    grandTotalIncome += amt;
+                } else if (t.type === 'expense') {
+                    monthlyData[key].expense += amt;
+                    grandTotalExpense += amt;
+                }
+            });
+
+            const sortedKeys = Object.keys(monthlyData).sort().reverse();
+
+            sortedKeys.forEach((key) => {
+                const item = monthlyData[key];
+                const net = item.income - item.expense;
+                const monthName = item.dateObj.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' });
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="px-3 py-2 font-bold text-slate-800 text-[11px] sm:text-xs">${monthName}</td>
+                    <td class="px-2 py-2 text-right font-semibold text-emerald-600 text-[11px] sm:text-xs">${formatRupiah(item.income)}</td>
+                    <td class="px-2 py-2 text-right font-semibold text-rose-600 text-[11px] sm:text-xs">${formatRupiah(item.expense)}</td>
+                    <td class="px-3 py-2 text-right font-bold text-[11px] sm:text-xs ${net >= 0 ? 'text-blue-600' : 'text-rose-600'}">${formatRupiah(net)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const grandNet = grandTotalIncome - grandTotalExpense;
+            if (!tfoot) {
+                const table = tbody.closest('table');
+                tfoot = document.createElement('tfoot');
+                tfoot.id = 'recap-tfoot';
+                tfoot.className = "bg-slate-100 font-bold border-t-2 border-slate-300 sticky bottom-0 shadow-inner";
+                table.appendChild(tfoot);
+            } else {
+                tfoot.className = "bg-slate-100 font-bold border-t-2 border-slate-300 sticky bottom-0 shadow-inner";
+            }
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="px-3 py-2 text-slate-800 text-[11px] sm:text-xs uppercase tracking-wider">Total</td>
+                    <td class="px-2 py-2 text-right text-emerald-700 text-[11px] sm:text-xs">${formatRupiah(grandTotalIncome)}</td>
+                    <td class="px-2 py-2 text-right text-rose-700 text-[11px] sm:text-xs">${formatRupiah(grandTotalExpense)}</td>
+                    <td class="px-3 py-2 text-right text-[11px] sm:text-xs ${grandNet >= 0 ? 'text-blue-700' : 'text-rose-700'}">${formatRupiah(grandNet)}</td>
+                </tr>
+            `;
+        };
+
+        window.renderHouseStatus = function() {
+            const periodInput = document.getElementById('house-period-filter');
+            if (!periodInput.value) periodInput.value = currentYearMonth;
+
+            const selectedPeriod = periodInput.value;
+            const statusFilter = document.getElementById('house-status-filter').value;
+            const searchQuery = (document.getElementById('house-search-input').value || '').toLowerCase().trim();
+
+            const tbody = document.getElementById('houses-tbody');
+            const emptyEl = document.getElementById('houses-empty');
+            tbody.innerHTML = '';
+
+            let paidCount = 0, unpaidCount = 0;
+
+            const sortedHouses = [...houses].sort((a, b) => 
+                (a.houseNumber || '').localeCompare(b.houseNumber || '', undefined, { numeric: true, sensitivity: 'base' })
+            );
+
+            const filteredHouses = sortedHouses.filter(h => 
+                (h.houseNumber && h.houseNumber.toLowerCase().includes(searchQuery)) || 
+                (h.ownerName && h.ownerName.toLowerCase().includes(searchQuery))
+            );
+
+            let visibleRows = 0;
+
+            filteredHouses.forEach(h => {
+                const payment = transactions.find(t => {
+                    if (t.type !== 'income' || !t.houseNumber) return false;
+                    if (t.houseNumber.trim().toUpperCase() !== h.houseNumber.trim().toUpperCase()) return false;
+                    
+                    const tDate = new Date(t.date);
+                    if (isNaN(tDate.getTime())) return false;
+                    
+                    const tPeriod = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`;
+                    return tPeriod === selectedPeriod;
+                });
+
+                const isPaid = !!payment;
+                if (isPaid) paidCount++;
+                else unpaidCount++;
+
+                if (statusFilter === 'paid' && !isPaid) return;
+                if (statusFilter === 'unpaid' && isPaid) return;
+
+                visibleRows++;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                const statusBadge = isPaid
+                    ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">Lunas</span>`
+                    : `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">Belum</span>`;
+
+                let actionBtn = '';
+                if (isPaid) {
+                    const hasProof = (payment.proofs && payment.proofs.length > 0) || payment.proof;
+                    actionBtn = `<button onclick="openProofModal('${payment.id}')" class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded ${hasProof ? '' : 'opacity-40 cursor-not-allowed'}" ${hasProof ? '' : 'disabled'}>Bukti</button>`;
+                } else if (isAdmin) {
+                    actionBtn = `<button onclick="quickRecordPayment('${h.houseNumber}')" class="text-[11px] px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded shadow-sm">Bayar</button>`;
+                } else {
+                    actionBtn = `<span class="text-[11px] text-slate-400 font-medium">-</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="px-3 py-2.5 font-medium text-slate-800">
+                        <div class="font-bold text-blue-700 text-xs">${escapeHTML(h.houseNumber)}</div>
+                        <div class="text-xs">${escapeHTML(h.ownerName)}</div>
+                        ${h.phone ? `<a href="https://wa.me/${h.phone.replace(/[^0-9]/g, '')}" target="_blank" class="text-[10px] text-emerald-600 flex items-center gap-0.5 mt-0.5"><i class="fab fa-whatsapp"></i> ${escapeHTML(h.phone)}</a>` : ''}
+                    </td>
+                    <td class="px-2 py-2.5 text-center">${statusBadge}</td>
+                    <td class="px-2 py-2.5 text-right font-medium text-xs ${isPaid ? 'text-emerald-600 font-bold' : 'text-slate-300'}">
+                        ${isPaid ? formatRupiah(payment.amount) : '-'}
+                    </td>
+                    <td class="px-2 py-2.5 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            ${actionBtn}
+                            <button onclick="editHouse('${h.id}')" class="admin-only text-slate-400 hover:text-amber-600 p-1 ${isAdmin ? '' : 'hidden'}">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteHouse('${h.id}')" class="admin-only text-slate-300 hover:text-rose-600 p-1 ${isAdmin ? '' : 'hidden'}">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const totalHouses = houses.length;
+            document.getElementById('stat-total-houses').textContent = totalHouses;
+            document.getElementById('stat-paid-houses').textContent = paidCount;
+            document.getElementById('stat-unpaid-houses').textContent = unpaidCount;
+            
+            const percentage = totalHouses > 0 ? Math.round((paidCount / totalHouses) * 100) : 0;
+            document.getElementById('stat-percentage').textContent = `${percentage}%`;
+
+            const unpaidBadge = document.getElementById('unpaid-badge');
+            if (unpaidBadge) {
+                unpaidBadge.textContent = unpaidCount;
+                if (unpaidCount > 0) unpaidBadge.classList.remove('hidden');
+                else unpaidBadge.classList.add('hidden');
+            }
+
+            if (visibleRows === 0) {
+                emptyEl.classList.remove('hidden');
+                emptyEl.classList.add('flex');
+            } else {
+                emptyEl.classList.add('hidden');
+                emptyEl.classList.remove('flex');
+            }
+        };
+
+        window.exportToExcel = function() {
+            if (typeof XLSX === 'undefined') {
+                showToast('Pustaka Excel belum siap. Coba lagi.', 'error');
+                return;
+            }
+
+            if (currentActiveTab === 'history') {
+                if (transactions.length === 0) {
+                    showToast('Tidak ada data transaksi untuk diekspor.', 'error');
+                    return;
+                }
+                const exportData = transactions.map((t, index) => ({
+                    "No": index + 1,
+                    "Tanggal": t.date || '-',
+                    "Tipe": t.type === 'income' ? 'Pemasukan' : 'Pengeluaran',
+                    "No. Rumah": t.houseNumber || '-',
+                    "Keterangan": t.description || '-',
+                    "Metode": t.paymentMethod || '-',
+                    "Pemasukan (Rp)": t.type === 'income' ? (parseFloat(t.amount) || 0) : 0,
+                    "Pengeluaran (Rp)": t.type === 'expense' ? (parseFloat(t.amount) || 0) : 0
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Buku Kas");
+                XLSX.writeFile(workbook, `Buku_Kas_RT_${new Date().toISOString().split('T')[0]}.xlsx`);
+                showToast('Buku Kas berhasil diekspor!');
+            } else {
+                const monthlyData = {};
+                transactions.forEach(t => {
+                    const d = new Date(t.date);
+                    if (isNaN(d.getTime())) return;
+                    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthlyData[key]) monthlyData[key] = { income: 0, expense: 0 };
+                    const amt = parseFloat(t.amount) || 0;
+                    if (t.type === 'income') monthlyData[key].income += amt;
+                    else if (t.type === 'expense') monthlyData[key].expense += amt;
+                });
+
+                const sortedKeys = Object.keys(monthlyData).sort().reverse();
+                if (sortedKeys.length === 0) {
+                    showToast('Tidak ada data rekap untuk diekspor.', 'error');
+                    return;
+                }
+
+                const exportData = sortedKeys.map((key, index) => {
+                    const item = monthlyData[key];
+                    return {
+                        "No": index + 1,
+                        "Periode": key,
+                        "Pemasukan (Rp)": item.income,
+                        "Pengeluaran (Rp)": item.expense,
+                        "Bersih (Rp)": item.income - item.expense
+                    };
+                });
+
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Bulanan");
+                XLSX.writeFile(workbook, `Rekap_Kas_RT_${new Date().toISOString().split('T')[0]}.xlsx`);
+                showToast('Rekap bulanan berhasil diekspor!');
+            }
+        };
+
+        window.exportHouseStatusToExcel = function() {
+            if (typeof XLSX === 'undefined') {
+                showToast('Pustaka Excel belum siap. Coba lagi.', 'error');
+                return;
+            }
+
+            const periodInput = document.getElementById('house-period-filter').value || currentYearMonth;
+            const sortedHouses = [...houses].sort((a, b) => 
+                (a.houseNumber || '').localeCompare(b.houseNumber || '', undefined, { numeric: true, sensitivity: 'base' })
+            );
+
+            if (sortedHouses.length === 0) {
+                showToast('Tidak ada data warga untuk diekspor.', 'error');
+                return;
+            }
+
+            const exportData = sortedHouses.map((h, index) => {
+                const payment = transactions.find(t => {
+                    if (t.type !== 'income' || !t.houseNumber) return false;
+                    if (t.houseNumber.trim().toUpperCase() !== h.houseNumber.trim().toUpperCase()) return false;
+                    const tDate = new Date(t.date);
+                    if (isNaN(tDate.getTime())) return false;
+                    return `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}` === periodInput;
+                });
+
+                return {
+                    "No": index + 1,
+                    "No. Rumah": h.houseNumber || '-',
+                    "Nama Penghuni": h.ownerName || '-',
+                    "No. Telepon": h.phone || '-',
+                    "Status": payment ? 'Lunas' : 'Belum Bayar',
+                    "Nominal (Rp)": payment ? parseFloat(payment.amount) || 0 : 0
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Status Iuran ${periodInput}`);
+            XLSX.writeFile(workbook, `Status_Iuran_RT_${periodInput}.xlsx`);
+            showToast(`Status iuran periode ${periodInput} berhasil diekspor!`);
+        };
+
+        window.quickRecordPayment = function(houseNo) { 
+            if (!requireAdmin()) return;
+            switchMainPage('dashboard');
+            cancelEditTransaction();
+            switchForm('income');
+            const houseInput = document.getElementById('inc-house');
+            const descInput = document.getElementById('inc-desc');
+            const periodInput = document.getElementById('house-period-filter').value;
+            
+            houseInput.value = houseNo;
+            
+            let monthName = new Date().toLocaleDateString('id-ID', { month: 'long' });
+            if (periodInput) {
+                const [pYear, pMonth] = periodInput.split('-');
+                const pDate = new Date(parseInt(pYear), parseInt(pMonth) - 1, 1);
+                if (!isNaN(pDate.getTime())) {
+                    monthName = pDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                    const yearMonthToday = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+                    if (periodInput !== yearMonthToday) {
+                        document.getElementById('inc-date').value = `${periodInput}-01`;
+                    }
+                }
+            }
+            
+            descInput.value = `Iuran Kas Bulan ${monthName}`;
+            document.getElementById('inc-amount').focus();
+            showToast(`Mencatat iuran rumah ${houseNo}`);
+        };
+
+        window.editTransaction = function(id) {
+            if (!requireAdmin()) return;
+            const t = transactions.find(item => item.id === id);
+            if (!t) return;
+
+            editingTransactionId = id;
+            switchMainPage('dashboard');
+
+            document.getElementById('form-type-switcher').classList.add('hidden');
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            if (t.type === 'income') {
+                switchForm('income');
+                document.getElementById('form-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Edit Pemasukan';
+                document.getElementById('inc-id').value = t.id;
+                document.getElementById('inc-date').value = t.date || '';
+                document.getElementById('inc-method').value = t.paymentMethod || 'Cash';
+                document.getElementById('inc-house').value = t.houseNumber || '';
+                document.getElementById('inc-desc').value = t.description || '';
+                document.getElementById('inc-amount').value = t.amount || '';
+                updateAllocationPreview(t.amount || 0);
+                document.getElementById('inc-submit-btn').innerHTML = '<i class="fas fa-save"></i> Perbarui Pemasukan';
+
+                currentIncomeProofs = Array.isArray(t.proofs) ? [...t.proofs] : (t.proof ? [t.proof] : []);
+                renderPreviews('income');
+
+            } else {
+                switchForm('expense');
+                document.getElementById('form-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Edit Pengeluaran';
+                document.getElementById('exp-id').value = t.id;
+                document.getElementById('exp-date').value = t.date || '';
+                document.getElementById('exp-desc').value = t.description || '';
+                document.getElementById('exp-amount').value = t.amount || '';
+                document.getElementById('exp-submit-btn').innerHTML = '<i class="fas fa-save"></i> Perbarui Pengeluaran';
+
+                currentExpenseProofs = Array.isArray(t.proofs) ? [...t.proofs] : (t.proof ? [t.proof] : []);
+                renderPreviews('expense');
+            }
+
+            document.getElementById('form-title').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.cancelEditTransaction = function() {
+            editingTransactionId = null;
+            document.getElementById('form-type-switcher').classList.remove('hidden');
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('form-title').innerHTML = '<i class="fas fa-pen-to-square text-blue-600"></i> Catat Transaksi Baru';
+
+            const formInc = document.getElementById('form-income');
+            formInc.reset();
+            document.getElementById('inc-id').value = '';
+            document.getElementById('inc-submit-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Pemasukan';
+            updateAllocationPreview(0);
+            currentIncomeProofs = [];
+            renderPreviews('income');
+
+            const formExp = document.getElementById('form-expense');
+            formExp.reset();
+            document.getElementById('exp-id').value = '';
+            document.getElementById('exp-submit-btn').innerHTML = '<i class="fas fa-save"></i> Simpan Pengeluaran';
+            currentExpenseProofs = [];
+            renderPreviews('expense');
+
+            const todayISO = new Date().toISOString().split('T')[0];
+            document.getElementById('inc-date').value = todayISO;
+            document.getElementById('exp-date').value = todayISO;
+        };
+
+        window.openAddHouseModal = function() { 
+            if (!requireAdmin()) return;
+            document.getElementById('modal-house-id').value = '';
+            document.getElementById('modal-house-no').value = '';
+            document.getElementById('modal-house-owner').value = '';
+            document.getElementById('modal-house-phone').value = '';
+            document.getElementById('house-modal-title').innerHTML = '<i class="fas fa-home text-blue-600"></i> Tambah Data Warga';
+            document.getElementById('house-modal').classList.remove('hidden');
+        };
+
+        window.editHouse = function(id) {
+            if (!requireAdmin()) return;
+            const house = houses.find(h => h.id === id);
+            if (!house) return;
+
+            document.getElementById('modal-house-id').value = house.id;
+            document.getElementById('modal-house-no').value = house.houseNumber || '';
+            document.getElementById('modal-house-owner').value = house.ownerName || '';
+            document.getElementById('modal-house-phone').value = house.phone || '';
+            document.getElementById('house-modal-title').innerHTML = '<i class="fas fa-edit text-amber-500"></i> Edit Data Warga';
+            document.getElementById('house-modal').classList.remove('hidden');
+        };
+
+        window.closeHouseModal = function() {
+            document.getElementById('house-modal').classList.add('hidden');
+        };
+
+        window.deleteHouse = function(id) { 
+            if (!requireAdmin()) return;
+            const house = houses.find(h => h.id === id);
+            const houseName = house ? `Rumah ${house.houseNumber}` : 'data ini';
+            if (confirm(`Hapus ${houseName}?`)) {
+                if (firebaseReady) {
+                    firebaseDb.ref(`kasRt/houses/${id}`).remove();
+                }
+                showToast('Data rumah terhapus', 'delete');
+            }
+        };
+
+        window.openProofModal = function(id) {
+            const t = transactions.find(item => item.id === id);
+            const modal = document.getElementById('proof-modal');
+            const container = document.getElementById('proof-images-container');
+            container.innerHTML = '';
+
+            let proofsList = [];
+            if (t) {
+                if (Array.isArray(t.proofs) && t.proofs.length > 0) {
+                    proofsList = t.proofs;
+                } else if (t.proof) {
+                    proofsList = [t.proof];
+                }
+            }
+
+            if (proofsList.length > 0) {
+                proofsList.forEach((src) => {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.className = "max-h-[50vh] max-w-full object-contain rounded-lg border border-slate-700 bg-black/40 shadow";
+                    container.appendChild(img);
+                });
+            } else {
+                container.innerHTML = '<p class="text-slate-400 text-xs">Bukti transaksi tidak tersedia.</p>';
+            }
+            modal.classList.remove('hidden');
+        };
+
+        window.closeProofModal = function() {
+            document.getElementById('proof-modal').classList.add('hidden');
+        };
+
+        window.deleteTransaction = function(id) { 
+            if (!requireAdmin()) return;
+            if (confirm('Hapus transaksi ini?')) {
+                if (editingTransactionId === id) cancelEditTransaction();
+                if (firebaseReady) {
+                    firebaseDb.ref(`kasRt/transactions/${id}`).remove();
+                }
+                showToast('Transaksi dihapus', 'delete');
+            }
+        };
+
+        let renderScheduled = false;
+
+        function scheduleRenderAllViews() {
+            if (renderScheduled) return;
+            renderScheduled = true;
+
+            const runRender = () => {
+                renderScheduled = false;
+                renderAllViews();
+            };
+
+            if (window.requestAnimationFrame) {
+                requestAnimationFrame(runRender);
+            } else {
+                setTimeout(runRender, 0);
+            }
         }
 
-        function speak(areaId, langSelectId) {
-            const txt = document.getElementById(areaId).value;
-            let lang = document.getElementById(langSelectId).value;
-            if (!txt) return;
-            if (lang === 'auto') lang = 'id';
-
-            const u = new SpeechSynthesisUtterance(txt);
-            u.lang = lang;
-            window.speechSynthesis.speak(u);
+        function renderAllViews() {
+            updateHouseDatalist();
+            renderBankAccounts();
+            renderFeeAllocations();
+            renderDashboard();
+            renderHistory();
+            renderRecap();
+            renderHouseStatus();
         }
+
+        function addHouseToFirebase(houseData) {
+            if (!firebaseReady) return;
+            const newRef = firebaseDb.ref('kasRt/houses').push();
+            newRef.set({
+                houseNumber: houseData.houseNumber,
+                ownerName: houseData.ownerName,
+                phone: houseData.phone || ''
+            });
+        }
+
+        function addBankToFirebase(bankData) {
+            if (!firebaseReady) return;
+            const newRef = firebaseDb.ref('kasRt/banks').push();
+            newRef.set({
+                bankName: bankData.bankName,
+                accountNumber: bankData.accountNumber,
+                accountHolder: bankData.accountHolder
+            });
+        }
+
+        function addAllocationToFirebase(allocData) {
+            if (!firebaseReady) return;
+            const newRef = firebaseDb.ref('kasRt/allocations').push();
+            newRef.set({
+                title: allocData.title,
+                amount: allocData.amount
+            });
+        }
+
+        function isFirebaseConfigured() {
+            return firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('ISI_');
+        }
+
+        function startFirebaseSync() {
+            if (!isFirebaseConfigured()) {
+                initApp();
+                return;
+            }
+            try {
+                firebase.initializeApp(firebaseConfig);
+                firebaseDb = firebase.database();
+                firebaseReady = true;
+
+                const myPresenceRef = firebaseDb.ref(`kasRt/presence/${userSessionId}`);
+                const connectedRef = firebaseDb.ref('.info/connected');
+
+                connectedRef.on('value', (snap) => {
+                    if (snap.val() === true) {
+                        myPresenceRef.onDisconnect().remove();
+                        myPresenceRef.set({
+                            joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                            device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+                        });
+                    }
+                });
+
+                window.addEventListener('beforeunload', () => {
+                    if (firebaseReady) {
+                        myPresenceRef.remove();
+                    }
+                });
+
+                firebaseDb.ref('kasRt/presence').on('value', (snap) => {
+                    const presenceObj = snap.val() || {};
+                    const container = document.getElementById('online-users-container');
+                    const countBadge = document.getElementById('online-count-badge');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+                    const keys = Object.keys(presenceObj);
+                    countBadge.textContent = `${keys.length} Online`;
+
+                    if (keys.length === 0) {
+                        container.innerHTML = '<span class="text-xs text-slate-400">Belum ada pengunjung online.</span>';
+                        return;
+                    }
+
+                    keys.forEach((key, index) => {
+                        const user = presenceObj[key];
+                        const isMe = key === userSessionId;
+                        const badge = document.createElement('div');
+                        badge.className = "flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-xl text-xs font-medium shadow-xs";
+                        badge.innerHTML = `
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>${isMe ? 'Anda (Admin)' : 'Pengunjung ' + (index + 1)}</span>
+                        `;
+                        container.appendChild(badge);
+                    });
+                });
+
+                firebaseDb.ref('kasRt/houses').on('value', (snap) => {
+                    const val = snap.val();
+                    if (!val) {
+                        houses = [...defaultHousesArray];
+                        // Seed default
+                        houses.forEach(h => addHouseToFirebase(h));
+                    } else {
+                        houses = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+                    }
+                    scheduleRenderAllViews();
+                });
+
+                firebaseDb.ref('kasRt/banks').on('value', (snap) => {
+                    const val = snap.val();
+                    if (!val) {
+                        bankAccounts = [...defaultBanksArray];
+                        bankAccounts.forEach(b => addBankToFirebase(b));
+                    } else {
+                        bankAccounts = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+                    }
+                    scheduleRenderAllViews();
+                });
+
+                firebaseDb.ref('kasRt/allocations').on('value', (snap) => {
+                    const val = snap.val();
+                    if (!val) {
+                        feeAllocations = [...defaultAllocationsArray];
+                        feeAllocations.forEach(a => addAllocationToFirebase(a));
+                    } else {
+                        feeAllocations = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+                    }
+                    scheduleRenderAllViews();
+                });
+
+                firebaseDb.ref('kasRt/transactions').on('value', (snap) => {
+                    const val = snap.val();
+                    if (!val) {
+                        transactions = [];
+                    } else {
+                        transactions = Object.keys(val).map(key => ({ id: key, ...val[key] }));
+                    }
+                    scheduleRenderAllViews();
+                });
+
+            } catch(err) {
+                console.error("Firebase initialization error:", err);
+                initApp();
+            }
+        }
+
+        function initApp() {
+            firebaseReady = false;
+            document.getElementById('firebase-status').innerHTML = '<span class="text-amber-600"><i class="fas fa-exclamation-triangle"></i> Mode Offline / LocalStorage (Firebase belum dikonfigurasi).</span>';
+            
+            houses = JSON.parse(localStorage.getItem('kasRtHouses') || JSON.stringify(defaultHousesArray));
+            bankAccounts = JSON.parse(localStorage.getItem('kasRtBanks') || JSON.stringify(defaultBanksArray));
+            feeAllocations = JSON.parse(localStorage.getItem('kasRtAllocations') || JSON.stringify(defaultAllocationsArray));
+            transactions = JSON.parse(localStorage.getItem('kasRtTransactions') || '[]');
+
+            document.getElementById('online-users-container').innerHTML = '<span class="text-xs text-slate-400">Offline mode. Real-time dinonaktifkan.</span>';
+            document.getElementById('online-count-badge').textContent = 'Offline';
+
+            scheduleRenderAllViews();
+        }
+
+        function saveLocalStorage() {
+            if (firebaseReady) return;
+            localStorage.setItem('kasRtHouses', JSON.stringify(houses));
+            localStorage.setItem('kasRtBanks', JSON.stringify(bankAccounts));
+            localStorage.setItem('kasRtAllocations', JSON.stringify(feeAllocations));
+            localStorage.setItem('kasRtTransactions', JSON.stringify(transactions));
+        }
+
+        window.openAdminLogin = function() {
+            document.getElementById('admin-pin').value = '';
+            document.getElementById('admin-login-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('admin-pin').focus(), 100);
+        };
+
+        window.closeAdminLogin = function() {
+            document.getElementById('admin-login-modal').classList.add('hidden');
+        };
+
+        window.handleAdminLogin = function(e) {
+            e.preventDefault();
+            const pin = document.getElementById('admin-pin').value;
+            if (pin === ADMIN_PIN) {
+                isAdmin = true;
+                sessionStorage.setItem('kasRtIsAdmin', 'true');
+                closeAdminLogin();
+                updateAdminUI();
+                showToast('Berhasil login sebagai Admin RT!');
+            } else {
+                showToast('PIN Admin salah!', 'error');
+                document.getElementById('admin-pin').value = '';
+            }
+        };
+
+        window.logoutAdmin = function() {
+            isAdmin = false;
+            sessionStorage.removeItem('kasRtIsAdmin');
+            updateAdminUI();
+            cancelEditTransaction();
+            showToast('Anda telah logout dari mode admin.');
+        };
+
+        window.openChangePin = function() {
+            if (!requireAdmin()) return;
+            document.getElementById('old-pin').value = '';
+            document.getElementById('new-pin').value = '';
+            document.getElementById('confirm-pin').value = '';
+            document.getElementById('change-pin-modal').classList.remove('hidden');
+        };
+
+        window.closeChangePin = function() {
+            document.getElementById('change-pin-modal').classList.add('hidden');
+        };
+
+        window.handlePinChange = function(e) {
+            e.preventDefault();
+            const oldPin = document.getElementById('old-pin').value;
+            const newPin = document.getElementById('new-pin').value;
+            const confirmPin = document.getElementById('confirm-pin').value;
+
+            if (oldPin !== ADMIN_PIN) {
+                showToast('PIN Lama tidak sesuai!', 'error');
+                return;
+            }
+            if (newPin.length < 6) {
+                showToast('PIN Baru minimal 6 karakter/digit!', 'error');
+                return;
+            }
+            if (newPin !== confirmPin) {
+                showToast('Konfirmasi PIN Baru tidak sama!', 'error');
+                return;
+            }
+
+            ADMIN_PIN = newPin;
+            localStorage.setItem('kasRtAdminPin', ADMIN_PIN);
+            closeChangePin();
+            showToast('PIN Admin berhasil diperbarui!');
+        };
+
+        function requireAdmin() {
+            if (!isAdmin) {
+                openAdminLogin();
+                return false;
+            }
+            return true;
+        }
+
+        function updateAdminUI() {
+            const adminOnlyElements = document.querySelectorAll('.admin-only');
+            adminOnlyElements.forEach(el => {
+                if (isAdmin) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+
+            const loginBtn = document.getElementById('admin-login-btn');
+            const loginBtnMb = document.getElementById('admin-login-btn-mb');
+            if (isAdmin) {
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (loginBtnMb) loginBtnMb.classList.add('hidden');
+            } else {
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (loginBtnMb) loginBtnMb.classList.remove('hidden');
+            }
+            renderAllViews();
+        }
+
+        // Form Submit Listeners
+        document.getElementById('form-bank').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!requireAdmin()) return;
+
+            const id = document.getElementById('modal-bank-id').value;
+            const bankName = document.getElementById('modal-bank-name').value.trim();
+            const accountNumber = document.getElementById('modal-bank-number').value.trim();
+            const accountHolder = document.getElementById('modal-bank-holder').value.trim();
+
+            if (firebaseReady) {
+                if (id) {
+                    firebaseDb.ref(`kasRt/banks/${id}`).update({ bankName, accountNumber, accountHolder });
+                } else {
+                    firebaseDb.ref('kasRt/banks').push({ bankName, accountNumber, accountHolder });
+                }
+            } else {
+                if (id) {
+                    const idx = bankAccounts.findIndex(b => b.id === id);
+                    if (idx !== -1) bankAccounts[idx] = { id, bankName, accountNumber, accountHolder };
+                } else {
+                    bankAccounts.push({ id: 'b_' + Date.now(), bankName, accountNumber, accountHolder });
+                }
+                saveLocalStorage();
+                scheduleRenderAllViews();
+            }
+
+            closeBankModal();
+            showToast('Data rekening berhasil disimpan!');
+        });
+
+        document.getElementById('form-allocation').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!requireAdmin()) return;
+
+            const id = document.getElementById('modal-allocation-id').value;
+            const title = document.getElementById('modal-allocation-title').value.trim();
+            const amount = parseFloat(document.getElementById('modal-allocation-amount').value) || 0;
+
+            if (firebaseReady) {
+                if (id) {
+                    firebaseDb.ref(`kasRt/allocations/${id}`).update({ title, amount });
+                } else {
+                    firebaseDb.ref('kasRt/allocations').push({ title, amount });
+                }
+            } else {
+                if (id) {
+                    const idx = feeAllocations.findIndex(a => a.id === id);
+                    if (idx !== -1) feeAllocations[idx] = { id, title, amount };
+                } else {
+                    feeAllocations.push({ id: 'a_' + Date.now(), title, amount });
+                }
+                saveLocalStorage();
+                scheduleRenderAllViews();
+            }
+
+            closeAllocationModal();
+            showToast('Rincian alokasi berhasil disimpan!');
+        });
+
+        document.getElementById('form-house').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!requireAdmin()) return;
+
+            const id = document.getElementById('modal-house-id').value;
+            const houseNumber = document.getElementById('modal-house-no').value.trim().toUpperCase();
+            const ownerName = document.getElementById('modal-house-owner').value.trim();
+            const phone = document.getElementById('modal-house-phone').value.trim();
+
+            if (firebaseReady) {
+                if (id) {
+                    firebaseDb.ref(`kasRt/houses/${id}`).update({ houseNumber, ownerName, phone });
+                } else {
+                    firebaseDb.ref('kasRt/houses').push({ houseNumber, ownerName, phone });
+                }
+            } else {
+                if (id) {
+                    const idx = houses.findIndex(h => h.id === id);
+                    if (idx !== -1) houses[idx] = { id, houseNumber, ownerName, phone };
+                } else {
+                    houses.push({ id: 'h_' + Date.now(), houseNumber, ownerName, phone });
+                }
+                saveLocalStorage();
+                scheduleRenderAllViews();
+            }
+
+            closeHouseModal();
+            showToast('Data warga berhasil disimpan!');
+        });
+
+        document.getElementById('form-income').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!requireAdmin()) return;
+
+            const id = document.getElementById('inc-id').value;
+            const date = document.getElementById('inc-date').value;
+            const paymentMethod = document.getElementById('inc-method').value;
+            const houseNumber = document.getElementById('inc-house').value.trim().toUpperCase();
+            const description = document.getElementById('inc-desc').value.trim();
+            const amount = parseFloat(document.getElementById('inc-amount').value) || 0;
+            const proofs = [...currentIncomeProofs];
+
+            const txData = { type: 'income', date, paymentMethod, houseNumber, description, amount, proofs };
+
+            if (firebaseReady) {
+                if (id) {
+                    firebaseDb.ref(`kasRt/transactions/${id}`).update(txData);
+                } else {
+                    firebaseDb.ref('kasRt/transactions').push(txData);
+                }
+            } else {
+                if (id) {
+                    const idx = transactions.findIndex(t => t.id === id);
+                    if (idx !== -1) transactions[idx] = { id, ...txData };
+                } else {
+                    transactions.push({ id: 't_' + Date.now(), ...txData });
+                }
+                saveLocalStorage();
+                scheduleRenderAllViews();
+            }
+
+            cancelEditTransaction();
+            showToast('Pemasukan kas berhasil dicatat!');
+        });
+
+        document.getElementById('form-expense').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!requireAdmin()) return;
+
+            const id = document.getElementById('exp-id').value;
+            const date = document.getElementById('exp-date').value;
+            const description = document.getElementById('exp-desc').value.trim();
+            const amount = parseFloat(document.getElementById('exp-amount').value) || 0;
+            const proofs = [...currentExpenseProofs];
+
+            const txData = { type: 'expense', date, description, amount, proofs };
+
+            if (firebaseReady) {
+                if (id) {
+                    firebaseDb.ref(`kasRt/transactions/${id}`).update(txData);
+                } else {
+                    firebaseDb.ref('kasRt/transactions').push(txData);
+                }
+            } else {
+                if (id) {
+                    const idx = transactions.findIndex(t => t.id === id);
+                    if (idx !== -1) transactions[idx] = { id, ...txData };
+                } else {
+                    transactions.push({ id: 't_' + Date.now(), ...txData });
+                }
+                saveLocalStorage();
+                scheduleRenderAllViews();
+            }
+
+            cancelEditTransaction();
+            showToast('Pengeluaran kas berhasil dicatat!');
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const incDateEl = document.getElementById('inc-date');
+            const expDateEl = document.getElementById('exp-date');
+            if (incDateEl) incDateEl.value = todayStr;
+            if (expDateEl) expDateEl.value = todayStr;
+
+            const dateContainer = document.getElementById('current-date');
+            if (dateContainer) {
+                dateContainer.textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            }
+
+            updateAdminUI();
+            startFirebaseSync();
+        });
     </script>
 </body>
 </html>
