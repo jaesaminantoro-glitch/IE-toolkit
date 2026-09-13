@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IE Tool - Smart Translator</title>
+    <title>IE Smart Translator</title>
     <style>
         * {
             box-sizing: border-box;
@@ -24,7 +24,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
             background: #ffffff;
             border-radius: 12px;
             padding: 25px;
@@ -56,7 +56,7 @@
 
         .translator-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 15px;
         }
 
@@ -159,7 +159,7 @@
         <div class="language-select">
             <select id="sourceLang">
                 <option value="id">Indonesia</option>
-                <option value="en" selected>Inggris (EN)</option>
+                <option value="en" selected>Inggris</option>
                 <option value="ja">Jepang</option>
                 <option value="zh">Mandarin</option>
                 <option value="de">Jerman</option>
@@ -170,7 +170,7 @@
 
             <select id="targetLang">
                 <option value="id" selected>Indonesia</option>
-                <option value="en">Inggris (EN)</option>
+                <option value="en">Inggris</option>
                 <option value="ja">Jepang</option>
                 <option value="zh">Mandarin</option>
                 <option value="de">Jerman</option>
@@ -181,18 +181,18 @@
         <!-- Input & Output Text Area -->
         <div class="translator-grid">
             <div class="text-box-container">
-                <textarea id="inputText" placeholder="Ketik teks yang ingin diterjemahkan di sini..."></textarea>
+                <textarea id="inputText" placeholder="Ketik teks di sini..."></textarea>
                 <div class="box-tools">
-                    <button class="btn-tool" onclick="speakText('inputText', 'sourceLang')">🔊 Dengarkan</button>
+                    <button class="btn-tool" onclick="speakText('inputText', 'sourceLang')">🔊 Suara</button>
                     <button class="btn-tool" onclick="clearInput()">🗑️ Hapus</button>
                 </div>
             </div>
 
             <div class="text-box-container">
-                <textarea id="outputText" class="output-box" placeholder="Hasil terjemahan akan muncul di sini..." readonly></textarea>
+                <textarea id="outputText" class="output-box" placeholder="Hasil penerjemahan akan muncul di sini..." readonly></textarea>
                 <div class="box-tools">
-                    <button class="btn-tool" onclick="speakText('outputText', 'targetLang')">🔊 Dengarkan</button>
-                    <button class="btn-tool" onclick="copyResult()">📋 Salin Teks</button>
+                    <button class="btn-tool" onclick="speakText('outputText', 'targetLang')">🔊 Suara</button>
+                    <button class="btn-tool" onclick="copyResult()">📋 Salin</button>
                 </div>
             </div>
         </div>
@@ -205,7 +205,7 @@
     </div>
 
     <script>
-        async function translateText() {
+        function translateText() {
             const input = document.getElementById('inputText').value.trim();
             const sourceLang = document.getElementById('sourceLang').value;
             const targetLang = document.getElementById('targetLang').value;
@@ -214,45 +214,38 @@
 
             if (!input) {
                 outputArea.value = '';
-                statusText.textContent = 'Silakan masukkan teks terlebih dahulu.';
+                statusText.textContent = 'Masukkan teks terlebih dahulu.';
                 return;
             }
 
             statusText.textContent = 'Menerjemahkan...';
 
-            // Jalur Utama: API Lingva
-            try {
-                const url = `https://lingva.ml/api/v1/${sourceLang}/${targetLang}/${encodeURIComponent(input)}`;
-                const response = await fetch(url);
-                const data = await response.json();
+            // Menghapus elemen script lama jika ada
+            const oldScript = document.getElementById('jsonp-script');
+            if (oldScript) oldScript.remove();
 
-                if (data.translation) {
-                    outputArea.value = data.translation;
+            // Membuat callback unik untuk menangani respons JSONP (Bypass CORS)
+            window.handleTranslation = function(response) {
+                if (response && response.responseData) {
+                    outputArea.value = response.responseData.translatedText;
                     statusText.textContent = 'Selesai menerjemahkan.';
-                    return;
-                }
-            } catch (e) {
-                console.log('Server utama sibuk, beralih ke server cadangan...');
-            }
-
-            // Jalur Cadangan: API MyMemory
-            try {
-                const urlBackup = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${sourceLang}|${targetLang}`;
-                const responseBackup = await fetch(urlBackup);
-                const dataBackup = await responseBackup.json();
-
-                if (dataBackup.responseData) {
-                    outputArea.value = dataBackup.responseData.translatedText;
-                    statusText.textContent = 'Selesai menerjemahkan (via Server Cadangan).';
                 } else {
-                    statusText.textContent = 'Gagal mengambil hasil terjemahan.';
+                    statusText.textContent = 'Gagal menerjemahkan teks.';
                 }
-            } catch (e) {
-                statusText.textContent = 'Gagal terhubung. Pastikan koneksi internet kamu aktif.';
-            }
+            };
+
+            // Memanggil API MyMemory via skrip dinamis
+            const script = document.createElement('script');
+            script.id = 'jsonp-script';
+            script.src = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${sourceLang}|${targetLang}&callback=handleTranslation`;
+            
+            script.onerror = function() {
+                statusText.textContent = 'Gagal terhubung ke server. Pastikan Anda terhubung ke internet.';
+            };
+
+            document.body.appendChild(script);
         }
 
-        // Fungsi Tukar Bahasa
         function swapLanguages() {
             const sourceSelect = document.getElementById('sourceLang');
             const targetSelect = document.getElementById('targetLang');
@@ -261,28 +254,23 @@
             targetSelect.value = temp;
         }
 
-        // Fungsi Salin Hasil
         function copyResult() {
             const outputText = document.getElementById('outputText').value;
             if (!outputText) return;
-            
             navigator.clipboard.writeText(outputText).then(() => {
                 alert('Teks berhasil disalin!');
             });
         }
 
-        // Fungsi Bersihkan Input
         function clearInput() {
             document.getElementById('inputText').value = '';
             document.getElementById('outputText').value = '';
             document.getElementById('statusText').textContent = '';
         }
 
-        // Fungsi Text-to-Speech (Suara)
         function speakText(areaId, langSelectId) {
             const text = document.getElementById(areaId).value;
             const lang = document.getElementById(langSelectId).value;
-
             if (!text) return;
 
             const utterance = new SpeechSynthesisUtterance(text);
