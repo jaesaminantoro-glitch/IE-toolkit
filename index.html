@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IE Translator Mobile</title>
+    <title>IE All-in-One Translator</title>
+    <!-- Tesseract.js Library untuk OCR Gambar -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -79,6 +81,55 @@
             margin: 0 6px;
         }
 
+        .media-tools {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .tool-btn {
+            flex: 1;
+            background: #e8f0fe;
+            color: #1a73e8;
+            border: 1px dashed #1a73e8;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tool-btn.recording {
+            background: #fce8e6;
+            color: #d93025;
+            border-color: #d93025;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            max-height: 120px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: none;
+            object-fit: contain;
+        }
+
         .card-box {
             background: #ffffff;
             border: 1px solid #dadce0;
@@ -95,7 +146,7 @@
 
         textarea {
             width: 100%;
-            height: 110px;
+            height: 100px;
             border: none;
             outline: none;
             resize: none;
@@ -124,42 +175,25 @@
             cursor: pointer;
         }
 
-        .main-btn {
-            width: 100%;
-            background: #1a73e8;
-            color: #ffffff;
-            border: none;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 4px;
-        }
-
-        .main-btn:active {
-            background: #1557b0;
-        }
-
         .status {
             font-size: 0.8rem;
             color: #70757a;
             text-align: center;
-            margin-top: 10px;
+            margin-top: 4px;
         }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <div class="header">IE Mobile Translator</div>
+        <div class="header">IE All-in-One Translator</div>
 
-        <!-- Language Selector -->
+        <!-- Selector Bahasa -->
         <div class="lang-bar">
-            <select id="srcLang">
+            <select id="srcLang" onchange="processTranslation()">
                 <option value="auto">Deteksi Bahasa</option>
-                <option value="id">Indonesia</option>
-                <option value="en" selected>Inggris</option>
+                <option value="id" selected>Indonesia</option>
+                <option value="en">Inggris</option>
                 <option value="ja">Jepang</option>
                 <option value="zh-CN">Mandarin</option>
                 <option value="ar">Arab</option>
@@ -167,25 +201,39 @@
 
             <button class="swap-btn" onclick="swapLangs()">⇄</button>
 
-            <select id="tgtLang">
-                <option value="id" selected>Indonesia</option>
-                <option value="en">Inggris</option>
+            <select id="tgtLang" onchange="processTranslation()">
+                <option value="id">Indonesia</option>
+                <option value="en" selected>Inggris</option>
                 <option value="ja">Jepang</option>
                 <option value="zh-CN">Mandarin</option>
                 <option value="ar">Arab</option>
             </select>
         </div>
 
-        <!-- Input Box -->
+        <!-- Tombol Input Gambar & Suara -->
+        <div class="media-tools">
+            <label for="imageInput" class="tool-btn">
+                📷 Foto / Galeri
+            </label>
+            <input type="file" id="imageInput" accept="image/*" onchange="processImage(event)">
+
+            <button id="micBtn" class="tool-btn" onclick="toggleSpeech()">
+                🎙️ Rekam Suara
+            </button>
+        </div>
+
+        <center><img id="imgPreview" class="preview-img" alt="Preview Gambar"></center>
+
+        <!-- Input Box Teks -->
         <div class="card-box">
-            <textarea id="inputText" placeholder="Ketik atau tempel teks di sini..."></textarea>
+            <textarea id="inputText" placeholder="Ketik, rekam suara, atau unggah foto..." oninput="handleInput()"></textarea>
             <div class="actions-row">
                 <button class="icon-btn" onclick="speak('inputText', 'srcLang')">🔊 Suara</button>
                 <button class="icon-btn" onclick="clearAll()">🗑️ Hapus</button>
             </div>
         </div>
 
-        <!-- Output Box -->
+        <!-- Output Box Hasil -->
         <div class="card-box output-theme">
             <textarea id="outputText" placeholder="Hasil terjemahan..." readonly></textarea>
             <div class="actions-row">
@@ -194,12 +242,108 @@
             </div>
         </div>
 
-        <!-- Translate Action -->
-        <button class="main-btn" onclick="processTranslation()">Terjemahkan</button>
-        <div class="status" id="statusMsg"></div>
+        <div class="status" id="statusMsg">Siap menerjemahkan...</div>
     </div>
 
     <script>
+        let timer;
+        let recognition;
+        let isRecording = false;
+
+        // 1. Fitur Speech-to-Text (Rekam Suara)
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = function() {
+                isRecording = true;
+                const micBtn = document.getElementById('micBtn');
+                micBtn.classList.add('recording');
+                micBtn.innerHTML = '🛑 Mendengarkan...';
+                document.getElementById('statusMsg').textContent = 'Silakan bicara sekarang...';
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('inputText').value = transcript;
+                document.getElementById('statusMsg').textContent = 'Suara terdeteksi! Menerjemahkan...';
+                processTranslation();
+            };
+
+            recognition.onerror = function(event) {
+                document.getElementById('statusMsg').textContent = 'Gagal merekam suara: ' + event.error;
+                stopRecordingUI();
+            };
+
+            recognition.onend = function() {
+                stopRecordingUI();
+            };
+        } else {
+            document.getElementById('micBtn').style.display = 'none';
+        }
+
+        function toggleSpeech() {
+            if (!recognition) {
+                alert('Fitur perekam suara tidak didukung di browser ini.');
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                let srcLang = document.getElementById('srcLang').value;
+                if (srcLang === 'auto') srcLang = 'id'; // Default ke ID jika auto
+                recognition.lang = srcLang;
+                recognition.start();
+            }
+        }
+
+        function stopRecordingUI() {
+            isRecording = false;
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.remove('recording');
+            micBtn.innerHTML = '🎙️ Rekam Suara';
+        }
+
+        // 2. Fitur OCR (Foto/Gambar)
+        async function processImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const imgPreview = document.getElementById('imgPreview');
+            const status = document.getElementById('statusMsg');
+            const inputText = document.getElementById('inputText');
+
+            imgPreview.src = URL.createObjectURL(file);
+            imgPreview.style.display = 'block';
+
+            status.textContent = 'Membaca tulisan dari gambar...';
+
+            try {
+                const result = await Tesseract.recognize(file, 'eng+ind');
+                const extractedText = result.data.text.trim();
+
+                if (extractedText) {
+                    inputText.value = extractedText;
+                    status.textContent = 'Tulisan terdeteksi! Menerjemahkan...';
+                    processTranslation();
+                } else {
+                    status.textContent = 'Tidak ada tulisan yang terdeteksi pada gambar.';
+                }
+            } catch (error) {
+                status.textContent = 'Gagal membaca gambar.';
+            }
+        }
+
+        // 3. Logika Terjemahan & Utilitas
+        function handleInput() {
+            document.getElementById('statusMsg').textContent = 'Mengetik...';
+            clearTimeout(timer);
+            timer = setTimeout(processTranslation, 500);
+        }
+
         function processTranslation() {
             const text = document.getElementById('inputText').value.trim();
             const src = document.getElementById('srcLang').value;
@@ -209,13 +353,12 @@
 
             if (!text) {
                 output.value = '';
-                status.textContent = 'Ketik teks terlebih dahulu.';
+                status.textContent = 'Siap menerjemahkan...';
                 return;
             }
 
-            status.textContent = 'Memproses...';
+            status.textContent = 'Menerjemahkan...';
 
-            // Menggunakan Google Translate Unofficial API via Google Script Endpoint
             const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${src}&tl=${tgt}&dt=t&q=${encodeURIComponent(text)}`;
 
             fetch(url)
@@ -224,13 +367,13 @@
                     if (data && data[0]) {
                         let result = data[0].map(item => item[0]).join('');
                         output.value = result;
-                        status.textContent = 'Selesai.';
+                        status.textContent = 'Selesai menerjemahkan.';
                     } else {
                         status.textContent = 'Gagal menerjemahkan.';
                     }
                 })
-                .catch(err => {
-                    status.textContent = 'Gagal terhubung. Pastikan internet HP aktif.';
+                .catch(() => {
+                    status.textContent = 'Gagal terhubung. Pastikan internet aktif.';
                 });
         }
 
@@ -241,6 +384,7 @@
             const temp = src.value;
             src.value = tgt.value;
             tgt.value = temp;
+            processTranslation();
         }
 
         function copyText() {
@@ -254,7 +398,11 @@
         function clearAll() {
             document.getElementById('inputText').value = '';
             document.getElementById('outputText').value = '';
-            document.getElementById('statusMsg').textContent = '';
+            document.getElementById('imageInput').value = '';
+            const imgPreview = document.getElementById('imgPreview');
+            imgPreview.src = '';
+            imgPreview.style.display = 'none';
+            document.getElementById('statusMsg').textContent = 'Siap menerjemahkan...';
         }
 
         function speak(areaId, langSelectId) {
