@@ -2,1773 +2,410 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>AI Photo Translator - SOP Factory</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Dino Adventure — Dunia Matematika</title>
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background:
-            radial-gradient(circle at top left, #dbeafe, transparent 35%),
-            radial-gradient(circle at bottom right, #dcfce7, transparent 35%),
-            #f8fafc;
-        min-height: 100vh;
-    }
-
-    .glass {
-        background: rgba(255,255,255,.88);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,.8);
-        box-shadow: 0 15px 40px rgba(15,23,42,.08);
-    }
-
-    .drop-zone {
-        border: 2px dashed #94a3b8;
-        transition: .2s;
-    }
-
-    .drop-zone:hover,
-    .drop-zone.dragover {
-        border-color: #2563eb;
-        background: #eff6ff;
-    }
-
-    .preview-img {
-        max-height: 360px;
-        object-fit: contain;
-    }
-
-    textarea {
-        resize: vertical;
-    }
-
-    .loader {
-        width: 24px;
-        height: 24px;
-        border: 3px solid #dbeafe;
-        border-top-color: #2563eb;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .confidence-bar {
-        height: 8px;
-        border-radius: 99px;
-        background: #e2e8f0;
-        overflow: hidden;
-    }
-
-    .confidence-fill {
-        height: 100%;
-        background: #2563eb;
-        transition: width .3s;
-    }
-
-    .history-item {
-        transition: .2s;
-    }
-
-    .history-item:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 5px 15px rgba(0,0,0,.06);
-    }
-
-    .dark-mode {
-        background: #0f172a;
-        color: #e2e8f0;
-    }
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#57c7f2}
+body{touch-action:none}
+button{font:inherit;border:0}
+#game{position:relative;width:100vw;height:100vh;overflow:hidden;background:linear-gradient(#38bce9 0%,#a7eaff 63%,#7bd34c 63%,#4eae38 100%)}
+#world{position:absolute;inset:0;overflow:hidden}
+.layer{position:absolute;bottom:28%;width:120%;height:35%;pointer-events:none}
+.mountain{position:absolute;bottom:0;width:0;height:0;border-left:110px solid transparent;border-right:110px solid transparent;border-bottom:190px solid #72acbd}
+.mountain:after{content:"";position:absolute;left:-35px;top:45px;border-left:35px solid transparent;border-right:35px solid transparent;border-bottom:70px solid #eaf8fa}
+.m1{left:0}.m2{left:35%;transform:scale(1.2)}.m3{right:2%;transform:scale(.85)}
+.cloud{position:absolute;width:135px;height:38px;background:#fff;border-radius:30px;opacity:.75}
+.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border-radius:50%}.cloud:before{width:58px;height:58px;left:25px;top:-28px}.cloud:after{width:48px;height:48px;left:78px;top:-20px}
+.c1{top:12%;left:-20px}.c2{top:24%;right:-35px}
+#camera{position:absolute;left:0;top:0;width:3000px;height:100%;will-change:transform}
+#ground{position:absolute;left:0;bottom:0;width:3000px;height:28%;background:linear-gradient(#68c83f 0 16%,#8a582f 16% 100%);border-top:8px solid #a5e45d}
+.platform{position:absolute;height:20px;background:#77d64b;border:4px solid #4c842d;border-radius:8px;box-shadow:0 7px 0 #754728}
+.platform.small{height:18px}
+.tree{position:absolute;bottom:28%;width:28px;height:125px;background:#75462a;border-radius:12px}
+.tree:before{content:"";position:absolute;width:120px;height:120px;left:-46px;top:-80px;border-radius:50%;background:#249243;box-shadow:48px 18px 0 #35a84d,-35px 25px 0 #21863e}
+.sign{position:absolute;bottom:28%;width:150px;padding:10px;background:#87451f;color:white;border:4px solid #4b2411;border-radius:10px;text-align:center;font-weight:1000;box-shadow:0 5px #391a0c}
+.coin{position:absolute;width:42px;height:42px;border-radius:50%;background:#ffd32e;border:5px solid #d28b08;box-shadow:0 5px 0 #9d6908;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:1000;color:#9b6500;animation:coin 1s infinite ease-in-out}
+@keyframes coin{50%{transform:translateY(-7px) rotateY(180deg)}}
+.egg{position:absolute;font-size:43px;filter:drop-shadow(0 4px 0 #70401f)}
+.enemy{position:absolute;font-size:55px;filter:drop-shadow(0 5px 0 #552b19);animation:enemy 1.2s infinite ease-in-out}
+@keyframes enemy{50%{transform:translateY(-5px)}}
+#dino{position:absolute;width:80px;height:90px;z-index:20;font-size:76px;line-height:1;filter:drop-shadow(0 7px 0 #236125);transform-origin:center bottom;user-select:none;pointer-events:none}
+#dinoInner{display:inline-block;width:100%;height:100%;transition:transform 0.1s}
+#dino.run #dinoInner{animation:run .18s infinite alternate}
+#dino.jump #dinoInner{animation:jump .45s ease-out}
+#dino.hit #dinoInner{animation:hit .35s}
+.flip-left{transform:scaleX(-1)}
+@keyframes run{to{transform:translateY(-5px) rotate(-2deg)}}
+@keyframes jump{0%{transform:translateY(0)}50%{transform:translateY(-18px) rotate(-5deg)}100%{transform:translateY(0)}}
+@keyframes hit{25%{transform:translateX(-10px)}50%{transform:translateX(10px)}75%{transform:translateX(-8px)}}
+#hud{position:absolute;z-index:50;top:10px;left:50%;transform:translateX(-50%);width:min(960px,94vw);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+.hudbox{background:#6c351b;color:#fff;border:3px solid #3f1e0d;border-radius:17px;padding:8px 12px;font-weight:1000;box-shadow:0 4px #3a1a0b;white-space:nowrap;pointer-events:auto}
+#progress{position:absolute;top:70px;left:50%;transform:translateX(-50%);width:min(600px,65vw);height:14px;background:#ffffffaa;border:2px solid #69401e;border-radius:20px;z-index:50;overflow:hidden}
+#bar{height:100%;width:0;background:#43c52f}
+#controls{position:absolute;z-index:60;bottom:18px;left:50%;transform:translateX(-50%);width:min(650px,94vw);display:flex;justify-content:space-between;align-items:end}
+.pad{display:flex;gap:10px}
+.ctrl{width:68px;height:68px;border-radius:20px;background:#ffffffdd;border:4px solid #70401f;color:#4b2a16;font-size:30px;font-weight:1000;box-shadow:0 6px #573018;user-select:none;touch-action:manipulation}
+.ctrl:active{transform:translateY(5px);box-shadow:0 1px #573018}
+#pauseBtn{width:58px;height:58px;font-size:22px;cursor:pointer}
+#startScreen,#question,#result,#pause{position:absolute;z-index:100;inset:0;display:flex;align-items:center;justify-content:center;background:#0004}
+.card{width:min(650px,92vw);max-height:90vh;overflow:auto;background:#fff;border:5px solid #6b351b;border-radius:28px;box-shadow:0 10px #3d2113,0 25px 50px #0004;padding:24px;text-align:center}
+.dinoBig{font-size:105px;filter:drop-shadow(0 7px #276128);animation:bob 1.5s infinite ease-in-out}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.title{font-size:clamp(36px,10vw,68px);font-weight:1000;color:#ffd22d;text-shadow:4px 4px #673016;margin:4px}
+.sub{font-size:clamp(20px,5vw,29px);font-weight:1000;color:#1689c5}
+.btn{display:block;width:min(430px,100%);margin:10px auto;padding:14px;border-radius:17px;color:white;font-size:21px;font-weight:1000;box-shadow:0 5px #0005;cursor:pointer}
+.green{background:#43c62f;border:3px solid #267c1e}.blue{background:#1599e8;border:3px solid #075b98}.orange{background:#ff9e1b;border:3px solid #a96308}
+.questionText{font-size:clamp(42px,12vw,76px);font-weight:1000;color:#4d2a17;margin:14px 0}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.answer{padding:16px;border-radius:17px;background:#1599e8;color:#fff;border:4px solid #075b98;box-shadow:0 5px #064b78;font-size:clamp(26px,7vw,40px);font-weight:1000;cursor:pointer}
+.answer:active{transform:translateY(4px);box-shadow:0 1px #064b78}
+.feedback{height:38px;font-size:21px;font-weight:1000;margin:7px}
+.stars{font-size:46px;color:#ffb900}.score{font-size:42px;font-weight:1000;color:#ed9900}
+.hidden{display:none!important}
+@media(max-width:600px){
+ .hudbox{font-size:12px;padding:6px 8px}.ctrl{width:60px;height:60px}.card{padding:18px}
+ #dino{font-size:68px;width:76px}.questionText{margin:8px 0 12px}
+}
 </style>
 </head>
-
 <body>
-
-<!-- HEADER -->
-<header class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b">
-    <div class="max-w-7xl mx-auto px-4 py-4">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-
-            <div>
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl">
-                        🤖
-                    </div>
-
-                    <div>
-                        <h1 class="text-xl md:text-2xl font-bold text-slate-800">
-                            AI Photo Translator
-                        </h1>
-
-                        <p class="text-xs md:text-sm text-slate-500">
-                            OCR + Translator untuk SOP Factory
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-2">
-                <button
-                    onclick="showDictionary()"
-                    class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold">
-                    📚 Kamus
-                </button>
-
-                <button
-                    onclick="clearAll()"
-                    class="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-sm font-semibold">
-                    🗑 Reset
-                </button>
-            </div>
-
-        </div>
+<div id="game">
+  <div id="world">
+    <div class="cloud c1"></div><div class="cloud c2"></div>
+    <div class="layer"><div class="mountain m m1"></div><div class="mountain m m2"></div><div class="mountain m m3"></div></div>
+    <div id="camera">
+      <div id="ground"></div>
+      <div class="tree" style="left:250px"></div><div class="tree" style="left:760px;transform:scale(.75)"></div>
+      <div class="tree" style="left:1450px;transform:scale(1.1)"></div><div class="tree" style="left:2300px;transform:scale(.8)"></div>
+      <div class="tree" style="left:2750px"></div>
+      
+      <!-- Platform -->
+      <div class="platform" data-left="500" data-width="210" data-bottom="42" style="left:500px;bottom:42%;width:210px"></div>
+      <div class="platform" data-left="1080" data-width="180" data-bottom="49" style="left:1080px;bottom:49%;width:180px"></div>
+      <div class="platform" data-left="1770" data-width="230" data-bottom="42" style="left:1770px;bottom:42%;width:230px"></div>
+      <div class="platform" data-left="2470" data-width="190" data-bottom="50" style="left:2470px;bottom:50%;width:190px"></div>
+      
+      <div class="sign" style="left:120px">🌴 MULAI PETUALANGAN</div>
+      <div class="sign" style="left:820px">🧠 ZONA MATEMATIKA</div>
+      <div class="sign" style="left:1530px">🥚 LEMBAH DINO</div>
+      <div class="sign" style="left:2260px">🏆 GERBANG BOSS</div>
+      
+      <div class="coin" data-x="470" style="left:470px;bottom:39%">⭐</div>
+      <div class="coin" data-x="570" style="left:570px;bottom:50%">⭐</div>
+      <div class="coin" data-x="1130" style="left:1130px;bottom:57%">⭐</div>
+      <div class="coin" data-x="1300" style="left:1300px;bottom:39%">⭐</div>
+      <div class="coin" data-x="1800" style="left:1800px;bottom:49%">⭐</div>
+      <div class="coin" data-x="1990" style="left:1990px;bottom:38%">⭐</div>
+      <div class="coin" data-x="2490" style="left:2490px;bottom:58%">⭐</div>
+      
+      <div class="egg" style="left:930px;bottom:30%">🥚</div>
+      <div class="egg" style="left:2100px;bottom:30%">🥚</div>
+      
+      <div class="enemy" data-x="700" style="left:700px;bottom:28%">🦀</div>
+      <div class="enemy" data-x="1390" style="left:1390px;bottom:28%">🐍</div>
+      <div class="enemy" data-x="2180" style="left:2180px;bottom:28%">🦖</div>
+      
+      <div id="finishFlag" style="position:absolute;left:2810px;bottom:28%;font-size:80px">🚩</div>
+      
+      <!-- Dino dipindahkan ke dalam camera agar sinkron dengan peta -->
+      <div id="dino"><span id="dinoInner">🦖</span></div>
     </div>
-</header>
-
-
-<main class="max-w-7xl mx-auto px-4 py-6">
-
-    <!-- INTRO -->
-    <section class="glass rounded-3xl p-5 md:p-7 mb-6">
-
-        <div class="flex flex-col md:flex-row gap-5 md:items-center">
-
-            <div class="text-5xl">
-                📷
-            </div>
-
-            <div class="flex-1">
-
-                <h2 class="text-xl font-bold text-slate-800 mb-2">
-                    Terjemahkan SOP dari Foto
-                </h2>
-
-                <p class="text-slate-600 text-sm leading-relaxed">
-                    Upload foto SOP Mandarin. Sistem akan membaca teks menggunakan OCR,
-                    kemudian menerjemahkannya ke Bahasa Indonesia.
-                    Kamu juga bisa memperbaiki hasil OCR sebelum diterjemahkan.
-                </p>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- UPLOAD -->
-    <section class="glass rounded-3xl p-5 mb-6">
-
-        <div
-            id="dropZone"
-            class="drop-zone rounded-3xl p-8 md:p-12 text-center cursor-pointer">
-
-            <input
-                type="file"
-                id="imageInput"
-                accept="image/*"
-                capture="environment"
-                class="hidden">
-
-            <div class="text-6xl mb-4">
-                📸
-            </div>
-
-            <h3 class="text-lg font-bold text-slate-800">
-                Upload Foto SOP
-            </h3>
-
-            <p class="text-sm text-slate-500 mt-2">
-                Klik untuk memilih foto atau gunakan kamera HP
-            </p>
-
-            <button
-                onclick="document.getElementById('imageInput').click()"
-                class="mt-5 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg">
-                📷 Pilih Foto
-            </button>
-
-            <p class="text-xs text-slate-400 mt-4">
-                JPG / PNG / WEBP
-            </p>
-
-        </div>
-
-    </section>
-
-
-    <!-- IMAGE PREVIEW -->
-    <section
-        id="previewSection"
-        class="glass rounded-3xl p-5 mb-6 hidden">
-
-        <div class="flex items-center justify-between mb-4">
-
-            <h2 class="font-bold text-lg">
-                🖼️ Foto
-            </h2>
-
-            <button
-                onclick="removeImage()"
-                class="text-sm text-red-600 hover:text-red-800">
-                Hapus foto
-            </button>
-
-        </div>
-
-        <div class="bg-slate-100 rounded-2xl p-3 text-center">
-            <img
-                id="previewImage"
-                class="preview-img mx-auto rounded-xl">
-        </div>
-
-        <div class="mt-5 flex flex-wrap gap-3">
-
-            <button
-                id="ocrButton"
-                onclick="startOCR()"
-                class="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
-                🔎 Baca Foto
-            </button>
-
-            <button
-                onclick="rotateImage()"
-                class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
-                🔄 Putar
-            </button>
-
-        </div>
-
-    </section>
-
-
-    <!-- OCR STATUS -->
-    <section
-        id="ocrStatus"
-        class="glass rounded-3xl p-5 mb-6 hidden">
-
-        <div class="flex items-center gap-4">
-
-            <div class="loader"></div>
-
-            <div class="flex-1">
-
-                <div class="font-bold">
-                    Sedang membaca foto...
-                </div>
-
-                <div
-                    id="ocrStatusText"
-                    class="text-sm text-slate-500 mt-1">
-                    Menyiapkan OCR...
-                </div>
-
-                <div class="confidence-bar mt-3">
-                    <div
-                        id="ocrProgress"
-                        class="confidence-fill"
-                        style="width:0%">
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- WORKSPACE -->
-    <section
-        id="workspace"
-        class="grid lg:grid-cols-2 gap-6 hidden">
-
-
-        <!-- SOURCE -->
-        <div class="glass rounded-3xl p-5">
-
-            <div class="flex items-center justify-between mb-4">
-
-                <div>
-                    <h2 class="font-bold text-lg text-slate-800">
-                        🇨🇳 Teks Mandarin
-                    </h2>
-
-                    <p class="text-xs text-slate-500">
-                        Hasil OCR dapat diperbaiki manual
-                    </p>
-                </div>
-
-                <button
-                    onclick="clearSource()"
-                    class="text-xs px-3 py-2 rounded-lg bg-red-50 text-red-600">
-                    Bersihkan
-                </button>
-
-            </div>
-
-            <textarea
-                id="sourceText"
-                rows="12"
-                class="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
-                placeholder="Teks Mandarin akan muncul di sini..."></textarea>
-
-
-            <div class="flex flex-wrap gap-2 mt-4">
-
-                <button
-                    onclick="translateText()"
-                    class="flex-1 min-w-[180px] px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                    🤖 Terjemahkan
-                </button>
-
-                <button
-                    onclick="copySource()"
-                    class="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
-                    📋 Copy
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- RESULT -->
-        <div class="glass rounded-3xl p-5">
-
-            <div class="flex items-center justify-between mb-4">
-
-                <div>
-                    <h2 class="font-bold text-lg text-slate-800">
-                        🇮🇩 Bahasa Indonesia
-                    </h2>
-
-                    <p class="text-xs text-slate-500">
-                        Hasil terjemahan
-                    </p>
-                </div>
-
-                <button
-                    onclick="copyResult()"
-                    class="text-xs px-3 py-2 rounded-lg bg-green-50 text-green-700">
-                    📋 Copy
-                </button>
-
-            </div>
-
-
-            <textarea
-                id="resultText"
-                rows="12"
-                class="w-full p-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-green-500 text-slate-800"
-                placeholder="Hasil terjemahan akan muncul di sini..."></textarea>
-
-
-            <div class="mt-4 grid grid-cols-2 gap-3">
-
-                <button
-                    onclick="translateText()"
-                    class="px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold">
-                    🔄 Terjemahkan Lagi
-                </button>
-
-                <button
-                    onclick="saveHistory()"
-                    class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 font-semibold">
-                    💾 Simpan
-                </button>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- TOOLS -->
-    <section class="grid md:grid-cols-3 gap-4 mt-6">
-
-        <div class="glass rounded-2xl p-5">
-
-            <div class="text-3xl mb-3">
-                🔎
-            </div>
-
-            <h3 class="font-bold">
-                OCR
-            </h3>
-
-            <p class="text-sm text-slate-500 mt-2">
-                Membaca tulisan dari foto menggunakan OCR di browser.
-            </p>
-
-        </div>
-
-
-        <div class="glass rounded-2xl p-5">
-
-            <div class="text-3xl mb-3">
-                📚
-            </div>
-
-            <h3 class="font-bold">
-                Kamus SOP
-            </h3>
-
-            <p class="text-sm text-slate-500 mt-2">
-                Menggunakan istilah khusus yang umum digunakan pada SOP factory.
-            </p>
-
-        </div>
-
-
-        <div class="glass rounded-2xl p-5">
-
-            <div class="text-3xl mb-3">
-                🤖
-            </div>
-
-            <h3 class="font-bold">
-                AI Ready
-            </h3>
-
-            <p class="text-sm text-slate-500 mt-2">
-                Struktur sudah disiapkan agar nantinya dapat disambungkan ke AI API.
-            </p>
-
-        </div>
-
-    </section>
-
-
-    <!-- HISTORY -->
-    <section class="glass rounded-3xl p-5 mt-6">
-
-        <div class="flex justify-between items-center mb-4">
-
-            <div>
-                <h2 class="font-bold text-lg">
-                    🕘 Riwayat
-                </h2>
-
-                <p class="text-xs text-slate-500">
-                    Tersimpan di browser ini
-                </p>
-            </div>
-
-            <button
-                onclick="clearHistory()"
-                class="text-xs px-3 py-2 rounded-lg bg-red-50 text-red-600">
-                Hapus Riwayat
-            </button>
-
-        </div>
-
-        <div
-            id="historyList"
-            class="space-y-3">
-
-            <div class="text-center py-8 text-slate-400 text-sm">
-                Belum ada riwayat.
-            </div>
-
-        </div>
-
-    </section>
-
-</main>
-
-
-<!-- DICTIONARY MODAL -->
-<div
-    id="dictionaryModal"
-    class="fixed inset-0 bg-black/50 z-[100] hidden items-center justify-center p-4">
-
-    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-
-        <div class="p-5 border-b flex justify-between items-center">
-
-            <div>
-                <h2 class="font-bold text-lg">
-                    📚 Kamus SOP Factory
-                </h2>
-
-                <p class="text-xs text-slate-500">
-                    Istilah khusus untuk membantu terjemahan
-                </p>
-            </div>
-
-            <button
-                onclick="closeDictionary()"
-                class="w-9 h-9 rounded-full bg-slate-100">
-                ✕
-            </button>
-
-        </div>
-
-
-        <div class="p-5 overflow-auto max-h-[70vh]">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3"
-                 id="dictionaryList">
-            </div>
-
-        </div>
-
+  </div>
+
+  <div id="hud">
+    <div class="hudbox" id="life">❤️❤️❤️</div>
+    <div class="hudbox" id="level">LEVEL 1</div>
+    <div class="hudbox" id="coins">🪙 0</div>
+    <button class="hudbox" id="pauseBtn" onclick="pauseGame()">Ⅱ</button>
+  </div>
+  <div id="progress"><div id="bar"></div></div>
+
+  <div id="controls">
+    <div class="pad">
+      <button class="ctrl" id="left">◀</button>
+      <button class="ctrl" id="right">▶</button>
+      <button class="ctrl" id="jump">⬆</button>
     </div>
+  </div>
 
+  <div id="startScreen">
+    <div class="card">
+      <div class="dinoBig">🦖</div><div class="title">DINO ADVENTURE</div>
+      <div class="sub">Petualangan Matematika</div>
+      <p><b>Gerakkan Dino, kumpulkan koin, hindari musuh, dan jawab soal untuk membuka gerbang!</b></p>
+      <button class="btn green" onclick="startGame()">▶ MULAI PETUALANGAN</button>
+      <p style="font-size:14px;color:#666">HP: gunakan ◀ ▶ dan ⬆ untuk melompat. Keyboard: A/D/W atau ←/→/↑.</p>
+    </div>
+  </div>
+
+  <div id="question" class="hidden"><div class="card">
+    <div class="sub">🧠 TANTANGAN MATEMATIKA</div>
+    <div id="qText" class="questionText">7 + 8 = ?</div>
+    <div id="answers" class="answers"></div>
+    <div id="feedback" class="feedback"></div>
+  </div></div>
+
+  <div id="pause" class="hidden"><div class="card"><div style="font-size:70px">⏸️</div><div class="sub">GAME DIJEDA</div><button class="btn green" onclick="resumeGame()">▶ LANJUT</button><button class="btn orange" onclick="location.reload()">🏠 MULAI ULANG</button></div></div>
+
+  <div id="result" class="hidden"><div class="card">
+    <div style="font-size:75px">🏆</div><div class="title" style="font-size:45px">PETUALANGAN SELESAI!</div>
+    <div class="stars" id="resultStars">★★★</div><div class="score" id="resultScore">0 ⭐</div>
+    <p id="resultText" style="font-size:20px;font-weight:900"></p>
+    <button class="btn green" onclick="location.reload()">🔄 MAIN LAGI</button>
+  </div></div>
 </div>
-
-
-<!-- TOAST -->
-<div
-    id="toast"
-    class="fixed bottom-5 right-5 z-[200] hidden">
-
-    <div
-        id="toastContent"
-        class="bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl text-sm">
-    </div>
-
-</div>
-
 
 <script>
-
-/* =========================================================
-   DATABASE KAMUS SOP
-========================================================= */
-
-const dictionary = {
-
-    "电池盖": "battery cover",
-    "电池盖组件": "battery cover assembly",
-
-    "上盖": "top cover",
-    "上盖组件": "top cover assembly",
-
-    "下盖": "bottom cover",
-    "下盖组件": "bottom cover assembly",
-
-    "定位销": "pin positioning",
-    "定位针": "pin positioning",
-
-    "治具": "fixture",
-    "夹具": "fixture",
-
-    "镊子": "tweezers",
-    "磁棒": "magnetic bar",
-    "磁铁棒": "magnetic bar",
-
-    "拆机棒": "disassembly stick",
-    "拆机工具": "disassembly stick",
-
-    "酒精": "alkohol",
-    "无尘布": "kain microfiber",
-    "擦拭布": "kain microfiber",
-    "微纤维布": "kain microfiber",
-
-    "纸胶带": "tape kertas",
-    "胶带": "tape",
-    "保护胶带": "protective tape",
-
-    "屏幕": "layar",
-    "显示屏": "layar",
-
-    "手机": "unit",
-    "设备": "unit",
-
-    "螺丝": "screw",
-    "螺丝刀": "screwdriver",
-
-    "点胶": "gluing",
-    "涂胶": "gluing",
-    "喷胶": "spray glue",
-
-    "防水": "waterproof",
-    "气密性": "air tightness",
-    "气密测试": "air tightness test",
-
-    "清洁棚": "cleanshed",
-    "清洁间": "cleanshed",
-
-    "生产": "production",
-    "生产线": "production line",
-    "流水线": "production line",
-
-    "检查": "check",
-    "检验": "inspection",
-    "确认": "confirm",
-    "测试": "test",
-
-    "安装": "install",
-    "拆卸": "disassembly",
-    "取出": "remove",
-    "放入": "put",
-
-    "连接": "connect",
-    "断开": "disconnect",
-
-    "电池": "battery",
-    "摄像头": "camera",
-    "镜头": "lens",
-    "相机": "camera",
-
-    "螺丝孔": "screw hole",
-    "孔位": "hole position",
-
-    "NG": "NG",
-    "OK": "OK",
-    "不良": "NG",
-    "良品": "OK",
-
-    "注意": "attention",
-    "禁止": "prohibited",
-    "必须": "must",
-
-    "轻轻": "gently",
-    "小心": "carefully",
-
-    "完成": "complete",
-    "结束": "finish",
-
-    "员工": "operator",
-    "作业员": "operator",
-    "操作员": "operator",
-
-    "标准": "standard",
-    "作业标准": "work standard",
-    "作业指导书": "work instruction",
-
-    "步骤": "step",
-    "工序": "process",
-    "工位": "workstation",
-
-    "时间": "time",
-    "节拍": "cycle time",
-
-    "数量": "quantity",
-    "分钟": "minute",
-    "秒": "second",
-
-    "左": "left",
-    "右": "right",
-    "上": "upper",
-    "下": "lower",
-
-    "前": "front",
-    "后": "rear",
-
-    "里面": "inside",
-    "外面": "outside",
-
-    "然后": "then",
-    "最后": "finally",
-    "首先": "first",
-
-    "避免": "avoid",
-    "防止": "prevent",
-
-    "损坏": "damage",
-    "刮伤": "scratch",
-
-    "异物": "foreign material",
-    "灰尘": "dust",
-
-    "漏水": "water leakage",
-    "漏气": "air leakage",
-
-    "扫码": "scan barcode",
-    "扫描": "scan",
-    "条码": "barcode",
-    "二维码": "QR code",
-
-    "重量": "weight",
-    "称重": "weighing",
-
-    "包装": "packaging",
-    "包装盒": "packaging box",
-
-    "确认无误": "confirm there is no abnormality",
-    "安装到位": "install into position",
-    "检查是否到位": "check whether it is properly installed",
-    "确保": "ensure",
-    "保持": "keep",
-
-    "取": "take",
-    "拿": "take",
-    "放置": "place",
-
-    "压合": "press fitting",
-    "按压": "press",
-    "固定": "fix",
-    "锁紧": "tighten",
-
-    "松开": "loosen",
-    "打开": "open",
-    "关闭": "close"
-};
-
-
-/* =========================================================
-   VARIABLES
-========================================================= */
-
-let currentImage = null;
-let rotation = 0;
-
-let historyData =
-    JSON.parse(localStorage.getItem("photoTranslatorHistory") || "[]");
-
-
-/* =========================================================
-   ELEMENTS
-========================================================= */
-
-const imageInput =
-    document.getElementById("imageInput");
-
-const dropZone =
-    document.getElementById("dropZone");
-
-const previewSection =
-    document.getElementById("previewSection");
-
-const previewImage =
-    document.getElementById("previewImage");
-
-const workspace =
-    document.getElementById("workspace");
-
-const sourceText =
-    document.getElementById("sourceText");
-
-const resultText =
-    document.getElementById("resultText");
-
-
-/* =========================================================
-   UPLOAD
-========================================================= */
-
-imageInput.addEventListener("change", function(e) {
-
-    const file = e.target.files[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-
-        showToast("File harus berupa gambar.");
-
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-
-        currentImage = event.target.result;
-
-        rotation = 0;
-
-        previewImage.src = currentImage;
-
-        previewSection.classList.remove("hidden");
-
-        workspace.classList.remove("hidden");
-
-        sourceText.value = "";
-
-        resultText.value = "";
-
-        showToast("Foto berhasil dimuat.");
-
-    };
-
-    reader.readAsDataURL(file);
-
+const W = 3000;
+let playing = false, paused = false, questionOpen = false;
+let x = 230, y = 0, vy = 0, onGround = true;
+let dir = 0, coins = 0, lives = 3, score = 0;
+let collected = new Set(), hitEnemies = new Set();
+let cameraX = 0, questionCount = 0, correct = 0;
+
+const dino = document.getElementById("dino");
+const dinoInner = document.getElementById("dinoInner");
+const camera = document.getElementById("camera");
+const coinEls = [...document.querySelectorAll(".coin")];
+const enemyEls = [...document.querySelectorAll(".enemy")];
+const platforms = [...document.querySelectorAll(".platform")].map(el => {
+  const h = window.innerHeight;
+  const bottomPct = parseFloat(el.dataset.bottom);
+  return {
+    left: parseFloat(el.dataset.left),
+    right: parseFloat(el.dataset.left) + parseFloat(el.dataset.width),
+    heightPx: (bottomPct / 100) * h - (0.28 * h)
+  };
 });
 
+const saveKey = "dinoWorldMathSave";
+let save = JSON.parse(localStorage.getItem(saveKey) || '{"best":0,"coins":0}');
 
-/* =========================================================
-   DRAG DROP
-========================================================= */
+function startGame() {
+  document.getElementById("startScreen").classList.add("hidden");
+  playing = true;
+  update();
+  requestAnimationFrame(loop);
+}
 
-dropZone.addEventListener("dragover", function(e) {
+function loop() {
+  if (playing && !paused) {
+    physics();
+    update();
+  }
+  requestAnimationFrame(loop);
+}
 
-    e.preventDefault();
+function physics() {
+  if (questionOpen) return;
 
-    dropZone.classList.add("dragover");
+  const speed = dir * 6;
+  x += speed;
 
+  if (dir > 0) {
+    dinoInner.classList.remove("flip-left");
+  } else if (dir < 0) {
+    dinoInner.classList.add("flip-left");
+  }
+
+  if (dir !== 0) dino.classList.add("run");
+  else dino.classList.remove("run");
+
+  x = Math.max(80, Math.min(W - 150, x));
+
+  // Gravitasi & Pijakan
+  vy -= 0.8;
+  y += vy;
+
+  let currentGround = 0;
+  platforms.forEach(p => {
+    if (x + 40 >= p.left && x - 40 <= p.right) {
+      if (y >= p.heightPx - 5 && (y - vy) >= p.heightPx) {
+        currentGround = Math.max(currentGround, p.heightPx);
+      }
+    }
+  });
+
+  if (y <= currentGround) {
+    y = currentGround;
+    vy = 0;
+    onGround = true;
+  } else {
+    onGround = false;
+  }
+
+  checkCoins();
+  checkEnemies();
+
+  if (x > 820 && questionCount < 1) openQuestion("7 + 8 = ?", 15);
+  else if (x > 1510 && questionCount < 2) openQuestion("6 × 4 = ?", 24);
+  else if (x > 2260 && questionCount < 3) openQuestion("35 − 17 = ?", 18);
+
+  if (x > 2780) finish();
+}
+
+function update() {
+  const base = window.innerHeight * 0.28;
+  dino.style.left = x + "px";
+  dino.style.bottom = (base + y) + "px";
+
+  // Perhitungan pergerakan kamera agar fokus mengikuti Dino di tengah layar
+  cameraX = x - (window.innerWidth * 0.4);
+  cameraX = Math.max(0, Math.min(W - window.innerWidth, cameraX));
+  camera.style.transform = `translateX(${-cameraX}px)`;
+
+  document.getElementById("coins").textContent = "🪙 " + coins;
+  document.getElementById("life").textContent = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
+  document.getElementById("bar").style.width = Math.min(100, (x / W) * 100) + "%";
+}
+
+function jump() {
+  if (!playing || paused || questionOpen) return;
+  if (onGround) {
+    vy = 15;
+    onGround = false;
+    dino.classList.remove("jump");
+    void dino.offsetWidth;
+    dino.classList.add("jump");
+  }
+}
+
+function checkCoins() {
+  coinEls.forEach((el, i) => {
+    if (collected.has(i)) return;
+    let cx = parseFloat(el.dataset.x);
+    if (Math.abs(x - cx) < 48) {
+      collected.add(i);
+      coins++;
+      score += 10;
+      el.style.visibility = "hidden";
+    }
+  });
+}
+
+function checkEnemies() {
+  enemyEls.forEach((el, i) => {
+    if (hitEnemies.has(i)) return;
+    let ex = parseFloat(el.dataset.x);
+    if (Math.abs(x - ex) < 58 && y < 45) {
+      hitEnemies.add(i);
+      lives--;
+      score = Math.max(0, score - 10);
+      dino.classList.remove("hit");
+      void dino.offsetWidth;
+      dino.classList.add("hit");
+      x -= 70;
+      if (lives <= 0) gameOver();
+    }
+  });
+}
+
+function openQuestion(text, answer) {
+  questionOpen = true;
+  dir = 0;
+  questionCount++;
+
+  document.getElementById("qText").textContent = text;
+
+  let vals = new Set([answer]);
+  while (vals.size < 4) {
+    let n = answer + Math.floor(Math.random() * 13) - 6;
+    if (n >= 0) vals.add(n);
+  }
+  let arr = [...vals].sort(() => Math.random() - 0.5);
+
+  document.getElementById("answers").innerHTML = arr.map(n => 
+    `<button class="answer" onclick="answer(${n},${answer},this)">${n}</button>`
+  ).join("");
+
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("question").classList.remove("hidden");
+}
+
+function answer(n, correctAnswer, btn) {
+  const fb = document.getElementById("feedback");
+  if (n === correctAnswer) {
+    btn.style.background = "#3fc534";
+    correct++;
+    score += 50;
+    coins += 10;
+    fb.textContent = "🎉 BENAR! Dino boleh lanjut!";
+    setTimeout(() => {
+      document.getElementById("question").classList.add("hidden");
+      questionOpen = false;
+    }, 650);
+  } else {
+    btn.style.background = "#e74b3c";
+    lives--;
+    fb.textContent = "😅 Belum tepat! Jawaban yang benar: " + correctAnswer;
+    if (lives <= 0) {
+      setTimeout(gameOver, 650);
+      return;
+    }
+    setTimeout(() => {
+      document.getElementById("question").classList.add("hidden");
+      questionOpen = false;
+    }, 850);
+  }
+}
+
+function pauseGame() {
+  if (!playing || questionOpen) return;
+  paused = true;
+  document.getElementById("pause").classList.remove("hidden");
+}
+
+function resumeGame() {
+  paused = false;
+  document.getElementById("pause").classList.add("hidden");
+}
+
+function finish() {
+  playing = false;
+  let stars = correct >= 3 ? 3 : correct === 2 ? 2 : 1;
+  save.best = Math.max(save.best, score);
+  save.coins = (save.coins || 0) + coins;
+  localStorage.setItem(saveKey, JSON.stringify(save));
+
+  document.getElementById("resultStars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+  document.getElementById("resultScore").textContent = score + " ⭐";
+  document.getElementById("resultText").textContent = `Kamu mengumpulkan ${coins} koin dan menjawab ${correct}/3 tantangan matematika dengan benar.`;
+  document.getElementById("result").classList.remove("hidden");
+}
+
+function gameOver() {
+  playing = false;
+  document.getElementById("resultStars").textContent = "💪";
+  document.getElementById("resultScore").textContent = score + " ⭐";
+  document.getElementById("resultText").textContent = "Nyawa habis. Tidak apa-apa — coba lagi dan bantu Dino mencapai bendera!";
+  document.getElementById("result").classList.remove("hidden");
+}
+
+function hold(el, fn) {
+  el.addEventListener("pointerdown", e => { e.preventDefault(); fn(true); });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(ev => 
+    el.addEventListener(ev, e => { e.preventDefault(); fn(false); })
+  );
+}
+
+hold(document.getElementById("left"), v => dir = v ? -1 : (dir < 0 ? 0 : dir));
+hold(document.getElementById("right"), v => dir = v ? 1 : (dir > 0 ? 0 : dir));
+document.getElementById("jump").addEventListener("pointerdown", e => { e.preventDefault(); jump(); });
+
+document.addEventListener("keydown", e => {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "a", "d", "w", "A", "D", "W"].includes(e.key)) e.preventDefault();
+  if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") dir = -1;
+  if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") dir = 1;
+  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") jump();
 });
 
-
-dropZone.addEventListener("dragleave", function() {
-
-    dropZone.classList.remove("dragover");
-
+document.addEventListener("keyup", e => {
+  if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && dir < 0) dir = 0;
+  if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && dir > 0) dir = 0;
 });
 
-
-dropZone.addEventListener("drop", function(e) {
-
-    e.preventDefault();
-
-    dropZone.classList.remove("dragover");
-
-    const file = e.dataTransfer.files[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-
-        showToast("File harus berupa gambar.");
-
-        return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-
-        currentImage = event.target.result;
-
-        rotation = 0;
-
-        previewImage.src = currentImage;
-
-        previewSection.classList.remove("hidden");
-
-        workspace.classList.remove("hidden");
-
-        sourceText.value = "";
-
-        resultText.value = "";
-
-    };
-
-    reader.readAsDataURL(file);
-
-});
-
-
-/* =========================================================
-   REMOVE IMAGE
-========================================================= */
-
-function removeImage() {
-
-    currentImage = null;
-
-    previewImage.src = "";
-
-    previewSection.classList.add("hidden");
-
-    workspace.classList.add("hidden");
-
-    imageInput.value = "";
-
-}
-
-
-/* =========================================================
-   ROTATE
-========================================================= */
-
-function rotateImage() {
-
-    if (!currentImage) return;
-
-    rotation += 90;
-
-    if (rotation >= 360) {
-
-        rotation = 0;
-
-    }
-
-    previewImage.style.transform =
-        `rotate(${rotation}deg)`;
-
-}
-
-
-/* =========================================================
-   OCR
-========================================================= */
-
-async function startOCR() {
-
-    if (!currentImage) {
-
-        showToast("Upload foto terlebih dahulu.");
-
-        return;
-    }
-
-    const status =
-        document.getElementById("ocrStatus");
-
-    const statusText =
-        document.getElementById("ocrStatusText");
-
-    const progress =
-        document.getElementById("ocrProgress");
-
-    const button =
-        document.getElementById("ocrButton");
-
-
-    status.classList.remove("hidden");
-
-    button.disabled = true;
-
-    button.classList.add("opacity-50");
-
-    sourceText.value = "";
-
-    resultText.value = "";
-
-
-    try {
-
-        statusText.innerText =
-            "Menyiapkan OCR Mandarin...";
-
-        progress.style.width = "5%";
-
-
-        const result =
-            await Tesseract.recognize(
-                currentImage,
-                "chi_sim+eng",
-                {
-
-                    logger: function(info) {
-
-                        if (info.status) {
-
-                            statusText.innerText =
-                                info.status;
-
-                        }
-
-                        if (info.progress) {
-
-                            const percent =
-                                Math.round(
-                                    info.progress * 100
-                                );
-
-                            progress.style.width =
-                                percent + "%";
-                        }
-
-                    }
-
-                }
-            );
-
-
-        let text =
-            result.data.text.trim();
-
-
-        sourceText.value = text;
-
-
-        progress.style.width = "100%";
-
-        statusText.innerText =
-            "OCR selesai.";
-
-
-        if (text) {
-
-            showToast(
-                "Teks berhasil dibaca dari foto."
-            );
-
-            translateText();
-
-        } else {
-
-            showToast(
-                "OCR tidak menemukan teks. Coba foto lebih jelas."
-            );
-
-        }
-
-
-    } catch(error) {
-
-        console.error(error);
-
-        showToast(
-            "OCR gagal. Pastikan koneksi internet tersedia."
-        );
-
-        statusText.innerText =
-            "OCR gagal.";
-
-
-    } finally {
-
-        setTimeout(() => {
-
-            status.classList.add("hidden");
-
-        }, 1500);
-
-
-        button.disabled = false;
-
-        button.classList.remove("opacity-50");
-
-    }
-
-}
-
-
-/* =========================================================
-   TRANSLATOR
-========================================================= */
-
-function translateText() {
-
-    let text =
-        sourceText.value.trim();
-
-
-    if (!text) {
-
-        showToast(
-            "Tidak ada teks untuk diterjemahkan."
-        );
-
-        return;
-    }
-
-
-    let result =
-        translateChinese(text);
-
-
-    resultText.value =
-        result;
-
-
-    showToast(
-        "Terjemahan selesai."
-    );
-
-}
-
-
-/* =========================================================
-   SIMPLE CHINESE TRANSLATION
-========================================================= */
-
-function translateChinese(text) {
-
-    let result = text;
-
-
-    /*
-        Urutkan dari frasa terpanjang
-        supaya "确认无误" diproses
-        sebelum "确认".
-    */
-
-    const keys =
-        Object.keys(dictionary)
-        .sort((a,b) =>
-            b.length - a.length
-        );
-
-
-    keys.forEach(function(chinese) {
-
-        const indonesian =
-            dictionary[chinese];
-
-        result =
-            result.split(chinese)
-                   .join(indonesian);
-
-    });
-
-
-    /*
-        Beberapa pola kalimat SOP
-    */
-
-    result =
-        result.replace(
-            /请/g,
-            "Silakan "
-        );
-
-
-    result =
-        result.replace(
-            /将/g,
-            ""
-        );
-
-
-    result =
-        result.replace(
-            /进行/g,
-            ""
-        );
-
-
-    result =
-        result.replace(
-            /是否/g,
-            "apakah "
-        );
-
-
-    result =
-        result.replace(
-            /然后/g,
-            "Kemudian "
-        );
-
-
-    result =
-        result.replace(
-            /首先/g,
-            "Pertama, "
-        );
-
-
-    result =
-        result.replace(
-            /最后/g,
-            "Terakhir, "
-        );
-
-
-    result =
-        result.replace(
-            /并且/g,
-            "dan "
-        );
-
-
-    result =
-        result.replace(
-            /以及/g,
-            "dan "
-        );
-
-
-    result =
-        result.replace(
-            /如果/g,
-            "Jika "
-        );
-
-
-    result =
-        result.replace(
-            /必须/g,
-            "harus "
-        );
-
-
-    result =
-        result.replace(
-            /注意/g,
-            "Perhatian: "
-        );
-
-
-    result =
-        result.replace(
-            /确保/g,
-            "Pastikan "
-        );
-
-
-    result =
-        result.replace(
-            /避免/g,
-            "Hindari "
-        );
-
-
-    result =
-        result.replace(
-            /防止/g,
-            "Cegah "
-        );
-
-
-    /*
-        Bersihkan spasi berlebih
-    */
-
-    result =
-        result.replace(
-            /[ \t]+/g,
-            " "
-        );
-
-
-    result =
-        result.replace(
-            /\n\s*\n\s*\n/g,
-            "\n\n"
-        );
-
-
-    /*
-        Rapikan beberapa kata Inggris
-    */
-
-    result =
-        result.replace(
-            /battery cover assembly/gi,
-            "battery cover assembly"
-        );
-
-
-    result =
-        result.replace(
-            /top cover assembly/gi,
-            "top cover assembly"
-        );
-
-
-    return result.trim();
-
-}
-
-
-/* =========================================================
-   COPY
-========================================================= */
-
-async function copyText(text) {
-
-    if (!text) {
-
-        showToast("Tidak ada teks.");
-
-        return;
-    }
-
-
-    try {
-
-        await navigator.clipboard.writeText(text);
-
-        showToast(
-            "Berhasil disalin."
-        );
-
-    } catch(error) {
-
-        const temp =
-            document.createElement("textarea");
-
-        temp.value = text;
-
-        document.body.appendChild(temp);
-
-        temp.select();
-
-        document.execCommand("copy");
-
-        temp.remove();
-
-        showToast(
-            "Berhasil disalin."
-        );
-
-    }
-
-}
-
-
-function copySource() {
-
-    copyText(
-        sourceText.value
-    );
-
-}
-
-
-function copyResult() {
-
-    copyText(
-        resultText.value
-    );
-
-}
-
-
-/* =========================================================
-   CLEAR SOURCE
-========================================================= */
-
-function clearSource() {
-
-    sourceText.value = "";
-
-    resultText.value = "";
-
-}
-
-
-/* =========================================================
-   SAVE HISTORY
-========================================================= */
-
-function saveHistory() {
-
-    const source =
-        sourceText.value.trim();
-
-    const result =
-        resultText.value.trim();
-
-
-    if (!source || !result) {
-
-        showToast(
-            "Belum ada hasil untuk disimpan."
-        );
-
-        return;
-    }
-
-
-    const item = {
-
-        id: Date.now(),
-
-        date:
-            new Date().toLocaleString(
-                "id-ID"
-            ),
-
-        source: source,
-
-        result: result
-
-    };
-
-
-    historyData.unshift(item);
-
-
-    if (historyData.length > 30) {
-
-        historyData =
-            historyData.slice(0,30);
-
-    }
-
-
-    localStorage.setItem(
-        "photoTranslatorHistory",
-        JSON.stringify(historyData)
-    );
-
-
-    renderHistory();
-
-    showToast(
-        "Hasil berhasil disimpan."
-    );
-
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function renderHistory() {
-
-    const container =
-        document.getElementById("historyList");
-
-
-    if (!historyData.length) {
-
-        container.innerHTML = `
-            <div class="text-center py-8 text-slate-400 text-sm">
-                Belum ada riwayat.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        historyData.map(item => `
-
-        <div class="history-item bg-white rounded-2xl border p-4">
-
-            <div class="flex justify-between gap-3">
-
-                <div class="text-xs text-slate-400">
-                    ${escapeHTML(item.date)}
-                </div>
-
-                <button
-                    onclick="deleteHistory(${item.id})"
-                    class="text-xs text-red-500">
-                    Hapus
-                </button>
-
-            </div>
-
-
-            <div class="grid md:grid-cols-2 gap-4 mt-3">
-
-                <div>
-
-                    <div class="text-xs font-bold text-blue-600 mb-1">
-                        🇨🇳 Mandarin
-                    </div>
-
-                    <div class="text-sm text-slate-700 whitespace-pre-wrap">
-                        ${escapeHTML(item.source)}
-                    </div>
-
-                </div>
-
-
-                <div>
-
-                    <div class="text-xs font-bold text-green-600 mb-1">
-                        🇮🇩 Indonesia
-                    </div>
-
-                    <div class="text-sm text-slate-700 whitespace-pre-wrap">
-                        ${escapeHTML(item.result)}
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <button
-                onclick="loadHistory(${item.id})"
-                class="mt-3 text-xs px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200">
-                ↩️ Gunakan lagi
-            </button>
-
-        </div>
-
-    `).join("");
-
-}
-
-
-function deleteHistory(id) {
-
-    historyData =
-        historyData.filter(
-            item => item.id !== id
-        );
-
-
-    localStorage.setItem(
-        "photoTranslatorHistory",
-        JSON.stringify(historyData)
-    );
-
-
-    renderHistory();
-
-}
-
-
-function loadHistory(id) {
-
-    const item =
-        historyData.find(
-            x => x.id === id
-        );
-
-
-    if (!item) return;
-
-
-    sourceText.value =
-        item.source;
-
-
-    resultText.value =
-        item.result;
-
-
-    workspace.classList.remove("hidden");
-
-
-    window.scrollTo({
-
-        top:
-            workspace.offsetTop - 80,
-
-        behavior:
-            "smooth"
-
-    });
-
-
-    showToast(
-        "Riwayat dimuat."
-    );
-
-}
-
-
-function clearHistory() {
-
-    if (!historyData.length) return;
-
-
-    if (
-        !confirm(
-            "Hapus semua riwayat?"
-        )
-    ) return;
-
-
-    historyData = [];
-
-
-    localStorage.removeItem(
-        "photoTranslatorHistory"
-    );
-
-
-    renderHistory();
-
-}
-
-
-/* =========================================================
-   DICTIONARY
-========================================================= */
-
-function showDictionary() {
-
-    const modal =
-        document.getElementById(
-            "dictionaryModal"
-        );
-
-
-    const list =
-        document.getElementById(
-            "dictionaryList"
-        );
-
-
-    list.innerHTML =
-        Object.entries(dictionary)
-        .map(([cn,id]) => `
-
-            <div class="border rounded-xl p-3">
-
-                <div class="font-bold text-slate-800">
-                    ${escapeHTML(cn)}
-                </div>
-
-                <div class="text-sm text-blue-600 mt-1">
-                    ${escapeHTML(id)}
-                </div>
-
-            </div>
-
-        `).join("");
-
-
-    modal.classList.remove("hidden");
-
-    modal.classList.add("flex");
-
-}
-
-
-function closeDictionary() {
-
-    const modal =
-        document.getElementById(
-            "dictionaryModal"
-        );
-
-
-    modal.classList.add("hidden");
-
-    modal.classList.remove("flex");
-
-}
-
-
-/* =========================================================
-   TOAST
-========================================================= */
-
-function showToast(message) {
-
-    const toast =
-        document.getElementById("toast");
-
-    const content =
-        document.getElementById(
-            "toastContent"
-        );
-
-
-    content.innerText =
-        message;
-
-
-    toast.classList.remove("hidden");
-
-
-    clearTimeout(
-        window.toastTimer
-    );
-
-
-    window.toastTimer =
-        setTimeout(() => {
-
-            toast.classList.add("hidden");
-
-        }, 2500);
-
-}
-
-
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
-
-function escapeHTML(text) {
-
-    return String(text)
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-/* =========================================================
-   CLEAR ALL
-========================================================= */
-
-function clearAll() {
-
-    if (
-        !confirm(
-            "Reset semua tampilan?"
-        )
-    ) return;
-
-
-    removeImage();
-
-    sourceText.value = "";
-
-    resultText.value = "";
-
-    document.getElementById(
-        "ocrStatus"
-    ).classList.add("hidden");
-
-
-    showToast(
-        "Tampilan sudah direset."
-    );
-
-}
-
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-renderHistory();
-
-
-/* =========================================================
-   KEYBOARD SHORTCUT
-========================================================= */
-
-document.addEventListener(
-    "keydown",
-    function(e) {
-
-        /*
-            Ctrl + Enter
-            = Translate
-        */
-
-        if (
-            e.ctrlKey &&
-            e.key === "Enter"
-        ) {
-
-            e.preventDefault();
-
-            translateText();
-
-        }
-
-    }
-);
-
+update();
 </script>
-
 </body>
 </html>
