@@ -1,678 +1,294 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Dino Adventure — Petualangan Matematika</title>
-<style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-body, html {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #111;
-}
-#game-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(to bottom, #56ccf2 0%, #a6e3e9 55%, #71c837 55%, #388e3c 100%);
-  overflow: hidden;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IE Tool - Smart Translator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-/* Canvas Utama */
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
+        body {
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-/* HUD Overlay */
-#hud {
-  position: absolute;
-  top: 15px;
-  left: 0;
-  width: 100%;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 10;
-  pointer-events: none;
-}
-.hud-card {
-  background: rgba(85, 43, 19, 0.85);
-  color: #fff;
-  padding: 8px 16px;
-  border-radius: 12px;
-  border: 3px solid #3a1c0b;
-  font-weight: bold;
-  font-size: 18px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-#progress-container {
-  position: absolute;
-  top: 65px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(400px, 60vw);
-  height: 14px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 2px solid #3a1c0b;
-  border-radius: 10px;
-  overflow: hidden;
-  z-index: 10;
-}
-#progress-bar {
-  width: 0%;
-  height: 100%;
-  background: #4de126;
-  transition: width 0.1s linear;
-}
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
 
-/* Kontrol Mobile - Disesuaikan agar aman di HP */
-#touch-controls {
-  position: absolute;
-  bottom: max(35px, env(safe-area-inset-bottom) + 15px);
-  left: 0;
-  width: 100%;
-  padding: 0 25px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  z-index: 20;
-}
-.dpad {
-  display: flex;
-  gap: 14px;
-}
-.btn-ctrl {
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 4px solid #5a3014;
-  border-radius: 18px;
-  color: #5a3014;
-  font-size: 26px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 0 #3a1c0b;
-  touch-action: manipulation;
-}
-.btn-ctrl:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 #3a1c0b;
-}
+        h1 {
+            color: #0d47a1;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
 
-/* UI Modal Screens */
-.modal {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-.hidden { display: none !important; }
+        .language-select {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
 
-.card {
-  background: #fff;
-  width: min(500px, 90vw);
-  border: 5px solid #5a3014;
-  border-radius: 24px;
-  padding: 24px;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-.card h1 { font-size: 32px; color: #f5a623; text-shadow: 2px 2px #5a3014; margin-bottom: 8px; }
-.card p { font-size: 16px; color: #444; margin-bottom: 20px; line-height: 1.4; }
+        select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: #fff;
+        }
 
-.btn-ui {
-  display: inline-block;
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 14px;
-  font-size: 18px;
-  font-weight: bold;
-  color: #fff;
-  background: #4de126;
-  border-bottom: 5px solid #2da80d;
-  cursor: pointer;
-}
-.btn-ui:active { transform: translateY(2px); border-bottom-width: 3px; }
+        .translator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
 
-/* Modal Soal */
-.question-text { font-size: 48px; font-weight: 900; color: #3a1c0b; margin: 15px 0; }
-.answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn-ans {
-  padding: 15px;
-  background: #29b6f6;
-  border: none;
-  border-radius: 12px;
-  border-bottom: 4px solid #0288d1;
-  color: white;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-}
-.btn-ans:active { transform: translateY(2px); border-bottom-width: 2px; }
-</style>
+        .text-box-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: none;
+            font-size: 0.95rem;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #0d47a1;
+        }
+
+        .output-box {
+            background-color: #f8f9fa;
+        }
+
+        .box-tools {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn-tool {
+            padding: 6px 12px;
+            background-color: #e4e6eb;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-tool:hover {
+            background-color: #d8dadf;
+        }
+
+        .btn-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 12px;
+            background-color: #0d47a1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1565c0;
+        }
+
+        .btn-swap {
+            flex: 0 0 50px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .btn-swap:hover {
+            background-color: #5a6268;
+        }
+
+        .status-text {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
 
-<div id="game-container">
-  <canvas id="gameCanvas"></canvas>
+    <div class="container">
+        <h1>IE Smart Translator</h1>
 
-  <!-- HUD -->
-  <div id="hud">
-    <div class="hud-card" id="hud-life">❤️❤️❤️</div>
-    <div class="hud-card" id="hud-coins">🪙 0</div>
-  </div>
-  <div id="progress-container"><div id="progress-bar"></div></div>
+        <!-- Pengaturan Bahasa -->
+        <div class="language-select">
+            <select id="sourceLang">
+                <option value="id">Indonesia</option>
+                <option value="en" selected>Inggris (EN)</option>
+                <option value="ja">Jepang</option>
+                <option value="zh">Mandarin</option>
+                <option value="de">Jerman</option>
+                <option value="ar">Arab</option>
+            </select>
 
-  <!-- Mobile Controls -->
-  <div id="touch-controls">
-    <div class="dpad">
-      <div class="btn-ctrl" id="btn-left">◀</div>
-      <div class="btn-ctrl" id="btn-right">▶</div>
+            <button class="btn-swap" onclick="swapLanguages()" title="Tukar Bahasa">⇄</button>
+
+            <select id="targetLang">
+                <option value="id" selected>Indonesia</option>
+                <option value="en">Inggris (EN)</option>
+                <option value="ja">Jepang</option>
+                <option value="zh">Mandarin</option>
+                <option value="de">Jerman</option>
+                <option value="ar">Arab</option>
+            </select>
+        </div>
+
+        <!-- Input & Output Text Area -->
+        <div class="translator-grid">
+            <div class="text-box-container">
+                <textarea id="inputText" placeholder="Ketik teks yang ingin diterjemahkan di sini..."></textarea>
+                <div class="box-tools">
+                    <button class="btn-tool" onclick="speakText('inputText', 'sourceLang')">🔊 Dengarkan</button>
+                    <button class="btn-tool" onclick="clearInput()">🗑️ Hapus</button>
+                </div>
+            </div>
+
+            <div class="text-box-container">
+                <textarea id="outputText" class="output-box" placeholder="Hasil terjemahan akan muncul di sini..." readonly></textarea>
+                <div class="box-tools">
+                    <button class="btn-tool" onclick="speakText('outputText', 'targetLang')">🔊 Dengarkan</button>
+                    <button class="btn-tool" onclick="copyResult()">📋 Salin Teks</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Aksi Utama -->
+        <div class="btn-container">
+            <button class="btn-primary" onclick="translateText()">Terjemahkan Sekarang</button>
+        </div>
+        <div class="status-text" id="statusText"></div>
     </div>
-    <div class="btn-ctrl" id="btn-jump">⬆</div>
-  </div>
 
-  <!-- Start Screen -->
-  <div id="screen-start" class="modal">
-    <div class="card">
-      <div style="font-size: 70px;">🦖</div>
-      <h1>DINO ADVENTURE</h1>
-      <p>Bantu Dino menjelajahi dunia matematika! Kumpulkan bintang, hindari rintangan, dan jawab soal untuk tamat.</p>
-      <button class="btn-ui" onclick="Game.start()">MULAI PETUALANGAN</button>
-    </div>
-  </div>
-
-  <!-- Question Screen -->
-  <div id="screen-question" class="modal hidden">
-    <div class="card">
-      <h3>🧠 TANTANGAN MATEMATIKA</h3>
-      <div class="question-text" id="q-text">0 + 0 = ?</div>
-      <div class="answers-grid" id="q-answers"></div>
-    </div>
-  </div>
-
-  <!-- Result Screen -->
-  <div id="screen-result" class="modal hidden">
-    <div class="card">
-      <div style="font-size: 70px;" id="res-icon">🏆</div>
-      <h1 id="res-title">SELESAI!</h1>
-      <p id="res-desc">Skor Kamu...</p>
-      <button class="btn-ui" onclick="location.reload()">MAIN LAGI</button>
-    </div>
-  </div>
-</div>
-
-<script>
-// --- ENGINE & GAMEPLAY ---
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-const WORLD_WIDTH = 3200;
-let WORLD_HEIGHT = 600;
-
-// State Game
-const state = {
-  playing: false,
-  paused: false,
-  cameraX: 0,
-  coins: 0,
-  lives: 3,
-  score: 0,
-  currentZone: 0
-};
-
-// Input State
-const keys = { left: false, right: false, jump: false };
-
-// Responsif Canvas
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  WORLD_HEIGHT = canvas.height;
-}
-window.addEventListener("resize", resize);
-resize();
-
-// --- ENTITY CLASSES ---
-class Player {
-  constructor() {
-    this.x = 100;
-    this.y = 0;
-    this.w = 55;
-    this.h = 65;
-    this.vx = 0;
-    this.vy = 0;
-    this.speed = 6;
-    this.jumpPower = -14;
-    this.gravity = 0.65;
-    this.onGround = false;
-    this.facing = 1; // 1: Kanan, -1: Kiri
-    this.stepCycle = 0; // Animasi Berjalan
-  }
-
-  update(platforms) {
-    // Input Horizontal
-    if (keys.left) {
-      this.vx = -this.speed;
-      this.facing = -1;
-      this.stepCycle += 0.25;
-    } else if (keys.right) {
-      this.vx = this.speed;
-      this.facing = 1;
-      this.stepCycle += 0.25;
-    } else {
-      this.vx = 0;
-      this.stepCycle = 0;
-    }
-
-    // Input Lompat
-    if (keys.jump && this.onGround) {
-      this.vy = this.jumpPower;
-      this.onGround = false;
-    }
-
-    // Gravitasi
-    this.vy += this.gravity;
-
-    // Gerak Y & Deteksi Pijakan
-    this.y += this.vy;
-    this.onGround = false;
-
-    // Pijakan Dasar (Tanah)
-    const groundY = WORLD_HEIGHT - 120;
-    if (this.y + this.h >= groundY) {
-      this.y = groundY - this.h;
-      this.vy = 0;
-      this.onGround = true;
-    }
-
-    // Pijakan Melayang
-    platforms.forEach(p => {
-      if (
-        this.x + this.w > p.x &&
-        this.x < p.x + p.w &&
-        this.y + this.h >= p.y &&
-        this.y + this.h - this.vy <= p.y + 10 &&
-        this.vy >= 0
-      ) {
-        this.y = p.y - this.h;
-        this.vy = 0;
-        this.onGround = true;
-      }
-    });
-
-    // Gerak X & Batas Dunia
-    this.x += this.vx;
-    this.x = Math.max(0, Math.min(WORLD_WIDTH - this.w, this.x));
-  }
-
-  draw(ctx, camX) {
-    ctx.save();
-    
-    // Posisi Dino di layar
-    const centerX = this.x - camX + this.w / 2;
-    const bottomY = this.y + this.h;
-    
-    ctx.translate(centerX, bottomY);
-    // Skala X untuk arah hadap (Facing 1 menghadap ke kanan)
-    ctx.scale(this.facing, 1);
-
-    // Ayunan Kaki (Sinusoidal Motion)
-    const legSwing = Math.sin(this.stepCycle) * 12;
-
-    // 1. Bayangan 3D di Tanah
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.beginPath();
-    ctx.ellipse(0, 2, 24, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 2. Kaki Belakang (Efek Depth/Gelap)
-    ctx.fillStyle = "#2d7a27";
-    ctx.beginPath();
-    ctx.roundRect(-10 - (this.onGround ? legSwing : 5), -22, 10, 22, 5);
-    ctx.fill();
-
-    // 3. Ekor (3D Curve)
-    ctx.fillStyle = "#43ac39";
-    ctx.beginPath();
-    ctx.moveTo(-15, -35);
-    ctx.quadraticCurveTo(-38, -30, -32, -45);
-    ctx.quadraticCurveTo(-15, -45, -10, -38);
-    ctx.fill();
-
-    // 4. Badan Utama (Gradasi 3D)
-    let bodyGrad = ctx.createLinearGradient(-20, -50, 15, -10);
-    bodyGrad.addColorStop(0, "#56c64b");
-    bodyGrad.addColorStop(1, "#36932c");
-    ctx.fillStyle = bodyGrad;
-    ctx.beginPath();
-    ctx.roundRect(-18, -48, 34, 34, 10);
-    ctx.fill();
-
-    // Perut (Highlight Depan)
-    ctx.fillStyle = "#a1e887";
-    ctx.beginPath();
-    ctx.ellipse(4, -30, 8, 12, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 5. Kepala (3D Vector Shape)
-    let headGrad = ctx.createLinearGradient(-5, -65, 20, -40);
-    headGrad.addColorStop(0, "#66d45b");
-    headGrad.addColorStop(1, "#36932c");
-    ctx.fillStyle = headGrad;
-    ctx.beginPath();
-    ctx.roundRect(-10, -66, 32, 24, 8);
-    ctx.fill();
-
-    // Mata & Pupil
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(8, -56, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#000";
-    ctx.beginPath();
-    ctx.arc(9.5, -56, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Hidung & Mulut
-    ctx.fillStyle = "#24661d";
-    ctx.beginPath();
-    ctx.arc(18, -60, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Tangan Kecil
-    ctx.fillStyle = "#43ac39";
-    ctx.beginPath();
-    ctx.roundRect(6, -38, 9, 5, 3);
-    ctx.fill();
-
-    // 6. Kaki Depan (Terang & Bergerak)
-    ctx.fillStyle = "#43ac39";
-    ctx.beginPath();
-    ctx.roundRect(-4 + (this.onGround ? legSwing : -5), -22, 11, 23, 5);
-    ctx.fill();
-
-    ctx.restore();
-  }
-}
-
-// --- WORLD ELEMENTS ---
-const platforms = [
-  { x: 450, y: WORLD_HEIGHT - 220, w: 180, h: 20 },
-  { x: 950, y: WORLD_HEIGHT - 250, w: 200, h: 20 },
-  { x: 1600, y: WORLD_HEIGHT - 220, w: 220, h: 20 },
-  { x: 2300, y: WORLD_HEIGHT - 270, w: 180, h: 20 }
-];
-
-const coins = [
-  { x: 480, y: WORLD_HEIGHT - 270, taken: false },
-  { x: 570, y: WORLD_HEIGHT - 270, taken: false },
-  { x: 1000, y: WORLD_HEIGHT - 300, taken: false },
-  { x: 1400, y: WORLD_HEIGHT - 160, taken: false },
-  { x: 1650, y: WORLD_HEIGHT - 270, taken: false },
-  { x: 2350, y: WORLD_HEIGHT - 320, taken: false }
-];
-
-const enemies = [
-  { x: 700, y: WORLD_HEIGHT - 160, type: "🦀", minX: 650, maxX: 850, dir: 1, speed: 2 },
-  { x: 1350, y: WORLD_HEIGHT - 160, type: "🐍", minX: 1300, maxX: 1500, dir: -1, speed: 2.5 },
-  { x: 2100, y: WORLD_HEIGHT - 160, type: "🦖", minX: 2000, maxX: 2250, dir: 1, speed: 3 }
-];
-
-const checkpoints = [
-  { x: 850, triggered: false, q: "12 + 15 = ?", a: 27 },
-  { x: 1750, triggered: false, q: "7 × 6 = ?", a: 42 },
-  { x: 2500, triggered: false, q: "50 − 18 = ?", a: 32 }
-];
-
-const player = new Player();
-
-// --- CONTROLLER LOGIC ---
-function setupControls() {
-  window.addEventListener("keydown", e => {
-    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
-    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = true;
-    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") keys.jump = true;
-  });
-
-  window.addEventListener("keyup", e => {
-    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = false;
-    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
-    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") keys.jump = false;
-  });
-
-  const bindTouch = (id, keyName) => {
-    const el = document.getElementById(id);
-    el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
-    el.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
-    el.addEventListener("mousedown", () => { keys[keyName] = true; });
-    el.addEventListener("mouseup", () => { keys[keyName] = false; });
-  };
-
-  bindTouch("btn-left", "left");
-  bindTouch("btn-right", "right");
-  bindTouch("btn-jump", "jump");
-}
-
-// --- GAME LOOP ---
-function update() {
-  if (!state.playing || state.paused) return;
-
-  player.update(platforms);
-
-  // Pergerakan Kamera (Smooth Center Lock)
-  state.cameraX = player.x - canvas.width * 0.35;
-  state.cameraX = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, state.cameraX));
-
-  // Update Musuh
-  enemies.forEach(e => {
-    e.x += e.speed * e.dir;
-    if (e.x >= e.maxX || e.x <= e.minX) e.dir *= -1;
-
-    if (
-      Math.abs(player.x - e.x) < 35 &&
-      Math.abs(player.y - (e.y - 20)) < 35
-    ) {
-      if (player.vy > 0 && player.y < e.y - 20) {
-        e.x = -999;
-        player.vy = -10;
-        state.score += 20;
-      } else {
-        state.lives--;
-        player.x -= 60;
-        player.vy = -6;
-        if (state.lives <= 0) Game.gameOver();
-      }
-    }
-  });
-
-  // Collect Coins
-  coins.forEach(c => {
-    if (!c.taken && Math.abs(player.x - c.x) < 35 && Math.abs(player.y - c.y) < 35) {
-      c.taken = true;
-      state.coins++;
-      state.score += 10;
-    }
-  });
-
-  // Checkpoint & Soal Matematika
-  checkpoints.forEach(cp => {
-    if (!cp.triggered && player.x >= cp.x) {
-      cp.triggered = true;
-      Game.openQuestion(cp);
-    }
-  });
-
-  // Finish Line
-  if (player.x >= WORLD_WIDTH - 200) {
-    Game.win();
-  }
-
-  // HUD Update
-  document.getElementById("hud-life").textContent = "❤️".repeat(Math.max(0, state.lives)) + "🖤".repeat(Math.max(0, 3 - state.lives));
-  document.getElementById("hud-coins").textContent = "🪙 " + state.coins;
-  document.getElementById("progress-bar").style.width = (player.x / (WORLD_WIDTH - 200) * 100) + "%";
-}
-
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const camX = state.cameraX;
-  const groundY = WORLD_HEIGHT - 120;
-
-  // 1. Background Parallax (Awan)
-  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-  ctx.beginPath();
-  ctx.arc(200 - camX * 0.2, 100, 40, 0, Math.PI * 2);
-  ctx.arc(1200 - camX * 0.2, 150, 50, 0, Math.PI * 2);
-  ctx.arc(2200 - camX * 0.2, 80, 45, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 2. Gambar Tanah (3D Layering Gradient)
-  let groundGrad = ctx.createLinearGradient(0, groundY, 0, WORLD_HEIGHT);
-  groundGrad.addColorStop(0, "#5ca632");
-  groundGrad.addColorStop(0.15, "#4d8f28");
-  groundGrad.addColorStop(1, "#6d4c41");
-  ctx.fillStyle = groundGrad;
-  ctx.fillRect(0 - camX, groundY, WORLD_WIDTH, 120);
-
-  // Line Atas Tanah
-  ctx.fillStyle = "#8ae047";
-  ctx.fillRect(0 - camX, groundY, WORLD_WIDTH, 8);
-
-  // 3. Platform Melayang dengan Efek Tebal 3D
-  platforms.forEach(p => {
-    // Sisi Bawah/Tebal
-    ctx.fillStyle = "#4e2e19";
-    ctx.fillRect(p.x - camX, p.y, p.w, p.h + 8);
-    // Badan Utama
-    ctx.fillStyle = "#8d5524";
-    ctx.fillRect(p.x - camX, p.y, p.w, p.h);
-    // Atas Rumput
-    ctx.fillStyle = "#79c738";
-    ctx.fillRect(p.x - camX, p.y, p.w, 6);
-  });
-
-  // 4. Gambar Items (Bintang)
-  coins.forEach(c => {
-    if (!c.taken) {
-      ctx.font = "24px Arial";
-      ctx.fillText("⭐", c.x - camX, c.y);
-    }
-  });
-
-  // 5. Gambar Musuh
-  enemies.forEach(e => {
-    if (e.x > 0) {
-      ctx.font = "36px Arial";
-      ctx.fillText(e.type, e.x - camX, e.y);
-    }
-  });
-
-  // 6. Gambar Checkpoint Gates
-  checkpoints.forEach(cp => {
-    ctx.font = "40px Arial";
-    ctx.fillText(cp.triggered ? "🚪" : "🧠", cp.x - camX, groundY - 10);
-  });
-
-  // 7. Finish Flag
-  ctx.font = "60px Arial";
-  ctx.fillText("🚩", WORLD_WIDTH - 180 - camX, groundY - 10);
-
-  // 8. Gambar Dino 3D (Player)
-  player.draw(ctx, camX);
-}
-
-function loop() {
-  update();
-  render();
-  requestAnimationFrame(loop);
-}
-
-// --- GAME MANAGEMENT & MODAL ---
-const Game = {
-  start() {
-    document.getElementById("screen-start").classList.add("hidden");
-    state.playing = true;
-    setupControls();
-    loop();
-  },
-  
-  openQuestion(cp) {
-    state.paused = true;
-    keys.left = keys.right = keys.jump = false;
-    
-    document.getElementById("q-text").textContent = cp.q;
-    
-    let options = new Set([cp.a]);
-    while(options.size < 4) {
-      let rand = cp.a + (Math.floor(Math.random() * 10) - 5);
-      if(rand >= 0) options.add(rand);
-    }
-    let arr = Array.from(options).sort(() => Math.random() - 0.5);
-
-    const ansContainer = document.getElementById("q-answers");
-    ansContainer.innerHTML = "";
-    arr.forEach(val => {
-      let btn = document.createElement("button");
-      btn.className = "btn-ans";
-      btn.textContent = val;
-      btn.onclick = () => this.answer(val === cp.a);
-      ansContainer.appendChild(btn);
-    });
-
-    document.getElementById("screen-question").classList.remove("hidden");
-  },
-
-  answer(isCorrect) {
-    document.getElementById("screen-question").classList.add("hidden");
-    state.paused = false;
-
-    if (isCorrect) {
-      state.score += 50;
-      state.coins += 5;
-    } else {
-      state.lives--;
-      if (state.lives <= 0) this.gameOver();
-    }
-  },
-
-  gameOver() {
-    state.playing = false;
-    document.getElementById("res-icon").textContent = "💀";
-    document.getElementById("res-title").textContent = "GAME OVER";
-    document.getElementById("res-desc").textContent = "Nyawa kamu habis! Coba lagi yuk.";
-    document.getElementById("screen-result").classList.remove("hidden");
-  },
-
-  win() {
-    state.playing = false;
-    document.getElementById("res-icon").textContent = "🏆";
-    document.getElementById("res-title").textContent = "SELAMAT!";
-    document.getElementById("res-desc").textContent = `Kamu berhasil menamatkan petualangan dengan ${state.coins} bintang dan Skor: ${state.score}`;
-    document.getElementById("screen-result").classList.remove("hidden");
-  }
-};
-</script>
+    <script>
+        async function translateText() {
+            const input = document.getElementById('inputText').value.trim();
+            const sourceLang = document.getElementById('sourceLang').value;
+            const targetLang = document.getElementById('targetLang').value;
+            const outputArea = document.getElementById('outputText');
+            const statusText = document.getElementById('statusText');
+
+            if (!input) {
+                outputArea.value = '';
+                statusText.textContent = 'Silakan masukkan teks terlebih dahulu.';
+                return;
+            }
+
+            statusText.textContent = 'Menerjemahkan...';
+
+            // Jalur Utama: API Lingva
+            try {
+                const url = `https://lingva.ml/api/v1/${sourceLang}/${targetLang}/${encodeURIComponent(input)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.translation) {
+                    outputArea.value = data.translation;
+                    statusText.textContent = 'Selesai menerjemahkan.';
+                    return;
+                }
+            } catch (e) {
+                console.log('Server utama sibuk, beralih ke server cadangan...');
+            }
+
+            // Jalur Cadangan: API MyMemory
+            try {
+                const urlBackup = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${sourceLang}|${targetLang}`;
+                const responseBackup = await fetch(urlBackup);
+                const dataBackup = await responseBackup.json();
+
+                if (dataBackup.responseData) {
+                    outputArea.value = dataBackup.responseData.translatedText;
+                    statusText.textContent = 'Selesai menerjemahkan (via Server Cadangan).';
+                } else {
+                    statusText.textContent = 'Gagal mengambil hasil terjemahan.';
+                }
+            } catch (e) {
+                statusText.textContent = 'Gagal terhubung. Pastikan koneksi internet kamu aktif.';
+            }
+        }
+
+        // Fungsi Tukar Bahasa
+        function swapLanguages() {
+            const sourceSelect = document.getElementById('sourceLang');
+            const targetSelect = document.getElementById('targetLang');
+            const temp = sourceSelect.value;
+            sourceSelect.value = targetSelect.value;
+            targetSelect.value = temp;
+        }
+
+        // Fungsi Salin Hasil
+        function copyResult() {
+            const outputText = document.getElementById('outputText').value;
+            if (!outputText) return;
+            
+            navigator.clipboard.writeText(outputText).then(() => {
+                alert('Teks berhasil disalin!');
+            });
+        }
+
+        // Fungsi Bersihkan Input
+        function clearInput() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+            document.getElementById('statusText').textContent = '';
+        }
+
+        // Fungsi Text-to-Speech (Suara)
+        function speakText(areaId, langSelectId) {
+            const text = document.getElementById(areaId).value;
+            const lang = document.getElementById(langSelectId).value;
+
+            if (!text) return;
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
 </body>
 </html>
