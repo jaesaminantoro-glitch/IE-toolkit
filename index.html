@@ -2,410 +2,592 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Dino Adventure — Dunia Matematika</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dino Adventure — Petualangan Matematika</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#57c7f2}
-body{touch-action:none}
-button{font:inherit;border:0}
-#game{position:relative;width:100vw;height:100vh;overflow:hidden;background:linear-gradient(#38bce9 0%,#a7eaff 63%,#7bd34c 63%,#4eae38 100%)}
-#world{position:absolute;inset:0;overflow:hidden}
-.layer{position:absolute;bottom:28%;width:120%;height:35%;pointer-events:none}
-.mountain{position:absolute;bottom:0;width:0;height:0;border-left:110px solid transparent;border-right:110px solid transparent;border-bottom:190px solid #72acbd}
-.mountain:after{content:"";position:absolute;left:-35px;top:45px;border-left:35px solid transparent;border-right:35px solid transparent;border-bottom:70px solid #eaf8fa}
-.m1{left:0}.m2{left:35%;transform:scale(1.2)}.m3{right:2%;transform:scale(.85)}
-.cloud{position:absolute;width:135px;height:38px;background:#fff;border-radius:30px;opacity:.75}
-.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border-radius:50%}.cloud:before{width:58px;height:58px;left:25px;top:-28px}.cloud:after{width:48px;height:48px;left:78px;top:-20px}
-.c1{top:12%;left:-20px}.c2{top:24%;right:-35px}
-#camera{position:absolute;left:0;top:0;width:3000px;height:100%;will-change:transform}
-#ground{position:absolute;left:0;bottom:0;width:3000px;height:28%;background:linear-gradient(#68c83f 0 16%,#8a582f 16% 100%);border-top:8px solid #a5e45d}
-.platform{position:absolute;height:20px;background:#77d64b;border:4px solid #4c842d;border-radius:8px;box-shadow:0 7px 0 #754728}
-.platform.small{height:18px}
-.tree{position:absolute;bottom:28%;width:28px;height:125px;background:#75462a;border-radius:12px}
-.tree:before{content:"";position:absolute;width:120px;height:120px;left:-46px;top:-80px;border-radius:50%;background:#249243;box-shadow:48px 18px 0 #35a84d,-35px 25px 0 #21863e}
-.sign{position:absolute;bottom:28%;width:150px;padding:10px;background:#87451f;color:white;border:4px solid #4b2411;border-radius:10px;text-align:center;font-weight:1000;box-shadow:0 5px #391a0c}
-.coin{position:absolute;width:42px;height:42px;border-radius:50%;background:#ffd32e;border:5px solid #d28b08;box-shadow:0 5px 0 #9d6908;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:1000;color:#9b6500;animation:coin 1s infinite ease-in-out}
-@keyframes coin{50%{transform:translateY(-7px) rotateY(180deg)}}
-.egg{position:absolute;font-size:43px;filter:drop-shadow(0 4px 0 #70401f)}
-.enemy{position:absolute;font-size:55px;filter:drop-shadow(0 5px 0 #552b19);animation:enemy 1.2s infinite ease-in-out}
-@keyframes enemy{50%{transform:translateY(-5px)}}
-#dino{position:absolute;width:80px;height:90px;z-index:20;font-size:76px;line-height:1;filter:drop-shadow(0 7px 0 #236125);transform-origin:center bottom;user-select:none;pointer-events:none}
-#dinoInner{display:inline-block;width:100%;height:100%;transition:transform 0.1s}
-#dino.run #dinoInner{animation:run .18s infinite alternate}
-#dino.jump #dinoInner{animation:jump .45s ease-out}
-#dino.hit #dinoInner{animation:hit .35s}
-.flip-left{transform:scaleX(-1)}
-@keyframes run{to{transform:translateY(-5px) rotate(-2deg)}}
-@keyframes jump{0%{transform:translateY(0)}50%{transform:translateY(-18px) rotate(-5deg)}100%{transform:translateY(0)}}
-@keyframes hit{25%{transform:translateX(-10px)}50%{transform:translateX(10px)}75%{transform:translateX(-8px)}}
-#hud{position:absolute;z-index:50;top:10px;left:50%;transform:translateX(-50%);width:min(960px,94vw);display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
-.hudbox{background:#6c351b;color:#fff;border:3px solid #3f1e0d;border-radius:17px;padding:8px 12px;font-weight:1000;box-shadow:0 4px #3a1a0b;white-space:nowrap;pointer-events:auto}
-#progress{position:absolute;top:70px;left:50%;transform:translateX(-50%);width:min(600px,65vw);height:14px;background:#ffffffaa;border:2px solid #69401e;border-radius:20px;z-index:50;overflow:hidden}
-#bar{height:100%;width:0;background:#43c52f}
-#controls{position:absolute;z-index:60;bottom:18px;left:50%;transform:translateX(-50%);width:min(650px,94vw);display:flex;justify-content:space-between;align-items:end}
-.pad{display:flex;gap:10px}
-.ctrl{width:68px;height:68px;border-radius:20px;background:#ffffffdd;border:4px solid #70401f;color:#4b2a16;font-size:30px;font-weight:1000;box-shadow:0 6px #573018;user-select:none;touch-action:manipulation}
-.ctrl:active{transform:translateY(5px);box-shadow:0 1px #573018}
-#pauseBtn{width:58px;height:58px;font-size:22px;cursor:pointer}
-#startScreen,#question,#result,#pause{position:absolute;z-index:100;inset:0;display:flex;align-items:center;justify-content:center;background:#0004}
-.card{width:min(650px,92vw);max-height:90vh;overflow:auto;background:#fff;border:5px solid #6b351b;border-radius:28px;box-shadow:0 10px #3d2113,0 25px 50px #0004;padding:24px;text-align:center}
-.dinoBig{font-size:105px;filter:drop-shadow(0 7px #276128);animation:bob 1.5s infinite ease-in-out}
-@keyframes bob{50%{transform:translateY(-10px)}}
-.title{font-size:clamp(36px,10vw,68px);font-weight:1000;color:#ffd22d;text-shadow:4px 4px #673016;margin:4px}
-.sub{font-size:clamp(20px,5vw,29px);font-weight:1000;color:#1689c5}
-.btn{display:block;width:min(430px,100%);margin:10px auto;padding:14px;border-radius:17px;color:white;font-size:21px;font-weight:1000;box-shadow:0 5px #0005;cursor:pointer}
-.green{background:#43c62f;border:3px solid #267c1e}.blue{background:#1599e8;border:3px solid #075b98}.orange{background:#ff9e1b;border:3px solid #a96308}
-.questionText{font-size:clamp(42px,12vw,76px);font-weight:1000;color:#4d2a17;margin:14px 0}
-.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.answer{padding:16px;border-radius:17px;background:#1599e8;color:#fff;border:4px solid #075b98;box-shadow:0 5px #064b78;font-size:clamp(26px,7vw,40px);font-weight:1000;cursor:pointer}
-.answer:active{transform:translateY(4px);box-shadow:0 1px #064b78}
-.feedback{height:38px;font-size:21px;font-weight:1000;margin:7px}
-.stars{font-size:46px;color:#ffb900}.score{font-size:42px;font-weight:1000;color:#ed9900}
-.hidden{display:none!important}
-@media(max-width:600px){
- .hudbox{font-size:12px;padding:6px 8px}.ctrl{width:60px;height:60px}.card{padding:18px}
- #dino{font-size:68px;width:76px}.questionText{margin:8px 0 12px}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #111;
+}
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(to bottom, #74d4ff 0%, #c4efff 60%, #8cd85b 60%, #4da72a 100%);
+  overflow: hidden;
+}
+
+/* Canvas Utama */
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* HUD Overlay */
+#hud {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+.hud-card {
+  background: rgba(85, 43, 19, 0.85);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 3px solid #3a1c0b;
+  font-weight: bold;
+  font-size: 18px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+#progress-container {
+  position: absolute;
+  top: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(400px, 60vw);
+  height: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid #3a1c0b;
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 10;
+}
+#progress-bar {
+  width: 0%;
+  height: 100%;
+  background: #4de126;
+  transition: width 0.1s linear;
+}
+
+/* Kontrol Mobile */
+#touch-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  z-index: 20;
+}
+.dpad {
+  display: flex;
+  gap: 12px;
+}
+.btn-ctrl {
+  width: 65px;
+  height: 65px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 4px solid #5a3014;
+  border-radius: 18px;
+  color: #5a3014;
+  font-size: 28px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 0 #3a1c0b;
+  touch-action: manipulation;
+}
+.btn-ctrl:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #3a1c0b;
+}
+
+/* UI Modal Screens */
+.modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.hidden { display: none !important; }
+
+.card {
+  background: #fff;
+  width: min(500px, 90vw);
+  border: 5px solid #5a3014;
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.card h1 { font-size: 32px; color: #f5a623; text-shadow: 2px 2px #5a3014; margin-bottom: 8px; }
+.card p { font-size: 16px; color: #444; margin-bottom: 20px; line-height: 1.4; }
+
+.btn-ui {
+  display: inline-block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  background: #4de126;
+  border-bottom: 5px solid #2da80d;
+  cursor: pointer;
+}
+.btn-ui:active { transform: translateY(2px); border-bottom-width: 3px; }
+
+/* Modal Soal */
+.question-text { font-size: 48px; font-weight: 900; color: #3a1c0b; margin: 15px 0; }
+.answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-ans {
+  padding: 15px;
+  background: #29b6f6;
+  border: none;
+  border-radius: 12px;
+  border-bottom: 4px solid #0288d1;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-ans:active { transform: translateY(2px); border-bottom-width: 2px; }
 </style>
 </head>
 <body>
-<div id="game">
-  <div id="world">
-    <div class="cloud c1"></div><div class="cloud c2"></div>
-    <div class="layer"><div class="mountain m m1"></div><div class="mountain m m2"></div><div class="mountain m m3"></div></div>
-    <div id="camera">
-      <div id="ground"></div>
-      <div class="tree" style="left:250px"></div><div class="tree" style="left:760px;transform:scale(.75)"></div>
-      <div class="tree" style="left:1450px;transform:scale(1.1)"></div><div class="tree" style="left:2300px;transform:scale(.8)"></div>
-      <div class="tree" style="left:2750px"></div>
-      
-      <!-- Platform -->
-      <div class="platform" data-left="500" data-width="210" data-bottom="42" style="left:500px;bottom:42%;width:210px"></div>
-      <div class="platform" data-left="1080" data-width="180" data-bottom="49" style="left:1080px;bottom:49%;width:180px"></div>
-      <div class="platform" data-left="1770" data-width="230" data-bottom="42" style="left:1770px;bottom:42%;width:230px"></div>
-      <div class="platform" data-left="2470" data-width="190" data-bottom="50" style="left:2470px;bottom:50%;width:190px"></div>
-      
-      <div class="sign" style="left:120px">🌴 MULAI PETUALANGAN</div>
-      <div class="sign" style="left:820px">🧠 ZONA MATEMATIKA</div>
-      <div class="sign" style="left:1530px">🥚 LEMBAH DINO</div>
-      <div class="sign" style="left:2260px">🏆 GERBANG BOSS</div>
-      
-      <div class="coin" data-x="470" style="left:470px;bottom:39%">⭐</div>
-      <div class="coin" data-x="570" style="left:570px;bottom:50%">⭐</div>
-      <div class="coin" data-x="1130" style="left:1130px;bottom:57%">⭐</div>
-      <div class="coin" data-x="1300" style="left:1300px;bottom:39%">⭐</div>
-      <div class="coin" data-x="1800" style="left:1800px;bottom:49%">⭐</div>
-      <div class="coin" data-x="1990" style="left:1990px;bottom:38%">⭐</div>
-      <div class="coin" data-x="2490" style="left:2490px;bottom:58%">⭐</div>
-      
-      <div class="egg" style="left:930px;bottom:30%">🥚</div>
-      <div class="egg" style="left:2100px;bottom:30%">🥚</div>
-      
-      <div class="enemy" data-x="700" style="left:700px;bottom:28%">🦀</div>
-      <div class="enemy" data-x="1390" style="left:1390px;bottom:28%">🐍</div>
-      <div class="enemy" data-x="2180" style="left:2180px;bottom:28%">🦖</div>
-      
-      <div id="finishFlag" style="position:absolute;left:2810px;bottom:28%;font-size:80px">🚩</div>
-      
-      <!-- Dino dipindahkan ke dalam camera agar sinkron dengan peta -->
-      <div id="dino"><span id="dinoInner">🦖</span></div>
-    </div>
-  </div>
 
+<div id="game-container">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
   <div id="hud">
-    <div class="hudbox" id="life">❤️❤️❤️</div>
-    <div class="hudbox" id="level">LEVEL 1</div>
-    <div class="hudbox" id="coins">🪙 0</div>
-    <button class="hudbox" id="pauseBtn" onclick="pauseGame()">Ⅱ</button>
+    <div class="hud-card" id="hud-life">❤️❤️❤️</div>
+    <div class="hud-card" id="hud-coins">🪙 0</div>
   </div>
-  <div id="progress"><div id="bar"></div></div>
+  <div id="progress-container"><div id="progress-bar"></div></div>
 
-  <div id="controls">
-    <div class="pad">
-      <button class="ctrl" id="left">◀</button>
-      <button class="ctrl" id="right">▶</button>
-      <button class="ctrl" id="jump">⬆</button>
+  <!-- Mobile Controls -->
+  <div id="touch-controls">
+    <div class="dpad">
+      <div class="btn-ctrl" id="btn-left">◀</div>
+      <div class="btn-ctrl" id="btn-right">▶</div>
     </div>
+    <div class="btn-ctrl" id="btn-jump">⬆</div>
   </div>
 
-  <div id="startScreen">
+  <!-- Start Screen -->
+  <div id="screen-start" class="modal">
     <div class="card">
-      <div class="dinoBig">🦖</div><div class="title">DINO ADVENTURE</div>
-      <div class="sub">Petualangan Matematika</div>
-      <p><b>Gerakkan Dino, kumpulkan koin, hindari musuh, dan jawab soal untuk membuka gerbang!</b></p>
-      <button class="btn green" onclick="startGame()">▶ MULAI PETUALANGAN</button>
-      <p style="font-size:14px;color:#666">HP: gunakan ◀ ▶ dan ⬆ untuk melompat. Keyboard: A/D/W atau ←/→/↑.</p>
+      <div style="font-size: 70px;">🦖</div>
+      <h1>DINO ADVENTURE</h1>
+      <p>Bantu Dino menjelajahi dunia matematika! Kumpulkan bintang, hindari rintangan, dan jawab soal untuk tamat.</p>
+      <button class="btn-ui" onclick="Game.start()">MULAI PETUALANGAN</button>
     </div>
   </div>
 
-  <div id="question" class="hidden"><div class="card">
-    <div class="sub">🧠 TANTANGAN MATEMATIKA</div>
-    <div id="qText" class="questionText">7 + 8 = ?</div>
-    <div id="answers" class="answers"></div>
-    <div id="feedback" class="feedback"></div>
-  </div></div>
+  <!-- Question Screen -->
+  <div id="screen-question" class="modal hidden">
+    <div class="card">
+      <h3>🧠 TANTANGAN MATEMATIKA</h3>
+      <div class="question-text" id="q-text">0 + 0 = ?</div>
+      <div class="answers-grid" id="q-answers"></div>
+    </div>
+  </div>
 
-  <div id="pause" class="hidden"><div class="card"><div style="font-size:70px">⏸️</div><div class="sub">GAME DIJEDA</div><button class="btn green" onclick="resumeGame()">▶ LANJUT</button><button class="btn orange" onclick="location.reload()">🏠 MULAI ULANG</button></div></div>
-
-  <div id="result" class="hidden"><div class="card">
-    <div style="font-size:75px">🏆</div><div class="title" style="font-size:45px">PETUALANGAN SELESAI!</div>
-    <div class="stars" id="resultStars">★★★</div><div class="score" id="resultScore">0 ⭐</div>
-    <p id="resultText" style="font-size:20px;font-weight:900"></p>
-    <button class="btn green" onclick="location.reload()">🔄 MAIN LAGI</button>
-  </div></div>
+  <!-- Result Screen -->
+  <div id="screen-result" class="modal hidden">
+    <div class="card">
+      <div style="font-size: 70px;" id="res-icon">🏆</div>
+      <h1 id="res-title">SELESAI!</h1>
+      <p id="res-desc">Skor Kamu...</p>
+      <button class="btn-ui" onclick="location.reload()">MAIN LAGI</button>
+    </div>
+  </div>
 </div>
 
 <script>
-const W = 3000;
-let playing = false, paused = false, questionOpen = false;
-let x = 230, y = 0, vy = 0, onGround = true;
-let dir = 0, coins = 0, lives = 3, score = 0;
-let collected = new Set(), hitEnemies = new Set();
-let cameraX = 0, questionCount = 0, correct = 0;
+// --- ENGINE & GAMEPLAY ---
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const dino = document.getElementById("dino");
-const dinoInner = document.getElementById("dinoInner");
-const camera = document.getElementById("camera");
-const coinEls = [...document.querySelectorAll(".coin")];
-const enemyEls = [...document.querySelectorAll(".enemy")];
-const platforms = [...document.querySelectorAll(".platform")].map(el => {
-  const h = window.innerHeight;
-  const bottomPct = parseFloat(el.dataset.bottom);
-  return {
-    left: parseFloat(el.dataset.left),
-    right: parseFloat(el.dataset.left) + parseFloat(el.dataset.width),
-    heightPx: (bottomPct / 100) * h - (0.28 * h)
+const WORLD_WIDTH = 3200;
+let WORLD_HEIGHT = 600;
+
+// State Game
+const state = {
+  playing: false,
+  paused: false,
+  cameraX: 0,
+  coins: 0,
+  lives: 3,
+  score: 0,
+  currentZone: 0
+};
+
+// Input State
+const keys = { left: false, right: false, jump: false };
+
+// Responsif Canvas
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  WORLD_HEIGHT = canvas.height;
+}
+window.addEventListener("resize", resize);
+resize();
+
+// --- ENTITY CLASSES ---
+class Player {
+  constructor() {
+    this.x = 100;
+    this.y = 0;
+    this.w = 50;
+    this.h = 60;
+    this.vx = 0;
+    this.vy = 0;
+    this.speed = 6;
+    this.jumpPower = -14;
+    this.gravity = 0.65;
+    this.onGround = false;
+    this.facing = 1; // 1: kanan, -1: kiri
+  }
+
+  update(platforms) {
+    // Input Horizontal
+    if (keys.left) {
+      this.vx = -this.speed;
+      this.facing = -1;
+    } else if (keys.right) {
+      this.vx = this.speed;
+      this.facing = 1;
+    } else {
+      this.vx = 0;
+    }
+
+    // Input Lompat
+    if (keys.jump && this.onGround) {
+      this.vy = this.jumpPower;
+      this.onGround = false;
+    }
+
+    // Gravitasi
+    this.vy += this.gravity;
+
+    // Gerak Y & Deteksi Pijakan (Platform Collision)
+    this.y += this.vy;
+    this.onGround = false;
+
+    // Pijakan Dasar (Tanah)
+    const groundY = WORLD_HEIGHT - 120;
+    if (this.y + this.h >= groundY) {
+      this.y = groundY - this.h;
+      this.vy = 0;
+      this.onGround = true;
+    }
+
+    // Pijakan Melayang
+    platforms.forEach(p => {
+      if (
+        this.x + this.w > p.x &&
+        this.x < p.x + p.w &&
+        this.y + this.h >= p.y &&
+        this.y + this.h - this.vy <= p.y + 10 &&
+        this.vy >= 0
+      ) {
+        this.y = p.y - this.h;
+        this.vy = 0;
+        this.onGround = true;
+      }
+    });
+
+    // Gerak X & Batas Dunia
+    this.x += this.vx;
+    this.x = Math.max(0, Math.min(WORLD_WIDTH - this.w, this.x));
+  }
+
+  draw(ctx, camX) {
+    ctx.save();
+    ctx.translate(this.x - camX + this.w / 2, this.y + this.h / 2);
+    if (this.facing === -1) ctx.scale(-1, 1);
+    
+    // Dino Graphics (Emoji Rendering)
+    ctx.font = "50px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🦖", 0, 0);
+    ctx.restore();
+  }
+}
+
+// --- WORLD ELEMENTS ---
+const platforms = [
+  { x: 450, y: WORLD_HEIGHT - 220, w: 180, h: 20 },
+  { x: 950, y: WORLD_HEIGHT - 250, w: 200, h: 20 },
+  { x: 1600, y: WORLD_HEIGHT - 220, w: 220, h: 20 },
+  { x: 2300, y: WORLD_HEIGHT - 270, w: 180, h: 20 }
+];
+
+const coins = [
+  { x: 480, y: WORLD_HEIGHT - 270, taken: false },
+  { x: 570, y: WORLD_HEIGHT - 270, taken: false },
+  { x: 1000, y: WORLD_HEIGHT - 300, taken: false },
+  { x: 1400, y: WORLD_HEIGHT - 160, taken: false },
+  { x: 1650, y: WORLD_HEIGHT - 270, taken: false },
+  { x: 2350, y: WORLD_HEIGHT - 320, taken: false }
+];
+
+const enemies = [
+  { x: 700, y: WORLD_HEIGHT - 160, type: "🦀", minX: 650, maxX: 850, dir: 1, speed: 2 },
+  { x: 1350, y: WORLD_HEIGHT - 160, type: "🐍", minX: 1300, maxX: 1500, dir: -1, speed: 2.5 },
+  { x: 2100, y: WORLD_HEIGHT - 160, type: "🦖", minX: 2000, maxX: 2250, dir: 1, speed: 3 }
+];
+
+const checkpoints = [
+  { x: 850, triggered: false, q: "12 + 15 = ?", a: 27 },
+  { x: 1750, triggered: false, q: "7 × 6 = ?", a: 42 },
+  { x: 2500, triggered: false, q: "50 − 18 = ?", a: 32 }
+];
+
+const player = new Player();
+
+// --- CONTROLLER LOGIC ---
+function setupControls() {
+  // Keyboard Event
+  window.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = true;
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = true;
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") keys.jump = true;
+  });
+
+  window.addEventListener("keyup", e => {
+    if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") keys.left = false;
+    if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = false;
+    if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") keys.jump = false;
+  });
+
+  // Touch Event Helper
+  const bindTouch = (id, keyName) => {
+    const el = document.getElementById(id);
+    el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[keyName] = true; });
+    el.addEventListener("touchend", (e) => { e.preventDefault(); keys[keyName] = false; });
+    el.addEventListener("mousedown", () => { keys[keyName] = true; });
+    el.addEventListener("mouseup", () => { keys[keyName] = false; });
   };
-});
 
-const saveKey = "dinoWorldMathSave";
-let save = JSON.parse(localStorage.getItem(saveKey) || '{"best":0,"coins":0}');
-
-function startGame() {
-  document.getElementById("startScreen").classList.add("hidden");
-  playing = true;
-  update();
-  requestAnimationFrame(loop);
+  bindTouch("btn-left", "left");
+  bindTouch("btn-right", "right");
+  bindTouch("btn-jump", "jump");
 }
 
-function loop() {
-  if (playing && !paused) {
-    physics();
-    update();
-  }
-  requestAnimationFrame(loop);
-}
+// --- GAME LOOP ---
+function update() {
+  if (!state.playing || state.paused) return;
 
-function physics() {
-  if (questionOpen) return;
+  player.update(platforms);
 
-  const speed = dir * 6;
-  x += speed;
+  // Pergerakan Kamera (Smooth Center Lock)
+  state.cameraX = player.x - canvas.width * 0.35;
+  state.cameraX = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, state.cameraX));
 
-  if (dir > 0) {
-    dinoInner.classList.remove("flip-left");
-  } else if (dir < 0) {
-    dinoInner.classList.add("flip-left");
-  }
+  // Update Musuh
+  enemies.forEach(e => {
+    e.x += e.speed * e.dir;
+    if (e.x >= e.maxX || e.x <= e.minX) e.dir *= -1;
 
-  if (dir !== 0) dino.classList.add("run");
-  else dino.classList.remove("run");
-
-  x = Math.max(80, Math.min(W - 150, x));
-
-  // Gravitasi & Pijakan
-  vy -= 0.8;
-  y += vy;
-
-  let currentGround = 0;
-  platforms.forEach(p => {
-    if (x + 40 >= p.left && x - 40 <= p.right) {
-      if (y >= p.heightPx - 5 && (y - vy) >= p.heightPx) {
-        currentGround = Math.max(currentGround, p.heightPx);
+    // Collision Player vs Enemy
+    if (
+      Math.abs(player.x - e.x) < 35 &&
+      Math.abs(player.y - (e.y - 20)) < 35
+    ) {
+      // Player Lompat Kena Musuh
+      if (player.vy > 0 && player.y < e.y - 20) {
+        e.x = -999; // Musuh Hancur
+        player.vy = -10;
+        state.score += 20;
+      } else {
+        // Player Kena Hit
+        state.lives--;
+        player.x -= 60;
+        player.vy = -6;
+        if (state.lives <= 0) Game.gameOver();
       }
     }
   });
 
-  if (y <= currentGround) {
-    y = currentGround;
-    vy = 0;
-    onGround = true;
-  } else {
-    onGround = false;
-  }
-
-  checkCoins();
-  checkEnemies();
-
-  if (x > 820 && questionCount < 1) openQuestion("7 + 8 = ?", 15);
-  else if (x > 1510 && questionCount < 2) openQuestion("6 × 4 = ?", 24);
-  else if (x > 2260 && questionCount < 3) openQuestion("35 − 17 = ?", 18);
-
-  if (x > 2780) finish();
-}
-
-function update() {
-  const base = window.innerHeight * 0.28;
-  dino.style.left = x + "px";
-  dino.style.bottom = (base + y) + "px";
-
-  // Perhitungan pergerakan kamera agar fokus mengikuti Dino di tengah layar
-  cameraX = x - (window.innerWidth * 0.4);
-  cameraX = Math.max(0, Math.min(W - window.innerWidth, cameraX));
-  camera.style.transform = `translateX(${-cameraX}px)`;
-
-  document.getElementById("coins").textContent = "🪙 " + coins;
-  document.getElementById("life").textContent = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
-  document.getElementById("bar").style.width = Math.min(100, (x / W) * 100) + "%";
-}
-
-function jump() {
-  if (!playing || paused || questionOpen) return;
-  if (onGround) {
-    vy = 15;
-    onGround = false;
-    dino.classList.remove("jump");
-    void dino.offsetWidth;
-    dino.classList.add("jump");
-  }
-}
-
-function checkCoins() {
-  coinEls.forEach((el, i) => {
-    if (collected.has(i)) return;
-    let cx = parseFloat(el.dataset.x);
-    if (Math.abs(x - cx) < 48) {
-      collected.add(i);
-      coins++;
-      score += 10;
-      el.style.visibility = "hidden";
+  // Collect Coins
+  coins.forEach(c => {
+    if (!c.taken && Math.abs(player.x - c.x) < 35 && Math.abs(player.y - c.y) < 35) {
+      c.taken = true;
+      state.coins++;
+      state.score += 10;
     }
   });
-}
 
-function checkEnemies() {
-  enemyEls.forEach((el, i) => {
-    if (hitEnemies.has(i)) return;
-    let ex = parseFloat(el.dataset.x);
-    if (Math.abs(x - ex) < 58 && y < 45) {
-      hitEnemies.add(i);
-      lives--;
-      score = Math.max(0, score - 10);
-      dino.classList.remove("hit");
-      void dino.offsetWidth;
-      dino.classList.add("hit");
-      x -= 70;
-      if (lives <= 0) gameOver();
+  // Checkpoint & Soal Matematika
+  checkpoints.forEach(cp => {
+    if (!cp.triggered && player.x >= cp.x) {
+      cp.triggered = true;
+      Game.openQuestion(cp);
     }
   });
-}
 
-function openQuestion(text, answer) {
-  questionOpen = true;
-  dir = 0;
-  questionCount++;
-
-  document.getElementById("qText").textContent = text;
-
-  let vals = new Set([answer]);
-  while (vals.size < 4) {
-    let n = answer + Math.floor(Math.random() * 13) - 6;
-    if (n >= 0) vals.add(n);
+  // Finish Line
+  if (player.x >= WORLD_WIDTH - 200) {
+    Game.win();
   }
-  let arr = [...vals].sort(() => Math.random() - 0.5);
 
-  document.getElementById("answers").innerHTML = arr.map(n => 
-    `<button class="answer" onclick="answer(${n},${answer},this)">${n}</button>`
-  ).join("");
-
-  document.getElementById("feedback").textContent = "";
-  document.getElementById("question").classList.remove("hidden");
+  // HUD Update
+  document.getElementById("hud-life").textContent = "❤️".repeat(Math.max(0, state.lives)) + "🖤".repeat(Math.max(0, 3 - state.lives));
+  document.getElementById("hud-coins").textContent = "🪙 " + state.coins;
+  document.getElementById("progress-bar").style.width = (player.x / (WORLD_WIDTH - 200) * 100) + "%";
 }
 
-function answer(n, correctAnswer, btn) {
-  const fb = document.getElementById("feedback");
-  if (n === correctAnswer) {
-    btn.style.background = "#3fc534";
-    correct++;
-    score += 50;
-    coins += 10;
-    fb.textContent = "🎉 BENAR! Dino boleh lanjut!";
-    setTimeout(() => {
-      document.getElementById("question").classList.add("hidden");
-      questionOpen = false;
-    }, 650);
-  } else {
-    btn.style.background = "#e74b3c";
-    lives--;
-    fb.textContent = "😅 Belum tepat! Jawaban yang benar: " + correctAnswer;
-    if (lives <= 0) {
-      setTimeout(gameOver, 650);
-      return;
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const camX = state.cameraX;
+  const groundY = WORLD_HEIGHT - 120;
+
+  // 1. Gambar Background Parallax (Awan)
+  ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+  ctx.beginPath();
+  ctx.arc(200 - camX * 0.2, 100, 40, 0, Math.PI * 2);
+  ctx.arc(1200 - camX * 0.2, 150, 50, 0, Math.PI * 2);
+  ctx.arc(2200 - camX * 0.2, 80, 45, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Gambar Tanah
+  ctx.fillStyle = "#5ca632";
+  ctx.fillRect(0 - camX, groundY, WORLD_WIDTH, 120);
+  ctx.fillStyle = "#3e791d";
+  ctx.fillRect(0 - camX, groundY, WORLD_WIDTH, 15);
+
+  // 3. Gambar Platform Melayang
+  platforms.forEach(p => {
+    ctx.fillStyle = "#8d5524";
+    ctx.fillRect(p.x - camX, p.y, p.w, p.h);
+    ctx.fillStyle = "#639a31";
+    ctx.fillRect(p.x - camX, p.y, p.w, 6);
+  });
+
+  // 4. Gambar Coins & Items
+  coins.forEach(c => {
+    if (!c.taken) {
+      ctx.font = "24px Arial";
+      ctx.fillText("⭐", c.x - camX, c.y);
     }
-    setTimeout(() => {
-      document.getElementById("question").classList.add("hidden");
-      questionOpen = false;
-    }, 850);
+  });
+
+  // 5. Gambar Musuh
+  enemies.forEach(e => {
+    if (e.x > 0) {
+      ctx.font = "36px Arial";
+      ctx.fillText(e.type, e.x - camX, e.y);
+    }
+  });
+
+  // 6. Gambar Checkpoint Gates
+  checkpoints.forEach(cp => {
+    ctx.font = "40px Arial";
+    ctx.fillText(cp.triggered ? "🚪" : "🧠", cp.x - camX, groundY - 10);
+  });
+
+  // 7. Finish Flag
+  ctx.font = "60px Arial";
+  ctx.fillText("🚩", WORLD_WIDTH - 180 - camX, groundY - 10);
+
+  // 8. Gambar Dino (Player)
+  player.draw(ctx, camX);
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+// --- GAME MANAGEMENT & MODAL ---
+const Game = {
+  start() {
+    document.getElementById("screen-start").classList.add("hidden");
+    state.playing = true;
+    setupControls();
+    loop();
+  },
+  
+  openQuestion(cp) {
+    state.paused = true;
+    keys.left = keys.right = keys.jump = false; // Reset Input
+    
+    document.getElementById("q-text").textContent = cp.q;
+    
+    // Opsi Jawaban Acak
+    let options = new Set([cp.a]);
+    while(options.size < 4) {
+      let rand = cp.a + (Math.floor(Math.random() * 10) - 5);
+      if(rand >= 0) options.add(rand);
+    }
+    let arr = Array.from(options).sort(() => Math.random() - 0.5);
+
+    const ansContainer = document.getElementById("q-answers");
+    ansContainer.innerHTML = "";
+    arr.forEach(val => {
+      let btn = document.createElement("button");
+      btn.className = "btn-ans";
+      btn.textContent = val;
+      btn.onclick = () => this.answer(val === cp.a);
+      ansContainer.appendChild(btn);
+    });
+
+    document.getElementById("screen-question").classList.remove("hidden");
+  },
+
+  answer(isCorrect) {
+    document.getElementById("screen-question").classList.add("hidden");
+    state.paused = false;
+
+    if (isCorrect) {
+      state.score += 50;
+      state.coins += 5;
+    } else {
+      state.lives--;
+      if (state.lives <= 0) this.gameOver();
+    }
+  },
+
+  gameOver() {
+    state.playing = false;
+    document.getElementById("res-icon").textContent = "💀";
+    document.getElementById("res-title").textContent = "GAME OVER";
+    document.getElementById("res-desc").textContent = "Nyawa kamu habis! Coba lagi yuk.";
+    document.getElementById("screen-result").classList.remove("hidden");
+  },
+
+  win() {
+    state.playing = false;
+    document.getElementById("res-icon").textContent = "🏆";
+    document.getElementById("res-title").textContent = "SELAMAT!";
+    document.getElementById("res-desc").textContent = `Kamu berhasil menamatkan petualangan dengan ${state.coins} bintang dan Skor: ${state.score}`;
+    document.getElementById("screen-result").classList.remove("hidden");
   }
-}
-
-function pauseGame() {
-  if (!playing || questionOpen) return;
-  paused = true;
-  document.getElementById("pause").classList.remove("hidden");
-}
-
-function resumeGame() {
-  paused = false;
-  document.getElementById("pause").classList.add("hidden");
-}
-
-function finish() {
-  playing = false;
-  let stars = correct >= 3 ? 3 : correct === 2 ? 2 : 1;
-  save.best = Math.max(save.best, score);
-  save.coins = (save.coins || 0) + coins;
-  localStorage.setItem(saveKey, JSON.stringify(save));
-
-  document.getElementById("resultStars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
-  document.getElementById("resultScore").textContent = score + " ⭐";
-  document.getElementById("resultText").textContent = `Kamu mengumpulkan ${coins} koin dan menjawab ${correct}/3 tantangan matematika dengan benar.`;
-  document.getElementById("result").classList.remove("hidden");
-}
-
-function gameOver() {
-  playing = false;
-  document.getElementById("resultStars").textContent = "💪";
-  document.getElementById("resultScore").textContent = score + " ⭐";
-  document.getElementById("resultText").textContent = "Nyawa habis. Tidak apa-apa — coba lagi dan bantu Dino mencapai bendera!";
-  document.getElementById("result").classList.remove("hidden");
-}
-
-function hold(el, fn) {
-  el.addEventListener("pointerdown", e => { e.preventDefault(); fn(true); });
-  ["pointerup", "pointercancel", "pointerleave"].forEach(ev => 
-    el.addEventListener(ev, e => { e.preventDefault(); fn(false); })
-  );
-}
-
-hold(document.getElementById("left"), v => dir = v ? -1 : (dir < 0 ? 0 : dir));
-hold(document.getElementById("right"), v => dir = v ? 1 : (dir > 0 ? 0 : dir));
-document.getElementById("jump").addEventListener("pointerdown", e => { e.preventDefault(); jump(); });
-
-document.addEventListener("keydown", e => {
-  if (["ArrowLeft", "ArrowRight", "ArrowUp", " ", "a", "d", "w", "A", "D", "W"].includes(e.key)) e.preventDefault();
-  if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") dir = -1;
-  if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") dir = 1;
-  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W" || e.key === " ") jump();
-});
-
-document.addEventListener("keyup", e => {
-  if ((e.key === "ArrowLeft" || e.key === "a" || e.key === "A") && dir < 0) dir = 0;
-  if ((e.key === "ArrowRight" || e.key === "d" || e.key === "D") && dir > 0) dir = 0;
-});
-
-update();
+};
 </script>
 </body>
 </html>
