@@ -2,280 +2,270 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IE Smart Translator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IE Translator Mobile</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: #f0f2f5;
-            color: #1c1e21;
-            padding: 20px;
+            background-color: #f8f9fa;
+            color: #202124;
             display: flex;
             justify-content: center;
-            align-items: center;
             min-height: 100vh;
+            padding: 12px;
         }
 
-        .container {
+        .app-container {
             width: 100%;
-            max-width: 800px;
+            max-width: 480px;
             background: #ffffff;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        h1 {
-            color: #0d47a1;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .language-select {
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            padding: 16px;
+            height: fit-content;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a73e8;
+            margin-bottom: 16px;
+        }
+
+        .lang-bar {
+            display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            justify-content: space-between;
+            background: #f1f3f4;
+            border-radius: 12px;
+            padding: 6px 10px;
+            margin-bottom: 16px;
         }
 
         select {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: none;
+            background: transparent;
             font-size: 0.95rem;
-            background-color: #fff;
+            font-weight: 600;
+            color: #3c4043;
+            padding: 8px 4px;
+            outline: none;
+            text-align-last: center;
         }
 
-        .translator-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
+        .swap-btn {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 0 6px;
         }
 
-        .text-box-container {
+        .card-box {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+        }
+
+        .card-box.output-theme {
+            background: #f8f9fa;
         }
 
         textarea {
             width: 100%;
-            height: 180px;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            resize: none;
-            font-size: 0.95rem;
-        }
-
-        textarea:focus {
+            height: 110px;
+            border: none;
             outline: none;
-            border-color: #0d47a1;
+            resize: none;
+            font-size: 1rem;
+            color: #202124;
+            background: transparent;
         }
 
-        .output-box {
-            background-color: #f8f9fa;
-        }
-
-        .box-tools {
+        .actions-row {
             display: flex;
-            gap: 8px;
             justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+            border-top: 1px solid #f1f3f4;
+            padding-top: 8px;
         }
 
-        .btn-tool {
+        .icon-btn {
+            background: #f1f3f4;
+            border: none;
+            border-radius: 8px;
             padding: 6px 12px;
-            background-color: #e4e6eb;
-            color: #333;
-            border: none;
-            border-radius: 4px;
             font-size: 0.8rem;
-            cursor: pointer;
             font-weight: 600;
-        }
-
-        .btn-tool:hover {
-            background-color: #d8dadf;
-        }
-
-        .btn-container {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-primary {
-            flex: 1;
-            padding: 12px;
-            background-color: #0d47a1;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
+            color: #3c4043;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
-        .btn-primary:hover {
-            background-color: #1565c0;
-        }
-
-        .btn-swap {
-            flex: 0 0 50px;
-            background-color: #6c757d;
-            color: white;
+        .main-btn {
+            width: 100%;
+            background: #1a73e8;
+            color: #ffffff;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
-            font-size: 1.1rem;
+            margin-top: 4px;
         }
 
-        .btn-swap:hover {
-            background-color: #5a6268;
+        .main-btn:active {
+            background: #1557b0;
         }
 
-        .status-text {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: #666;
+        .status {
+            font-size: 0.8rem;
+            color: #70757a;
             text-align: center;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>IE Smart Translator</h1>
+    <div class="app-container">
+        <div class="header">IE Mobile Translator</div>
 
-        <!-- Pengaturan Bahasa -->
-        <div class="language-select">
-            <select id="sourceLang">
+        <!-- Language Selector -->
+        <div class="lang-bar">
+            <select id="srcLang">
+                <option value="auto">Deteksi Bahasa</option>
                 <option value="id">Indonesia</option>
                 <option value="en" selected>Inggris</option>
                 <option value="ja">Jepang</option>
-                <option value="zh">Mandarin</option>
-                <option value="de">Jerman</option>
+                <option value="zh-CN">Mandarin</option>
                 <option value="ar">Arab</option>
             </select>
 
-            <button class="btn-swap" onclick="swapLanguages()" title="Tukar Bahasa">⇄</button>
+            <button class="swap-btn" onclick="swapLangs()">⇄</button>
 
-            <select id="targetLang">
+            <select id="tgtLang">
                 <option value="id" selected>Indonesia</option>
                 <option value="en">Inggris</option>
                 <option value="ja">Jepang</option>
-                <option value="zh">Mandarin</option>
-                <option value="de">Jerman</option>
+                <option value="zh-CN">Mandarin</option>
                 <option value="ar">Arab</option>
             </select>
         </div>
 
-        <!-- Input & Output Text Area -->
-        <div class="translator-grid">
-            <div class="text-box-container">
-                <textarea id="inputText" placeholder="Ketik teks di sini..."></textarea>
-                <div class="box-tools">
-                    <button class="btn-tool" onclick="speakText('inputText', 'sourceLang')">🔊 Suara</button>
-                    <button class="btn-tool" onclick="clearInput()">🗑️ Hapus</button>
-                </div>
-            </div>
-
-            <div class="text-box-container">
-                <textarea id="outputText" class="output-box" placeholder="Hasil penerjemahan akan muncul di sini..." readonly></textarea>
-                <div class="box-tools">
-                    <button class="btn-tool" onclick="speakText('outputText', 'targetLang')">🔊 Suara</button>
-                    <button class="btn-tool" onclick="copyResult()">📋 Salin</button>
-                </div>
+        <!-- Input Box -->
+        <div class="card-box">
+            <textarea id="inputText" placeholder="Ketik atau tempel teks di sini..."></textarea>
+            <div class="actions-row">
+                <button class="icon-btn" onclick="speak('inputText', 'srcLang')">🔊 Suara</button>
+                <button class="icon-btn" onclick="clearAll()">🗑️ Hapus</button>
             </div>
         </div>
 
-        <!-- Tombol Aksi Utama -->
-        <div class="btn-container">
-            <button class="btn-primary" onclick="translateText()">Terjemahkan Sekarang</button>
+        <!-- Output Box -->
+        <div class="card-box output-theme">
+            <textarea id="outputText" placeholder="Hasil terjemahan..." readonly></textarea>
+            <div class="actions-row">
+                <button class="icon-btn" onclick="speak('outputText', 'tgtLang')">🔊 Suara</button>
+                <button class="icon-btn" onclick="copyText()">📋 Salin</button>
+            </div>
         </div>
-        <div class="status-text" id="statusText"></div>
+
+        <!-- Translate Action -->
+        <button class="main-btn" onclick="processTranslation()">Terjemahkan</button>
+        <div class="status" id="statusMsg"></div>
     </div>
 
     <script>
-        function translateText() {
-            const input = document.getElementById('inputText').value.trim();
-            const sourceLang = document.getElementById('sourceLang').value;
-            const targetLang = document.getElementById('targetLang').value;
-            const outputArea = document.getElementById('outputText');
-            const statusText = document.getElementById('statusText');
+        function processTranslation() {
+            const text = document.getElementById('inputText').value.trim();
+            const src = document.getElementById('srcLang').value;
+            const tgt = document.getElementById('tgtLang').value;
+            const output = document.getElementById('outputText');
+            const status = document.getElementById('statusMsg');
 
-            if (!input) {
-                outputArea.value = '';
-                statusText.textContent = 'Masukkan teks terlebih dahulu.';
+            if (!text) {
+                output.value = '';
+                status.textContent = 'Ketik teks terlebih dahulu.';
                 return;
             }
 
-            statusText.textContent = 'Menerjemahkan...';
+            status.textContent = 'Memproses...';
 
-            // Menghapus elemen script lama jika ada
-            const oldScript = document.getElementById('jsonp-script');
-            if (oldScript) oldScript.remove();
+            // Menggunakan Google Translate Unofficial API via Google Script Endpoint
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${src}&tl=${tgt}&dt=t&q=${encodeURIComponent(text)}`;
 
-            // Membuat callback unik untuk menangani respons JSONP (Bypass CORS)
-            window.handleTranslation = function(response) {
-                if (response && response.responseData) {
-                    outputArea.value = response.responseData.translatedText;
-                    statusText.textContent = 'Selesai menerjemahkan.';
-                } else {
-                    statusText.textContent = 'Gagal menerjemahkan teks.';
-                }
-            };
-
-            // Memanggil API MyMemory via skrip dinamis
-            const script = document.createElement('script');
-            script.id = 'jsonp-script';
-            script.src = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(input)}&langpair=${sourceLang}|${targetLang}&callback=handleTranslation`;
-            
-            script.onerror = function() {
-                statusText.textContent = 'Gagal terhubung ke server. Pastikan Anda terhubung ke internet.';
-            };
-
-            document.body.appendChild(script);
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data[0]) {
+                        let result = data[0].map(item => item[0]).join('');
+                        output.value = result;
+                        status.textContent = 'Selesai.';
+                    } else {
+                        status.textContent = 'Gagal menerjemahkan.';
+                    }
+                })
+                .catch(err => {
+                    status.textContent = 'Gagal terhubung. Pastikan internet HP aktif.';
+                });
         }
 
-        function swapLanguages() {
-            const sourceSelect = document.getElementById('sourceLang');
-            const targetSelect = document.getElementById('targetLang');
-            const temp = sourceSelect.value;
-            sourceSelect.value = targetSelect.value;
-            targetSelect.value = temp;
+        function swapLangs() {
+            const src = document.getElementById('srcLang');
+            const tgt = document.getElementById('tgtLang');
+            if (src.value === 'auto') return;
+            const temp = src.value;
+            src.value = tgt.value;
+            tgt.value = temp;
         }
 
-        function copyResult() {
-            const outputText = document.getElementById('outputText').value;
-            if (!outputText) return;
-            navigator.clipboard.writeText(outputText).then(() => {
+        function copyText() {
+            const out = document.getElementById('outputText').value;
+            if (!out) return;
+            navigator.clipboard.writeText(out).then(() => {
                 alert('Teks berhasil disalin!');
             });
         }
 
-        function clearInput() {
+        function clearAll() {
             document.getElementById('inputText').value = '';
             document.getElementById('outputText').value = '';
-            document.getElementById('statusText').textContent = '';
+            document.getElementById('statusMsg').textContent = '';
         }
 
-        function speakText(areaId, langSelectId) {
-            const text = document.getElementById(areaId).value;
-            const lang = document.getElementById(langSelectId).value;
-            if (!text) return;
+        function speak(areaId, langSelectId) {
+            const txt = document.getElementById(areaId).value;
+            let lang = document.getElementById(langSelectId).value;
+            if (!txt) return;
+            if (lang === 'auto') lang = 'id';
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            window.speechSynthesis.speak(utterance);
+            const u = new SpeechSynthesisUtterance(txt);
+            u.lang = lang;
+            window.speechSynthesis.speak(u);
         }
     </script>
 </body>
