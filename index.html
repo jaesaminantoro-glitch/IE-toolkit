@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - 3 Tab Layout</title>
+    <title>Time Study - 4 Tab + Daftar Mesin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -14,9 +14,9 @@
         /* Tab Navigation */
         .tab-btn {
             flex: 1;
-            padding: 12px 8px;
+            padding: 10px 6px;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 12px;
             color: #6b7280;
             background: transparent;
             border: none;
@@ -24,15 +24,14 @@
             cursor: pointer;
             transition: all 0.2s;
             -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
         }
         .tab-btn.tab-active {
             color: #4F46E5;
             border-bottom-color: #4F46E5;
             background: #eef2ff;
         }
-        .tab-btn:not(.tab-active):active {
-            background: #f3f4f6;
-        }
+        .tab-btn:not(.tab-active):active { background: #f3f4f6; }
 
         /* Bottom Controls */
         .bottom-controls {
@@ -61,23 +60,30 @@
             border: none;
             cursor: pointer;
         }
-        .bottom-controls-btn:active:not(:disabled) {
-            transform: scale(0.95);
-            opacity: 0.85;
-        }
-        .bottom-controls-btn:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-        }
+        .bottom-controls-btn:active:not(:disabled) { transform: scale(0.95); opacity: 0.85; }
+        .bottom-controls-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* Table scroll */
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .table-scroll::-webkit-scrollbar { height: 8px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .table-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
 
         body { padding-bottom: 110px; }
+
+        /* Modal */
+        .modal-bg {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 100; display: none; align-items: center; justify-content: center;
+            padding: 16px;
+        }
+        .modal-bg.active { display: flex; }
+        .modal-content { background: white; border-radius: 16px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
 
-    <!-- ============================================================ -->
     <!-- HEADER -->
-    <!-- ============================================================ -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center">
             <h1 class="text-base md:text-xl font-bold text-gray-800">⏱️ Time Study</h1>
@@ -85,51 +91,62 @@
         </div>
     </header>
 
-    <!-- ============================================================ -->
-    <!-- TAB NAVIGATION -->
-    <!-- ============================================================ -->
+    <!-- TAB NAVIGATION (4 TAB) -->
     <nav class="bg-white border-b border-gray-200 sticky top-[44px] md:top-[56px] z-20">
-        <div class="max-w-7xl mx-auto flex">
-            <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">
-                📝 Input
-            </button>
-            <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">
-                📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span>
-            </button>
-            <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">
-                📥 Export
-            </button>
+        <div class="max-w-7xl mx-auto flex overflow-x-auto">
+            <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
+            <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+            <button onclick="switchTab('mesin')" id="tabBtn-mesin" class="tab-btn">⚙️ Mesin <span id="machineCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+            <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📥 Export</button>
         </div>
     </nav>
 
     <!-- ============================================================ -->
-    <!-- TAB CONTENT: INPUT -->
+    <!-- TAB INPUT -->
     <!-- ============================================================ -->
     <div id="tab-input" class="tab-content">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-sm md:text-base font-semibold text-gray-800">🎯 Input Data</h2>
                     <span id="timerStatus" class="text-[10px] md:text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">Idle</span>
                 </div>
 
-                <!-- FORM -->
                 <div class="space-y-3">
+                    <!-- DROPDOWN MESIN + AUTO-ISI -->
+                    <div>
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Pilih Mesin / Jalur</label>
+                        <div class="relative">
+                            <select id="machineSelect" onchange="handleMachineSelect(this)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-white appearance-none">
+                                <option value="">-- Pilih Mesin --</option>
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-1">Daftar mesin bisa diubah di tab ⚙️ Mesin</p>
+                    </div>
+
+                    <!-- INPUT NO + PROSES (auto-terisi dari dropdown) -->
                     <div class="grid grid-cols-3 gap-2">
                         <div class="col-span-1">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">No</label>
-                            <input type="text" id="inputNo" placeholder="9" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="inputNo" placeholder="9" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-gray-50">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Proses</label>
-                            <input type="text" id="inputProcess" placeholder="Double screw" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="inputProcess" placeholder="Double screw" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-gray-50">
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Mesin / Jalur (Opsional)</label>
-                        <input type="text" id="inputSubMachine" placeholder="Mesin 1 / Jalur 2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <!-- INPUT MESIN MANUAL (kalau pilih "Lainnya") -->
+                    <div id="customMachineWrapper" class="hidden">
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Mesin Manual (Baru)</label>
+                        <input type="text" id="inputSubMachineCustom" placeholder="Ketik nama mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-amber-50">
+                    </div>
+
+                    <!-- INFO SUB-MESIN (kalau pilih dari dropdown) -->
+                    <div id="selectedMachineInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                        <div class="text-[10px] text-blue-600 uppercase font-semibold">Mesin Terpilih</div>
+                        <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -144,7 +161,7 @@
                     </div>
                 </div>
 
-                <!-- TIMER DISPLAY -->
+                <!-- TIMER -->
                 <div class="mt-4 bg-gray-900 rounded-xl p-4 text-center text-white shadow-inner border border-gray-800">
                     <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
                     <div id="timerDisplay" class="timer-display text-4xl md:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
@@ -162,7 +179,6 @@
                     </div>
                 </div>
 
-                <!-- TOMBOL SIMPAN -->
                 <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
                     💾 Simpan ke Master Data
                 </button>
@@ -171,44 +187,101 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB CONTENT: DATA (CARD VIEW) -->
+    <!-- TAB DATA -->
     <!-- ============================================================ -->
     <div id="tab-data" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-
             <div class="flex justify-between items-center mb-3">
                 <div>
                     <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
-                    <p class="text-[10px] md:text-xs text-gray-500">1 mesin = 1 card. Total gabungan per proses di bawah card.</p>
+                    <p class="text-[10px] md:text-xs text-gray-500">Proses di-merge jika punya beberapa mesin. Total Gabungan UPH di kanan.</p>
                 </div>
                 <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset Semua</button>
             </div>
 
-            <div id="mobileCards" class="space-y-3">
-                <div class="text-center text-gray-400 italic py-12 text-sm bg-white rounded-xl border border-gray-200">
-                    Belum ada data. Input dulu di tab 📝 Input.
-                </div>
+            <div class="lg:hidden text-[10px] text-blue-700 mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded border border-blue-200">
+                <span>👉</span><span>Geser tabel ke kanan / kiri untuk melihat semua kolom</span>
             </div>
 
-            <!-- Ringkasan Total -->
-            <div id="dataSummary" class="hidden mt-4 bg-gradient-to-r from-emerald-50 to-purple-50 rounded-xl border border-emerald-200 p-4">
-                <div class="text-xs font-semibold text-gray-600 uppercase mb-2">📈 Ringkasan</div>
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                        <div class="text-[10px] text-gray-500">Total Mesin</div>
-                        <div id="summaryTotalMachine" class="font-bold text-gray-800">0</div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-gray-500">Total Siklus</div>
-                        <div id="summaryTotalLaps" class="font-bold text-gray-800">0</div>
-                    </div>
-                </div>
+            <div class="table-scroll border border-gray-200 rounded-lg bg-white">
+                <table class="min-w-full divide-y divide-gray-200 text-xs" id="masterTable">
+                    <thead class="bg-yellow-100 text-gray-800">
+                        <tr>
+                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
+                            <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
+                            <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
+                            <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
+                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
+                            <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
+                            <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
+                            <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
+                            <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterTableBody" class="divide-y divide-gray-200 bg-white">
+                        <tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- TAB CONTENT: EXPORT -->
+    <!-- TAB MESIN (KELOLA DAFTAR MESIN) -->
+    <!-- ============================================================ -->
+    <div id="tab-mesin" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-sm md:text-base font-semibold text-gray-800">⚙️ Daftar Mesin</h2>
+                        <p class="text-[10px] md:text-xs text-gray-500">Kelola daftar mesin. Data tersimpan otomatis di HP.</p>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">➕ Tambah</button>
+                        <button onclick="openBulkImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">📥 Import CSV</button>
+                        <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">📄 Export CSV</button>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="relative mb-3">
+                    <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="table-scroll border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs" id="machineTable">
+                        <thead class="bg-blue-100 text-gray-800">
+                            <tr>
+                                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap w-12">No</th>
+                                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
+                                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
+                                <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="machineTableBody" class="divide-y divide-gray-200 bg-white">
+                            <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada mesin. Klik "➕ Tambah".</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                <div class="text-xs font-bold text-blue-800 mb-2">💡 Cara Pakai</div>
+                <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
+                    <li><b>➕ Tambah</b> — tambah mesin satu per satu (No, Proses, Mesin)</li>
+                    <li><b>📥 Import CSV</b> — import banyak mesin sekaligus dari file CSV</li>
+                    <li><b>📄 Export CSV</b> — backup daftar mesin ke file CSV</li>
+                    <li>Daftar otomatis muncul di dropdown Tab Input</li>
+                    <li>Data tersimpan di HP — refresh tidak hilang</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB EXPORT -->
     <!-- ============================================================ -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
@@ -236,7 +309,7 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
+                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data Time Study</h2>
 
                 <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3 flex items-center justify-center gap-2">
                     📥 Export Excel (.xlsx)
@@ -254,7 +327,7 @@
                 <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
                     <li>File tersimpan di folder <b>Download</b> HP</li>
                     <li>Buka pakai <b>WPS Office</b> atau <b>Google Sheets</b></li>
-                    <li>Kalau download gagal, <b>wajib pakai Chrome</b> (bukan browser in-app)</li>
+                    <li>Kalau download gagal, <b>wajib pakai Chrome</b></li>
                     <li>Export rutin setiap selesai shift untuk backup</li>
                 </ul>
             </div>
@@ -262,7 +335,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- TOMBOL KONTROL BAWAH (FIXED) -->
+    <!-- BOTTOM CONTROLS -->
     <!-- ============================================================ -->
     <div class="bottom-controls">
         <div class="max-w-7xl mx-auto">
@@ -277,9 +350,80 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- MODAL: TAMBAH / EDIT MESIN -->
+    <!-- ============================================================ -->
+    <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 id="machineModalTitle" class="text-base font-bold text-gray-800">Tambah Mesin</h3>
+                <button onclick="closeMachineModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-1">
+                        <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">No</label>
+                        <input type="text" id="modalNo" placeholder="9" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Nama Proses</label>
+                        <input type="text" id="modalProcess" placeholder="Double screw" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mesin / Jalur</label>
+                    <input type="text" id="modalSubMachine" placeholder="Mesin 1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeMachineModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="saveMachine()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm">💾 Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: BULK IMPORT -->
+    <!-- ============================================================ -->
+    <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">📥 Import CSV Daftar Mesin</h3>
+                <button onclick="closeBulkImportModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                    <div class="font-bold mb-1">Format CSV:</div>
+                    <div class="font-mono text-[10px] bg-white p-2 rounded border">
+                        No,Nama Proses,Mesin<br>
+                        9,Double screw,Mesin 1<br>
+                        9,Double screw,Mesin 2<br>
+                        23,Online screw,Mesin 1
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File CSV</label>
+                    <input type="file" id="bulkFileInput" accept=".csv,.txt" class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Atau Paste Data (Copy dari Excel)</label>
+                    <textarea id="bulkPasteArea" rows="6" placeholder="9&#9;Double screw&#9;Mesin 1&#10;9&#9;Double screw&#9;Mesin 2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="replaceExisting" class="rounded">
+                    <label for="replaceExisting" class="text-xs text-gray-700">Ganti daftar mesin yang ada (reset dulu)</label>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeBulkImportModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="processBulkImport()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm">📥 Import</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================================
-        // STATE GLOBAL
+        // STATE
         // ============================================================
         let startTime = 0;
         let elapsedTime = 0;
@@ -289,7 +433,37 @@
         let masterData = [];
         let lastLapTimestamp = 0;
         let currentTab = 'input';
+        let machineList = [];  // [{id, no, proses, mesin}, ...]
+        let editingMachineId = null;
 
+        // ============================================================
+        // LOCALSTORAGE
+        // ============================================================
+        const LS_KEY_MACHINES = 'timeStudy_machines_v1';
+        const LS_KEY_MASTER = 'timeStudy_master_v1';
+
+        function saveMachinesToLS() {
+            try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {}
+        }
+        function loadMachinesFromLS() {
+            try {
+                const raw = localStorage.getItem(LS_KEY_MACHINES);
+                if (raw) machineList = JSON.parse(raw);
+            } catch(e) { machineList = []; }
+        }
+        function saveMasterToLS() {
+            try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {}
+        }
+        function loadMasterFromLS() {
+            try {
+                const raw = localStorage.getItem(LS_KEY_MASTER);
+                if (raw) masterData = JSON.parse(raw);
+            } catch(e) { masterData = []; }
+        }
+
+        // ============================================================
+        // INISIALISASI
+        // ============================================================
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
             weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
         });
@@ -298,12 +472,8 @@
         // TAB NAVIGATION
         // ============================================================
         function switchTab(tabName) {
-            // Warning kalau timer sedang jalan & pindah tab
             if (isRunning && tabName !== 'input') {
-                if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.\n\nLanjutkan?')) {
-                    return;
-                }
-                // Auto-pause saat pindah tab
+                if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.\n\nLanjutkan?')) return;
                 clearInterval(timerInterval);
                 timerInterval = null;
                 setStartButton('resume');
@@ -311,17 +481,19 @@
                 isRunning = false;
             }
 
-            // Sembunyikan semua tab
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById('tab-' + tabName).classList.remove('hidden');
-
-            // Update tombol tab
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
             document.getElementById('tabBtn-' + tabName).classList.add('tab-active');
 
             currentTab = tabName;
 
-            // Scroll ke atas
+            // Update data saat buka tab
+            if (tabName === 'mesin') renderMachineTable();
+            if (tabName === 'data') { renderMasterTable(); updateCounters(); }
+            if (tabName === 'export') updateCounters();
+            if (tabName === 'input') populateMachineDropdown();
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -347,13 +519,10 @@
 
         function setStartButton(mode) {
             const mobileBtn = document.getElementById('mobileStartBtn');
-            if (mode === 'start') {
-                if (mobileBtn) { mobileBtn.innerText = '▶️ START'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
-            } else if (mode === 'pause') {
-                if (mobileBtn) { mobileBtn.innerText = '⏸️ PAUSE'; mobileBtn.className = 'bottom-controls-btn bg-yellow-600'; }
-            } else if (mode === 'resume') {
-                if (mobileBtn) { mobileBtn.innerText = '▶️ RESUME'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
-            }
+            if (!mobileBtn) return;
+            if (mode === 'start') { mobileBtn.innerText = '▶️ START'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
+            else if (mode === 'pause') { mobileBtn.innerText = '⏸️ PAUSE'; mobileBtn.className = 'bottom-controls-btn bg-yellow-600'; }
+            else if (mode === 'resume') { mobileBtn.innerText = '▶️ RESUME'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
         }
 
         function setButtonEnabled(id, enabled) {
@@ -375,13 +544,18 @@
             const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
             const toast = document.createElement('div');
             toast.innerText = message;
-            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-50 toast-animate whitespace-nowrap`;
+            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[100] toast-animate whitespace-nowrap`;
             document.body.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s';
                 setTimeout(() => toast.remove(), 300);
             }, 1800);
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
         }
 
         // ============================================================
@@ -474,34 +648,104 @@
             `).join('');
         }
 
-        function resetTimer() {
-            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-            isRunning = false;
-            elapsedTime = 0;
-            lastLapTimestamp = 0;
-            currentLaps = [];
-            document.getElementById('timerDisplay').innerText = '00:00.00';
-            document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
-            setStartButton('start');
-            setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
-            setButtonEnabled('stopBtn', false);
-            setButtonEnabled('lapBtn', false);
-            setButtonEnabled('commitBtn', false);
-            updateLapsUI();
-            showToast('Stopwatch direset', 'info');
+        // ============================================================
+        // DROPDOWN MESIN + AUTO-ISI
+        // ============================================================
+        function populateMachineDropdown() {
+            const select = document.getElementById('machineSelect');
+            if (!select) return;
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Pilih Mesin --</option>';
+
+            // Sort by No then Mesin
+            const sorted = [...machineList].sort((a, b) => {
+                const na = String(a.no), nb = String(b.no);
+                if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
+                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
+            });
+
+            sorted.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `${m.no} · ${m.proses} · ${m.mesin}`;
+                opt.dataset.no = m.no;
+                opt.dataset.proses = m.proses;
+                opt.dataset.mesin = m.mesin;
+                select.appendChild(opt);
+            });
+
+            // Opsi "Lainnya"
+            const optCustom = document.createElement('option');
+            optCustom.value = '__custom__';
+            optCustom.textContent = '➕ Lainnya (ketik manual)';
+            select.appendChild(optCustom);
+
+            // Restore value kalau masih ada
+            if (currentValue && (currentValue === '__custom__' || select.querySelector(`option[value="${currentValue}"]`))) {
+                select.value = currentValue;
+            }
+
+            // Update badge
+            const badge = document.getElementById('machineCountBadge');
+            if (badge) {
+                badge.innerText = machineList.length;
+                badge.className = machineList.length > 0
+                    ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
+                    : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
+            }
+        }
+
+        function handleMachineSelect(select) {
+            const customWrapper = document.getElementById('customMachineWrapper');
+            const infoWrapper = document.getElementById('selectedMachineInfo');
+            const selectedOpt = select.options[select.selectedIndex];
+
+            if (select.value === '__custom__') {
+                customWrapper.classList.remove('hidden');
+                infoWrapper.classList.add('hidden');
+                document.getElementById('inputNo').value = '';
+                document.getElementById('inputProcess').value = '';
+                setTimeout(() => document.getElementById('inputSubMachineCustom').focus(), 100);
+            } else if (select.value) {
+                customWrapper.classList.add('hidden');
+                infoWrapper.classList.remove('hidden');
+                // Auto-isi No + Proses
+                document.getElementById('inputNo').value = selectedOpt.dataset.no || '';
+                document.getElementById('inputProcess').value = selectedOpt.dataset.proses || '';
+                document.getElementById('selectedMachineName').innerText = selectedOpt.dataset.mesin || '';
+            } else {
+                customWrapper.classList.add('hidden');
+                infoWrapper.classList.add('hidden');
+                document.getElementById('inputNo').value = '';
+                document.getElementById('inputProcess').value = '';
+            }
         }
 
         // ============================================================
-        // COMMIT
+        // COMMIT TIME STUDY
         // ============================================================
         function commitStudyRow() {
-            const no = document.getElementById('inputNo').value.trim() || '-';
-            const process = document.getElementById('inputProcess').value.trim();
-            const subMachine = document.getElementById('inputSubMachine').value.trim() || '-';
+            const select = document.getElementById('machineSelect');
+            const customWrapper = document.getElementById('customMachineWrapper');
+            const isCustom = select.value === '__custom__' || !select.value;
+
+            let no, process, subMachine;
+
+            if (isCustom) {
+                no = document.getElementById('inputNo').value.trim() || '-';
+                process = document.getElementById('inputProcess').value.trim();
+                subMachine = document.getElementById('inputSubMachineCustom').value.trim() || '-';
+            } else {
+                const opt = select.options[select.selectedIndex];
+                no = opt.dataset.no || '-';
+                process = opt.dataset.proses || '';
+                subMachine = opt.dataset.mesin || '-';
+            }
+
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
 
-            if (!process) { showToast('Mohon isi nama proses!', 'error'); return; }
+            if (!process) { showToast('Mohon pilih/isi nama proses!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
             if (actualMachine < 1) { showToast('Jumlah unit mesin minimal 1!', 'error'); return; }
 
@@ -527,7 +771,9 @@
                 showToast('✅ Data disimpan', 'success');
             }
 
-            // PENTING: Reset timer tapi PERTAHANKAN No + Nama Proses
+            saveMasterToLS();
+
+            // Reset timer
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
             elapsedTime = 0;
@@ -535,9 +781,10 @@
             lastLapTimestamp = 0;
             document.getElementById('timerDisplay').innerText = '00:00.00';
             document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
-            document.getElementById('inputSubMachine').value = '';
             document.getElementById('inputActualMachine').value = '1';
-            // No & Nama Proses TIDAK direset — biar bisa lanjut input mesin berikutnya
+            if (isCustom) {
+                document.getElementById('inputSubMachineCustom').value = '';
+            }
 
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
@@ -546,15 +793,15 @@
             setButtonEnabled('commitBtn', false);
             updateLapsUI();
             renderMasterTable();
+            updateCounters();
 
-            // AUTO-PINDAH TAB: Input → Data (lihat hasil) → balik Input setelah 1.5 detik
+            // Auto-pindah tab: Input → Data → balik Input
             switchTab('data');
             setTimeout(() => {
                 if (currentTab === 'data') {
                     switchTab('input');
-                    // Fokus ke input Mesin / Jalur
                     setTimeout(() => {
-                        document.getElementById('inputSubMachine').focus();
+                        document.getElementById('machineSelect').focus();
                     }, 200);
                 }
             }, 1500);
@@ -573,24 +820,48 @@
         }
 
         // ============================================================
-        // RENDER CARD VIEW (TAB DATA)
+        // RENDER MASTER TABLE
         // ============================================================
         function renderMasterTable() {
-            renderMobileCards();
-            updateCounters();
-        }
-
-        function renderMobileCards() {
-            const container = document.getElementById('mobileCards');
-            const summary = document.getElementById('dataSummary');
+            const tbody = document.getElementById('masterTableBody');
+            const thead = document.querySelector('#masterTable thead tr');
 
             if (masterData.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-400 italic py-12 text-sm bg-white rounded-xl border border-gray-200">Belum ada data. Input dulu di tab 📝 Input.</div>';
-                summary.classList.add('hidden');
+                thead.innerHTML = `
+                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
+                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
+                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
+                    <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
+                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
+                    <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
+                    <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
+                    <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
+                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
+                `;
+                tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>`;
                 return;
             }
 
-            // Group by (No + Process)
+            const maxLaps = Math.max(...masterData.map(item => item.laps.length));
+
+            let headerHTML = `
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
+            `;
+            for (let i = 1; i <= maxLaps; i++) {
+                headerHTML += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
+            }
+            headerHTML += `
+                <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
+                <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
+                <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
+            `;
+            thead.innerHTML = headerHTML;
+
             const groups = {};
             const groupOrder = [];
             masterData.forEach((item, idx) => {
@@ -603,134 +874,92 @@
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
 
-            let html = '';
+            let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
-                const isMulti = group.rows.length > 1;
+                const rowSpan = group.rows.length;
 
-                // Header proses (jika multi mesin)
-                if (isMulti) {
-                    html += `
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mt-2">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="bg-yellow-200 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded">No ${group.no}</span>
-                                    <span class="font-bold text-gray-800 ml-1">${group.process}</span>
-                                </div>
-                                <span class="text-[10px] text-gray-500">${group.rows.length} mesin</span>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                // Card per mesin
                 group.rows.forEach((row, rIdx) => {
                     const stats = getRowStats(row);
                     const sessionBadge = row.sessions > 1
-                        ? `<span class="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions}×</span>`
+                        ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions} sesi</span>`
                         : '';
 
-                    html += `
-                        <div class="bg-white rounded-xl border border-gray-200 p-3 mb-2">
-                            <div class="flex justify-between items-start mb-2 gap-2">
-                                <div class="flex-1 min-w-0">
-                                    ${!isMulti ? `
-                                        <span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${row.no}</span>
-                                        <span class="font-bold text-gray-800 ml-1 text-sm">${row.process}</span>
-                                    ` : `
-                                        <span class="text-xs text-gray-600">Mesin ${rIdx + 1}</span>
-                                    `}
-                                    <div class="text-[11px] text-gray-500 mt-0.5 truncate">
-                                        <span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 font-mono">${row.subMachine}</span>
-                                        ${sessionBadge}
-                                    </div>
-                                </div>
-                                <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 text-[10px] bg-red-50 px-2 py-1 rounded border border-red-200 whitespace-nowrap">Hapus</button>
-                            </div>
+                    htmlOutput += `<tr class="hover:bg-yellow-50/50 transition">`;
 
-                            <div class="grid grid-cols-4 gap-1.5 text-[10px] mb-2">
-                                <div class="bg-blue-50 rounded p-1.5 text-center">
-                                    <div class="text-gray-500">Siklus</div>
-                                    <div class="font-bold text-blue-700">${stats.count}×</div>
-                                </div>
-                                <div class="bg-yellow-50 rounded p-1.5 text-center">
-                                    <div class="text-gray-500">Rata²</div>
-                                    <div class="font-bold text-yellow-700">${stats.avg.toFixed(2)}</div>
-                                </div>
-                                <div class="bg-orange-50 rounded p-1.5 text-center">
-                                    <div class="text-gray-500">CT+G</div>
-                                    <div class="font-bold text-orange-700">${stats.ctPlusG.toFixed(2)}</div>
-                                </div>
-                                <div class="bg-emerald-50 rounded p-1.5 text-center">
-                                    <div class="text-gray-500">Kap.</div>
-                                    <div class="font-bold text-emerald-700">${stats.capacity}</div>
-                                </div>
-                            </div>
+                    if (rIdx === 0) {
+                        htmlOutput += `
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(group.no)}</td>
+                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process)}</td>
+                        `;
+                    }
 
-                            <div class="text-[10px] text-gray-500 bg-gray-50 p-1.5 rounded border border-gray-100">
-                                <div class="font-mono text-gray-700 break-words leading-relaxed">
-                                    ${row.laps.map((l, i) => `<span class="inline-block bg-white px-1.5 py-0.5 rounded border border-gray-200 mr-0.5 mb-0.5">S${i + 1}: ${l.toFixed(2)}</span>`).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">
+                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine)}</span>${sessionBadge}
+                    </td>`;
+
+                    for (let i = 0; i < maxLaps; i++) {
+                        const lapVal = row.laps[i];
+                        if (lapVal !== undefined) htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${lapVal.toFixed(2)}</td>`;
+                        else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                    }
+
+                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${row.ngRate}%</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
+
+                    if (rIdx === 0) {
+                        htmlOutput += `
+                            <td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">
+                                ${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span>
+                            </td>
+                        `;
+                    }
+
+                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    </td>`;
+
+                    htmlOutput += `</tr>`;
                 });
-
-                // Total gabungan (kalau multi mesin)
-                if (isMulti) {
-                    html += `
-                        <div class="bg-gradient-to-r from-purple-50 to-emerald-50 rounded-lg border border-purple-200 px-3 py-2 mb-2 -mt-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[11px] font-bold text-purple-800">📊 Total Gabungan</span>
-                                <span class="text-base font-extrabold text-purple-700">${group.totalCapacity} <span class="text-[10px] font-normal">UPH</span></span>
-                            </div>
-                        </div>
-                    `;
-                }
             });
 
-            container.innerHTML = html;
-
-            // Show summary
-            summary.classList.remove('hidden');
-            const totalMachine = masterData.length;
-            const totalLaps = masterData.reduce((sum, item) => sum + item.laps.length, 0);
-            document.getElementById('summaryTotalMachine').innerText = totalMachine;
-            document.getElementById('summaryTotalLaps').innerText = totalLaps;
+            tbody.innerHTML = htmlOutput;
         }
 
         function deleteMasterRow(idx) {
             const item = masterData[idx];
             if (!confirm(`Hapus data "${item.process}" (${item.subMachine})?`)) return;
             masterData.splice(idx, 1);
+            saveMasterToLS();
             renderMasterTable();
+            updateCounters();
             showToast('Data dihapus', 'warning');
         }
 
         function clearAllData() {
-            if (!confirm('Yakin ingin menghapus seluruh data?')) return;
+            if (!confirm('Yakin ingin menghapus seluruh data time study?')) return;
             masterData = [];
+            saveMasterToLS();
             renderMasterTable();
+            updateCounters();
             showToast('Semua data dihapus', 'warning');
         }
 
         // ============================================================
-        // UPDATE COUNTERS
+        // COUNTERS
         // ============================================================
         function updateCounters() {
             const totalMachine = masterData.length;
             const totalLaps = masterData.reduce((sum, item) => sum + item.laps.length, 0);
 
-            // Badge di tab Data
             const badge = document.getElementById('dataCountBadge');
             badge.innerText = totalMachine;
-            if (totalMachine > 0) {
-                badge.className = 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full';
-            } else {
-                badge.className = 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
-            }
+            badge.className = totalMachine > 0
+                ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
+                : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
 
-            // Summary di tab Export
             const totalProcess = new Set(masterData.map(item => `${item.no}||${item.process}`)).size;
             const totalCapacity = (() => {
                 const groups = {};
@@ -746,10 +975,243 @@
             document.getElementById('exportTotalLaps').innerText = totalLaps;
             document.getElementById('exportTotalProcess').innerText = totalProcess;
             document.getElementById('exportTotalCapacity').innerText = totalCapacity + ' UPH';
+
+            // Machine badge
+            const mBadge = document.getElementById('machineCountBadge');
+            if (mBadge) {
+                mBadge.innerText = machineList.length;
+                mBadge.className = machineList.length > 0
+                    ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
+                    : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
+            }
         }
 
         // ============================================================
-        // BUILD DATA ROWS (untuk Excel & CSV)
+        // MACHINE MANAGEMENT
+        // ============================================================
+        function generateId() {
+            return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        }
+
+        function openMachineModal(machineId = null) {
+            editingMachineId = machineId;
+            const modal = document.getElementById('machineModal');
+            const title = document.getElementById('machineModalTitle');
+
+            if (machineId) {
+                title.innerText = 'Edit Mesin';
+                const m = machineList.find(x => x.id === machineId);
+                if (m) {
+                    document.getElementById('modalNo').value = m.no || '';
+                    document.getElementById('modalProcess').value = m.proses || '';
+                    document.getElementById('modalSubMachine').value = m.mesin || '';
+                }
+            } else {
+                title.innerText = 'Tambah Mesin';
+                document.getElementById('modalNo').value = '';
+                document.getElementById('modalProcess').value = '';
+                document.getElementById('modalSubMachine').value = '';
+            }
+            modal.classList.add('active');
+            setTimeout(() => document.getElementById('modalNo').focus(), 100);
+        }
+
+        function closeMachineModal() {
+            document.getElementById('machineModal').classList.remove('active');
+            editingMachineId = null;
+        }
+
+        function saveMachine() {
+            const no = document.getElementById('modalNo').value.trim();
+            const proses = document.getElementById('modalProcess').value.trim();
+            const mesin = document.getElementById('modalSubMachine').value.trim();
+
+            if (!proses) { showToast('Nama Proses wajib diisi!', 'error'); return; }
+            if (!mesin) { showToast('Nama Mesin wajib diisi!', 'error'); return; }
+
+            if (editingMachineId) {
+                const m = machineList.find(x => x.id === editingMachineId);
+                if (m) {
+                    m.no = no || '-';
+                    m.proses = proses;
+                    m.mesin = mesin;
+                }
+                showToast('✅ Mesin diperbarui', 'success');
+            } else {
+                machineList.push({
+                    id: generateId(),
+                    no: no || '-',
+                    proses, mesin
+                });
+                showToast('✅ Mesin ditambahkan', 'success');
+            }
+
+            saveMachinesToLS();
+            renderMachineTable();
+            updateCounters();
+            populateMachineDropdown();
+            closeMachineModal();
+        }
+
+        function deleteMachine(id) {
+            const m = machineList.find(x => x.id === id);
+            if (!m) return;
+            if (!confirm(`Hapus mesin "${m.mesin}" (${m.proses})?`)) return;
+            machineList = machineList.filter(x => x.id !== id);
+            saveMachinesToLS();
+            renderMachineTable();
+            updateCounters();
+            populateMachineDropdown();
+            showToast('Mesin dihapus', 'warning');
+        }
+
+        function renderMachineTable() {
+            const tbody = document.getElementById('machineTableBody');
+            const search = (document.getElementById('machineSearch')?.value || '').toLowerCase().trim();
+
+            let filtered = machineList;
+            if (search) {
+                filtered = machineList.filter(m =>
+                    String(m.no).toLowerCase().includes(search) ||
+                    String(m.proses).toLowerCase().includes(search) ||
+                    String(m.mesin).toLowerCase().includes(search)
+                );
+            }
+
+            // Sort
+            filtered = [...filtered].sort((a, b) => {
+                const na = String(a.no), nb = String(b.no);
+                if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
+                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${machineList.length === 0 ? 'Belum ada mesin. Klik "➕ Tambah".' : 'Tidak ada hasil pencarian.'}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(m => `
+                <tr class="hover:bg-blue-50/50">
+                    <td class="px-2 py-2 text-center font-bold border-r border-b whitespace-nowrap">${escapeHtml(m.no)}</td>
+                    <td class="px-3 py-2 border-r border-b whitespace-nowrap">${escapeHtml(m.proses)}</td>
+                    <td class="px-3 py-2 border-r border-b whitespace-nowrap">
+                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100 font-medium">${escapeHtml(m.mesin)}</span>
+                    </td>
+                    <td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="openMachineModal('${m.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">Edit</button>
+                        <button onclick="deleteMachine('${m.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============================================================
+        // BULK IMPORT
+        // ============================================================
+        function openBulkImportModal() {
+            document.getElementById('bulkFileInput').value = '';
+            document.getElementById('bulkPasteArea').value = '';
+            document.getElementById('replaceExisting').checked = false;
+            document.getElementById('bulkImportModal').classList.add('active');
+        }
+        function closeBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.remove('active');
+        }
+
+        function processBulkImport() {
+            const fileInput = document.getElementById('bulkFileInput');
+            const pasteArea = document.getElementById('bulkPasteArea');
+            const replace = document.getElementById('replaceExisting').checked;
+
+            const handleText = (text) => {
+                try {
+                    const lines = text.split(/\r?\n/).filter(l => l.trim());
+                    if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
+
+                    // Deteksi delimiter: tab (Excel paste) atau koma (CSV)
+                    const firstLine = lines[0];
+                    const delimiter = firstLine.includes('\t') ? '\t' : ',';
+
+                    // Skip header kalau ada
+                    let startIdx = 0;
+                    const firstCells = firstLine.split(delimiter).map(c => c.trim().toLowerCase().replace(/^"|"$/g, ''));
+                    if (firstCells[0] === 'no' || firstCells[1] === 'nama proses' || firstCells[1] === 'proses') {
+                        startIdx = 1;
+                    }
+
+                    const newItems = [];
+                    for (let i = startIdx; i < lines.length; i++) {
+                        const cells = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
+                        if (cells.length < 3) continue;
+                        const [no, proses, mesin] = cells;
+                        if (!proses || !mesin) continue;
+                        newItems.push({
+                            id: generateId(),
+                            no: no || '-',
+                            proses: proses,
+                            mesin: mesin
+                        });
+                    }
+
+                    if (newItems.length === 0) { showToast('Tidak ada data valid!', 'error'); return; }
+
+                    if (replace) {
+                        machineList = newItems;
+                    } else {
+                        machineList = machineList.concat(newItems);
+                    }
+
+                    saveMachinesToLS();
+                    renderMachineTable();
+                    updateCounters();
+                    populateMachineDropdown();
+                    closeBulkImportModal();
+                    showToast(`✅ ${newItems.length} mesin berhasil di-import`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    showToast('❌ Gagal parse data', 'error');
+                }
+            };
+
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => handleText(e.target.result);
+                reader.readAsText(file);
+            } else if (pasteArea.value.trim()) {
+                handleText(pasteArea.value);
+            } else {
+                showToast('Pilih file CSV atau paste data dulu!', 'error');
+            }
+        }
+
+        // ============================================================
+        // EXPORT MACHINE CSV
+        // ============================================================
+        function exportMachineCSV() {
+            if (machineList.length === 0) { showToast('Belum ada mesin untuk di-export!', 'error'); return; }
+            const escapeCSV = (v) => {
+                const s = String(v == null ? '' : v);
+                if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+                return s;
+            };
+            const rows = [['No', 'Nama Proses', 'Mesin']];
+            const sorted = [...machineList].sort((a, b) => {
+                const na = String(a.no), nb = String(b.no);
+                if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
+                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
+            });
+            sorted.forEach(m => rows.push([m.no, m.proses, m.mesin]));
+            const csvContent = rows.map(r => r.map(escapeCSV).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const filename = `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`;
+            if (downloadBlob(blob, filename)) {
+                showToast('📄 Daftar mesin berhasil di-export', 'success');
+            }
+        }
+
+        // ============================================================
+        // BUILD DATA ROWS (Excel & CSV)
         // ============================================================
         function buildDataRows() {
             const maxLaps = Math.max(...masterData.map(item => item.laps.length));
@@ -838,14 +1300,8 @@
         // EXPORT XLSX
         // ============================================================
         function exportToExcelXLSX() {
-            if (masterData.length === 0) {
-                showToast('Belum ada data untuk di-export!', 'error');
-                return;
-            }
-            if (typeof XLSX === 'undefined') {
-                showToast('❌ SheetJS belum ke-load. Coba CSV.', 'error');
-                return;
-            }
+            if (masterData.length === 0) { showToast('Belum ada data untuk di-export!', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ SheetJS belum ke-load. Coba CSV.', 'error'); return; }
 
             try {
                 const { dataRows, merges, maxLaps } = buildDataRows();
@@ -871,9 +1327,7 @@
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-                if (downloadBlob(blob, filename)) {
-                    showToast('📥 File Excel berhasil diunduh', 'success');
-                }
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel berhasil diunduh', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
                 showToast('❌ Gagal export Excel. Coba CSV.', 'error');
@@ -884,27 +1338,18 @@
         // EXPORT CSV
         // ============================================================
         function exportToCSV() {
-            if (masterData.length === 0) {
-                showToast('Belum ada data untuk di-export!', 'error');
-                return;
-            }
-
+            if (masterData.length === 0) { showToast('Belum ada data untuk di-export!', 'error'); return; }
             try {
                 const { dataRows } = buildDataRows();
                 const escapeCSV = (v) => {
                     const s = String(v == null ? '' : v);
-                    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-                        return '"' + s.replace(/"/g, '""') + '"';
-                    }
+                    if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
                     return s;
                 };
                 const csvContent = dataRows.map(row => row.map(escapeCSV).join(',')).join('\r\n');
                 const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.csv`;
-
-                if (downloadBlob(blob, filename)) {
-                    showToast('📄 File CSV berhasil diunduh', 'success');
-                }
+                if (downloadBlob(blob, filename)) showToast('📄 File CSV berhasil diunduh', 'success');
             } catch (err) {
                 console.error('Export CSV gagal:', err);
                 showToast('❌ Gagal export CSV.', 'error');
@@ -915,11 +1360,17 @@
         // INIT
         // ============================================================
         (function init() {
+            loadMachinesFromLS();
+            loadMasterFromLS();
+            populateMachineDropdown();
+            renderMachineTable();
+            renderMasterTable();
+            updateCounters();
+
             const mobileStopBtn = document.getElementById('mobileStopBtn');
             const mobileLapBtn = document.getElementById('mobileLapBtn');
             if (mobileStopBtn) mobileStopBtn.disabled = true;
             if (mobileLapBtn) mobileLapBtn.disabled = true;
-            updateCounters();
         })();
     </script>
 </body>
