@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Line</title>
+    <title>Time Study - Multi Line + Multi Select</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -92,106 +92,57 @@
         .header-btn .btn-label { font-size: 9px; font-weight: 700; margin-top: 2px; line-height: 1; }
 
         @media (min-width: 768px) {
-            .header-btn {
-                flex-direction: row;
-                width: auto;
-                height: auto;
-                padding: 6px 12px;
-                gap: 6px;
-            }
+            .header-btn { flex-direction: row; width: auto; height: auto; padding: 6px 12px; gap: 6px; }
             .header-btn .btn-icon { font-size: 13px; }
             .header-btn .btn-label { font-size: 11px; margin-top: 0; }
         }
 
         .line-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.1s;
-            -webkit-tap-highlight-color: transparent;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 8px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            transition: transform 0.1s; -webkit-tap-highlight-color: transparent;
             white-space: nowrap;
         }
         .line-badge:active { transform: scale(0.95); }
 
-        /* Custom Dropdown */
         .custom-dropdown-wrapper { position: relative; }
         .custom-dropdown-btn {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #93c5fd;
-            border-radius: 8px;
-            background: white;
-            text-align: left;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
+            width: 100%; padding: 10px 12px;
+            border: 2px solid #93c5fd; border-radius: 8px;
+            background: white; text-align: left; font-size: 14px;
+            cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; gap: 8px;
             -webkit-tap-highlight-color: transparent;
         }
         .custom-dropdown-btn:active { background: #f9fafb; }
-        .custom-dropdown-btn.open {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
+        .custom-dropdown-btn.open { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
         .custom-dropdown-panel {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: white; border: 1px solid #e5e7eb; border-radius: 8px;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            z-index: 50;
-            display: none;
-            max-height: 300px;
-            overflow: hidden;
+            z-index: 50; display: none; max-height: 300px; overflow: hidden;
             flex-direction: column;
         }
         .custom-dropdown-panel.open { display: flex; }
-        .custom-dropdown-search {
-            padding: 8px;
-            border-bottom: 1px solid #e5e7eb;
-            flex-shrink: 0;
-        }
-        .custom-dropdown-search input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-        .custom-dropdown-list {
-            overflow-y: auto;
-            flex: 1;
-            -webkit-overflow-scrolling: touch;
-        }
+        .custom-dropdown-search { padding: 8px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+        .custom-dropdown-search input { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
+        .custom-dropdown-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         .custom-dropdown-item {
-            padding: 10px 12px;
-            font-size: 13px;
-            cursor: pointer;
+            padding: 10px 12px; font-size: 13px; cursor: pointer;
             border-bottom: 1px solid #f3f4f6;
             -webkit-tap-highlight-color: transparent;
         }
         .custom-dropdown-item:active { background: #eef2ff; }
-        .custom-dropdown-item.selected {
-            background: #eef2ff;
-            color: #4f46e5;
-            font-weight: 700;
-        }
-        .custom-dropdown-empty {
-            padding: 20px;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 13px;
-            font-style: italic;
+        .custom-dropdown-item.selected { background: #eef2ff; color: #4f46e5; font-weight: 700; }
+        .custom-dropdown-empty { padding: 20px; text-align: center; color: #9ca3af; font-size: 13px; font-style: italic; }
+
+        /* Checkbox Custom */
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #4f46e5;
         }
     </style>
 </head>
@@ -238,13 +189,41 @@
             <div class="p-4 space-y-3">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Line</label>
-                    <input type="text" id="editLineInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Nama line">
+                    <input type="text" id="editLineInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
                 <p class="text-[10px] text-gray-500">💡 Mengubah nama line akan mengubah semua data time study yang menggunakan line ini.</p>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
                 <button onclick="closeEditLineModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
                 <button onclick="saveEditedLine()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm">💾 Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BULK EDIT MESIN -->
+    <div id="bulkEditMachineModal" class="modal-bg" onclick="if(event.target===this) closeBulkEditMachineModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">✏️ Edit Multiple Mesin</h3>
+                <button onclick="closeBulkEditMachineModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+                    <b>⚠️ Edit N mesin sekaligus</b>
+                    <div class="mt-1">Kosongkan field kalau tidak mau diubah.</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Mesin Baru (opsional)</label>
+                    <input type="text" id="bulkEditProcess" placeholder="Biarkan kosong kalau tidak diubah" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Sub Mesin Baru (opsional)</label>
+                    <input type="text" id="bulkEditSubMachine" placeholder="Biarkan kosong kalau tidak diubah" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeBulkEditMachineModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="saveBulkEditMachine()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm">💾 Simpan</button>
             </div>
         </div>
     </div>
@@ -261,15 +240,15 @@
                     <span>🏷️</span>
                     <span id="currentLineText">Pilih Line</span>
                 </button>
-                <button onclick="manualSync()" class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200" title="Sync Manual">
+                <button onclick="manualSync()" class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200">
                     <span class="btn-icon">🔄</span>
                     <span class="btn-label">SYNC</span>
                 </button>
-                <button onclick="exportToExcelXLSX()" class="header-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm" title="Export Excel">
+                <button onclick="exportToExcelXLSX()" class="header-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
                     <span class="btn-icon">📥</span>
                     <span class="btn-label">EXCEL</span>
                 </button>
-                <button onclick="exportToCSV()" class="header-btn bg-amber-600 hover:bg-amber-700 text-white shadow-sm" title="Export CSV">
+                <button onclick="exportToCSV()" class="header-btn bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
                     <span class="btn-icon">📄</span>
                     <span class="btn-label">CSV</span>
                 </button>
@@ -435,7 +414,7 @@
         </div>
     </div>
 
-    <!-- TAB MESIN -->
+    <!-- TAB MESIN (UPDATED DENGAN CHECKBOX) -->
     <div id="tab-mesin" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -447,7 +426,7 @@
                     <div class="flex gap-2 flex-wrap">
                         <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
                         <button onclick="openBulkImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
-                        <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
+                        <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export All</button>
                     </div>
                 </div>
 
@@ -455,29 +434,55 @@
                     <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
 
+                <!-- BULK ACTION BAR -->
+                <div id="bulkActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
+                    <div class="flex justify-between items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
+                            <label for="selectAllCheckbox" class="text-xs font-bold text-indigo-800 cursor-pointer">
+                                Pilih Semua (<span id="selectedCount">0</span> terpilih)
+                            </label>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="openBulkEditMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">✏️ Edit Pilihan</button>
+                            <button onclick="deleteBulkSelected()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">🗑️ Hapus Pilihan</button>
+                            <button onclick="exportSelectedMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">📄 Export Pilihan</button>
+                            <button onclick="clearSelection()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">❌ Batal</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-scroll border border-gray-200 rounded-lg">
                     <table class="min-w-full divide-y divide-gray-200 text-xs">
                         <thead class="bg-blue-100 text-gray-800">
                             <tr>
+                                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap w-10">
+                                    <input type="checkbox" id="selectAllHeaderCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom" title="Pilih Semua">
+                                </th>
                                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
                                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin / Jalur</th>
                                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="machineTableBody" class="divide-y divide-gray-200 bg-white">
-                            <tr><td colspan="3" class="px-4 py-12 text-center text-gray-400 italic">Belum ada mesin. Klik "➕ Tambah".</td></tr>
+                            <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada mesin. Klik "➕ Tambah".</td></tr>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- INFO SELECTION -->
+                <div id="selectionInfo" class="hidden mt-2 text-[11px] text-indigo-700 text-center bg-indigo-50 py-2 rounded">
+                    💡 <b><span id="selectedCountBottom">0</span> mesin dipilih</b> — gunakan tombol di atas untuk edit/hapus/export.
                 </div>
             </div>
 
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                 <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
                 <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
-                    <li>Daftar mesin SAMA untuk semua line</li>
-                    <li>No diinput manual di tab 📝 Input</li>
-                    <li>Setiap input otomatis diberi tag Line aktif</li>
-                    <li>Data sync otomatis ke Firebase</li>
+                    <li><b>➕ Tambah</b> — tambah 1 mesin</li>
+                    <li><b>📥 Import</b> — import banyak dari Excel/CSV</li>
+                    <li><b>📄 Export All</b> — export semua mesin ke CSV</li>
+                    <li><b>☑️ Checkbox</b> — pilih mesin untuk edit/hapus/export massal</li>
                 </ul>
             </div>
         </div>
@@ -502,9 +507,7 @@
                             <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
                                 oninput="renderStandardCheck()"
                                 class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                            <button onclick="clearStandardUph()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap" title="Kosongkan">
-                                ✖️
-                            </button>
+                            <button onclick="clearStandardUph()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap" title="Kosongkan">✖️</button>
                         </div>
                     </div>
                 </div>
@@ -583,25 +586,16 @@
                         Press Lensa | Mesin 1<br>
                         Axxon | Mesin 1
                     </div>
-                    <div class="text-[10px] flex items-center gap-2 flex-wrap">
-                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ Excel</span>
-                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ CSV</span>
-                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ Paste</span>
-                    </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File</label>
                     <input type="file" id="bulkFileInput" accept=".csv,.txt,.xlsx,.xls" class="w-full text-sm border border-gray-300 rounded-lg p-2">
                 </div>
-
                 <div class="text-center text-xs text-gray-400 font-semibold">— ATAU —</div>
-
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Copy-Paste dari Excel</label>
                     <textarea id="bulkPasteArea" rows="6" placeholder="Press Lensa&#9;Mesin 1&#10;Axxon&#9;Mesin 1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
                 </div>
-
                 <div class="flex items-center gap-2 pt-1">
                     <input type="checkbox" id="replaceExisting" class="rounded">
                     <label for="replaceExisting" class="text-xs text-gray-700">Ganti daftar mesin yang ada</label>
@@ -663,6 +657,9 @@
         let tempSelectedLine = '';
         let editingLineOldName = '';
         let selectedMachineId = '';
+        
+        // NEW: Multi-select state
+        let selectedMachineIds = new Set();
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
@@ -688,7 +685,6 @@
             if (el) el.innerText = text;
         }
 
-        // FIREBASE
         async function saveMasterToFirebase() {
             if (!firebaseReady || isSyncingFromRemote) return;
             try {
@@ -870,14 +866,12 @@
                     </div>`;
                 });
             }
-
             list.innerHTML = html;
             document.getElementById('totalMachines').innerText = machineList.length;
         }
         function selectMachine(id) {
             selectedMachineId = id;
             const label = document.getElementById('machineDropdownLabel');
-
             if (id === '') {
                 label.innerText = '-- Pilih Mesin --';
                 label.className = 'text-gray-500';
@@ -920,8 +914,8 @@
                     <button onclick="selectLineTemp('${escapeHtml(l)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l ? 'text-emerald-800' : 'text-gray-700'}">
                         ${tempSelectedLine === l ? '✅ ' : ''}${escapeHtml(l)}
                     </button>
-                    <button onclick="openEditLineModal('${escapeHtml(l)}')" class="text-blue-500 hover:text-blue-700 px-2 py-1 text-sm" title="Edit">✏️</button>
-                    <button onclick="deleteLineFromModal('${escapeHtml(l)}')" class="text-red-500 hover:text-red-700 px-2 py-1 text-sm" title="Hapus">🗑️</button>
+                    <button onclick="openEditLineModal('${escapeHtml(l)}')" class="text-blue-500 hover:text-blue-700 px-2 py-1 text-sm">✏️</button>
+                    <button onclick="deleteLineFromModal('${escapeHtml(l)}')" class="text-red-500 hover:text-red-700 px-2 py-1 text-sm">🗑️</button>
                 </div>
             `).join('');
         }
@@ -980,7 +974,6 @@
             masterData.forEach(item => {
                 if (item.line === oldName) { item.line = newName; updateCount++; }
             });
-
             if (activeLine === oldName) {
                 activeLine = newName;
                 localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
@@ -1005,7 +998,6 @@
             if (!confirm(msg)) return;
 
             lineList = lineList.filter(l => l !== lineName);
-
             if (activeLine === lineName) {
                 activeLine = '';
                 localStorage.removeItem(LS_KEY_ACTIVE_LINE);
@@ -1025,6 +1017,133 @@
             if (display) display.innerText = activeLine || '-';
         }
 
+        // ============================================================
+        // MULTI-SELECT MACHINES
+        // ============================================================
+        function toggleMachineSelection(id) {
+            if (selectedMachineIds.has(id)) {
+                selectedMachineIds.delete(id);
+            } else {
+                selectedMachineIds.add(id);
+            }
+            updateBulkActionBar();
+            renderMachineTable();
+        }
+        function toggleSelectAll(checked) {
+            const visibleMachines = getFilteredMachines();
+            if (checked) {
+                visibleMachines.forEach(m => selectedMachineIds.add(m.id));
+            } else {
+                visibleMachines.forEach(m => selectedMachineIds.delete(m.id));
+            }
+            updateBulkActionBar();
+            renderMachineTable();
+        }
+        function clearSelection() {
+            selectedMachineIds.clear();
+            updateBulkActionBar();
+            renderMachineTable();
+        }
+        function updateBulkActionBar() {
+            const bar = document.getElementById('bulkActionBar');
+            const info = document.getElementById('selectionInfo');
+            const count = selectedMachineIds.size;
+
+            if (count > 0) {
+                bar.classList.remove('hidden');
+                info.classList.remove('hidden');
+                document.getElementById('selectedCount').innerText = count;
+                document.getElementById('selectedCountBottom').innerText = count;
+            } else {
+                bar.classList.add('hidden');
+                info.classList.add('hidden');
+            }
+
+            // Update select all checkbox
+            const visible = getFilteredMachines();
+            const allSelected = visible.length > 0 && visible.every(m => selectedMachineIds.has(m.id));
+            const headerCb = document.getElementById('selectAllHeaderCheckbox');
+            const barCb = document.getElementById('selectAllCheckbox');
+            if (headerCb) headerCb.checked = allSelected;
+            if (barCb) barCb.checked = allSelected;
+        }
+        function getFilteredMachines() {
+            const search = (document.getElementById('machineSearch')?.value || '').toLowerCase().trim();
+            let filtered = machineList;
+            if (search) {
+                filtered = machineList.filter(m =>
+                    String(m.proses).toLowerCase().includes(search) ||
+                    String(m.mesin).toLowerCase().includes(search)
+                );
+            }
+            return [...filtered].sort((a, b) => {
+                const na = String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
+                if (na !== 0) return na;
+                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
+            });
+        }
+
+        function deleteBulkSelected() {
+            const count = selectedMachineIds.size;
+            if (count === 0) return;
+            if (!confirm(`Hapus ${count} mesin yang dipilih?\n\nTindakan ini tidak bisa dibatalkan.`)) return;
+
+            machineList = machineList.filter(m => !selectedMachineIds.has(m.id));
+            selectedMachineIds.clear();
+            saveMachinesToLS();
+            renderMachineTable();
+            renderMachineDropdownList();
+            updateCounters();
+            updateBulkActionBar();
+            showToast(`✅ ${count} mesin dihapus`, 'success');
+        }
+
+        function openBulkEditMachineModal() {
+            if (selectedMachineIds.size === 0) {
+                showToast('Pilih mesin dulu!', 'error');
+                return;
+            }
+            document.getElementById('bulkEditProcess').value = '';
+            document.getElementById('bulkEditSubMachine').value = '';
+            document.getElementById('bulkEditMachineModal').classList.add('active');
+        }
+        function closeBulkEditMachineModal() {
+            document.getElementById('bulkEditMachineModal').classList.remove('active');
+        }
+        function saveBulkEditMachine() {
+            const newProcess = document.getElementById('bulkEditProcess').value.trim();
+            const newSubMachine = document.getElementById('bulkEditSubMachine').value.trim();
+
+            if (!newProcess && !newSubMachine) {
+                showToast('Isi minimal 1 field untuk diubah!', 'error');
+                return;
+            }
+
+            let updateCount = 0;
+            machineList.forEach(m => {
+                if (selectedMachineIds.has(m.id)) {
+                    if (newProcess) m.proses = newProcess;
+                    if (newSubMachine) m.mesin = newSubMachine;
+                    updateCount++;
+                }
+            });
+
+            saveMachinesToLS();
+            closeBulkEditMachineModal();
+            renderMachineTable();
+            renderMachineDropdownList();
+            showToast(`✅ ${updateCount} mesin diupdate`, 'success');
+        }
+
+        function exportSelectedMachineCSV() {
+            if (selectedMachineIds.size === 0) {
+                showToast('Pilih mesin dulu!', 'error');
+                return;
+            }
+            const selected = machineList.filter(m => selectedMachineIds.has(m.id));
+            exportMachineCSVList(selected, `Selected_Mesin_${selected.length}_${new Date().toISOString().slice(0, 10)}.csv`);
+        }
+
         // INIT
         async function init() {
             const savedLine = localStorage.getItem(LS_KEY_ACTIVE_LINE);
@@ -1038,7 +1157,6 @@
             updateCounters();
             updateLineDisplay();
 
-            // Load standard UPH dari localStorage SEKALI SAJA
             const savedStandard = localStorage.getItem(LS_KEY_STANDARD);
             if (savedStandard) {
                 const el = document.getElementById('standardUph');
@@ -1089,7 +1207,7 @@
             document.getElementById('tabBtn-' + tabName).classList.add('tab-active');
             currentTab = tabName;
 
-            if (tabName === 'mesin') renderMachineTable();
+            if (tabName === 'mesin') { renderMachineTable(); updateBulkActionBar(); }
             if (tabName === 'data') { renderMasterTable(); updateCounters(); }
             if (tabName === 'export') { updateServerInfo(); renderStandardCheck(); }
             if (tabName === 'input') renderMachineDropdownList();
@@ -1497,9 +1615,6 @@
             }
         }
 
-        // ============================================================
-        // FIX: STANDARD UPH - BISA DIKOSONGKAN
-        // ============================================================
         function clearStandardUph() {
             document.getElementById('standardUph').value = '';
             localStorage.removeItem(LS_KEY_STANDARD);
@@ -1513,7 +1628,6 @@
             const filterEl = document.getElementById('standardFilterLine');
             if (!standardInput || !headerEl || !listEl) return;
 
-            // Populate filter dropdown
             if (filterEl) {
                 const currentVal = filterEl.value;
                 const linesInData = [...new Set(masterData.map(d => d.line).filter(Boolean))].sort();
@@ -1530,18 +1644,10 @@
                 else filterEl.value = '__active__';
             }
 
-            // ========================================================
-            // FIX BUG: Baca value langsung, JANGAN auto-restore
-            // ========================================================
             const rawValue = standardInput.value;
             const standard = parseFloat(rawValue) || 0;
+            if (standard > 0) localStorage.setItem(LS_KEY_STANDARD, standard);
 
-            // Simpan HANYA kalau valid (> 0)
-            if (standard > 0) {
-                localStorage.setItem(LS_KEY_STANDARD, standard);
-            }
-
-            // Kalau kosong, tampilkan pesan & return
             if (!rawValue || rawValue === '' || standard <= 0) {
                 headerEl.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan Standard UPH di atas untuk mulai cek.</div>`;
                 listEl.innerHTML = '';
@@ -1551,16 +1657,9 @@
             const filter = filterEl ? filterEl.value : '__active__';
             let filteredData;
             let filterLabel = '';
-            if (filter === '__all__') {
-                filteredData = masterData;
-                filterLabel = 'Semua Line';
-            } else if (filter === '__active__') {
-                filteredData = masterData.filter(d => d.line === activeLine);
-                filterLabel = activeLine;
-            } else {
-                filteredData = masterData.filter(d => d.line === filter);
-                filterLabel = filter;
-            }
+            if (filter === '__all__') { filteredData = masterData; filterLabel = 'Semua Line'; }
+            else if (filter === '__active__') { filteredData = masterData.filter(d => d.line === activeLine); filterLabel = activeLine; }
+            else { filteredData = masterData.filter(d => d.line === filter); filterLabel = filter; }
 
             const groups = {};
             filteredData.forEach(item => {
@@ -1570,7 +1669,6 @@
                 groups[key].capacity += stats.capacity;
                 groups[key].machines.push(item.subMachine);
             });
-
             const perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
 
             if (perProcess.length === 0) {
@@ -1632,7 +1730,6 @@
                     </div>
                 `;
             });
-
             if (aboveStandard.length > 0) {
                 listHtml += `<div class="text-[11px] text-emerald-600 text-center pt-3 border-t border-gray-200 mt-2">✅ ${aboveStandard.length} proses sudah di atas standard</div>`;
             }
@@ -1688,30 +1785,36 @@
             if (!m) return;
             if (!confirm(`Hapus mesin "${m.mesin}" (${m.proses})?`)) return;
             machineList = machineList.filter(x => x.id !== id);
+            selectedMachineIds.delete(id);
             saveMachinesToLS();
             renderMachineTable();
             renderMachineDropdownList();
             updateCounters();
             showToast('Mesin dihapus', 'warning');
         }
+
+        // RENDER MACHINE TABLE dengan checkbox
         function renderMachineTable() {
             const tbody = document.getElementById('machineTableBody');
             if (!tbody) return;
-            const search = (document.getElementById('machineSearch')?.value || '').toLowerCase().trim();
-            let filtered = machineList;
-            if (search) {
-                filtered = machineList.filter(m =>
-                    String(m.proses).toLowerCase().includes(search) ||
-                    String(m.mesin).toLowerCase().includes(search)
-                );
-            }
-            filtered = [...filtered].sort((a, b) => String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true }));
+
+            const filtered = getFilteredMachines();
+
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="px-4 py-12 text-center text-gray-400 italic">${machineList.length === 0 ? 'Belum ada mesin. Klik "➕ Tambah".' : 'Tidak ada hasil pencarian.'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${machineList.length === 0 ? 'Belum ada mesin. Klik "➕ Tambah".' : 'Tidak ada hasil pencarian.'}</td></tr>`;
+                updateBulkActionBar();
                 return;
             }
-            tbody.innerHTML = filtered.map(m => `
-                <tr class="hover:bg-blue-50/50">
+
+            tbody.innerHTML = filtered.map(m => {
+                const isSelected = selectedMachineIds.has(m.id);
+                return `
+                <tr class="hover:bg-blue-50/50 ${isSelected ? 'bg-indigo-50' : ''}">
+                    <td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">
+                        <input type="checkbox" class="checkbox-custom" 
+                            ${isSelected ? 'checked' : ''} 
+                            onchange="toggleMachineSelection('${m.id}')">
+                    </td>
                     <td class="px-3 py-2 border-r border-b whitespace-nowrap font-semibold text-gray-800">${escapeHtml(m.proses)}</td>
                     <td class="px-3 py-2 border-r border-b whitespace-nowrap">
                         <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100 font-medium">${escapeHtml(m.mesin)}</span>
@@ -1721,9 +1824,13 @@
                         <button onclick="deleteMachine('${m.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
+
+            updateBulkActionBar();
         }
 
+        // BULK IMPORT
         function openBulkImportModal() {
             document.getElementById('bulkFileInput').value = '';
             document.getElementById('bulkPasteArea').value = '';
@@ -1803,20 +1910,28 @@
             }
         }
 
-        function exportMachineCSV() {
-            if (machineList.length === 0) { showToast('Belum ada mesin!', 'error'); return; }
+        // EXPORT MACHINE CSV
+        function exportMachineCSVList(list, filename) {
+            if (list.length === 0) { showToast('Belum ada mesin!', 'error'); return; }
             const escapeCSV = (v) => {
                 const s = String(v == null ? '' : v);
                 if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
                 return s;
             };
             const rows = [['Nama Mesin', 'Sub Mesin']];
-            const sorted = [...machineList].sort((a, b) => String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true }));
-            sorted.forEach(m => rows.push([m.proses, m.mesin]));
+            list.forEach(m => rows.push([m.proses, m.mesin]));
             const csvContent = rows.map(r => r.map(escapeCSV).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const filename = `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`;
-            if (downloadBlob(blob, filename)) showToast('📄 Daftar mesin di-export', 'success');
+            if (downloadBlob(blob, filename)) showToast(`📄 ${list.length} mesin di-export`, 'success');
+        }
+
+        function exportMachineCSV() {
+            const sorted = [...machineList].sort((a, b) => {
+                const na = String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
+                if (na !== 0) return na;
+                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
+            });
+            exportMachineCSVList(sorted, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`);
         }
 
         function buildDataRows(exportFilter = '__all__') {
@@ -1950,7 +2065,6 @@
 
                 const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
                 const perProcess = Object.values(groups);
-
                 const lineGroups = {};
                 perProcess.forEach(p => {
                     if (!lineGroups[p.line]) lineGroups[p.line] = [];
