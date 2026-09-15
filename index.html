@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Line + Multi Select</title>
+    <title>Time Study - Multi Line + Analisa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -137,7 +137,6 @@
         .custom-dropdown-item.selected { background: #eef2ff; color: #4f46e5; font-weight: 700; }
         .custom-dropdown-empty { padding: 20px; text-align: center; color: #9ca3af; font-size: 13px; font-style: italic; }
 
-        /* Checkbox Custom */
         .checkbox-custom {
             width: 20px;
             height: 20px;
@@ -261,7 +260,7 @@
             <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
             <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
             <button onclick="switchTab('mesin')" id="tabBtn-mesin" class="tab-btn">⚙️ Mesin <span id="machineCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
-            <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📥 Export</button>
+            <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📊 Analisa</button>
         </div>
     </nav>
 
@@ -402,7 +401,7 @@
                             <th class="px-2 py-3 text-center font-bold border-r bg-amber-100 whitespace-nowrap">Gerakan</th>
                             <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
                             <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                            <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
+                            <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Kapasitas</th>
                             <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
@@ -414,7 +413,7 @@
         </div>
     </div>
 
-    <!-- TAB MESIN (UPDATED DENGAN CHECKBOX) -->
+    <!-- TAB MESIN -->
     <div id="tab-mesin" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -434,7 +433,6 @@
                     <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
 
-                <!-- BULK ACTION BAR -->
                 <div id="bulkActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
                     <div class="flex justify-between items-center gap-2 flex-wrap">
                         <div class="flex items-center gap-2">
@@ -470,7 +468,6 @@
                     </table>
                 </div>
 
-                <!-- INFO SELECTION -->
                 <div id="selectionInfo" class="hidden mt-2 text-[11px] text-indigo-700 text-center bg-indigo-50 py-2 rounded">
                     💡 <b><span id="selectedCountBottom">0</span> mesin dipilih</b> — gunakan tombol di atas untuk edit/hapus/export.
                 </div>
@@ -488,7 +485,7 @@
         </div>
     </div>
 
-    <!-- TAB EXPORT -->
+    <!-- TAB ANALISA (sebelumnya EXPORT) -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
@@ -528,7 +525,7 @@
                     <div>Daftar Mesin: <span id="serverMachineCount" class="font-bold">0</span></div>
                     <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
                 </div>
-                <p class="text-[10px] text-blue-600 mt-2">💡 Tombol Export Excel/CSV di header</p>
+                <p class="text-[10px] text-blue-600 mt-2">💡 Tombol Export Excel/CSV ada di header atas</p>
             </div>
         </div>
     </div>
@@ -657,8 +654,6 @@
         let tempSelectedLine = '';
         let editingLineOldName = '';
         let selectedMachineId = '';
-        
-        // NEW: Multi-select state
         let selectedMachineIds = new Set();
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
@@ -1017,25 +1012,17 @@
             if (display) display.innerText = activeLine || '-';
         }
 
-        // ============================================================
-        // MULTI-SELECT MACHINES
-        // ============================================================
+        // MULTI-SELECT
         function toggleMachineSelection(id) {
-            if (selectedMachineIds.has(id)) {
-                selectedMachineIds.delete(id);
-            } else {
-                selectedMachineIds.add(id);
-            }
+            if (selectedMachineIds.has(id)) selectedMachineIds.delete(id);
+            else selectedMachineIds.add(id);
             updateBulkActionBar();
             renderMachineTable();
         }
         function toggleSelectAll(checked) {
-            const visibleMachines = getFilteredMachines();
-            if (checked) {
-                visibleMachines.forEach(m => selectedMachineIds.add(m.id));
-            } else {
-                visibleMachines.forEach(m => selectedMachineIds.delete(m.id));
-            }
+            const visible = getFilteredMachines();
+            if (checked) visible.forEach(m => selectedMachineIds.add(m.id));
+            else visible.forEach(m => selectedMachineIds.delete(m.id));
             updateBulkActionBar();
             renderMachineTable();
         }
@@ -1048,7 +1035,6 @@
             const bar = document.getElementById('bulkActionBar');
             const info = document.getElementById('selectionInfo');
             const count = selectedMachineIds.size;
-
             if (count > 0) {
                 bar.classList.remove('hidden');
                 info.classList.remove('hidden');
@@ -1058,8 +1044,6 @@
                 bar.classList.add('hidden');
                 info.classList.add('hidden');
             }
-
-            // Update select all checkbox
             const visible = getFilteredMachines();
             const allSelected = visible.length > 0 && visible.every(m => selectedMachineIds.has(m.id));
             const headerCb = document.getElementById('selectAllHeaderCheckbox');
@@ -1082,12 +1066,10 @@
                 return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
             });
         }
-
         function deleteBulkSelected() {
             const count = selectedMachineIds.size;
             if (count === 0) return;
             if (!confirm(`Hapus ${count} mesin yang dipilih?\n\nTindakan ini tidak bisa dibatalkan.`)) return;
-
             machineList = machineList.filter(m => !selectedMachineIds.has(m.id));
             selectedMachineIds.clear();
             saveMachinesToLS();
@@ -1097,28 +1079,17 @@
             updateBulkActionBar();
             showToast(`✅ ${count} mesin dihapus`, 'success');
         }
-
         function openBulkEditMachineModal() {
-            if (selectedMachineIds.size === 0) {
-                showToast('Pilih mesin dulu!', 'error');
-                return;
-            }
+            if (selectedMachineIds.size === 0) { showToast('Pilih mesin dulu!', 'error'); return; }
             document.getElementById('bulkEditProcess').value = '';
             document.getElementById('bulkEditSubMachine').value = '';
             document.getElementById('bulkEditMachineModal').classList.add('active');
         }
-        function closeBulkEditMachineModal() {
-            document.getElementById('bulkEditMachineModal').classList.remove('active');
-        }
+        function closeBulkEditMachineModal() { document.getElementById('bulkEditMachineModal').classList.remove('active'); }
         function saveBulkEditMachine() {
             const newProcess = document.getElementById('bulkEditProcess').value.trim();
             const newSubMachine = document.getElementById('bulkEditSubMachine').value.trim();
-
-            if (!newProcess && !newSubMachine) {
-                showToast('Isi minimal 1 field untuk diubah!', 'error');
-                return;
-            }
-
+            if (!newProcess && !newSubMachine) { showToast('Isi minimal 1 field!', 'error'); return; }
             let updateCount = 0;
             machineList.forEach(m => {
                 if (selectedMachineIds.has(m.id)) {
@@ -1127,24 +1098,18 @@
                     updateCount++;
                 }
             });
-
             saveMachinesToLS();
             closeBulkEditMachineModal();
             renderMachineTable();
             renderMachineDropdownList();
             showToast(`✅ ${updateCount} mesin diupdate`, 'success');
         }
-
         function exportSelectedMachineCSV() {
-            if (selectedMachineIds.size === 0) {
-                showToast('Pilih mesin dulu!', 'error');
-                return;
-            }
+            if (selectedMachineIds.size === 0) { showToast('Pilih mesin dulu!', 'error'); return; }
             const selected = machineList.filter(m => selectedMachineIds.has(m.id));
             exportMachineCSVList(selected, `Selected_Mesin_${selected.length}_${new Date().toISOString().slice(0, 10)}.csv`);
         }
 
-        // INIT
         async function init() {
             const savedLine = localStorage.getItem(LS_KEY_ACTIVE_LINE);
             if (savedLine) activeLine = savedLine;
@@ -1518,7 +1483,7 @@
                 <th class="px-2 py-3 text-center font-bold border-r bg-amber-100 whitespace-nowrap">Gerakan</th>
                 <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
                 <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
+                <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Kapasitas</th>
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
             thead.innerHTML = headerHTML;
@@ -1792,12 +1757,9 @@
             updateCounters();
             showToast('Mesin dihapus', 'warning');
         }
-
-        // RENDER MACHINE TABLE dengan checkbox
         function renderMachineTable() {
             const tbody = document.getElementById('machineTableBody');
             if (!tbody) return;
-
             const filtered = getFilteredMachines();
 
             if (filtered.length === 0) {
@@ -1811,9 +1773,7 @@
                 return `
                 <tr class="hover:bg-blue-50/50 ${isSelected ? 'bg-indigo-50' : ''}">
                     <td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">
-                        <input type="checkbox" class="checkbox-custom" 
-                            ${isSelected ? 'checked' : ''} 
-                            onchange="toggleMachineSelection('${m.id}')">
+                        <input type="checkbox" class="checkbox-custom" ${isSelected ? 'checked' : ''} onchange="toggleMachineSelection('${m.id}')">
                     </td>
                     <td class="px-3 py-2 border-r border-b whitespace-nowrap font-semibold text-gray-800">${escapeHtml(m.proses)}</td>
                     <td class="px-3 py-2 border-r border-b whitespace-nowrap">
@@ -1823,10 +1783,8 @@
                         <button onclick="openMachineModal('${m.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">Edit</button>
                         <button onclick="deleteMachine('${m.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
                     </td>
-                </tr>
-                `;
+                </tr>`;
             }).join('');
-
             updateBulkActionBar();
         }
 
@@ -1910,7 +1868,6 @@
             }
         }
 
-        // EXPORT MACHINE CSV
         function exportMachineCSVList(list, filename) {
             if (list.length === 0) { showToast('Belum ada mesin!', 'error'); return; }
             const escapeCSV = (v) => {
@@ -1942,7 +1899,7 @@
             const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
             const header = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
-            header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Gabungan UPH');
+            header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Kapasitas');
 
             const groups = {};
             const groupOrder = [];
@@ -2107,8 +2064,8 @@
                             let align = { horizontal: 'center', vertical: 'center' };
 
                             if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
-                            if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; align.horizontal = 'left'; }
-                            if (c === 3) { fill = 'DBEAFE'; font = { sz: 11, color: { rgb: '1E40AF' } }; align.horizontal = 'left'; }
+                            if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
+                            if (c === 3) { fill = 'DBEAFE'; font = { sz: 11, color: { rgb: '1E40AF' } }; }
                             if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
                             if (c === 4 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
                             if (c === 5 + maxLaps) fill = 'FFFFFF';
