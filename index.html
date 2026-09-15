@@ -1767,7 +1767,7 @@
                 setStartButton('pause');
                 setTimerStatus('Running', 'bg-green-100 text-green-700');
                 setButtonEnabled('stopBtn', true);
-                setButtonEnabled('lapBtn', true);
+                setButtonEnabled('lapBtn', true);   // <-- LAP aktif saat running
                 isRunning = true;
                 if (navigator.vibrate) navigator.vibrate(30);
             } else {
@@ -1775,6 +1775,7 @@
                 setStartButton('resume');
                 setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
                 isRunning = false;
+                setButtonEnabled('lapBtn', false);  // <-- PERBAIKAN: LAP disabled saat paused
                 if (navigator.vibrate) navigator.vibrate(30);
             }
         }
@@ -1832,7 +1833,11 @@
         }
 
         function recordLap() {
-            if (!isRunning) return;
+            // Guard ganda: timer harus running
+            if (!isRunning) {
+                showToast('⏱️ Timer tidak jalan', 'warning');
+                return;
+            }
             const now = Date.now();
             const dur = (now - lastLapTimestamp) / 1000;
             lastLapTimestamp = now;
@@ -2397,6 +2402,7 @@
                 setStartButton('resume');
                 setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
                 isRunning = false;
+                setButtonEnabled('lapBtn', false);  // <-- pastikan LAP disabled saat pause
             }
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('tab-' + tabName);
