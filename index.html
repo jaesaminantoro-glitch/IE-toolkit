@@ -394,6 +394,7 @@
                             <th class="px-2 py-3 text-center font-bold border-r bg-amber-100 whitespace-nowrap">Gerakan</th>
                             <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
                             <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
+                            <th class="px-2 py-3 text-center font-bold border-r bg-pink-100 text-pink-900 whitespace-nowrap">Jml Mesin</th>
                             <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Kapasitas</th>
                             <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
                         </tr>
@@ -642,14 +643,13 @@
         let firebaseReady = false;
         let isSyncingFromRemote = false;
         let lastServerUpdate = null;
-        // lineList: array of { name: string, uph: number }
         let lineList = [];
         let activeLine = '';
         let tempSelectedLine = '';
         let editingLineOldName = '';
         let selectedMachineId = '';
         let selectedMachineIds = new Set();
-        let uphUserOverride = false; // user sudah override manual
+        let uphUserOverride = false;
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
@@ -660,26 +660,14 @@
         function lsSaveMaster() { try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {} }
         function lsLoadMaster() { try { const r = localStorage.getItem(LS_KEY_MASTER); if (r) masterData = JSON.parse(r); } catch(e) { masterData = []; } }
 
-        // ============================================================
-        // HELPER: Line list selalu array of { name, uph }
-        // ============================================================
         function normalizeLineList(raw) {
             if (!Array.isArray(raw)) return [];
             return raw.map(item => {
-                if (typeof item === 'string') {
-                    // Migrasi dari format lama (string) → object
-                    return { name: item, uph: 500 };
-                }
-                return {
-                    name: String(item.name || ''),
-                    uph: parseFloat(item.uph) || 500
-                };
+                if (typeof item === 'string') return { name: item, uph: 500 };
+                return { name: String(item.name || ''), uph: parseFloat(item.uph) || 500 };
             }).filter(l => l.name);
         }
-
-        function getLineNames() {
-            return lineList.map(l => l.name);
-        }
+        function getLineNames() { return lineList.map(l => l.name); }
         function getLineUph(lineName) {
             const found = lineList.find(l => l.name === lineName);
             return found ? parseFloat(found.uph) || 0 : 0;
@@ -777,11 +765,8 @@
                 if (JSON.stringify(remoteData) !== JSON.stringify(lineList)) {
                     isSyncingFromRemote = true;
                     lineList = remoteData;
-                    // Update UPH input kalau line aktif punya UPH
                     syncUphFromActiveLine();
-                    if (document.getElementById('lineModal').classList.contains('active')) {
-                        renderLineList();
-                    }
+                    if (document.getElementById('lineModal').classList.contains('active')) renderLineList();
                     isSyncingFromRemote = false;
                 }
             }, () => {});
@@ -834,10 +819,10 @@
         function loadMasterFromLS() { lsLoadMaster(); }
 
         // ============================================================
-        // UPH — sync dengan Line aktif
+        // UPH SYNC
         // ============================================================
         function syncUphFromActiveLine() {
-            if (uphUserOverride) return; // user override, jangan timpa
+            if (uphUserOverride) return;
             if (!activeLine) return;
             const uph = getLineUph(activeLine);
             if (uph > 0) {
@@ -848,7 +833,6 @@
             }
         }
         function onUphInputChange() {
-            // Tandai user sudah override manual
             uphUserOverride = true;
             const hint = document.getElementById('uphSourceHint');
             if (hint) hint.innerText = 'Manual override';
@@ -996,7 +980,6 @@
             activeLine = tempSelectedLine;
             localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
             updateLineDisplay();
-            // Auto-set UPH dari Line
             uphUserOverride = false;
             syncUphFromActiveLine();
             closeLineModal();
@@ -1019,20 +1002,12 @@
             const newName = document.getElementById('editLineInput').value.trim();
             const newUph = parseFloat(document.getElementById('editLineUph').value) || 0;
             if (!newName) { showToast('Nama line tidak boleh kosong!', 'error'); return; }
-            if (newName === editingLineOldName && newUph === getLineUph(editingLineOldName)) {
-                closeEditLineModal();
-                return;
-            }
-            if (newName !== editingLineOldName && lineList.find(l => l.name === newName)) {
-                showToast('Nama line sudah ada!', 'warning');
-                return;
-            }
+            if (newName === editingLineOldName && newUph === getLineUph(editingLineOldName)) { closeEditLineModal(); return; }
+            if (newName !== editingLineOldName && lineList.find(l => l.name === newName)) { showToast('Nama line sudah ada!', 'warning'); return; }
 
             const oldName = editingLineOldName;
             const idx = lineList.findIndex(l => l.name === oldName);
-            if (idx !== -1) {
-                lineList[idx] = { name: newName, uph: newUph };
-            }
+            if (idx !== -1) lineList[idx] = { name: newName, uph: newUph };
             lineList.sort((a, b) => a.name.localeCompare(b.name));
 
             let updateCount = 0;
@@ -1050,18 +1025,12 @@
 
             saveLineListToFirebase();
             if (updateCount > 0) saveMasterToLS();
-
-            // Re-sync UPH jika line aktif berubah
-            if (activeLine === newName) {
-                uphUserOverride = false;
-                syncUphFromActiveLine();
-            }
+            if (activeLine === newName) { uphUserOverride = false; syncUphFromActiveLine(); }
 
             renderLineList();
             closeEditLineModal();
             renderMasterTable();
             renderStandardCheck();
-
             showToast(`✅ Line diupdate`, 'success');
         }
         function deleteLineFromModal(lineName) {
@@ -1069,7 +1038,6 @@
             let msg = `Hapus Line "${lineName}"?`;
             if (dataCount > 0) msg += `\n\n⚠️ Ada ${dataCount} data time study dengan Line ini.\nData time study TIDAK akan terhapus, tapi Line-nya jadi tidak valid.`;
             if (!confirm(msg)) return;
-
             lineList = lineList.filter(l => l.name !== lineName);
             if (activeLine === lineName) {
                 activeLine = '';
@@ -1077,7 +1045,6 @@
                 updateLineDisplay();
             }
             if (tempSelectedLine === lineName) tempSelectedLine = '';
-
             saveLineListToFirebase();
             renderLineList();
             showToast(`Line "${lineName}" dihapus`, 'warning');
@@ -1090,7 +1057,7 @@
             if (display) display.innerText = activeLine || '-';
         }
 
-        // MULTI-SELECT MESIN
+        // MULTI-SELECT
         function toggleMachineSelection(id) {
             if (selectedMachineIds.has(id)) selectedMachineIds.delete(id);
             else selectedMachineIds.add(id);
@@ -1556,6 +1523,7 @@
                 <th class="px-2 py-3 text-center font-bold border-r bg-amber-100 whitespace-nowrap">Gerakan</th>
                 <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
                 <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-pink-100 text-pink-900 whitespace-nowrap">Jml Mesin</th>
                 <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Kapasitas</th>
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
@@ -1602,6 +1570,7 @@
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-amber-700 bg-amber-50 border-r border-b whitespace-nowrap">${stats.gerakan.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${row.actualMachine}</td>`;
                     if (rIdx === 0) {
                         htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">
                             ${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span>
@@ -1957,6 +1926,9 @@
             exportMachineCSVList(sorted, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`);
         }
 
+        // ============================================================
+        // BUILD DATA ROWS (dengan kolom Jml Mesin)
+        // ============================================================
         function buildDataRows(exportFilter = '__all__') {
             let dataToExport;
             if (exportFilter === '__all__') dataToExport = masterData;
@@ -1965,7 +1937,8 @@
             const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
             const header = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
-            header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Kapasitas');
+            // Header dengan Jml Mesin di antara Kapasitas & Total Kapasitas
+            header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Jml Mesin', 'Total Kapasitas');
 
             const groups = {};
             const groupOrder = [];
@@ -1999,12 +1972,14 @@
                     for (let i = 0; i < maxLaps; i++) {
                         rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
                     }
+                    // Data row dengan Jml Mesin
                     rowData.push(
                         parseFloat(stats.avg.toFixed(2)),
                         item.ngRate,
                         parseFloat(stats.gerakan.toFixed(2)),
                         parseFloat(stats.ctPlusG.toFixed(2)),
                         stats.capacity,
+                        item.actualMachine,       // ← Jml Mesin
                         rIdx === 0 ? group.totalCapacity : ''
                     );
                     dataRows.push(rowData);
@@ -2012,7 +1987,8 @@
                 });
 
                 if (rowSpan > 1) {
-                    const totalCol = 9 + maxLaps;
+                    // Total Kapasitas sekarang di kolom 10 + maxLaps (bukan 9 + maxLaps)
+                    const totalCol = 10 + maxLaps;
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
                     merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
                     merges.push({ s: { r: groupStartRow, c: 2 }, e: { r: rowIndex - 1, c: 2 } });
@@ -2040,6 +2016,9 @@
             }
         }
 
+        // ============================================================
+        // EXPORT EXCEL dengan Jml Mesin
+        // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
@@ -2050,9 +2029,11 @@
                 const ws = XLSX.utils.aoa_to_sheet(dataRows);
                 ws['!merges'] = merges;
 
+                // Lebar kolom: Line | No | Nama | Sub | S1..Sn | Rata | NG | Gerakan | CTG | Kapasitas | JmlMesin | TotalKapasitas
                 const colWidths = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
                 for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
-                colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
+                colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
+                //                                                                                            ↑ Jml Mesin
                 ws['!cols'] = colWidths;
 
                 const range = XLSX.utils.decode_range(ws['!ref']);
@@ -2063,6 +2044,7 @@
                     right: { style: 'thin', color: { rgb: '9CA3AF' } }
                 };
 
+                // Header style
                 for (let c = 0; c <= range.e.c; c++) {
                     const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                     if (!ws[addr]) ws[addr] = { t: 's', v: '' };
@@ -2114,6 +2096,9 @@
                         const excelRow = rowIdx + 1;
                         const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
 
+                        // Column index:
+                        // Line=0, No=1, Nama=2, Sub=3, S1..Sn=4..(3+maxLaps), Rata=4+maxLaps, NG=5+maxLaps,
+                        // Gerakan=6+maxLaps, CTG=7+maxLaps, Kapasitas=8+maxLaps, JmlMesin=9+maxLaps, Total=10+maxLaps
                         const colS1 = XLSX.utils.encode_col(4);
                         const colSn = XLSX.utils.encode_col(4 + maxLaps - 1);
                         const colAvg = XLSX.utils.encode_col(4 + maxLaps);
@@ -2137,9 +2122,10 @@
                             if (c === 5 + maxLaps) fill = 'FFFFFF';
                             if (c === 6 + maxLaps) { fill = 'FED7AA'; font = { sz: 11, color: { rgb: '9A3412' } }; }
                             if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                            if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                            if (c === 9 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; }
-                            if (isProblem && (c === 8 + maxLaps || c === 9 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
+                            if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }  // Kapasitas
+                            if (c === 9 + maxLaps) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }  // Jml Mesin (pink)
+                            if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; } // Total Kapasitas
+                            if (isProblem && (c === 8 + maxLaps || c === 10 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
 
                             ws[addr].s = {
                                 font: font,
@@ -2149,6 +2135,7 @@
                             };
                         }
 
+                        // Rumus Rata-rata
                         const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 4 + maxLaps });
                         if (ws[avgAddr]) {
                             ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`;
@@ -2156,6 +2143,7 @@
                             ws[avgAddr].t = 'n';
                             ws[avgAddr].z = '0.00';
                         }
+                        // Rumus CT + Gerakan
                         const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
                         if (ws[ctgAddr]) {
                             ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`;
@@ -2163,6 +2151,7 @@
                             ws[ctgAddr].t = 'n';
                             ws[ctgAddr].z = '0.00';
                         }
+                        // Rumus Kapasitas
                         const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 8 + maxLaps });
                         if (ws[kapAddr]) {
                             ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`;
@@ -2173,8 +2162,9 @@
                         dataRowIdx++;
                     });
 
+                    // Rumus Total Kapasitas (kolom 10 + maxLaps)
                     if (group.rows.length > 1) {
-                        const totalCol = 9 + maxLaps;
+                        const totalCol = 10 + maxLaps;
                         const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
                         if (ws[totalAddr]) {
                             const colKap = XLSX.utils.encode_col(8 + maxLaps);
@@ -2188,6 +2178,7 @@
                     }
                 });
 
+                // Apply style ke merged cells
                 merges.forEach(merge => {
                     const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
                     if (ws[startAddr] && ws[startAddr].s) {
@@ -2211,7 +2202,7 @@
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh (dengan Jml Mesin)', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
                 showToast('❌ Gagal export Excel.', 'error');
