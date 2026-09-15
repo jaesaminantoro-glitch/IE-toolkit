@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Firebase + Warna Excel</title>
+    <title>Time Study - Firebase + Rumus + Warna Excel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -304,12 +304,12 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
                 <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
-                    📥 Export Excel (.xlsx) — Dengan Warna
+                    📥 Export Excel (.xlsx) — Rumus + Warna
                 </button>
                 <button onclick="exportToCSV()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
                     📄 Export CSV (.csv)
                 </button>
-                <p class="text-[10px] text-gray-500 text-center">💡 File Excel berwarna — header kuning, bottleneck merah, normal hijau</p>
+                <p class="text-[10px] text-gray-500 text-center">💡 File Excel: rumus aktif + warna. Ubah data di Excel → auto recalculate</p>
             </div>
 
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
@@ -1390,6 +1390,7 @@
                     for (let i = 0; i < maxLaps; i++) {
                         rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
                     }
+                    // Nilai awal (nanti di-override oleh rumus)
                     rowData.push(
                         parseFloat(stats.avg.toFixed(2)),
                         item.ngRate,
@@ -1430,7 +1431,7 @@
         }
 
         // ============================================================
-        // EXPORT XLSX DENGAN WARNA
+        // EXPORT XLSX: RUMUS + WARNA
         // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
@@ -1448,20 +1449,9 @@
                 colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
                 ws['!cols'] = colWidths;
 
-                // === FORMAT ANGKA 2 DESIMAL ===
                 const range = XLSX.utils.decode_range(ws['!ref']);
-                for (let r = 1; r <= range.e.r; r++) {
-                    const avgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 3 });
-                    if (ws[avgCell] && typeof ws[avgCell].v === 'number') ws[avgCell].z = '0.00';
-                    const gerakanCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 5 });
-                    if (ws[gerakanCell] && typeof ws[gerakanCell].v === 'number') ws[gerakanCell].z = '0.00';
-                    const ctgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 6 });
-                    if (ws[ctgCell] && typeof ws[ctgCell].v === 'number') ws[ctgCell].z = '0.00';
-                }
 
-                // ============================================================
-                // STYLING
-                // ============================================================
+                // === BORDER STYLE ===
                 const BORDER = {
                     top: { style: 'thin', color: { rgb: '9CA3AF' } },
                     bottom: { style: 'thin', color: { rgb: '9CA3AF' } },
@@ -1475,13 +1465,13 @@
                     if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                     ws[addr].s = {
                         font: { bold: true, sz: 11, color: { rgb: '111827' } },
-                        fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } },  // Kuning
+                        fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } },
                         alignment: { horizontal: 'center', vertical: 'center' },
                         border: BORDER
                     };
                 }
 
-                // ---------- 2. GROUP & BOTTLENECK DETECTION ----------
+                // ---------- 2. GROUP & BOTTLENECK ----------
                 const groups = {};
                 const groupOrder = [];
                 masterData.forEach(item => {
@@ -1503,94 +1493,78 @@
                     if (p.capacity < minCap) { minCap = p.capacity; bottleneckKey = key; }
                 });
 
-                // ---------- 3. WARNA PER BARIS ----------
+                // ---------- 3. STYLE + RUMUS PER BARIS ----------
                 let dataRowIdx = 1;
                 groupOrder.forEach(key => {
                     const group = groups[key];
                     const isBelowStandard = standardUph > 0 && group.capacity < standardUph;
                     const isBottleneck = (key === bottleneckKey && perProcess.length > 1);
+                    const isProblem = isBelowStandard || isBottleneck;
+                    const groupStartRow = dataRowIdx;
 
                     group.rows.forEach((item, rIdx) => {
                         const rowIdx = dataRowIdx;
+                        const excelRow = rowIdx + 1;
+                        const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
 
-                        // Warna dasar baris (hijau/merah)
-                        const isProblem = isBelowStandard || isBottleneck;
-                        const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';  // Merah muda / Hijau muda
+                        // Kolom index (alfabet Excel)
+                        const colS1 = XLSX.utils.encode_col(3);
+                        const colSn = XLSX.utils.encode_col(3 + maxLaps - 1);
+                        const colAvg = XLSX.utils.encode_col(3 + maxLaps);
+                        const colGerakan = XLSX.utils.encode_col(5 + maxLaps);
+                        const colCTG = XLSX.utils.encode_col(6 + maxLaps);
+                        const colKap = XLSX.utils.encode_col(7 + maxLaps);
 
+                        // === STYLE SETIAP CELL ===
                         for (let c = 0; c <= range.e.c; c++) {
                             const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
                             if (!ws[addr]) ws[addr] = { t: 's', v: '' };
 
-                            // Default style
                             let fill = rowBg;
                             let font = { color: { rgb: '111827' }, sz: 11 };
                             let align = { horizontal: 'center', vertical: 'center' };
 
-                            // === OVERRIDE PER KOLOM ===
-
-                            // No & Nama Mesin (baris pertama grup) → kuning pucat
                             if (rIdx === 0 && (c === 0 || c === 1)) {
                                 fill = 'FEF9E7';
                                 font = { bold: true, sz: 11, color: { rgb: '78350F' } };
                                 align.horizontal = 'left';
                             }
-
-                            // Sub Mesin → biru pucat
                             if (c === 2) {
                                 fill = 'DBEAFE';
                                 font = { sz: 11, color: { rgb: '1E40AF' } };
                                 align.horizontal = 'left';
                             }
-
-                            // S1..Sn → biru sangat pucat
                             if (c >= 3 && c < 3 + maxLaps) {
                                 fill = 'EFF6FF';
                                 font = { sz: 11, color: { rgb: '1F2937' } };
                             }
-
-                            // Rata-rata → kuning
                             if (c === maxLaps + 3) {
                                 fill = 'FEF3C7';
                                 font = { bold: true, sz: 11, color: { rgb: '92400E' } };
                             }
-
-                            // NG% → putih
                             if (c === maxLaps + 4) {
                                 fill = 'FFFFFF';
                                 font = { sz: 11, color: { rgb: '111827' } };
                             }
-
-                            // Gerakan → orange pucat
                             if (c === maxLaps + 5) {
                                 fill = 'FED7AA';
                                 font = { sz: 11, color: { rgb: '9A3412' } };
                             }
-
-                            // CT + Gerakan → orange
                             if (c === maxLaps + 6) {
                                 fill = 'FFEDD5';
                                 font = { bold: true, sz: 11, color: { rgb: 'C2410C' } };
                             }
-
-                            // Kapasitas → hijau pucat
                             if (c === maxLaps + 7) {
                                 fill = 'D1FAE5';
                                 font = { bold: true, sz: 11, color: { rgb: '065F46' } };
                             }
-
-                            // Total Gabungan UPH → ungu pucat
                             if (c === maxLaps + 8) {
                                 fill = 'EDE9FE';
                                 font = { bold: true, sz: 11, color: { rgb: '5B21B6' } };
                             }
-
-                            // Baris problem → override warna kolom dengan merah
-                            if (isProblem) {
-                                // Khusus kolom Kapasitas & CT+G di baris problem → merah
-                                if (c === maxLaps + 7 || c === maxLaps + 8) {
-                                    fill = 'FECACA';  // bg-red-200
-                                    font = { bold: true, sz: 11, color: { rgb: '991B1B' } };
-                                }
+                            if (isProblem && (c === maxLaps + 7 || c === maxLaps + 8)) {
+                                fill = 'FECACA';
+                                font = { bold: true, sz: 11, color: { rgb: '991B1B' } };
                             }
 
                             ws[addr].s = {
@@ -1601,11 +1575,46 @@
                             };
                         }
 
+                        // === SET RUMUS ===
+                        // Rata-rata
+                        const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
+                        if (ws[avgAddr]) {
+                            ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`;
+                            ws[avgAddr].t = 'n';
+                            ws[avgAddr].z = '0.00';
+                        }
+                        // CT + Gerakan
+                        const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 6 + maxLaps });
+                        if (ws[ctgAddr]) {
+                            ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`;
+                            ws[ctgAddr].t = 'n';
+                            ws[ctgAddr].z = '0.00';
+                        }
+                        // Kapasitas
+                        const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
+                        if (ws[kapAddr]) {
+                            ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`;
+                            ws[kapAddr].t = 'n';
+                        }
+
                         dataRowIdx++;
                     });
+
+                    // === RUMUS TOTAL GABUNGAN (merge) ===
+                    if (group.rows.length > 1) {
+                        const totalCol = 8 + maxLaps;
+                        const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
+                        if (ws[totalAddr]) {
+                            const colKap = XLSX.utils.encode_col(7 + maxLaps);
+                            const startRow = groupStartRow + 1;
+                            const endRow = dataRowIdx;
+                            ws[totalAddr].f = `SUM(${colKap}${startRow}:${colKap}${endRow})`;
+                            ws[totalAddr].t = 'n';
+                        }
+                    }
                 });
 
-                // ---------- 4. APPLY STYLE KE MERGED CELLS ----------
+                // ---------- 4. STYLE MERGED CELLS ----------
                 merges.forEach(merge => {
                     const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
                     if (ws[startAddr] && ws[startAddr].s) {
@@ -1623,7 +1632,7 @@
                 });
 
                 // ---------- 5. ROW HEIGHT ----------
-                ws['!rows'] = [{ hpt: 25 }];  // header height
+                ws['!rows'] = [{ hpt: 25 }];
                 for (let r = 1; r <= range.e.r; r++) {
                     ws['!rows'][r] = { hpt: 20 };
                 }
@@ -1637,7 +1646,7 @@
                 });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel berwarna diunduh', 'success');
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel (rumus + warna) diunduh', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
                 showToast('❌ Gagal export Excel.', 'error');
