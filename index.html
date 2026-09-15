@@ -1746,15 +1746,21 @@
             else if (mode === 'resume') { b.innerText = '▶️ RESUME'; b.className = 'bottom-controls-btn bg-green-600'; }
         }
         function setButtonEnabled(id, enabled) {
-            const btn = document.getElementById(id);
-            if (btn) {
-                btn.disabled = !enabled;
-                if (enabled) btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                else btn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
+            const applyState = (b) => {
+                if (!b) return;
+                b.disabled = !enabled;
+                if (enabled) {
+                    b.classList.remove('opacity-50', 'cursor-not-allowed');
+                    b.style.pointerEvents = '';
+                } else {
+                    b.classList.add('opacity-50', 'cursor-not-allowed');
+                    b.style.pointerEvents = 'none'; // PERBAIKAN BUG: blokir tap walau disabled attribute telat ke-apply
+                }
+            };
+            applyState(document.getElementById(id));
             const mapping = { 'stopBtn': 'mobileStopBtn', 'lapBtn': 'mobileLapBtn', 'startStopBtn': 'mobileStartBtn' };
             const mid = mapping[id];
-            if (mid) { const mb = document.getElementById(mid); if (mb) mb.disabled = !enabled; }
+            if (mid) applyState(document.getElementById(mid)); // PERBAIKAN BUG: dulu tombol mobile tidak dapat class visual disabled
         }
         function toggleTimer() {
             if (!isRunning) {
@@ -1833,9 +1839,11 @@
         }
 
         function recordLap() {
-            // Guard ganda: timer harus running
-            if (!isRunning) {
-                showToast('⏱️ Timer tidak jalan', 'warning');
+            // Guard ganda: timer harus running DAN interval-nya masih aktif.
+            // (PERBAIKAN BUG: sebelumnya hanya cek isRunning, sekarang cek timerInterval juga
+            // supaya lap tidak bisa tercatat saat timer sedang paused, walau tombol sempat ter-tap.)
+            if (!isRunning || !timerInterval) {
+                showToast('⏱️ Timer sedang paused/berhenti, LAP tidak aktif', 'warning');
                 return;
             }
             const now = Date.now();
