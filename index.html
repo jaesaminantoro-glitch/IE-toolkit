@@ -3,67 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - 4 Tab + Daftar Mesin</title>
+    <title>Time Study - Firebase Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="xlsx.full.min.js"></script>
     <style>
         .timer-display { user-select: none; -webkit-user-select: none; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast-animate { animation: slideIn 0.3s ease-out; }
 
-        /* Tab Navigation */
         .tab-btn {
-            flex: 1;
-            padding: 10px 6px;
-            font-weight: 700;
-            font-size: 12px;
-            color: #6b7280;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-            -webkit-tap-highlight-color: transparent;
+            flex: 1; padding: 10px 6px; font-weight: 700; font-size: 12px;
+            color: #6b7280; background: transparent; border: none;
+            border-bottom: 3px solid transparent; cursor: pointer;
+            transition: all 0.2s; -webkit-tap-highlight-color: transparent;
             white-space: nowrap;
         }
         .tab-btn.tab-active {
-            color: #4F46E5;
-            border-bottom-color: #4F46E5;
-            background: #eef2ff;
+            color: #4F46E5; border-bottom-color: #4F46E5; background: #eef2ff;
         }
         .tab-btn:not(.tab-active):active { background: #f3f4f6; }
 
-        /* Bottom Controls */
         .bottom-controls {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(17, 24, 39, 0.96);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 10px 12px 12px;
-            z-index: 40;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            padding: 10px 12px 12px; z-index: 40;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
             border-top: 1px solid #374151;
         }
         .bottom-controls-btn {
-            flex: 1;
-            padding: 18px 8px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 14px;
-            color: white;
+            flex: 1; padding: 18px 8px; border-radius: 12px;
+            font-weight: 700; font-size: 14px; color: white;
             transition: transform 0.1s, opacity 0.15s, background-color 0.2s;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            border: none;
-            cursor: pointer;
+            user-select: none; border: none; cursor: pointer;
         }
         .bottom-controls-btn:active:not(:disabled) { transform: scale(0.95); opacity: 0.85; }
         .bottom-controls-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-        /* Table scroll */
         .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .table-scroll::-webkit-scrollbar { height: 8px; }
         .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -71,27 +48,59 @@
 
         body { padding-bottom: 110px; }
 
-        /* Modal */
         .modal-bg {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            z-index: 100; display: none; align-items: center; justify-content: center;
-            padding: 16px;
+            z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px;
         }
         .modal-bg.active { display: flex; }
         .modal-content { background: white; border-radius: 16px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .sync-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .sync-offline { background: #ef4444; animation: pulse 1.5s infinite; }
+        .sync-syncing { background: #f59e0b; animation: pulse 0.8s infinite; }
+
+        #loadingOverlay {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
+            z-index: 999; display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 4px solid #e5e7eb; border-top: 4px solid #4F46E5;
+            border-radius: 50%; width: 48px; height: 48px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
 
+    <!-- LOADING OVERLAY -->
+    <div id="loadingOverlay">
+        <div class="spinner mb-4"></div>
+        <div class="text-sm text-gray-600 font-medium">Menghubungkan ke Firebase...</div>
+        <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
+    </div>
+
     <!-- HEADER -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center">
-            <h1 class="text-base md:text-xl font-bold text-gray-800">⏱️ Time Study</h1>
-            <span id="currentDate" class="text-[10px] md:text-xs text-gray-500 font-medium"></span>
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <h1 class="text-base md:text-xl font-bold text-gray-800 truncate">⏱️ Time Study</h1>
+                <div class="flex items-center gap-1 text-[10px] md:text-xs text-gray-500">
+                    <span id="syncDot" class="sync-dot sync-syncing"></span>
+                    <span id="syncText" class="hidden sm:inline">Menghubungkan...</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="manualSync()" class="text-[10px] md:text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1.5 rounded-lg border border-blue-200 transition" title="Sync manual">🔄</button>
+                <span id="currentDate" class="text-[10px] md:text-xs text-gray-500 font-medium hidden sm:inline"></span>
+            </div>
         </div>
     </header>
 
-    <!-- TAB NAVIGATION (4 TAB) -->
+    <!-- TAB NAV -->
     <nav class="bg-white border-b border-gray-200 sticky top-[44px] md:top-[56px] z-20">
         <div class="max-w-7xl mx-auto flex overflow-x-auto">
             <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
@@ -101,9 +110,7 @@
         </div>
     </nav>
 
-    <!-- ============================================================ -->
     <!-- TAB INPUT -->
-    <!-- ============================================================ -->
     <div id="tab-input" class="tab-content">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
@@ -113,7 +120,6 @@
                 </div>
 
                 <div class="space-y-3">
-                    <!-- DROPDOWN MESIN + AUTO-ISI -->
                     <div>
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Pilih Mesin / Jalur</label>
                         <div class="relative">
@@ -125,25 +131,22 @@
                         <p class="text-[10px] text-gray-400 mt-1">Daftar mesin bisa diubah di tab ⚙️ Mesin</p>
                     </div>
 
-                    <!-- INPUT NO + PROSES (auto-terisi dari dropdown) -->
                     <div class="grid grid-cols-3 gap-2">
                         <div class="col-span-1">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">No</label>
-                            <input type="text" id="inputNo" placeholder="9" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                            <input type="text" id="inputNo" placeholder="9" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Proses</label>
-                            <input type="text" id="inputProcess" placeholder="Double screw" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                            <input type="text" id="inputProcess" placeholder="Double screw" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
                         </div>
                     </div>
 
-                    <!-- INPUT MESIN MANUAL (kalau pilih "Lainnya") -->
                     <div id="customMachineWrapper" class="hidden">
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Mesin Manual (Baru)</label>
-                        <input type="text" id="inputSubMachineCustom" placeholder="Ketik nama mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 bg-amber-50">
+                        <input type="text" id="inputSubMachineCustom" placeholder="Ketik nama mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
                     </div>
 
-                    <!-- INFO SUB-MESIN (kalau pilih dari dropdown) -->
                     <div id="selectedMachineInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-2.5">
                         <div class="text-[10px] text-blue-600 uppercase font-semibold">Mesin Terpilih</div>
                         <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
@@ -152,23 +155,21 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
-                            <input type="number" id="inputNgRate" value="2" step="0.1" min="0" max="100" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="number" id="inputNgRate" value="2" step="0.1" min="0" max="100" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                         </div>
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jml Unit</label>
-                            <input type="number" id="inputActualMachine" value="1" min="1" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 font-bold text-blue-600">
+                            <input type="number" id="inputActualMachine" value="1" min="1" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-600">
                         </div>
                     </div>
                 </div>
 
-                <!-- TIMER -->
                 <div class="mt-4 bg-gray-900 rounded-xl p-4 text-center text-white shadow-inner border border-gray-800">
                     <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
                     <div id="timerDisplay" class="timer-display text-4xl md:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
                     <div id="lapSplitPreview" class="text-[10px] md:text-xs font-mono text-blue-400 h-4">Split Terakhir: --:--.--</div>
                 </div>
 
-                <!-- CHIP SIKLUS -->
                 <div class="mt-4">
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
@@ -186,15 +187,13 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
     <!-- TAB DATA -->
-    <!-- ============================================================ -->
     <div id="tab-data" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
             <div class="flex justify-between items-center mb-3">
                 <div>
                     <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
-                    <p class="text-[10px] md:text-xs text-gray-500">Proses di-merge jika punya beberapa mesin. Total Gabungan UPH di kanan.</p>
+                    <p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time via Firebase</p>
                 </div>
                 <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset Semua</button>
             </div>
@@ -226,32 +225,28 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- TAB MESIN (KELOLA DAFTAR MESIN) -->
-    <!-- ============================================================ -->
+    <!-- TAB MESIN -->
     <div id="tab-mesin" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h2 class="text-sm md:text-base font-semibold text-gray-800">⚙️ Daftar Mesin</h2>
-                        <p class="text-[10px] md:text-xs text-gray-500">Kelola daftar mesin. Data tersimpan otomatis di HP.</p>
+                        <p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time antar device.</p>
                     </div>
                     <div class="flex gap-2 flex-wrap">
-                        <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">➕ Tambah</button>
-                        <button onclick="openBulkImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">📥 Import CSV</button>
-                        <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm transition">📄 Export CSV</button>
+                        <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
+                        <button onclick="openBulkImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
+                        <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
                     </div>
                 </div>
 
-                <!-- Search -->
                 <div class="relative mb-3">
-                    <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
 
                 <div class="table-scroll border border-gray-200 rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200 text-xs" id="machineTable">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs">
                         <thead class="bg-blue-100 text-gray-800">
                             <tr>
                                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap w-12">No</th>
@@ -268,24 +263,20 @@
             </div>
 
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
-                <div class="text-xs font-bold text-blue-800 mb-2">💡 Cara Pakai</div>
+                <div class="text-xs font-bold text-blue-800 mb-2">💡 Sinkronisasi Firebase</div>
                 <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
-                    <li><b>➕ Tambah</b> — tambah mesin satu per satu (No, Proses, Mesin)</li>
-                    <li><b>📥 Import CSV</b> — import banyak mesin sekaligus dari file CSV</li>
-                    <li><b>📄 Export CSV</b> — backup daftar mesin ke file CSV</li>
-                    <li>Daftar otomatis muncul di dropdown Tab Input</li>
-                    <li>Data tersimpan di HP — refresh tidak hilang</li>
+                    <li>Data sync otomatis ke Firebase (real-time)</li>
+                    <li>Semua HP & PC lihat data yang sama persis</li>
+                    <li>Tidak perlu server lokal — cukup internet</li>
+                    <li>Data tersimpan di Google Cloud (backup otomatis)</li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- ============================================================ -->
     <!-- TAB EXPORT -->
-    <!-- ============================================================ -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📈 Ringkasan Data</h2>
                 <div class="grid grid-cols-2 gap-3">
@@ -309,34 +300,28 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data Time Study</h2>
-
-                <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3 flex items-center justify-center gap-2">
+                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
+                <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
                     📥 Export Excel (.xlsx)
                 </button>
-                <p class="text-[10px] text-gray-500 mb-4">Format terbaik — auto-merge, siap dibuka di Excel/WPS/Sheets.</p>
-
-                <button onclick="exportToCSV()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3 flex items-center justify-center gap-2">
+                <button onclick="exportToCSV()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
                     📄 Export CSV (.csv)
                 </button>
-                <p class="text-[10px] text-gray-500">Format cadangan — universal, tapi tanpa auto-merge.</p>
             </div>
 
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
-                <div class="text-xs font-bold text-blue-800 mb-2">💡 Tips</div>
-                <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
-                    <li>File tersimpan di folder <b>Download</b> HP</li>
-                    <li>Buka pakai <b>WPS Office</b> atau <b>Google Sheets</b></li>
-                    <li>Kalau download gagal, <b>wajib pakai Chrome</b></li>
-                    <li>Export rutin setiap selesai shift untuk backup</li>
-                </ul>
+                <div class="text-xs font-bold text-blue-800 mb-2">💡 Info Firebase</div>
+                <div class="text-[11px] text-blue-700 space-y-1">
+                    <div>Status: <span id="serverStatusInfo" class="font-bold">-</span></div>
+                    <div>Data Master: <span id="serverMasterCount" class="font-bold">0</span></div>
+                    <div>Daftar Mesin: <span id="serverMachineCount" class="font-bold">0</span></div>
+                    <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ============================================================ -->
     <!-- BOTTOM CONTROLS -->
-    <!-- ============================================================ -->
     <div class="bottom-controls">
         <div class="max-w-7xl mx-auto">
             <div class="flex gap-2">
@@ -350,9 +335,7 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- MODAL: TAMBAH / EDIT MESIN -->
-    <!-- ============================================================ -->
+    <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -363,16 +346,16 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div class="col-span-1">
                         <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">No</label>
-                        <input type="text" id="modalNo" placeholder="9" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="modalNo" placeholder="9" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Nama Proses</label>
-                        <input type="text" id="modalProcess" placeholder="Double screw" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="modalProcess" placeholder="Double screw" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                     </div>
                 </div>
                 <div>
                     <label class="block text-[10px] font-semibold text-gray-600 uppercase mb-1">Mesin / Jalur</label>
-                    <input type="text" id="modalSubMachine" placeholder="Mesin 1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="modalSubMachine" placeholder="Mesin 1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
@@ -382,9 +365,7 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- MODAL: BULK IMPORT -->
-    <!-- ============================================================ -->
+    <!-- MODAL BULK IMPORT -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -397,8 +378,7 @@
                     <div class="font-mono text-[10px] bg-white p-2 rounded border">
                         No,Nama Proses,Mesin<br>
                         9,Double screw,Mesin 1<br>
-                        9,Double screw,Mesin 2<br>
-                        23,Online screw,Mesin 1
+                        9,Double screw,Mesin 2
                     </div>
                 </div>
                 <div>
@@ -407,11 +387,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Atau Paste Data (Copy dari Excel)</label>
-                    <textarea id="bulkPasteArea" rows="6" placeholder="9&#9;Double screw&#9;Mesin 1&#10;9&#9;Double screw&#9;Mesin 2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-blue-500"></textarea>
+                    <textarea id="bulkPasteArea" rows="6" placeholder="9&#9;Double screw&#9;Mesin 1&#10;9&#9;Double screw&#9;Mesin 2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="replaceExisting" class="rounded">
-                    <label for="replaceExisting" class="text-xs text-gray-700">Ganti daftar mesin yang ada (reset dulu)</label>
+                    <label for="replaceExisting" class="text-xs text-gray-700">Ganti daftar mesin yang ada</label>
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
@@ -421,6 +401,48 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- FIREBASE SDK (type=module) -->
+    <!-- ============================================================ -->
+    <script type="module">
+        // ============================================================
+        // FIREBASE CONFIG — Time Study
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
+            authDomain: "time-study-6f689.firebaseapp.com",
+            databaseURL: "https://time-study-6f689-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "time-study-6f689",
+            storageBucket: "time-study-6f689.firebasestorage.app",
+            messagingSenderId: "448993822556",
+            appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
+            measurementId: "G-3EHX8Z3Y62"
+        };
+
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import {
+            getDatabase, ref, set, onValue, get
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Expose ke window
+        window.firebaseDB = db;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseOnValue = onValue;
+        window.firebaseGet = get;
+
+        console.log('✅ Firebase Realtime Database initialized');
+        window.dispatchEvent(new Event('firebaseReady'));
+    </script>
+
+    <!-- ============================================================ -->
+    <!-- APP SCRIPT -->
+    <!-- ============================================================ -->
     <script>
         // ============================================================
         // STATE
@@ -433,40 +455,268 @@
         let masterData = [];
         let lastLapTimestamp = 0;
         let currentTab = 'input';
-        let machineList = [];  // [{id, no, proses, mesin}, ...]
+        let machineList = [];
         let editingMachineId = null;
+        let firebaseReady = false;
+        let isSyncingFromRemote = false;
+        let lastServerUpdate = null;
 
         // ============================================================
-        // LOCALSTORAGE
+        // LOCALSTORAGE (Cache / Fallback)
         // ============================================================
         const LS_KEY_MACHINES = 'timeStudy_machines_v1';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
 
-        function saveMachinesToLS() {
+        function lsSaveMachines() {
             try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {}
         }
-        function loadMachinesFromLS() {
-            try {
-                const raw = localStorage.getItem(LS_KEY_MACHINES);
-                if (raw) machineList = JSON.parse(raw);
-            } catch(e) { machineList = []; }
+        function lsLoadMachines() {
+            try { const r = localStorage.getItem(LS_KEY_MACHINES); if (r) machineList = JSON.parse(r); } catch(e) { machineList = []; }
         }
-        function saveMasterToLS() {
+        function lsSaveMaster() {
             try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {}
         }
-        function loadMasterFromLS() {
-            try {
-                const raw = localStorage.getItem(LS_KEY_MASTER);
-                if (raw) masterData = JSON.parse(raw);
-            } catch(e) { masterData = []; }
+        function lsLoadMaster() {
+            try { const r = localStorage.getItem(LS_KEY_MASTER); if (r) masterData = JSON.parse(r); } catch(e) { masterData = []; }
         }
 
         // ============================================================
-        // INISIALISASI
+        // FIREBASE SYNC HELPERS
         // ============================================================
-        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
-            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-        });
+        function setSyncStatus(status, text) {
+            const dot = document.getElementById('syncDot');
+            const t = document.getElementById('syncText');
+            if (!dot || !t) return;
+            dot.className = 'sync-dot ' + (status === 'online' ? 'sync-online' : status === 'offline' ? 'sync-offline' : 'sync-syncing');
+            t.innerText = text || (status === 'online' ? 'Tersinkron' : status === 'offline' ? 'Offline' : 'Sync...');
+        }
+
+        function setLoadingDone() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.3s';
+                setTimeout(() => overlay.remove(), 350);
+            }
+        }
+
+        function setLoadingDetail(text) {
+            const el = document.getElementById('loadingDetail');
+            if (el) el.innerText = text;
+        }
+
+        // Simpan master data ke Firebase
+        async function saveMasterToFirebase() {
+            if (!firebaseReady || isSyncingFromRemote) return;
+            try {
+                setSyncStatus('syncing');
+                const dbRef = window.firebaseRef(window.firebaseDB, 'masterData');
+                await window.firebaseSet(dbRef, {
+                    data: masterData,
+                    lastUpdate: new Date().toISOString()
+                });
+                setSyncStatus('online');
+                console.log('✅ Master data tersimpan ke Firebase');
+            } catch (e) {
+                console.error('❌ Gagal save master:', e);
+                setSyncStatus('offline', 'Gagal simpan');
+                showToast('⚠️ Gagal sync ke Firebase', 'warning');
+            }
+        }
+
+        // Simpan daftar mesin ke Firebase
+        async function saveMachinesToFirebase() {
+            if (!firebaseReady || isSyncingFromRemote) return;
+            try {
+                setSyncStatus('syncing');
+                const dbRef = window.firebaseRef(window.firebaseDB, 'machineList');
+                await window.firebaseSet(dbRef, {
+                    data: machineList,
+                    lastUpdate: new Date().toISOString()
+                });
+                setSyncStatus('online');
+                console.log('✅ Daftar mesin tersimpan ke Firebase');
+            } catch (e) {
+                console.error('❌ Gagal save machines:', e);
+                setSyncStatus('offline', 'Gagal simpan');
+                showToast('⚠️ Gagal sync ke Firebase', 'warning');
+            }
+        }
+
+        // Setup listeners real-time
+        function setupFirebaseListeners() {
+            if (!firebaseReady) return;
+
+            // Listener master data
+            const masterRef = window.firebaseRef(window.firebaseDB, 'masterData');
+            window.firebaseOnValue(masterRef, (snapshot) => {
+                const val = snapshot.val();
+                if (!val) return;
+                const remoteData = val.data || [];
+                const remoteUpdate = val.lastUpdate;
+
+                if (isSyncingFromRemote) return;
+
+                if (JSON.stringify(remoteData) !== JSON.stringify(masterData)) {
+                    console.log('🔄 Master data ter-update dari Firebase:', remoteData.length, 'items');
+                    isSyncingFromRemote = true;
+                    masterData = remoteData;
+                    lsSaveMaster();
+                    renderMasterTable();
+                    updateCounters();
+                    isSyncingFromRemote = false;
+                }
+                lastServerUpdate = remoteUpdate;
+                setSyncStatus('online');
+
+                const masterCount = document.getElementById('serverMasterCount');
+                if (masterCount) masterCount.innerText = remoteData.length;
+                const lastUpdateEl = document.getElementById('serverLastUpdate');
+                if (lastUpdateEl && remoteUpdate) {
+                    lastUpdateEl.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
+                }
+            }, (error) => {
+                console.error('❌ Listener master error:', error);
+                setSyncStatus('offline');
+            });
+
+            // Listener daftar mesin
+            const machinesRef = window.firebaseRef(window.firebaseDB, 'machineList');
+            window.firebaseOnValue(machinesRef, (snapshot) => {
+                const val = snapshot.val();
+                if (!val) return;
+                const remoteData = val.data || [];
+                const remoteUpdate = val.lastUpdate;
+
+                if (isSyncingFromRemote) return;
+
+                if (JSON.stringify(remoteData) !== JSON.stringify(machineList)) {
+                    console.log('🔄 Daftar mesin ter-update dari Firebase:', remoteData.length, 'items');
+                    isSyncingFromRemote = true;
+                    machineList = remoteData;
+                    lsSaveMachines();
+                    populateMachineDropdown();
+                    renderMachineTable();
+                    updateCounters();
+                    isSyncingFromRemote = false;
+                }
+                lastServerUpdate = remoteUpdate;
+                setSyncStatus('online');
+
+                const machineCount = document.getElementById('serverMachineCount');
+                if (machineCount) machineCount.innerText = remoteData.length;
+            }, (error) => {
+                console.error('❌ Listener machines error:', error);
+                setSyncStatus('offline');
+            });
+        }
+
+        async function manualSync() {
+            showToast('🔄 Sync manual...', 'info');
+            await loadAllFromFirebaseOnce();
+            if (firebaseReady) {
+                showToast('✅ Tersinkron dengan Firebase', 'success');
+            } else {
+                showToast('❌ Firebase tidak terjangkau', 'error');
+            }
+        }
+
+        async function loadAllFromFirebaseOnce() {
+            if (!firebaseReady) return;
+            try {
+                const masterRef = window.firebaseRef(window.firebaseDB, 'masterData');
+                const snap = await window.firebaseGet(masterRef);
+                if (snap.exists()) {
+                    const val = snap.val();
+                    isSyncingFromRemote = true;
+                    masterData = val.data || [];
+                    lsSaveMaster();
+                    renderMasterTable();
+                    updateCounters();
+                    isSyncingFromRemote = false;
+                    lastServerUpdate = val.lastUpdate;
+                }
+
+                const machinesRef = window.firebaseRef(window.firebaseDB, 'machineList');
+                const snap2 = await window.firebaseGet(machinesRef);
+                if (snap2.exists()) {
+                    const val2 = snap2.val();
+                    isSyncingFromRemote = true;
+                    machineList = val2.data || [];
+                    lsSaveMachines();
+                    populateMachineDropdown();
+                    renderMachineTable();
+                    updateCounters();
+                    isSyncingFromRemote = false;
+                }
+
+                setSyncStatus('online');
+            } catch (e) {
+                console.error('Load error:', e);
+                setSyncStatus('offline');
+            }
+        }
+
+        // Wrapper untuk save (LS + Firebase)
+        function saveMachinesToLS() {
+            lsSaveMachines();
+            if (firebaseReady) saveMachinesToFirebase();
+        }
+        function loadMachinesFromLS() { lsLoadMachines(); }
+        function saveMasterToLS() {
+            lsSaveMaster();
+            if (firebaseReady) saveMasterToFirebase();
+        }
+        function loadMasterFromLS() { lsLoadMaster(); }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        async function init() {
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
+                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+            });
+
+            loadMachinesFromLS();
+            loadMasterFromLS();
+            populateMachineDropdown();
+            renderMachineTable();
+            renderMasterTable();
+            updateCounters();
+
+            setLoadingDetail('Menunggu Firebase SDK...');
+
+            // Tunggu event firebaseReady atau langsung kalau sudah ready
+            const activateFirebase = async () => {
+                firebaseReady = true;
+                setLoadingDetail('Firebase siap, load data...');
+                await loadAllFromFirebaseOnce();
+                setupFirebaseListeners();
+                setSyncStatus('online');
+                setLoadingDone();
+                console.log('✅ Firebase mode aktif');
+            };
+
+            if (window.firebaseDB) {
+                await activateFirebase();
+            } else {
+                window.addEventListener('firebaseReady', activateFirebase, { once: true });
+                setTimeout(() => {
+                    if (!firebaseReady) {
+                        console.warn('⚠️ Firebase tidak ready dalam 5s, fallback ke localStorage');
+                        setSyncStatus('offline', 'Offline mode');
+                        setLoadingDone();
+                        showToast('⚠️ Firebase tidak terjangkau. Mode offline.', 'warning');
+                    }
+                }, 5000);
+            }
+
+            // Disable tombol bawah saat idle
+            const stopBtn = document.getElementById('mobileStopBtn');
+            const lapBtn = document.getElementById('mobileLapBtn');
+            if (stopBtn) stopBtn.disabled = true;
+            if (lapBtn) lapBtn.disabled = true;
+        }
 
         // ============================================================
         // TAB NAVIGATION
@@ -485,16 +735,30 @@
             document.getElementById('tab-' + tabName).classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
             document.getElementById('tabBtn-' + tabName).classList.add('tab-active');
-
             currentTab = tabName;
 
-            // Update data saat buka tab
             if (tabName === 'mesin') renderMachineTable();
             if (tabName === 'data') { renderMasterTable(); updateCounters(); }
-            if (tabName === 'export') updateCounters();
+            if (tabName === 'export') { updateCounters(); updateServerInfo(); }
             if (tabName === 'input') populateMachineDropdown();
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateServerInfo() {
+            const statusEl = document.getElementById('serverStatusInfo');
+            if (firebaseReady) {
+                statusEl.innerText = '✅ Online';
+                statusEl.className = 'font-bold text-emerald-600';
+            } else {
+                statusEl.innerText = '❌ Offline';
+                statusEl.className = 'font-bold text-red-600';
+            }
+            document.getElementById('serverMasterCount').innerText = masterData.length;
+            document.getElementById('serverMachineCount').innerText = machineList.length;
+            document.getElementById('serverLastUpdate').innerText = lastServerUpdate
+                ? new Date(lastServerUpdate).toLocaleString('id-ID')
+                : '-';
         }
 
         // ============================================================
@@ -649,7 +913,7 @@
         }
 
         // ============================================================
-        // DROPDOWN MESIN + AUTO-ISI
+        // DROPDOWN MESIN
         // ============================================================
         function populateMachineDropdown() {
             const select = document.getElementById('machineSelect');
@@ -657,7 +921,6 @@
             const currentValue = select.value;
             select.innerHTML = '<option value="">-- Pilih Mesin --</option>';
 
-            // Sort by No then Mesin
             const sorted = [...machineList].sort((a, b) => {
                 const na = String(a.no), nb = String(b.no);
                 if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
@@ -674,18 +937,15 @@
                 select.appendChild(opt);
             });
 
-            // Opsi "Lainnya"
             const optCustom = document.createElement('option');
             optCustom.value = '__custom__';
             optCustom.textContent = '➕ Lainnya (ketik manual)';
             select.appendChild(optCustom);
 
-            // Restore value kalau masih ada
             if (currentValue && (currentValue === '__custom__' || select.querySelector(`option[value="${currentValue}"]`))) {
                 select.value = currentValue;
             }
 
-            // Update badge
             const badge = document.getElementById('machineCountBadge');
             if (badge) {
                 badge.innerText = machineList.length;
@@ -709,7 +969,6 @@
             } else if (select.value) {
                 customWrapper.classList.add('hidden');
                 infoWrapper.classList.remove('hidden');
-                // Auto-isi No + Proses
                 document.getElementById('inputNo').value = selectedOpt.dataset.no || '';
                 document.getElementById('inputProcess').value = selectedOpt.dataset.proses || '';
                 document.getElementById('selectedMachineName').innerText = selectedOpt.dataset.mesin || '';
@@ -726,11 +985,9 @@
         // ============================================================
         function commitStudyRow() {
             const select = document.getElementById('machineSelect');
-            const customWrapper = document.getElementById('customMachineWrapper');
             const isCustom = select.value === '__custom__' || !select.value;
 
             let no, process, subMachine;
-
             if (isCustom) {
                 no = document.getElementById('inputNo').value.trim() || '-';
                 process = document.getElementById('inputProcess').value.trim();
@@ -782,9 +1039,7 @@
             document.getElementById('timerDisplay').innerText = '00:00.00';
             document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             document.getElementById('inputActualMachine').value = '1';
-            if (isCustom) {
-                document.getElementById('inputSubMachineCustom').value = '';
-            }
+            if (isCustom) document.getElementById('inputSubMachineCustom').value = '';
 
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
@@ -795,14 +1050,11 @@
             renderMasterTable();
             updateCounters();
 
-            // Auto-pindah tab: Input → Data → balik Input
             switchTab('data');
             setTimeout(() => {
                 if (currentTab === 'data') {
                     switchTab('input');
-                    setTimeout(() => {
-                        document.getElementById('machineSelect').focus();
-                    }, 200);
+                    setTimeout(() => document.getElementById('machineSelect').focus(), 200);
                 }
             }, 1500);
         }
@@ -827,17 +1079,6 @@
             const thead = document.querySelector('#masterTable thead tr');
 
             if (masterData.length === 0) {
-                thead.innerHTML = `
-                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
-                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
-                    <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
-                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
-                    <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
-                    <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                    <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
-                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
-                `;
                 tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>`;
                 return;
             }
@@ -886,45 +1127,34 @@
                         : '';
 
                     htmlOutput += `<tr class="hover:bg-yellow-50/50 transition">`;
-
                     if (rIdx === 0) {
                         htmlOutput += `
                             <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(group.no)}</td>
                             <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process)}</td>
                         `;
                     }
-
                     htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">
                         <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine)}</span>${sessionBadge}
                     </td>`;
-
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = row.laps[i];
                         if (lapVal !== undefined) htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${lapVal.toFixed(2)}</td>`;
                         else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
                     }
-
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${row.ngRate}%</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
-
                     if (rIdx === 0) {
-                        htmlOutput += `
-                            <td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">
-                                ${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span>
-                            </td>
-                        `;
+                        htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">
+                            ${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span>
+                        </td>`;
                     }
-
                     htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
                         <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
-                    </td>`;
-
-                    htmlOutput += `</tr>`;
+                    </td></tr>`;
                 });
             });
-
             tbody.innerHTML = htmlOutput;
         }
 
@@ -955,10 +1185,12 @@
             const totalLaps = masterData.reduce((sum, item) => sum + item.laps.length, 0);
 
             const badge = document.getElementById('dataCountBadge');
-            badge.innerText = totalMachine;
-            badge.className = totalMachine > 0
-                ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
-                : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
+            if (badge) {
+                badge.innerText = totalMachine;
+                badge.className = totalMachine > 0
+                    ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
+                    : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
+            }
 
             const totalProcess = new Set(masterData.map(item => `${item.no}||${item.process}`)).size;
             const totalCapacity = (() => {
@@ -971,12 +1203,15 @@
                 return Object.values(groups).reduce((a, b) => a + b, 0);
             })();
 
-            document.getElementById('exportTotalMachine').innerText = totalMachine;
-            document.getElementById('exportTotalLaps').innerText = totalLaps;
-            document.getElementById('exportTotalProcess').innerText = totalProcess;
-            document.getElementById('exportTotalCapacity').innerText = totalCapacity + ' UPH';
+            const el1 = document.getElementById('exportTotalMachine');
+            if (el1) el1.innerText = totalMachine;
+            const el2 = document.getElementById('exportTotalLaps');
+            if (el2) el2.innerText = totalLaps;
+            const el3 = document.getElementById('exportTotalProcess');
+            if (el3) el3.innerText = totalProcess;
+            const el4 = document.getElementById('exportTotalCapacity');
+            if (el4) el4.innerText = totalCapacity + ' UPH';
 
-            // Machine badge
             const mBadge = document.getElementById('machineCountBadge');
             if (mBadge) {
                 mBadge.innerText = machineList.length;
@@ -1038,11 +1273,7 @@
                 }
                 showToast('✅ Mesin diperbarui', 'success');
             } else {
-                machineList.push({
-                    id: generateId(),
-                    no: no || '-',
-                    proses, mesin
-                });
+                machineList.push({ id: generateId(), no: no || '-', proses, mesin });
                 showToast('✅ Mesin ditambahkan', 'success');
             }
 
@@ -1078,7 +1309,6 @@
                 );
             }
 
-            // Sort
             filtered = [...filtered].sort((a, b) => {
                 const na = String(a.no), nb = String(b.no);
                 if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
@@ -1128,11 +1358,9 @@
                     const lines = text.split(/\r?\n/).filter(l => l.trim());
                     if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
 
-                    // Deteksi delimiter: tab (Excel paste) atau koma (CSV)
                     const firstLine = lines[0];
                     const delimiter = firstLine.includes('\t') ? '\t' : ',';
 
-                    // Skip header kalau ada
                     let startIdx = 0;
                     const firstCells = firstLine.split(delimiter).map(c => c.trim().toLowerCase().replace(/^"|"$/g, ''));
                     if (firstCells[0] === 'no' || firstCells[1] === 'nama proses' || firstCells[1] === 'proses') {
@@ -1145,28 +1373,20 @@
                         if (cells.length < 3) continue;
                         const [no, proses, mesin] = cells;
                         if (!proses || !mesin) continue;
-                        newItems.push({
-                            id: generateId(),
-                            no: no || '-',
-                            proses: proses,
-                            mesin: mesin
-                        });
+                        newItems.push({ id: generateId(), no: no || '-', proses, mesin });
                     }
 
                     if (newItems.length === 0) { showToast('Tidak ada data valid!', 'error'); return; }
 
-                    if (replace) {
-                        machineList = newItems;
-                    } else {
-                        machineList = machineList.concat(newItems);
-                    }
+                    if (replace) machineList = newItems;
+                    else machineList = machineList.concat(newItems);
 
                     saveMachinesToLS();
                     renderMachineTable();
                     updateCounters();
                     populateMachineDropdown();
                     closeBulkImportModal();
-                    showToast(`✅ ${newItems.length} mesin berhasil di-import`, 'success');
+                    showToast(`✅ ${newItems.length} mesin di-import`, 'success');
                 } catch (e) {
                     console.error(e);
                     showToast('❌ Gagal parse data', 'error');
@@ -1205,13 +1425,11 @@
             const csvContent = rows.map(r => r.map(escapeCSV).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
             const filename = `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`;
-            if (downloadBlob(blob, filename)) {
-                showToast('📄 Daftar mesin berhasil di-export', 'success');
-            }
+            if (downloadBlob(blob, filename)) showToast('📄 Daftar mesin di-export', 'success');
         }
 
         // ============================================================
-        // BUILD DATA ROWS (Excel & CSV)
+        // BUILD DATA ROWS
         // ============================================================
         function buildDataRows() {
             const maxLaps = Math.max(...masterData.map(item => item.laps.length));
@@ -1284,10 +1502,7 @@
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                }, 1500);
+                setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1500);
                 return true;
             } catch (e) {
                 console.error('Download gagal:', e);
@@ -1300,7 +1515,7 @@
         // EXPORT XLSX
         // ============================================================
         function exportToExcelXLSX() {
-            if (masterData.length === 0) { showToast('Belum ada data untuk di-export!', 'error'); return; }
+            if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ SheetJS belum ke-load. Coba CSV.', 'error'); return; }
 
             try {
@@ -1327,10 +1542,10 @@
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel berhasil diunduh', 'success');
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
-                showToast('❌ Gagal export Excel. Coba CSV.', 'error');
+                showToast('❌ Gagal export Excel.', 'error');
             }
         }
 
@@ -1338,7 +1553,7 @@
         // EXPORT CSV
         // ============================================================
         function exportToCSV() {
-            if (masterData.length === 0) { showToast('Belum ada data untuk di-export!', 'error'); return; }
+            if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             try {
                 const { dataRows } = buildDataRows();
                 const escapeCSV = (v) => {
@@ -1349,7 +1564,7 @@
                 const csvContent = dataRows.map(row => row.map(escapeCSV).join(',')).join('\r\n');
                 const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.csv`;
-                if (downloadBlob(blob, filename)) showToast('📄 File CSV berhasil diunduh', 'success');
+                if (downloadBlob(blob, filename)) showToast('📄 File CSV diunduh', 'success');
             } catch (err) {
                 console.error('Export CSV gagal:', err);
                 showToast('❌ Gagal export CSV.', 'error');
@@ -1357,21 +1572,9 @@
         }
 
         // ============================================================
-        // INIT
+        // START
         // ============================================================
-        (function init() {
-            loadMachinesFromLS();
-            loadMasterFromLS();
-            populateMachineDropdown();
-            renderMachineTable();
-            renderMasterTable();
-            updateCounters();
-
-            const mobileStopBtn = document.getElementById('mobileStopBtn');
-            const mobileLapBtn = document.getElementById('mobileLapBtn');
-            if (mobileStopBtn) mobileStopBtn.disabled = true;
-            if (mobileLapBtn) mobileLapBtn.disabled = true;
-        })();
+        init();
     </script>
 </body>
 </html>
