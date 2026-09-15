@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Line</title>
+    <title>Time Study - Multi Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -12,7 +12,7 @@
         .toast-animate { animation: slideIn 0.3s ease-out; }
 
         .tab-btn {
-            flex: 1; padding: 10px 6px; font-weight: 700; font-size: 12px;
+            flex: 1; padding: 10px 4px; font-weight: 700; font-size: 12px;
             color: #6b7280; background: transparent; border: none;
             border-bottom: 3px solid transparent; cursor: pointer;
             transition: all 0.2s; -webkit-tap-highlight-color: transparent;
@@ -44,7 +44,6 @@
         .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .table-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
 
-        /* Scrollbar untuk chip siklus */
         .laps-scroll::-webkit-scrollbar { width: 6px; }
         .laps-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -76,9 +75,20 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        .header-flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 8px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .header-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
         .header-btn {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            width: 44px; height: 44px; border-radius: 10px; border: none; cursor: pointer;
+            min-width: 44px; height: 44px; padding: 4px 6px;
+            border-radius: 10px; border: none; cursor: pointer;
             transition: transform 0.1s, opacity 0.15s;
             -webkit-tap-highlight-color: transparent; flex-shrink: 0;
         }
@@ -87,7 +97,7 @@
         .header-btn .btn-label { font-size: 9px; font-weight: 700; margin-top: 2px; line-height: 1; }
 
         @media (min-width: 768px) {
-            .header-btn { flex-direction: row; width: auto; height: auto; padding: 6px 12px; gap: 6px; }
+            .header-btn { flex-direction: row; width: auto; min-width: auto; height: auto; padding: 6px 12px; gap: 6px; }
             .header-btn .btn-icon { font-size: 13px; }
             .header-btn .btn-label { font-size: 11px; margin-top: 0; }
         }
@@ -100,6 +110,15 @@
             white-space: nowrap;
         }
         .line-badge:active { transform: scale(0.95); }
+
+        .mode-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 8px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            transition: transform 0.1s; -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
+        }
+        .mode-badge:active { transform: scale(0.95); }
 
         .custom-dropdown-wrapper { position: relative; }
         .custom-dropdown-btn {
@@ -132,6 +151,26 @@
         .custom-dropdown-empty { padding: 20px; text-align: center; color: #9ca3af; font-size: 13px; font-style: italic; }
 
         .checkbox-custom { width: 20px; height: 20px; cursor: pointer; accent-color: #4f46e5; }
+
+        /* Mode selection cards */
+        .mode-card {
+            display: flex; align-items: center; gap: 16px;
+            padding: 20px; border: 3px solid #e5e7eb; border-radius: 16px;
+            background: white; cursor: pointer; transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            text-align: left;
+        }
+        .mode-card:hover { border-color: #93c5fd; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .mode-card:active { transform: scale(0.98); }
+        .mode-card-icon { font-size: 48px; line-height: 1; flex-shrink: 0; }
+        .mode-card-title { font-size: 22px; font-weight: 800; color: #1f2937; line-height: 1.2; }
+        .mode-card-desc { font-size: 14px; color: #6b7280; margin-top: 4px; line-height: 1.4; }
+
+        @media (min-width: 768px) {
+            .mode-card-icon { font-size: 56px; }
+            .mode-card-title { font-size: 26px; }
+            .mode-card-desc { font-size: 15px; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
@@ -140,6 +179,45 @@
         <div class="spinner mb-4"></div>
         <div class="text-sm text-gray-600 font-medium">Menghubungkan ke Firebase...</div>
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
+    </div>
+
+    <!-- MODAL PILIH MODE -->
+    <div id="modeModal" class="modal-bg active">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="p-6 border-b border-gray-200 text-center">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">⏱️ Time Study</h1>
+                <p class="text-base md:text-lg text-gray-500 mt-2">Pilih Mode Time Study</p>
+            </div>
+            <div class="p-4 md:p-6 space-y-4">
+                <button onclick="selectMode('mesin')" class="mode-card w-full">
+                    <div class="mode-card-icon">🔧</div>
+                    <div class="flex-1">
+                        <div class="mode-card-title">Time Study Mesin</div>
+                        <div class="mode-card-desc">Ukur cycle time per mesin untuk hitung kapasitas</div>
+                    </div>
+                    <div class="text-3xl text-gray-300">›</div>
+                </button>
+                <button onclick="selectMode('elemen')" class="mode-card w-full">
+                    <div class="mode-card-icon">📋</div>
+                    <div class="flex-1">
+                        <div class="mode-card-title">Time Study Elemen</div>
+                        <div class="mode-card-desc">Ukur breakdown gerakan per elemen proses</div>
+                    </div>
+                    <div class="text-3xl text-gray-300">›</div>
+                </button>
+                <button onclick="selectMode('siklus')" class="mode-card w-full">
+                    <div class="mode-card-icon">🔄</div>
+                    <div class="flex-1">
+                        <div class="mode-card-title">Time Study Siklus</div>
+                        <div class="mode-card-desc">Ukur cycle time line keseluruhan</div>
+                    </div>
+                    <div class="text-3xl text-gray-300">›</div>
+                </button>
+            </div>
+            <div class="p-4 border-t border-gray-200 text-center">
+                <p class="text-xs text-gray-400">💡 Bisa ganti mode kapan saja lewat tombol 🏠 di header</p>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL PILIH LINE -->
@@ -225,332 +303,393 @@
         </div>
     </div>
 
-    <!-- HEADER -->
-    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center gap-2">
-            <div class="flex items-center gap-2 min-w-0">
-                <h1 class="text-base md:text-xl font-bold text-gray-800 truncate">⏱️ Time Study</h1>
-                <span id="syncDot" class="sync-dot sync-syncing"></span>
-            </div>
-            <div class="flex items-center gap-1.5 md:gap-2">
-                <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white">
-                    <span>🏷️</span>
-                    <span id="currentLineText">Pilih Line</span>
-                </button>
-                <button onclick="manualSync()" class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200">
-                    <span class="btn-icon">🔄</span>
-                    <span class="btn-label">SYNC</span>
-                </button>
-                <button onclick="exportToExcelXLSX()" class="header-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-                    <span class="btn-icon">📥</span>
-                    <span class="btn-label">EXCEL</span>
-                </button>
-                <button onclick="exportToCSV()" class="header-btn bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
-                    <span class="btn-icon">📄</span>
-                    <span class="btn-label">CSV</span>
-                </button>
-            </div>
-        </div>
-    </header>
+    <!-- APP CONTAINER (muncul setelah pilih mode) -->
+    <div id="appContainer" class="hidden">
 
-    <nav class="bg-white border-b border-gray-200 sticky top-[52px] md:top-[60px] z-20">
-        <div class="max-w-7xl mx-auto flex overflow-x-auto">
-            <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
-            <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
-            <button onclick="switchTab('mesin')" id="tabBtn-mesin" class="tab-btn">⚙️ Mesin <span id="machineCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
-            <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📊 Analisa</button>
-        </div>
-    </nav>
-
-    <!-- TAB INPUT -->
-    <div id="tab-input" class="tab-content">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm md:text-base font-semibold text-gray-800">🎯 Input Data</h2>
-                    <span id="timerStatus" class="text-[10px] md:text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">Idle</span>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex items-center justify-between">
-                        <div>
-                            <div class="text-[10px] text-indigo-600 uppercase font-semibold">Line Aktif</div>
-                            <div id="inputLineDisplay" class="text-sm font-bold text-indigo-800">-</div>
-                        </div>
-                        <button onclick="openLineModal()" class="text-[10px] bg-white border border-indigo-300 text-indigo-700 px-2 py-1 rounded font-semibold">
-                            Ganti Line
+        <!-- HEADER -->
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
+                <div class="header-flex">
+                    <div class="header-left">
+                        <h1 class="text-base md:text-xl font-bold text-gray-800 whitespace-nowrap">⏱️ Time Study</h1>
+                        <span id="syncDot" class="sync-dot sync-syncing"></span>
+                    </div>
+                    <div class="header-right">
+                        <button onclick="openModeModal()" id="modeBadge" class="mode-badge bg-purple-600 hover:bg-purple-700 text-white" title="Ganti Mode">
+                            <span>🏠</span>
+                            <span id="currentModeText">Mesin</span>
+                        </button>
+                        <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white" title="Ganti Line">
+                            <span>🏷️</span>
+                            <span id="currentLineText">Pilih Line</span>
+                        </button>
+                        <button onclick="manualSync()" class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200" title="Sync">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-label">SYNC</span>
+                        </button>
+                        <button onclick="exportToExcelXLSX()" class="header-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm" title="Export Excel">
+                            <span class="btn-icon">📥</span>
+                            <span class="btn-label">EXCEL</span>
+                        </button>
+                        <button onclick="exportToCSV()" class="header-btn bg-amber-600 hover:bg-amber-700 text-white shadow-sm" title="Export CSV">
+                            <span class="btn-icon">📄</span>
+                            <span class="btn-label">CSV</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </header>
 
-                    <div>
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih Mesin / Jalur</label>
-                        <div class="custom-dropdown-wrapper">
-                            <button type="button" id="machineDropdownBtn" onclick="toggleMachineDropdown()" class="custom-dropdown-btn">
-                                <span id="machineDropdownLabel" class="text-gray-500">-- Pilih Mesin --</span>
-                                <span class="text-gray-400">▼</span>
+        <!-- TAB NAV -->
+        <nav class="bg-white border-b border-gray-200 sticky top-[52px] md:top-[60px] z-20">
+            <div class="max-w-7xl mx-auto flex overflow-x-auto">
+                <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
+                <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+                <button onclick="switchTab('mesin')" id="tabBtn-mesin" class="tab-btn">⚙️ Mesin <span id="machineCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+                <button onclick="switchTab('elemen')" id="tabBtn-elemen" class="tab-btn hidden">📋 Elemen <span id="elemenCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+                <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📈 Analisa</button>
+            </div>
+        </nav>
+
+        <!-- TAB INPUT -->
+        <div id="tab-input" class="tab-content">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-sm md:text-base font-semibold text-gray-800">🎯 Input Data</h2>
+                        <span id="timerStatus" class="text-[10px] md:text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">Idle</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex items-center justify-between">
+                            <div>
+                                <div class="text-[10px] text-indigo-600 uppercase font-semibold">Line Aktif</div>
+                                <div id="inputLineDisplay" class="text-sm font-bold text-indigo-800">-</div>
+                            </div>
+                            <button onclick="openLineModal()" class="text-[10px] bg-white border border-indigo-300 text-indigo-700 px-2 py-1 rounded font-semibold">
+                                Ganti Line
                             </button>
-                            <div id="machineDropdownPanel" class="custom-dropdown-panel">
-                                <div class="custom-dropdown-search">
-                                    <input type="text" id="machineSearchInput" placeholder="🔍 Cari mesin..." oninput="renderMachineDropdownList()" autocomplete="off">
+                        </div>
+
+                        <!-- MODE MESIN: Dropdown Mesin -->
+                        <div id="machineInputWrapper">
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih Mesin / Jalur</label>
+                            <div class="custom-dropdown-wrapper">
+                                <button type="button" id="machineDropdownBtn" onclick="toggleMachineDropdown()" class="custom-dropdown-btn">
+                                    <span id="machineDropdownLabel" class="text-gray-500">-- Pilih Mesin --</span>
+                                    <span class="text-gray-400">▼</span>
+                                </button>
+                                <div id="machineDropdownPanel" class="custom-dropdown-panel">
+                                    <div class="custom-dropdown-search">
+                                        <input type="text" id="machineSearchInput" placeholder="🔍 Cari mesin..." oninput="renderMachineDropdownList()" autocomplete="off">
+                                    </div>
+                                    <div id="machineDropdownList" class="custom-dropdown-list"></div>
                                 </div>
-                                <div id="machineDropdownList" class="custom-dropdown-list"></div>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1">Total: <span id="totalMachines">0</span> mesin</p>
+                        </div>
+
+                        <!-- MODE ELEMEN: Dropdown No Proses -->
+                        <div id="elemenInputWrapper" class="hidden">
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih No Proses</label>
+                            <select id="elemenNoSelect" onchange="onElemenNoChange(this)" class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-sm bg-white font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Pilih No Proses --</option>
+                            </select>
+                            <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master</p>
+                            <div id="elemenListPreview" class="hidden mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                                <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Elemen untuk No ini:</div>
+                                <div id="elemenListPreviewItems" class="space-y-1"></div>
                             </div>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Total: <span id="totalMachines">0</span> mesin</p>
+
+                        <!-- NO + NAMA (auto dari dropdown mesin) -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="col-span-1">
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
+                                    2️⃣ No <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="inputNo" placeholder="Ketik No" inputmode="text"
+                                    class="w-full px-2 py-2 border-2 border-blue-300 rounded-lg text-sm bg-white font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
+                                <p class="text-[9px] text-gray-400 mt-0.5">Manual</p>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Mesin (auto)</label>
+                                <input type="text" id="inputProcess" placeholder="Pilih mesin dulu" readonly
+                                    class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                            </div>
+                        </div>
+
+                        <div id="customMachineWrapper" class="hidden">
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Sub Mesin Manual (Baru)</label>
+                            <input type="text" id="inputSubMachineCustom" placeholder="Ketik sub mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
+                        </div>
+
+                        <div id="selectedMachineInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                            <div class="text-[10px] text-blue-600 uppercase font-semibold">Sub Mesin</div>
+                            <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
+                                <input type="number" id="inputNgRate" value="2" step="0.1" min="0" max="100" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
+                                    Gerakan (s) <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" id="inputGerakan" placeholder="Ketik" step="0.1" min="0" inputmode="decimal" 
+                                    class="w-full px-3 py-2 border-2 border-orange-300 rounded-lg text-sm font-bold text-orange-600 bg-white focus:ring-2 focus:ring-orange-500">
+                                <p class="text-[9px] text-gray-400 mt-0.5">Wajib isi</p>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jumlah Mesin / Jalur</label>
+                                <input type="number" id="inputActualMachine" value="1" min="1" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-600">
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="col-span-1">
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
-                                2️⃣ No <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" id="inputNo" placeholder="Ketik No" inputmode="text"
-                                class="w-full px-2 py-2 border-2 border-blue-300 rounded-lg text-sm bg-white font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                            <p class="text-[9px] text-gray-400 mt-0.5">Manual</p>
+                    <div class="mt-4 bg-gray-900 rounded-xl p-4 text-center text-white shadow-inner border border-gray-800">
+                        <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
+                        <div id="timerDisplay" class="timer-display text-4xl md:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
+                        <div id="lapSplitPreview" class="text-[10px] md:text-xs font-mono text-blue-400 h-4">Split Terakhir: --:--.--</div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
+                            <span id="lapCounterBadge" class="text-[10px] md:text-xs text-gray-500 font-medium">0 Siklus</span>
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Mesin (auto)</label>
-                            <input type="text" id="inputProcess" placeholder="Pilih mesin dulu" readonly
-                                class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
+                        <div id="currentLapsContainer" class="laps-scroll flex flex-wrap gap-2 min-h-[60px] max-h-56 overflow-y-auto p-2.5 bg-gray-50 border border-gray-200 rounded-lg">
+                            <span class="text-gray-400 italic text-xs md:text-sm self-center">Belum ada siklus direkam.</span>
                         </div>
                     </div>
 
-                    <div id="customMachineWrapper" class="hidden">
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Sub Mesin Manual (Baru)</label>
-                        <input type="text" id="inputSubMachineCustom" placeholder="Ketik sub mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
-                    </div>
+                    <button onclick="resetStopwatchCurrent()" class="mt-3 w-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition border border-gray-300 text-sm flex items-center justify-center gap-2">
+                        🔄 Reset Stopwatch
+                    </button>
 
-                    <div id="selectedMachineInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-2.5">
-                        <div class="text-[10px] text-blue-600 uppercase font-semibold">Sub Mesin</div>
-                        <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
-                            <input type="number" id="inputNgRate" value="2" step="0.1" min="0" max="100" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
-                                Gerakan (s) <span class="text-red-500">*</span>
-                            </label>
-                            <input type="number" id="inputGerakan" placeholder="Ketik" step="0.1" min="0" inputmode="decimal" 
-                                class="w-full px-3 py-2 border-2 border-orange-300 rounded-lg text-sm font-bold text-orange-600 bg-white focus:ring-2 focus:ring-orange-500">
-                            <p class="text-[9px] text-gray-400 mt-0.5">Wajib isi</p>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jumlah Mesin / Jalur</label>
-                            <input type="number" id="inputActualMachine" value="1" min="1" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-600">
-                        </div>
-                    </div>
+                    <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
+                        💾 Simpan ke Master Data
+                    </button>
                 </div>
-
-                <div class="mt-4 bg-gray-900 rounded-xl p-4 text-center text-white shadow-inner border border-gray-800">
-                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
-                    <div id="timerDisplay" class="timer-display text-4xl md:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
-                    <div id="lapSplitPreview" class="text-[10px] md:text-xs font-mono text-blue-400 h-4">Split Terakhir: --:--.--</div>
-                </div>
-
-                <!-- REKAMAN SIKLUS - max-h-56 + auto-scroll -->
-                <div class="mt-4">
-                    <div class="flex justify-between items-center mb-1.5">
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
-                        <span id="lapCounterBadge" class="text-[10px] md:text-xs text-gray-500 font-medium">0 Siklus</span>
-                    </div>
-                    <div id="currentLapsContainer" class="laps-scroll flex flex-wrap gap-2 min-h-[60px] max-h-56 overflow-y-auto p-2.5 bg-gray-50 border border-gray-200 rounded-lg">
-                        <span class="text-gray-400 italic text-xs md:text-sm self-center">Belum ada siklus direkam.</span>
-                    </div>
-                </div>
-
-                <button onclick="resetStopwatchCurrent()" class="mt-3 w-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition border border-gray-300 text-sm flex items-center justify-center gap-2">
-                    🔄 Reset Stopwatch
-                </button>
-
-                <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
-                    💾 Simpan ke Master Data
-                </button>
             </div>
         </div>
-    </div>
 
-    <!-- TAB DATA -->
-    <div id="tab-data" class="tab-content hidden">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                <div>
-                    <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
-                    <p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time via Firebase</p>
-                </div>
-                <div class="flex gap-2 items-center">
-                    <label class="text-[10px] text-gray-500 font-semibold">Filter Line:</label>
-                    <select id="dataFilterLine" onchange="renderMasterTable()" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
-                        <option value="__active__">Line Aktif</option>
-                        <option value="__all__">Semua Line</option>
-                    </select>
-                    <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset</button>
-                </div>
-            </div>
-
-            <div class="lg:hidden text-[10px] text-blue-700 mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded border border-blue-200">
-                <span>👉</span><span>Geser tabel ke kanan / kiri untuk melihat semua kolom</span>
-            </div>
-
-            <div class="table-scroll border border-gray-200 rounded-lg bg-white">
-                <table class="min-w-full divide-y divide-gray-200 text-xs" id="masterTable">
-                    <thead class="bg-yellow-100 text-gray-800">
-                        <tr>
-                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
-                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                            <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
-                            <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
-                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-amber-100 whitespace-nowrap">Gerakan</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-pink-100 text-pink-900 whitespace-nowrap">Jml Mesin</th>
-                            <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Kapasitas</th>
-                            <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterTableBody" class="divide-y divide-gray-200 bg-white">
-                        <tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB MESIN -->
-    <div id="tab-mesin" class="tab-content hidden">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+        <!-- TAB DATA -->
+        <div id="tab-data" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                     <div>
-                        <h2 class="text-sm md:text-base font-semibold text-gray-800">⚙️ Daftar Mesin</h2>
-                        <p class="text-[10px] md:text-xs text-gray-500">Sama untuk semua line. No diinput manual.</p>
+                        <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
+                        <p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time via Firebase</p>
                     </div>
-                    <div class="flex gap-2 flex-wrap">
-                        <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
-                        <button onclick="openBulkImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
-                        <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export All</button>
-                    </div>
-                </div>
-
-                <div class="relative mb-3">
-                    <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                </div>
-
-                <div id="bulkActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
-                    <div class="flex justify-between items-center gap-2 flex-wrap">
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
-                            <label for="selectAllCheckbox" class="text-xs font-bold text-indigo-800 cursor-pointer">
-                                Pilih Semua (<span id="selectedCount">0</span>)
-                            </label>
-                        </div>
-                        <div class="flex gap-2 flex-wrap">
-                            <button onclick="openBulkEditMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✏️ Edit</button>
-                            <button onclick="deleteBulkSelected()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">🗑️ Hapus</button>
-                            <button onclick="exportSelectedMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">📄 Export</button>
-                            <button onclick="clearSelection()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">❌</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="table-scroll border border-gray-200 rounded-lg">
-                    <table class="min-w-full divide-y divide-gray-200 text-xs">
-                        <thead class="bg-blue-100 text-gray-800">
-                            <tr>
-                                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap w-10">
-                                    <input type="checkbox" id="selectAllHeaderCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
-                                </th>
-                                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
-                                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin / Jalur</th>
-                                <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="machineTableBody" class="divide-y divide-gray-200 bg-white">
-                            <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada mesin. Klik "➕ Tambah".</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="selectionInfo" class="hidden mt-2 text-[11px] text-indigo-700 text-center bg-indigo-50 py-2 rounded">
-                    💡 <b><span id="selectedCountBottom">0</span> mesin dipilih</b>
-                </div>
-            </div>
-
-            <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
-                <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
-                <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
-                    <li>Daftar mesin SAMA untuk semua line</li>
-                    <li>No diinput manual di tab 📝 Input</li>
-                    <li>Setiap input otomatis diberi tag Line aktif</li>
-                    <li>Data sync otomatis ke Firebase</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB ANALISA -->
-    <div id="tab-export" class="tab-content hidden">
-        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah UPH</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Filter Line</label>
-                        <select id="standardFilterLine" onchange="renderStandardCheck()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                    <div class="flex gap-2 items-center">
+                        <label class="text-[10px] text-gray-500 font-semibold">Filter Line:</label>
+                        <select id="dataFilterLine" onchange="renderMasterTable()" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
                             <option value="__active__">Line Aktif</option>
                             <option value="__all__">Semua Line</option>
                         </select>
+                        <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset</button>
                     </div>
-                    <div>
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">UPH</label>
-                        <div class="flex gap-2 items-center">
-                            <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
-                                oninput="onUphInputChange()"
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                            <button onclick="clearStandardUph()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap" title="Kosongkan">✖️</button>
+                </div>
+
+                <div class="lg:hidden text-[10px] text-blue-700 mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded border border-blue-200">
+                    <span>👉</span><span>Geser tabel ke kanan / kiri untuk melihat semua kolom</span>
+                </div>
+
+                <div class="table-scroll border border-gray-200 rounded-lg bg-white">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs" id="masterTable">
+                        <thead class="bg-yellow-100 text-gray-800">
+                            <tr id="masterTableHeaderRow"></tr>
+                        </thead>
+                        <tbody id="masterTableBody" class="divide-y divide-gray-200 bg-white">
+                            <tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB MESIN (khusus mode mesin) -->
+        <div id="tab-mesin" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div>
+                            <h2 class="text-sm md:text-base font-semibold text-gray-800">⚙️ Daftar Mesin</h2>
+                            <p class="text-[10px] md:text-xs text-gray-500">Sama untuk semua line. No diinput manual.</p>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1" id="uphSourceHint">Auto dari Line</p>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
+                            <button onclick="openBulkImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
+                            <button onclick="exportMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export All</button>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-3">
+                        <input type="text" id="machineSearch" oninput="renderMachineTable()" placeholder="🔍 Cari mesin..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+
+                    <div id="bulkActionBar" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
+                        <div class="flex justify-between items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
+                                <label for="selectAllCheckbox" class="text-xs font-bold text-indigo-800 cursor-pointer">
+                                    Pilih Semua (<span id="selectedCount">0</span>)
+                                </label>
+                            </div>
+                            <div class="flex gap-2 flex-wrap">
+                                <button onclick="openBulkEditMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✏️ Edit</button>
+                                <button onclick="deleteBulkSelected()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">🗑️ Hapus</button>
+                                <button onclick="exportSelectedMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">📄 Export</button>
+                                <button onclick="clearSelection()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">❌</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-scroll border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200 text-xs">
+                            <thead class="bg-blue-100 text-gray-800">
+                                <tr>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap w-10">
+                                        <input type="checkbox" id="selectAllHeaderCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
+                                    </th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin / Jalur</th>
+                                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="machineTableBody" class="divide-y divide-gray-200 bg-white">
+                                <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada mesin. Klik "➕ Tambah".</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="selectionInfo" class="hidden mt-2 text-[11px] text-indigo-700 text-center bg-indigo-50 py-2 rounded">
+                        💡 <b><span id="selectedCountBottom">0</span> mesin dipilih</b>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                    <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
+                    <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
+                        <li>Daftar mesin SAMA untuk semua line</li>
+                        <li>No diinput manual di tab 📝 Input</li>
+                        <li>Setiap input otomatis diberi tag Line aktif</li>
+                        <li>Data sync otomatis ke Firebase</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB ELEMEN (khusus mode elemen) -->
+        <div id="tab-elemen" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div>
+                            <h2 class="text-sm md:text-base font-semibold text-gray-800">📋 Master Elemen Proses</h2>
+                            <p class="text-[10px] md:text-xs text-gray-500">Upload Excel dengan kolom: No | Nama Proses | Nama Elemen | Kategori</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="openElemenImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
+                            <button onclick="exportElemenCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
+                            <button onclick="clearAllElemen()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="relative mb-3">
+                        <input type="text" id="elemenSearch" oninput="renderElemenMasterTable()" placeholder="🔍 Cari elemen..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+
+                    <div class="table-scroll border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200 text-xs">
+                            <thead class="bg-purple-100 text-gray-800">
+                                <tr>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Elemen</th>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Kategori</th>
+                                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="elemenMasterTableBody" class="divide-y divide-gray-200 bg-white">
+                                <tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "📥 Import".</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 rounded-xl border border-purple-200 p-4">
+                    <div class="text-xs font-bold text-purple-800 mb-2">💡 Format Import Excel</div>
+                    <div class="text-[11px] text-purple-700 space-y-1">
+                        <div>Kolom: <b>No | Nama Proses | Nama Elemen | Kategori</b></div>
+                        <div>Contoh: <span class="font-mono bg-white px-1 rounded">5-1 | Press Lensa | Ambil Part | VA</span></div>
+                        <div>Kategori: VA (Value Added), NNVA (Necessary Non-Value Added), NVA (Non-Value Added)</div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <div id="standardResultHeader" class="mb-3">
-                    <div class="text-sm text-gray-400 italic text-center py-4">Memuat...</div>
+        <!-- TAB ANALISA -->
+        <div id="tab-export" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+                    <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah UPH</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Filter Line</label>
+                            <select id="standardFilterLine" onchange="renderStandardCheck()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                                <option value="__active__">Line Aktif</option>
+                                <option value="__all__">Semua Line</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">UPH</label>
+                            <div class="flex gap-2 items-center">
+                                <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
+                                    oninput="onUphInputChange()"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
+                                <button onclick="clearStandardUph()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap" title="Kosongkan">✖️</button>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1" id="uphSourceHint">Auto dari Line</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="standardResultList" class="space-y-2"></div>
-            </div>
 
-            <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
-                <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
-                <div class="text-[11px] text-blue-700 space-y-1">
-                    <div>Firebase: <span id="serverStatusInfo" class="font-bold">-</span></div>
-                    <div>Data Master: <span id="serverMasterCount" class="font-bold">0</span></div>
-                    <div>Daftar Mesin: <span id="serverMachineCount" class="font-bold">0</span></div>
-                    <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+                    <div id="standardResultHeader" class="mb-3">
+                        <div class="text-sm text-gray-400 italic text-center py-4">Memuat...</div>
+                    </div>
+                    <div id="standardResultList" class="space-y-2"></div>
+                </div>
+
+                <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                    <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
+                    <div class="text-[11px] text-blue-700 space-y-1">
+                        <div>Firebase: <span id="serverStatusInfo" class="font-bold">-</span></div>
+                        <div>Data Master: <span id="serverMasterCount" class="font-bold">0</span></div>
+                        <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- BOTTOM CONTROLS -->
-    <div class="bottom-controls">
-        <div class="max-w-7xl mx-auto">
-            <div class="flex gap-2">
-                <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
-                <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
-                <button id="mobileStopBtn" onclick="stopTimer()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP</button>
-            </div>
-            <div class="text-center text-[10px] text-gray-400 mt-1.5">
-                <span id="mobileStatus">Idle</span>
+        <!-- BOTTOM CONTROLS -->
+        <div class="bottom-controls">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex gap-2">
+                    <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
+                    <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
+                    <button id="mobileStopBtn" onclick="stopTimer()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP</button>
+                </div>
+                <div class="text-center text-[10px] text-gray-400 mt-1.5">
+                    <span id="mobileStatus">Idle</span>
+                </div>
             </div>
         </div>
-    </div>
+    </div><!-- end appContainer -->
 
     <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
@@ -576,7 +715,7 @@
         </div>
     </div>
 
-    <!-- MODAL BULK IMPORT -->
+    <!-- MODAL BULK IMPORT MESIN -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -613,6 +752,45 @@
         </div>
     </div>
 
+    <!-- MODAL IMPORT ELEMEN -->
+    <div id="elemenImportModal" class="modal-bg" onclick="if(event.target===this) closeElemenImportModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">📥 Import Master Elemen</h3>
+                <button onclick="closeElemenImportModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-800">
+                    <div class="font-bold mb-1">Format Excel (4 kolom):</div>
+                    <div class="font-mono text-[10px] bg-white p-2 rounded border mb-2">
+                        No | Nama Proses | Nama Elemen | Kategori<br>
+                        5-1 | Press Lensa | Ambil Part | VA<br>
+                        5-1 | Press Lensa | Pasang Lensa | VA<br>
+                        5-1 | Press Lensa | Kencangkan | VA<br>
+                        5-1 | Press Lensa | Cek Visual | NNVA
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File Excel/CSV</label>
+                    <input type="file" id="elemenFileInput" accept=".csv,.txt,.xlsx,.xls" class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                </div>
+                <div class="text-center text-xs text-gray-400 font-semibold">— ATAU —</div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Copy-Paste dari Excel</label>
+                    <textarea id="elemenPasteArea" rows="8" placeholder="5-1&#9;Press Lensa&#9;Ambil Part&#9;VA&#10;5-1&#9;Press Lensa&#9;Pasang Lensa&#9;VA" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="elemenReplaceExisting" class="rounded">
+                    <label for="elemenReplaceExisting" class="text-xs text-gray-700">Ganti semua elemen (reset dulu)</label>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeElemenImportModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="processElemenImport()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm">📥 Import</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FIREBASE SDK -->
     <script type="module">
         const firebaseConfig = {
@@ -644,6 +822,10 @@
 
     <!-- APP SCRIPT -->
     <script>
+        // ============================================================
+        // STATE
+        // ============================================================
+        let currentMode = ''; // 'mesin' | 'elemen' | 'siklus'
         let startTime = 0;
         let elapsedTime = 0;
         let timerInterval = null;
@@ -665,14 +847,22 @@
         let selectedMachineIds = new Set();
         let uphUserOverride = false;
 
-        const LS_KEY_MACHINES = 'timeStudy_machines_v2';
-        const LS_KEY_MASTER = 'timeStudy_master_v1';
-        const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
+        // Master Elemen
+        let elemenMasterList = []; // [{id, no, proses, elemen, kategori}]
+        let currentElemenNo = '';
+        let currentElemenProses = '';
 
-        function lsSaveMachines() { try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {} }
-        function lsLoadMachines() { try { const r = localStorage.getItem(LS_KEY_MACHINES); if (r) machineList = JSON.parse(r); } catch(e) { machineList = []; } }
-        function lsSaveMaster() { try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {} }
-        function lsLoadMaster() { try { const r = localStorage.getItem(LS_KEY_MASTER); if (r) masterData = JSON.parse(r); } catch(e) { masterData = []; } }
+        const LS_KEY_MACHINES = 'timeStudy_machines_v2';
+        const LS_KEY_MASTER = 'timeStudy_master_v2';
+        const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
+        const LS_KEY_MODE = 'timeStudy_mode_v1';
+        const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v1';
+
+        // ============================================================
+        // UTILS
+        // ============================================================
+        function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
+        function lsLoad(key, def) { try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : def; } catch(e) { return def; } }
 
         function normalizeLineList(raw) {
             if (!Array.isArray(raw)) return [];
@@ -699,12 +889,110 @@
             const el = document.getElementById('loadingDetail');
             if (el) el.innerText = text;
         }
+        function formatTimeMs(ms) {
+            if (ms < 0) ms = 0;
+            const totalSec = ms / 1000;
+            const m = Math.floor(totalSec / 60);
+            const s = Math.floor(totalSec % 60);
+            const cs = Math.floor((ms % 1000) / 10);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
+        }
+        function escapeHtml(s) {
+            if (s == null) return '';
+            return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+        }
+        function generateId(prefix) { return (prefix || 'm_') + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
+        function showToast(message, type = 'info') {
+            const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
+            const toast = document.createElement('div');
+            toast.innerText = message;
+            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[200] toast-animate`;
+            toast.style.maxWidth = '90vw';
+            toast.style.textAlign = 'center';
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 1800);
+        }
 
+        // ============================================================
+        // MODE MANAGEMENT
+        // ============================================================
+        function selectMode(mode) {
+            currentMode = mode;
+            lsSave(LS_KEY_MODE, mode);
+            document.getElementById('modeModal').classList.remove('active');
+            document.getElementById('appContainer').classList.remove('hidden');
+            applyModeToUI();
+            // Jika belum pilih line, tampilkan line modal
+            setTimeout(() => {
+                if (!activeLine) openLineModal();
+            }, 300);
+        }
+        function openModeModal() {
+            if (isRunning || currentLaps.length > 0) {
+                if (!confirm('⚠️ Timer sedang jalan / ada siklus belum disimpan.\n\nGanti mode akan reset siklus. Lanjutkan?')) return;
+            }
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            currentLaps = [];
+            elapsedTime = 0;
+            updateLapsUI();
+            document.getElementById('timerDisplay').innerText = '00:00.00';
+            document.getElementById('modeModal').classList.add('active');
+        }
+        function applyModeToUI() {
+            // Update mode badge text
+            const modeText = { 'mesin': 'Mesin', 'elemen': 'Elemen', 'siklus': 'Siklus' };
+            const modeEmoji = { 'mesin': '🔧', 'elemen': '📋', 'siklus': '🔄' };
+            document.getElementById('currentModeText').innerText = modeText[currentMode] || '-';
+            document.getElementById('modeBadge').innerHTML = `<span>${modeEmoji[currentMode] || '🏠'}</span><span id="currentModeText">${modeText[currentMode] || '-'}</span>`;
+
+            // Show/hide machine wrapper & elemen wrapper
+            const machineWrapper = document.getElementById('machineInputWrapper');
+            const elemenWrapper = document.getElementById('elemenInputWrapper');
+            const tabMesin = document.getElementById('tabBtn-mesin');
+            const tabElemen = document.getElementById('tabBtn-elemen');
+
+            if (currentMode === 'mesin') {
+                machineWrapper.classList.remove('hidden');
+                elemenWrapper.classList.add('hidden');
+                tabMesin.classList.remove('hidden');
+                tabElemen.classList.add('hidden');
+            } else if (currentMode === 'elemen') {
+                machineWrapper.classList.add('hidden');
+                elemenWrapper.classList.remove('hidden');
+                tabMesin.classList.add('hidden');
+                tabElemen.classList.remove('hidden');
+            } else if (currentMode === 'siklus') {
+                machineWrapper.classList.remove('hidden');
+                elemenWrapper.classList.add('hidden');
+                tabMesin.classList.add('hidden');
+                tabElemen.classList.add('hidden');
+            }
+
+            // Update data table
+            renderMasterTable();
+            renderStandardCheck();
+            updateCounters();
+            if (currentMode === 'elemen') {
+                populateElemenNoDropdown();
+                renderElemenMasterTable();
+            }
+        }
+
+        // ============================================================
+        // FIREBASE SYNC
+        // ============================================================
         async function saveMasterToFirebase() {
             if (!firebaseReady || isSyncingFromRemote) return;
             try {
                 setSyncStatus('syncing');
-                await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'masterData'), { data: masterData, lastUpdate: new Date().toISOString() });
+                const node = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                await window.firebaseSet(window.firebaseRef(window.firebaseDB, node), { data: masterData, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
@@ -724,57 +1012,22 @@
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
+        async function saveElemenMasterToFirebase() {
+            if (!firebaseReady || isSyncingFromRemote) return;
+            try {
+                setSyncStatus('syncing');
+                await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'elemenMaster'), { data: elemenMasterList, lastUpdate: new Date().toISOString() });
+                setSyncStatus('online');
+            } catch (e) { setSyncStatus('offline'); }
+        }
 
         function setupFirebaseListeners() {
             if (!firebaseReady) return;
 
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'masterData'), (snapshot) => {
-                const val = snapshot.val();
-                if (!val) return;
-                const remoteData = val.data || [];
-                const remoteUpdate = val.lastUpdate;
-                if (isSyncingFromRemote) return;
-                if (JSON.stringify(remoteData) !== JSON.stringify(masterData)) {
-                    isSyncingFromRemote = true;
-                    masterData = remoteData;
-                    lsSaveMaster();
-                    renderMasterTable();
-                    renderStandardCheck();
-                    updateCounters();
-                    isSyncingFromRemote = false;
-                }
-                lastServerUpdate = remoteUpdate;
-                setSyncStatus('online');
-                const mc = document.getElementById('serverMasterCount');
-                if (mc) mc.innerText = remoteData.length;
-                const lu = document.getElementById('serverLastUpdate');
-                if (lu && remoteUpdate) lu.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
-            }, () => { setSyncStatus('offline'); });
-
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snapshot) => {
-                const val = snapshot.val();
-                if (!val) return;
-                const remoteData = val.data || [];
-                if (isSyncingFromRemote) return;
-                if (JSON.stringify(remoteData) !== JSON.stringify(machineList)) {
-                    isSyncingFromRemote = true;
-                    machineList = remoteData;
-                    lsSaveMachines();
-                    renderMachineDropdownList();
-                    renderMachineTable();
-                    updateCounters();
-                    isSyncingFromRemote = false;
-                }
-                setSyncStatus('online');
-                const mc = document.getElementById('serverMachineCount');
-                if (mc) mc.innerText = remoteData.length;
-            }, () => { setSyncStatus('offline'); });
-
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snapshot) => {
-                const val = snapshot.val();
-                if (!val) return;
+            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
+                const val = snap.val();
+                if (!val || isSyncingFromRemote) return;
                 const remoteData = normalizeLineList(val.data || []);
-                if (isSyncingFromRemote) return;
                 if (JSON.stringify(remoteData) !== JSON.stringify(lineList)) {
                     isSyncingFromRemote = true;
                     lineList = remoteData;
@@ -783,6 +1036,63 @@
                     isSyncingFromRemote = false;
                 }
             }, () => {});
+
+            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
+                const val = snap.val();
+                if (!val || isSyncingFromRemote) return;
+                const remoteData = val.data || [];
+                if (JSON.stringify(remoteData) !== JSON.stringify(machineList)) {
+                    isSyncingFromRemote = true;
+                    machineList = remoteData;
+                    lsSave(LS_KEY_MACHINES, machineList);
+                    renderMachineDropdownList();
+                    renderMachineTable();
+                    updateCounters();
+                    isSyncingFromRemote = false;
+                }
+            }, () => {});
+
+            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'elemenMaster'), (snap) => {
+                const val = snap.val();
+                if (!val || isSyncingFromRemote) return;
+                const remoteData = val.data || [];
+                if (JSON.stringify(remoteData) !== JSON.stringify(elemenMasterList)) {
+                    isSyncingFromRemote = true;
+                    elemenMasterList = remoteData;
+                    lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                    if (currentMode === 'elemen') {
+                        populateElemenNoDropdown();
+                        renderElemenMasterTable();
+                    }
+                    isSyncingFromRemote = false;
+                }
+            }, () => {});
+
+            // Listeners untuk 3 node master
+            ['masterDataMesin', 'masterDataElemen', 'masterDataSiklus'].forEach(node => {
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, node), (snap) => {
+                    const val = snap.val();
+                    if (!val || isSyncingFromRemote) return;
+                    const remoteData = val.data || [];
+                    const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                    if (node === activeNode && JSON.stringify(remoteData) !== JSON.stringify(masterData)) {
+                        isSyncingFromRemote = true;
+                        masterData = remoteData;
+                        renderMasterTable();
+                        renderStandardCheck();
+                        updateCounters();
+                        isSyncingFromRemote = false;
+                    }
+                    if (node === activeNode) {
+                        lastServerUpdate = val.lastUpdate;
+                        setSyncStatus('online');
+                        const mc = document.getElementById('serverMasterCount');
+                        if (mc) mc.innerText = remoteData.length;
+                        const lu = document.getElementById('serverLastUpdate');
+                        if (lu && val.lastUpdate) lu.innerText = new Date(val.lastUpdate).toLocaleString('id-ID');
+                    }
+                }, () => {});
+            });
         }
 
         async function manualSync() {
@@ -793,43 +1103,37 @@
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
             try {
-                const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'masterData'));
-                if (snap.exists()) {
-                    const val = snap.val();
-                    isSyncingFromRemote = true;
-                    masterData = val.data || [];
-                    lsSaveMaster();
-                    renderMasterTable();
-                    renderStandardCheck();
-                    updateCounters();
-                    isSyncingFromRemote = false;
-                    lastServerUpdate = val.lastUpdate;
-                }
+                const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'lineList'));
+                if (snap.exists()) lineList = normalizeLineList(snap.val().data || []);
                 const snap2 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'machineList'));
-                if (snap2.exists()) {
-                    const val2 = snap2.val();
-                    isSyncingFromRemote = true;
-                    machineList = val2.data || [];
-                    lsSaveMachines();
-                    renderMachineDropdownList();
-                    renderMachineTable();
-                    updateCounters();
-                    isSyncingFromRemote = false;
+                if (snap2.exists()) machineList = snap2.val().data || [];
+                const snap3 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'elemenMaster'));
+                if (snap3.exists()) elemenMasterList = snap3.val().data || [];
+
+                const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                const snapM = await window.firebaseGet(window.firebaseRef(window.firebaseDB, activeNode));
+                if (snapM.exists()) {
+                    masterData = snapM.val().data || [];
+                    lastServerUpdate = snapM.val().lastUpdate;
                 }
-                const snap3 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'lineList'));
-                if (snap3.exists()) {
-                    const val3 = snap3.val();
-                    lineList = normalizeLineList(val3.data || []);
-                }
+
+                lsSave(LS_KEY_MACHINES, machineList);
+                lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                lsSave(LS_KEY_MASTER, masterData);
+
+                renderMachineDropdownList();
+                renderMachineTable();
+                renderMasterTable();
+                renderStandardCheck();
+                updateCounters();
+                if (currentMode === 'elemen') { populateElemenNoDropdown(); renderElemenMasterTable(); }
                 syncUphFromActiveLine();
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
 
-        function saveMachinesToLS() { lsSaveMachines(); if (firebaseReady) saveMachinesToFirebase(); }
-        function loadMachinesFromLS() { lsLoadMachines(); }
-        function saveMasterToLS() { lsSaveMaster(); if (firebaseReady) saveMasterToFirebase(); }
-        function loadMasterFromLS() { lsLoadMaster(); }
+        function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
+        function saveMasterToLS() { lsSave(LS_KEY_MASTER, masterData); if (firebaseReady) saveMasterToFirebase(); }
 
         function syncUphFromActiveLine() {
             if (uphUserOverride) return;
@@ -844,102 +1148,19 @@
         }
         function onUphInputChange() {
             uphUserOverride = true;
-            const hint = document.getElementById('uphSourceHint');
-            if (hint) hint.innerText = 'Manual override';
+            document.getElementById('uphSourceHint').innerText = 'Manual override';
             renderStandardCheck();
         }
         function clearStandardUph() {
             document.getElementById('standardUph').value = '';
             uphUserOverride = false;
-            const hint = document.getElementById('uphSourceHint');
-            if (hint) hint.innerText = 'Auto dari Line';
+            document.getElementById('uphSourceHint').innerText = 'Auto dari Line';
             renderStandardCheck();
         }
 
-        function toggleMachineDropdown() {
-            const panel = document.getElementById('machineDropdownPanel');
-            const btn = document.getElementById('machineDropdownBtn');
-            if (panel.classList.contains('open')) {
-                closeMachineDropdown();
-            } else {
-                panel.classList.add('open');
-                btn.classList.add('open');
-                setTimeout(() => document.getElementById('machineSearchInput').focus(), 100);
-                renderMachineDropdownList();
-            }
-        }
-        function closeMachineDropdown() {
-            document.getElementById('machineDropdownPanel').classList.remove('open');
-            document.getElementById('machineDropdownBtn').classList.remove('open');
-            document.getElementById('machineSearchInput').value = '';
-        }
-        function renderMachineDropdownList() {
-            const list = document.getElementById('machineDropdownList');
-            const search = (document.getElementById('machineSearchInput')?.value || '').toLowerCase().trim();
-
-            let filtered = machineList;
-            if (search) {
-                filtered = machineList.filter(m =>
-                    String(m.proses).toLowerCase().includes(search) ||
-                    String(m.mesin).toLowerCase().includes(search)
-                );
-            }
-            filtered = [...filtered].sort((a, b) => {
-                const na = String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
-                if (na !== 0) return na;
-                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
-            });
-
-            let html = '';
-            html += `<div class="custom-dropdown-item ${selectedMachineId === '__custom__' ? 'selected' : ''}" onclick="selectMachine('__custom__')">➕ Lainnya (ketik manual)</div>`;
-            html += `<div class="custom-dropdown-item" onclick="selectMachine('')">✖️ Reset Pilihan</div>`;
-            html += `<div style="height:1px;background:#e5e7eb;margin:4px 0;"></div>`;
-
-            if (filtered.length === 0) {
-                html += `<div class="custom-dropdown-empty">Tidak ada mesin cocok</div>`;
-            } else {
-                filtered.forEach(m => {
-                    const isSelected = selectedMachineId === m.id;
-                    html += `<div class="custom-dropdown-item ${isSelected ? 'selected' : ''}" onclick="selectMachine('${m.id}')">
-                        ${isSelected ? '✅ ' : ''}${escapeHtml(m.proses)} · ${escapeHtml(m.mesin)}
-                    </div>`;
-                });
-            }
-            list.innerHTML = html;
-            document.getElementById('totalMachines').innerText = machineList.length;
-        }
-        function selectMachine(id) {
-            selectedMachineId = id;
-            const label = document.getElementById('machineDropdownLabel');
-            if (id === '') {
-                label.innerText = '-- Pilih Mesin --';
-                label.className = 'text-gray-500';
-                document.getElementById('inputProcess').value = '';
-                document.getElementById('inputSubMachineCustom').value = '';
-                document.getElementById('customMachineWrapper').classList.add('hidden');
-                document.getElementById('selectedMachineInfo').classList.add('hidden');
-            } else if (id === '__custom__') {
-                label.innerText = '➕ Lainnya (ketik manual)';
-                label.className = 'text-amber-700 font-semibold';
-                document.getElementById('customMachineWrapper').classList.remove('hidden');
-                document.getElementById('selectedMachineInfo').classList.add('hidden');
-                document.getElementById('inputProcess').value = '';
-                setTimeout(() => document.getElementById('inputSubMachineCustom').focus(), 100);
-            } else {
-                const m = machineList.find(x => x.id === id);
-                if (m) {
-                    label.innerText = `${m.proses} · ${m.mesin}`;
-                    label.className = 'text-gray-800 font-semibold';
-                    document.getElementById('customMachineWrapper').classList.add('hidden');
-                    document.getElementById('selectedMachineInfo').classList.remove('hidden');
-                    document.getElementById('inputProcess').value = m.proses || '';
-                    document.getElementById('selectedMachineName').innerText = m.mesin || '';
-                    setTimeout(() => document.getElementById('inputNo').focus(), 100);
-                }
-            }
-            closeMachineDropdown();
-        }
-
+        // ============================================================
+        // LINE MANAGEMENT
+        // ============================================================
         function renderLineList() {
             const container = document.getElementById('lineListContainer');
             if (!container) return;
@@ -991,7 +1212,14 @@
             uphUserOverride = false;
             syncUphFromActiveLine();
             closeLineModal();
+            renderMasterTable();
             showToast(`✅ Line: ${activeLine}`, 'success');
+        }
+        function updateLineDisplay() {
+            const badge = document.getElementById('currentLineText');
+            const display = document.getElementById('inputLineDisplay');
+            if (badge) badge.innerText = activeLine || 'Pilih Line';
+            if (display) display.innerText = activeLine || '-';
         }
 
         function openEditLineModal(lineName) {
@@ -1000,135 +1228,229 @@
             document.getElementById('editLineInput').value = lineName;
             document.getElementById('editLineUph').value = l ? l.uph : 500;
             document.getElementById('editLineModal').classList.add('active');
-            setTimeout(() => document.getElementById('editLineInput').focus(), 100);
         }
-        function closeEditLineModal() {
-            document.getElementById('editLineModal').classList.remove('active');
-            editingLineOldName = '';
-        }
+        function closeEditLineModal() { document.getElementById('editLineModal').classList.remove('active'); }
         function saveEditedLine() {
             const newName = document.getElementById('editLineInput').value.trim();
             const newUph = parseFloat(document.getElementById('editLineUph').value) || 0;
-            if (!newName) { showToast('Nama line tidak boleh kosong!', 'error'); return; }
-            if (newName === editingLineOldName && newUph === getLineUph(editingLineOldName)) { closeEditLineModal(); return; }
+            if (!newName) { showToast('Nama line wajib diisi!', 'error'); return; }
             if (newName !== editingLineOldName && lineList.find(l => l.name === newName)) { showToast('Nama line sudah ada!', 'warning'); return; }
-
             const oldName = editingLineOldName;
             const idx = lineList.findIndex(l => l.name === oldName);
             if (idx !== -1) lineList[idx] = { name: newName, uph: newUph };
             lineList.sort((a, b) => a.name.localeCompare(b.name));
-
             let updateCount = 0;
             if (newName !== oldName) {
-                masterData.forEach(item => {
-                    if (item.line === oldName) { item.line = newName; updateCount++; }
-                });
-                if (activeLine === oldName) {
-                    activeLine = newName;
-                    localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
-                    updateLineDisplay();
-                }
+                masterData.forEach(item => { if (item.line === oldName) { item.line = newName; updateCount++; } });
+                if (activeLine === oldName) { activeLine = newName; localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine); updateLineDisplay(); }
                 if (tempSelectedLine === oldName) tempSelectedLine = newName;
             }
-
             saveLineListToFirebase();
             if (updateCount > 0) saveMasterToLS();
             if (activeLine === newName) { uphUserOverride = false; syncUphFromActiveLine(); }
-
             renderLineList();
             closeEditLineModal();
             renderMasterTable();
             renderStandardCheck();
-            showToast(`✅ Line diupdate`, 'success');
+            showToast('✅ Line diupdate', 'success');
         }
         function deleteLineFromModal(lineName) {
             const dataCount = masterData.filter(d => d.line === lineName).length;
-            let msg = `Hapus Line "${lineName}"?`;
-            if (dataCount > 0) msg += `\n\n⚠️ Ada ${dataCount} data time study dengan Line ini.\nData time study TIDAK akan terhapus, tapi Line-nya jadi tidak valid.`;
-            if (!confirm(msg)) return;
+            if (!confirm(`Hapus Line "${lineName}"?${dataCount > 0 ? `\n\n⚠️ Ada ${dataCount} data dengan Line ini.` : ''}`)) return;
             lineList = lineList.filter(l => l.name !== lineName);
-            if (activeLine === lineName) {
-                activeLine = '';
-                localStorage.removeItem(LS_KEY_ACTIVE_LINE);
-                updateLineDisplay();
-            }
+            if (activeLine === lineName) { activeLine = ''; localStorage.removeItem(LS_KEY_ACTIVE_LINE); updateLineDisplay(); }
             if (tempSelectedLine === lineName) tempSelectedLine = '';
             saveLineListToFirebase();
             renderLineList();
-            showToast(`Line "${lineName}" dihapus`, 'warning');
+            showToast(`Line dihapus`, 'warning');
         }
 
-        function updateLineDisplay() {
-            const badge = document.getElementById('currentLineText');
-            const display = document.getElementById('inputLineDisplay');
-            if (badge) badge.innerText = activeLine || 'Pilih Line';
-            if (display) display.innerText = activeLine || '-';
-        }
-
-        function toggleMachineSelection(id) {
-            if (selectedMachineIds.has(id)) selectedMachineIds.delete(id);
-            else selectedMachineIds.add(id);
-            updateBulkActionBar();
-            renderMachineTable();
-        }
-        function toggleSelectAll(checked) {
-            const visible = getFilteredMachines();
-            if (checked) visible.forEach(m => selectedMachineIds.add(m.id));
-            else visible.forEach(m => selectedMachineIds.delete(m.id));
-            updateBulkActionBar();
-            renderMachineTable();
-        }
-        function clearSelection() {
-            selectedMachineIds.clear();
-            updateBulkActionBar();
-            renderMachineTable();
-        }
-        function updateBulkActionBar() {
-            const bar = document.getElementById('bulkActionBar');
-            const info = document.getElementById('selectionInfo');
-            const count = selectedMachineIds.size;
-            if (count > 0) {
-                bar.classList.remove('hidden');
-                info.classList.remove('hidden');
-                document.getElementById('selectedCount').innerText = count;
-                document.getElementById('selectedCountBottom').innerText = count;
-            } else {
-                bar.classList.add('hidden');
-                info.classList.add('hidden');
+        // ============================================================
+        // MACHINE MANAGEMENT
+        // ============================================================
+        function toggleMachineDropdown() {
+            const panel = document.getElementById('machineDropdownPanel');
+            const btn = document.getElementById('machineDropdownBtn');
+            if (panel.classList.contains('open')) closeMachineDropdown();
+            else {
+                panel.classList.add('open'); btn.classList.add('open');
+                setTimeout(() => document.getElementById('machineSearchInput').focus(), 100);
+                renderMachineDropdownList();
             }
-            const visible = getFilteredMachines();
-            const allSelected = visible.length > 0 && visible.every(m => selectedMachineIds.has(m.id));
-            const headerCb = document.getElementById('selectAllHeaderCheckbox');
-            const barCb = document.getElementById('selectAllCheckbox');
-            if (headerCb) headerCb.checked = allSelected;
-            if (barCb) barCb.checked = allSelected;
+        }
+        function closeMachineDropdown() {
+            document.getElementById('machineDropdownPanel').classList.remove('open');
+            document.getElementById('machineDropdownBtn').classList.remove('open');
+            document.getElementById('machineSearchInput').value = '';
+        }
+        function renderMachineDropdownList() {
+            const list = document.getElementById('machineDropdownList');
+            if (!list) return;
+            const search = (document.getElementById('machineSearchInput')?.value || '').toLowerCase().trim();
+            let filtered = machineList;
+            if (search) filtered = machineList.filter(m => String(m.proses).toLowerCase().includes(search) || String(m.mesin).toLowerCase().includes(search));
+            filtered = [...filtered].sort((a, b) => {
+                const na = String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
+                if (na !== 0) return na;
+                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
+            });
+            let html = `<div class="custom-dropdown-item ${selectedMachineId === '__custom__' ? 'selected' : ''}" onclick="selectMachine('__custom__')">➕ Lainnya (ketik manual)</div>`;
+            html += `<div class="custom-dropdown-item" onclick="selectMachine('')">✖️ Reset Pilihan</div>`;
+            html += `<div style="height:1px;background:#e5e7eb;margin:4px 0;"></div>`;
+            if (filtered.length === 0) html += `<div class="custom-dropdown-empty">Tidak ada mesin cocok</div>`;
+            else filtered.forEach(m => {
+                const isSelected = selectedMachineId === m.id;
+                html += `<div class="custom-dropdown-item ${isSelected ? 'selected' : ''}" onclick="selectMachine('${m.id}')">${isSelected ? '✅ ' : ''}${escapeHtml(m.proses)} · ${escapeHtml(m.mesin)}</div>`;
+            });
+            list.innerHTML = html;
+            const tm = document.getElementById('totalMachines');
+            if (tm) tm.innerText = machineList.length;
+        }
+        function selectMachine(id) {
+            selectedMachineId = id;
+            const label = document.getElementById('machineDropdownLabel');
+            if (id === '') {
+                label.innerText = '-- Pilih Mesin --'; label.className = 'text-gray-500';
+                document.getElementById('inputProcess').value = '';
+                document.getElementById('inputSubMachineCustom').value = '';
+                document.getElementById('customMachineWrapper').classList.add('hidden');
+                document.getElementById('selectedMachineInfo').classList.add('hidden');
+            } else if (id === '__custom__') {
+                label.innerText = '➕ Lainnya (ketik manual)'; label.className = 'text-amber-700 font-semibold';
+                document.getElementById('customMachineWrapper').classList.remove('hidden');
+                document.getElementById('selectedMachineInfo').classList.add('hidden');
+                document.getElementById('inputProcess').value = '';
+                setTimeout(() => document.getElementById('inputSubMachineCustom').focus(), 100);
+            } else {
+                const m = machineList.find(x => x.id === id);
+                if (m) {
+                    label.innerText = `${m.proses} · ${m.mesin}`; label.className = 'text-gray-800 font-semibold';
+                    document.getElementById('customMachineWrapper').classList.add('hidden');
+                    document.getElementById('selectedMachineInfo').classList.remove('hidden');
+                    document.getElementById('inputProcess').value = m.proses || '';
+                    document.getElementById('selectedMachineName').innerText = m.mesin || '';
+                    setTimeout(() => document.getElementById('inputNo').focus(), 100);
+                }
+            }
+            closeMachineDropdown();
+        }
+        function openMachineModal(machineId = null) {
+            editingMachineId = machineId;
+            const title = document.getElementById('machineModalTitle');
+            if (machineId) {
+                title.innerText = 'Edit Mesin';
+                const m = machineList.find(x => x.id === machineId);
+                if (m) { document.getElementById('modalProcess').value = m.proses || ''; document.getElementById('modalSubMachine').value = m.mesin || ''; }
+            } else {
+                title.innerText = 'Tambah Mesin';
+                document.getElementById('modalProcess').value = '';
+                document.getElementById('modalSubMachine').value = '';
+            }
+            document.getElementById('machineModal').classList.add('active');
+        }
+        function closeMachineModal() { document.getElementById('machineModal').classList.remove('active'); editingMachineId = null; }
+        function saveMachine() {
+            const proses = document.getElementById('modalProcess').value.trim();
+            const mesin = document.getElementById('modalSubMachine').value.trim();
+            if (!proses) { showToast('Nama Mesin wajib diisi!', 'error'); return; }
+            if (!mesin) { showToast('Sub Mesin wajib diisi!', 'error'); return; }
+            if (editingMachineId) {
+                const m = machineList.find(x => x.id === editingMachineId);
+                if (m) { m.proses = proses; m.mesin = mesin; }
+                showToast('✅ Mesin diperbarui', 'success');
+            } else {
+                machineList.push({ id: generateId('m_'), proses, mesin });
+                showToast('✅ Mesin ditambahkan', 'success');
+            }
+            saveMachinesToLS();
+            renderMachineTable();
+            renderMachineDropdownList();
+            updateCounters();
+            closeMachineModal();
+        }
+        function deleteMachine(id) {
+            const m = machineList.find(x => x.id === id);
+            if (!m) return;
+            if (!confirm(`Hapus mesin "${m.mesin}" (${m.proses})?`)) return;
+            machineList = machineList.filter(x => x.id !== id);
+            selectedMachineIds.delete(id);
+            saveMachinesToLS();
+            renderMachineTable();
+            renderMachineDropdownList();
+            updateCounters();
+            showToast('Mesin dihapus', 'warning');
         }
         function getFilteredMachines() {
             const search = (document.getElementById('machineSearch')?.value || '').toLowerCase().trim();
             let filtered = machineList;
-            if (search) {
-                filtered = machineList.filter(m =>
-                    String(m.proses).toLowerCase().includes(search) ||
-                    String(m.mesin).toLowerCase().includes(search)
-                );
-            }
+            if (search) filtered = machineList.filter(m => String(m.proses).toLowerCase().includes(search) || String(m.mesin).toLowerCase().includes(search));
             return [...filtered].sort((a, b) => {
                 const na = String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
                 if (na !== 0) return na;
                 return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
             });
         }
+        function renderMachineTable() {
+            const tbody = document.getElementById('machineTableBody');
+            if (!tbody) return;
+            const filtered = getFilteredMachines();
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${machineList.length === 0 ? 'Belum ada mesin. Klik "➕ Tambah".' : 'Tidak ada hasil pencarian.'}</td></tr>`;
+                updateBulkActionBar();
+                return;
+            }
+            tbody.innerHTML = filtered.map(m => {
+                const isSelected = selectedMachineIds.has(m.id);
+                return `<tr class="hover:bg-blue-50/50 ${isSelected ? 'bg-indigo-50' : ''}">
+                    <td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">
+                        <input type="checkbox" class="checkbox-custom" ${isSelected ? 'checked' : ''} onchange="toggleMachineSelection('${m.id}')">
+                    </td>
+                    <td class="px-3 py-2 border-r border-b whitespace-nowrap font-semibold text-gray-800">${escapeHtml(m.proses)}</td>
+                    <td class="px-3 py-2 border-r border-b whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100 font-medium">${escapeHtml(m.mesin)}</span></td>
+                    <td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="openMachineModal('${m.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">Edit</button>
+                        <button onclick="deleteMachine('${m.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    </td>
+                </tr>`;
+            }).join('');
+            updateBulkActionBar();
+        }
+        function toggleMachineSelection(id) {
+            if (selectedMachineIds.has(id)) selectedMachineIds.delete(id); else selectedMachineIds.add(id);
+            updateBulkActionBar(); renderMachineTable();
+        }
+        function toggleSelectAll(checked) {
+            const visible = getFilteredMachines();
+            if (checked) visible.forEach(m => selectedMachineIds.add(m.id));
+            else visible.forEach(m => selectedMachineIds.delete(m.id));
+            updateBulkActionBar(); renderMachineTable();
+        }
+        function clearSelection() { selectedMachineIds.clear(); updateBulkActionBar(); renderMachineTable(); }
+        function updateBulkActionBar() {
+            const bar = document.getElementById('bulkActionBar');
+            const info = document.getElementById('selectionInfo');
+            if (!bar || !info) return;
+            const count = selectedMachineIds.size;
+            if (count > 0) {
+                bar.classList.remove('hidden'); info.classList.remove('hidden');
+                document.getElementById('selectedCount').innerText = count;
+                document.getElementById('selectedCountBottom').innerText = count;
+            } else { bar.classList.add('hidden'); info.classList.add('hidden'); }
+            const visible = getFilteredMachines();
+            const allSelected = visible.length > 0 && visible.every(m => selectedMachineIds.has(m.id));
+            const hc = document.getElementById('selectAllHeaderCheckbox');
+            const bc = document.getElementById('selectAllCheckbox');
+            if (hc) hc.checked = allSelected;
+            if (bc) bc.checked = allSelected;
+        }
         function deleteBulkSelected() {
             const count = selectedMachineIds.size;
             if (count === 0) return;
-            if (!confirm(`Hapus ${count} mesin yang dipilih?`)) return;
+            if (!confirm(`Hapus ${count} mesin?`)) return;
             machineList = machineList.filter(m => !selectedMachineIds.has(m.id));
             selectedMachineIds.clear();
             saveMachinesToLS();
-            renderMachineTable();
-            renderMachineDropdownList();
-            updateCounters();
-            updateBulkActionBar();
+            renderMachineTable(); renderMachineDropdownList(); updateCounters(); updateBulkActionBar();
             showToast(`✅ ${count} mesin dihapus`, 'success');
         }
         function openBulkEditMachineModal() {
@@ -1139,134 +1461,297 @@
         }
         function closeBulkEditMachineModal() { document.getElementById('bulkEditMachineModal').classList.remove('active'); }
         function saveBulkEditMachine() {
-            const newProcess = document.getElementById('bulkEditProcess').value.trim();
-            const newSubMachine = document.getElementById('bulkEditSubMachine').value.trim();
-            if (!newProcess && !newSubMachine) { showToast('Isi minimal 1 field!', 'error'); return; }
-            let updateCount = 0;
+            const np = document.getElementById('bulkEditProcess').value.trim();
+            const ns = document.getElementById('bulkEditSubMachine').value.trim();
+            if (!np && !ns) { showToast('Isi minimal 1 field!', 'error'); return; }
+            let c = 0;
             machineList.forEach(m => {
                 if (selectedMachineIds.has(m.id)) {
-                    if (newProcess) m.proses = newProcess;
-                    if (newSubMachine) m.mesin = newSubMachine;
-                    updateCount++;
+                    if (np) m.proses = np;
+                    if (ns) m.mesin = ns;
+                    c++;
                 }
             });
             saveMachinesToLS();
-            closeBulkEditMachineModal();
-            renderMachineTable();
-            renderMachineDropdownList();
-            showToast(`✅ ${updateCount} mesin diupdate`, 'success');
+            closeBulkEditMachineModal(); renderMachineTable(); renderMachineDropdownList();
+            showToast(`✅ ${c} mesin diupdate`, 'success');
         }
         function exportSelectedMachineCSV() {
             if (selectedMachineIds.size === 0) { showToast('Pilih mesin dulu!', 'error'); return; }
             const selected = machineList.filter(m => selectedMachineIds.has(m.id));
-            exportMachineCSVList(selected, `Selected_Mesin_${selected.length}_${new Date().toISOString().slice(0, 10)}.csv`);
+            exportMachineCSVList(selected, `Selected_Mesin_${selected.length}.csv`);
         }
 
-        async function init() {
-            const savedLine = localStorage.getItem(LS_KEY_ACTIVE_LINE);
-            if (savedLine) activeLine = savedLine;
-
-            loadMachinesFromLS();
-            loadMasterFromLS();
-            renderMachineDropdownList();
-            renderMachineTable();
-            renderMasterTable();
-            updateCounters();
-            updateLineDisplay();
-
-            setLoadingDetail('Menunggu Firebase SDK...');
-
-            const activateFirebase = async () => {
-                firebaseReady = true;
-                setLoadingDetail('Firebase siap...');
-                await loadAllFromFirebaseOnce();
-                setupFirebaseListeners();
-                setSyncStatus('online');
-                setLoadingDone();
-                if (!activeLine) setTimeout(() => openLineModal(), 500);
-                else syncUphFromActiveLine();
-            };
-            if (window.firebaseDB) { await activateFirebase(); }
-            else {
-                window.addEventListener('firebaseReady', activateFirebase, { once: true });
-                setTimeout(() => {
-                    if (!firebaseReady) {
-                        setSyncStatus('offline');
-                        setLoadingDone();
-                        if (!activeLine) setTimeout(() => openLineModal(), 500);
+        // ============================================================
+        // MACHINE IMPORT/EXPORT
+        // ============================================================
+        function openBulkImportModal() {
+            document.getElementById('bulkFileInput').value = '';
+            document.getElementById('bulkPasteArea').value = '';
+            document.getElementById('replaceExisting').checked = false;
+            document.getElementById('bulkImportModal').classList.add('active');
+        }
+        function closeBulkImportModal() { document.getElementById('bulkImportModal').classList.remove('active'); }
+        function processBulkImport() {
+            const fileInput = document.getElementById('bulkFileInput');
+            const pasteArea = document.getElementById('bulkPasteArea');
+            const replace = document.getElementById('replaceExisting').checked;
+            const processRows = (rows) => {
+                try {
+                    if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
+                    let startIdx = 0;
+                    const firstRow = rows[0].map(c => String(c == null ? '' : c).trim().toLowerCase());
+                    if (firstRow[0] === 'nama mesin' || firstRow[0] === 'nama' || firstRow[0] === 'proses') startIdx = 1;
+                    const newItems = [];
+                    for (let i = startIdx; i < rows.length; i++) {
+                        const cells = rows[i].map(c => String(c == null ? '' : c).trim());
+                        if (cells.length < 2 || (!cells[0] && !cells[1])) continue;
+                        if (!cells[0]) continue;
+                        newItems.push({ id: generateId('m_'), proses: cells[0], mesin: cells[1] || '-' });
                     }
-                }, 5000);
+                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
+                    if (replace) machineList = newItems;
+                    else machineList = machineList.concat(newItems);
+                    saveMachinesToLS();
+                    renderMachineTable(); renderMachineDropdownList(); updateCounters();
+                    closeBulkImportModal();
+                    showToast(`✅ ${newItems.length} mesin di-import`, 'success');
+                } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
+            };
+            const handleText = (text) => {
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
+                const delimiter = lines[0].includes('\t') ? '\t' : ',';
+                const rows = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, '')));
+                processRows(rows);
+            };
+            const file = fileInput.files[0];
+            if (file) {
+                const fn = file.name.toLowerCase();
+                if (fn.endsWith('.xlsx') || fn.endsWith('.xls')) {
+                    if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const wb = XLSX.read(data, { type: 'array' });
+                            const ws = wb.Sheets[wb.SheetNames[0]];
+                            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false });
+                            processRows(rows);
+                        } catch (err) { showToast('❌ Gagal baca Excel', 'error'); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => handleText(e.target.result);
+                    reader.readAsText(file);
+                }
+            } else if (pasteArea.value.trim()) handleText(pasteArea.value);
+            else showToast('Pilih file atau paste data dulu!', 'error');
+        }
+        function exportMachineCSVList(list, filename) {
+            if (list.length === 0) { showToast('Belum ada mesin!', 'error'); return; }
+            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            const rows = [['Nama Mesin', 'Sub Mesin']];
+            list.forEach(m => rows.push([m.proses, m.mesin]));
+            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            if (downloadBlob(blob, filename)) showToast(`📄 ${list.length} mesin di-export`, 'success');
+        }
+        function exportMachineCSV() {
+            const sorted = [...machineList].sort((a, b) => String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true }));
+            exportMachineCSVList(sorted, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`);
+        }
+        function downloadBlob(blob, filename) {
+            try {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url; link.download = filename; link.style.display = 'none';
+                document.body.appendChild(link); link.click();
+                setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1500);
+                return true;
+            } catch (e) { showToast('❌ Gagal download. Coba Chrome.', 'error'); return false; }
+        }
+
+        // ============================================================
+        // ELEMEN MASTER
+        // ============================================================
+        function openElemenImportModal() {
+            document.getElementById('elemenFileInput').value = '';
+            document.getElementById('elemenPasteArea').value = '';
+            document.getElementById('elemenReplaceExisting').checked = false;
+            document.getElementById('elemenImportModal').classList.add('active');
+        }
+        function closeElemenImportModal() { document.getElementById('elemenImportModal').classList.remove('active'); }
+        function processElemenImport() {
+            const fileInput = document.getElementById('elemenFileInput');
+            const pasteArea = document.getElementById('elemenPasteArea');
+            const replace = document.getElementById('elemenReplaceExisting').checked;
+            const processRows = (rows) => {
+                try {
+                    if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
+                    let startIdx = 0;
+                    const firstRow = rows[0].map(c => String(c == null ? '' : c).trim().toLowerCase());
+                    if (firstRow[0] === 'no' || firstRow[1] === 'nama proses' || firstRow[2] === 'nama elemen') startIdx = 1;
+                    const newItems = [];
+                    for (let i = startIdx; i < rows.length; i++) {
+                        const cells = rows[i].map(c => String(c == null ? '' : c).trim());
+                        if (cells.length < 3) continue;
+                        const no = cells[0];
+                        const proses = cells[1];
+                        const elemen = cells[2];
+                        const kategori = cells[3] || 'VA';
+                        if (!proses || !elemen) continue;
+                        newItems.push({ id: generateId('e_'), no: no || '-', proses, elemen, kategori });
+                    }
+                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
+                    if (replace) elemenMasterList = newItems;
+                    else elemenMasterList = elemenMasterList.concat(newItems);
+                    lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                    if (firebaseReady) saveElemenMasterToFirebase();
+                    populateElemenNoDropdown();
+                    renderElemenMasterTable();
+                    updateCounters();
+                    closeElemenImportModal();
+                    showToast(`✅ ${newItems.length} elemen di-import`, 'success');
+                } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
+            };
+            const handleText = (text) => {
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
+                const delimiter = lines[0].includes('\t') ? '\t' : ',';
+                const rows = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, '')));
+                processRows(rows);
+            };
+            const file = fileInput.files[0];
+            if (file) {
+                const fn = file.name.toLowerCase();
+                if (fn.endsWith('.xlsx') || fn.endsWith('.xls')) {
+                    if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const wb = XLSX.read(data, { type: 'array' });
+                            const ws = wb.Sheets[wb.SheetNames[0]];
+                            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false });
+                            processRows(rows);
+                        } catch (err) { showToast('❌ Gagal baca Excel', 'error'); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => handleText(e.target.result);
+                    reader.readAsText(file);
+                }
+            } else if (pasteArea.value.trim()) handleText(pasteArea.value);
+            else showToast('Pilih file atau paste data dulu!', 'error');
+        }
+        function renderElemenMasterTable() {
+            const tbody = document.getElementById('elemenMasterTableBody');
+            if (!tbody) return;
+            const search = (document.getElementById('elemenSearch')?.value || '').toLowerCase().trim();
+            let filtered = elemenMasterList;
+            if (search) filtered = elemenMasterList.filter(e => String(e.no).toLowerCase().includes(search) || String(e.proses).toLowerCase().includes(search) || String(e.elemen).toLowerCase().includes(search));
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
+                return;
             }
-
-            document.addEventListener('click', (e) => {
-                const wrapper = document.querySelector('.custom-dropdown-wrapper');
-                if (wrapper && !wrapper.contains(e.target)) closeMachineDropdown();
-            });
+            tbody.innerHTML = filtered.map(e => {
+                const kategoriColor = e.kategori === 'VA' ? 'bg-emerald-100 text-emerald-800' : (e.kategori === 'NNVA' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                return `<tr class="hover:bg-purple-50/30">
+                    <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(e.no)}</td>
+                    <td class="px-3 py-2 border-r border-b">${escapeHtml(e.proses)}</td>
+                    <td class="px-3 py-2 border-r border-b font-medium">${escapeHtml(e.elemen)}</td>
+                    <td class="px-2 py-2 text-center border-r border-b"><span class="${kategoriColor} text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(e.kategori)}</span></td>
+                    <td class="px-2 py-2 text-center border-b">
+                        <button onclick="deleteElemenMaster('${e.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    </td>
+                </tr>`;
+            }).join('');
         }
-
-        function switchTab(tabName) {
-            if (isRunning && tabName !== 'input') {
-                if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.\n\nLanjutkan?')) return;
-                clearInterval(timerInterval);
-                timerInterval = null;
-                setStartButton('resume');
-                setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
-                isRunning = false;
+        function deleteElemenMaster(id) {
+            if (!confirm('Hapus elemen ini?')) return;
+            elemenMasterList = elemenMasterList.filter(e => e.id !== id);
+            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+            if (firebaseReady) saveElemenMasterToFirebase();
+            renderElemenMasterTable();
+            populateElemenNoDropdown();
+            updateCounters();
+        }
+        function clearAllElemen() {
+            if (!confirm('Yakin hapus SEMUA master elemen?')) return;
+            elemenMasterList = [];
+            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+            if (firebaseReady) saveElemenMasterToFirebase();
+            renderElemenMasterTable();
+            populateElemenNoDropdown();
+            updateCounters();
+            showToast('Master elemen direset', 'warning');
+        }
+        function exportElemenCSV() {
+            if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
+            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            const rows = [['No', 'Nama Proses', 'Nama Elemen', 'Kategori']];
+            elemenMasterList.forEach(e => rows.push([e.no, e.proses, e.elemen, e.kategori]));
+            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
+        }
+        function populateElemenNoDropdown() {
+            const sel = document.getElementById('elemenNoSelect');
+            if (!sel) return;
+            const nos = [...new Set(elemenMasterList.map(e => e.no))].sort();
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">-- Pilih No Proses --</option>' + nos.map(no => {
+                const first = elemenMasterList.find(e => e.no === no);
+                return `<option value="${escapeHtml(no)}">${escapeHtml(no)} · ${escapeHtml(first?.proses || '')}</option>`;
+            }).join('');
+            if (currentVal && nos.includes(currentVal)) sel.value = currentVal;
+        }
+        function onElemenNoChange(sel) {
+            const no = sel.value;
+            if (!no) {
+                currentElemenNo = '';
+                currentElemenProses = '';
+                document.getElementById('inputNo').value = '';
+                document.getElementById('inputProcess').value = '';
+                document.getElementById('elemenListPreview').classList.add('hidden');
+                return;
             }
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
-            document.getElementById('tabBtn-' + tabName).classList.add('tab-active');
-            currentTab = tabName;
-
-            if (tabName === 'mesin') { renderMachineTable(); updateBulkActionBar(); }
-            if (tabName === 'data') { renderMasterTable(); updateCounters(); }
-            if (tabName === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
-            if (tabName === 'input') renderMachineDropdownList();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            currentElemenNo = no;
+            const items = elemenMasterList.filter(e => e.no === no);
+            if (items.length > 0) currentElemenProses = items[0].proses;
+            document.getElementById('inputNo').value = no;
+            document.getElementById('inputProcess').value = currentElemenProses;
+            const preview = document.getElementById('elemenListPreview');
+            const previewItems = document.getElementById('elemenListPreviewItems');
+            preview.classList.remove('hidden');
+            previewItems.innerHTML = items.map((e, i) => {
+                const katColor = e.kategori === 'VA' ? 'bg-emerald-100 text-emerald-800' : (e.kategori === 'NNVA' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                return `<div class="flex items-center gap-2 text-xs">
+                    <span class="font-mono font-bold text-blue-700 bg-white px-1.5 py-0.5 rounded border">E${i + 1}</span>
+                    <span class="flex-1 font-medium">${escapeHtml(e.elemen)}</span>
+                    <span class="${katColor} text-[10px] font-bold px-1.5 py-0.5 rounded">${escapeHtml(e.kategori)}</span>
+                </div>`;
+            }).join('');
         }
 
-        function updateServerInfo() {
-            const statusEl = document.getElementById('serverStatusInfo');
-            if (!statusEl) return;
-            if (firebaseReady) {
-                statusEl.innerText = '✅ Online';
-                statusEl.className = 'font-bold text-emerald-600';
-            } else {
-                statusEl.innerText = '❌ Offline';
-                statusEl.className = 'font-bold text-red-600';
-            }
-            const mc = document.getElementById('serverMasterCount');
-            if (mc) mc.innerText = masterData.length;
-            const mc2 = document.getElementById('serverMachineCount');
-            if (mc2) mc2.innerText = machineList.length;
-            const lu = document.getElementById('serverLastUpdate');
-            if (lu) lu.innerText = lastServerUpdate ? new Date(lastServerUpdate).toLocaleString('id-ID') : '-';
-        }
-
-        function formatTimeMs(ms) {
-            if (ms < 0) ms = 0;
-            const totalSec = ms / 1000;
-            const m = Math.floor(totalSec / 60);
-            const s = Math.floor(totalSec % 60);
-            const cs = Math.floor((ms % 1000) / 10);
-            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
-        }
+        // ============================================================
+        // TIMER
+        // ============================================================
         function setTimerStatus(text, colorClasses) {
             const badge = document.getElementById('timerStatus');
-            if (badge) {
-                badge.innerText = text;
-                badge.className = 'text-[10px] md:text-xs px-2 py-1 rounded-full font-semibold ' + colorClasses;
-            }
+            if (badge) { badge.innerText = text; badge.className = 'text-[10px] md:text-xs px-2 py-1 rounded-full font-semibold ' + colorClasses; }
             const ms = document.getElementById('mobileStatus');
             if (ms) ms.innerText = text;
         }
         function setStartButton(mode) {
-            const mobileBtn = document.getElementById('mobileStartBtn');
-            if (!mobileBtn) return;
-            if (mode === 'start') { mobileBtn.innerText = '▶️ START'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
-            else if (mode === 'pause') { mobileBtn.innerText = '⏸️ PAUSE'; mobileBtn.className = 'bottom-controls-btn bg-yellow-600'; }
-            else if (mode === 'resume') { mobileBtn.innerText = '▶️ RESUME'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
+            const b = document.getElementById('mobileStartBtn');
+            if (!b) return;
+            if (mode === 'start') { b.innerText = '▶️ START'; b.className = 'bottom-controls-btn bg-green-600'; }
+            else if (mode === 'pause') { b.innerText = '⏸️ PAUSE'; b.className = 'bottom-controls-btn bg-yellow-600'; }
+            else if (mode === 'resume') { b.innerText = '▶️ RESUME'; b.className = 'bottom-controls-btn bg-green-600'; }
         }
         function setButtonEnabled(id, enabled) {
             const btn = document.getElementById(id);
@@ -1276,29 +1761,9 @@
                 else btn.classList.add('opacity-50', 'cursor-not-allowed');
             }
             const mapping = { 'stopBtn': 'mobileStopBtn', 'lapBtn': 'mobileLapBtn', 'startStopBtn': 'mobileStartBtn' };
-            const mobileId = mapping[id];
-            if (mobileId) {
-                const mb = document.getElementById(mobileId);
-                if (mb) mb.disabled = !enabled;
-            }
+            const mid = mapping[id];
+            if (mid) { const mb = document.getElementById(mid); if (mb) mb.disabled = !enabled; }
         }
-        function showToast(message, type = 'info') {
-            const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
-            const toast = document.createElement('div');
-            toast.innerText = message;
-            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[200] toast-animate whitespace-nowrap`;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 1800);
-        }
-        function escapeHtml(s) {
-            if (s == null) return '';
-            return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-        }
-
         function toggleTimer() {
             if (!isRunning) {
                 lastLapTimestamp = Date.now();
@@ -1314,8 +1779,7 @@
                 isRunning = true;
                 if (navigator.vibrate) navigator.vibrate(30);
             } else {
-                clearInterval(timerInterval);
-                timerInterval = null;
+                clearInterval(timerInterval); timerInterval = null;
                 setStartButton('resume');
                 setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
                 isRunning = false;
@@ -1328,13 +1792,10 @@
             setStartButton('start');
             setButtonEnabled('stopBtn', false);
             setButtonEnabled('lapBtn', false);
-
             if (currentLaps.length > 0) {
-                const savedLaps = [...currentLaps];
-                elapsedTime = 0;
-                lastLapTimestamp = 0;
+                elapsedTime = 0; lastLapTimestamp = 0;
                 document.getElementById('timerDisplay').innerText = '00:00.00';
-                document.getElementById('lapSplitPreview').innerText = `✅ ${savedLaps.length} siklus siap di-commit`;
+                document.getElementById('lapSplitPreview').innerText = `✅ ${currentLaps.length} siklus siap di-commit`;
                 setTimerStatus('Siap Commit', 'bg-indigo-100 text-indigo-700');
                 setButtonEnabled('commitBtn', true);
             } else {
@@ -1348,12 +1809,12 @@
         function recordLap() {
             if (!isRunning) return;
             const now = Date.now();
-            const lapDurationSec = (now - lastLapTimestamp) / 1000;
+            const dur = (now - lastLapTimestamp) / 1000;
             lastLapTimestamp = now;
-            if (lapDurationSec < 0.1) return;
-            currentLaps.push(parseFloat(lapDurationSec.toFixed(2)));
+            if (dur < 0.1) return;
+            currentLaps.push(parseFloat(dur.toFixed(2)));
             updateLapsUI();
-            document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${lapDurationSec.toFixed(2)}s`;
+            document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s`;
             setButtonEnabled('commitBtn', true);
             if (navigator.vibrate) navigator.vibrate(30);
         }
@@ -1366,53 +1827,29 @@
                 document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             }
         }
-
-        // ============================================================
-        // UPDATE LAPS UI - Auto-scroll & Highlight Chip Terbaru
-        // ============================================================
         function updateLapsUI() {
             const container = document.getElementById('currentLapsContainer');
             const badge = document.getElementById('lapCounterBadge');
             if (!container || !badge) return;
             badge.innerText = `${currentLaps.length} Siklus`;
-            
             if (currentLaps.length === 0) {
                 container.innerHTML = '<span class="text-gray-400 italic text-xs md:text-sm self-center">Belum ada siklus direkam.</span>';
                 return;
             }
-            
-            // Render semua chip. Chip terakhir (paling baru) di-highlight hijau
             container.innerHTML = currentLaps.map((lap, i) => {
                 const isLatest = (i === currentLaps.length - 1);
-                const chipClass = isLatest 
-                    ? 'bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-300' 
-                    : 'bg-blue-50 text-blue-800 border-blue-200';
-                return `
-                    <div class="flex items-center gap-1.5 ${chipClass} px-3 py-1.5 rounded-md font-mono text-base md:text-lg font-bold border">
-                        <span>C${i + 1}: ${lap.toFixed(2)}s</span>
-                        <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-1 text-lg">×</button>
-                    </div>
-                `;
+                const cls = isLatest ? 'bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-200';
+                return `<div class="flex items-center gap-1.5 ${cls} px-3 py-1.5 rounded-md font-mono text-base md:text-lg font-bold border">
+                    <span>C${i + 1}: ${lap.toFixed(2)}s</span>
+                    <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-1 text-lg">×</button>
+                </div>`;
             }).join('');
-            
-            // AUTO-SCROLL ke bawah supaya chip terbaru selalu terlihat
-            setTimeout(() => {
-                container.scrollTop = container.scrollHeight;
-            }, 50);
+            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
         }
-
-        // ============================================================
-        // RESET STOPWATCH — hanya reset timer, SIKLUS TETAP
-        // ============================================================
         function resetStopwatchCurrent() {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            isRunning = false;
-            elapsedTime = 0;
-            lastLapTimestamp = Date.now();
-            
+            clearInterval(timerInterval); timerInterval = null;
+            isRunning = false; elapsedTime = 0; lastLapTimestamp = Date.now();
             document.getElementById('timerDisplay').innerText = '00:00.00';
-            
             if (currentLaps.length > 0) {
                 document.getElementById('lapSplitPreview').innerText = `✅ ${currentLaps.length} siklus siap di-commit`;
                 setTimerStatus('Siap Commit', 'bg-indigo-100 text-indigo-700');
@@ -1422,55 +1859,48 @@
                 setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
                 setButtonEnabled('commitBtn', false);
             }
-            
             setStartButton('start');
             setButtonEnabled('stopBtn', false);
             setButtonEnabled('lapBtn', false);
-            
             showToast('⏱️ Timer direset (siklus tetap)', 'info');
         }
 
+        // ============================================================
+        // COMMIT
+        // ============================================================
         function commitStudyRow() {
-            if (!activeLine) {
-                showToast('⚠️ Pilih Line dulu!', 'error');
-                openLineModal();
-                return;
-            }
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
 
-            const isCustom = selectedMachineId === '__custom__' || !selectedMachineId;
             let no, process, subMachine;
-            if (isCustom) {
-                no = document.getElementById('inputNo').value.trim() || '-';
-                process = document.getElementById('inputProcess').value.trim();
-                subMachine = document.getElementById('inputSubMachineCustom').value.trim() || '-';
+            if (currentMode === 'elemen') {
+                no = currentElemenNo || document.getElementById('inputNo').value.trim();
+                process = currentElemenProses || document.getElementById('inputProcess').value.trim();
+                subMachine = 'Elemen';
+                if (!no) { showToast('⚠️ Pilih No Proses dulu!', 'error'); return; }
             } else {
-                const m = machineList.find(x => x.id === selectedMachineId);
-                if (!m) { showToast('Mesin tidak ditemukan!', 'error'); return; }
-                no = document.getElementById('inputNo').value.trim() || '-';
-                process = m.proses || '';
-                subMachine = m.mesin || '-';
+                const isCustom = selectedMachineId === '__custom__' || !selectedMachineId;
+                if (isCustom) {
+                    no = document.getElementById('inputNo').value.trim() || '-';
+                    process = document.getElementById('inputProcess').value.trim();
+                    subMachine = document.getElementById('inputSubMachineCustom').value.trim() || '-';
+                } else {
+                    const m = machineList.find(x => x.id === selectedMachineId);
+                    if (!m) { showToast('Mesin tidak ditemukan!', 'error'); return; }
+                    no = document.getElementById('inputNo').value.trim() || '-';
+                    process = m.proses || '';
+                    subMachine = m.mesin || '-';
+                }
             }
+
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
-
             const gerakanRaw = document.getElementById('inputGerakan').value.trim();
-            if (!gerakanRaw || gerakanRaw === '') {
-                showToast('⚠️ Mohon isi Gerakan (detik)!', 'error');
-                document.getElementById('inputGerakan').focus();
-                return;
-            }
+            if (!gerakanRaw) { showToast('⚠️ Mohon isi Gerakan (detik)!', 'error'); document.getElementById('inputGerakan').focus(); return; }
             const gerakan = parseFloat(gerakanRaw);
-            if (isNaN(gerakan) || gerakan < 0) {
-                showToast('⚠️ Gerakan harus angka positif!', 'error');
-                document.getElementById('inputGerakan').focus();
-                return;
-            }
-
+            if (isNaN(gerakan) || gerakan < 0) { showToast('⚠️ Gerakan harus angka positif!', 'error'); return; }
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
 
-            if (!no || no === '-') { showToast('⚠️ Mohon isi No terlebih dahulu!', 'error'); document.getElementById('inputNo').focus(); return; }
-            if (!process) { showToast('Mohon pilih mesin dulu!', 'error'); return; }
+            if (!process) { showToast('Mohon pilih/isi nama proses!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
-            if (actualMachine < 1) { showToast('Jumlah Mesin/Jalur minimal 1!', 'error'); return; }
 
             const existingIndex = masterData.findIndex(item =>
                 item.line === activeLine && item.no === no && item.process === process && item.subMachine === subMachine
@@ -1478,19 +1908,22 @@
 
             if (existingIndex !== -1) {
                 const existing = masterData[existingIndex];
-                if (!confirm(`Mesin "${subMachine}" untuk "${process}" (No ${no}, ${activeLine}) sudah ada.\n\nGabungkan sesi baru ini?`)) return;
+                if (!confirm(`"${process}" (No ${no}) sudah ada.\n\nGabungkan sesi baru?`)) return;
                 existing.laps = existing.laps.concat(currentLaps);
                 existing.ngRate = ngRate;
                 existing.actualMachine = actualMachine;
                 existing.gerakan = gerakan;
                 existing.sessions = (existing.sessions || 1) + 1;
-                showToast(`Sesi ditambahkan (total ${existing.laps.length} siklus)`, 'success');
+                showToast(`Sesi ditambahkan`, 'success');
             } else {
                 masterData.push({ line: activeLine, no, process, subMachine, laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1 });
                 showToast(`✅ Data disimpan (${activeLine})`, 'success');
             }
             saveMasterToLS();
+            resetStopwatchAfterCommit();
+        }
 
+        function resetStopwatchAfterCommit() {
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
             elapsedTime = 0;
@@ -1503,11 +1936,17 @@
             document.getElementById('inputNo').value = '';
             document.getElementById('inputSubMachineCustom').value = '';
             selectedMachineId = '';
-            document.getElementById('machineDropdownLabel').innerText = '-- Pilih Mesin --';
-            document.getElementById('machineDropdownLabel').className = 'text-gray-500';
+            const lbl = document.getElementById('machineDropdownLabel');
+            if (lbl) { lbl.innerText = '-- Pilih Mesin --'; lbl.className = 'text-gray-500'; }
             document.getElementById('inputProcess').value = '';
             document.getElementById('customMachineWrapper').classList.add('hidden');
             document.getElementById('selectedMachineInfo').classList.add('hidden');
+            if (currentMode === 'elemen') {
+                document.getElementById('elemenNoSelect').value = '';
+                document.getElementById('elemenListPreview').classList.add('hidden');
+                currentElemenNo = '';
+                currentElemenProses = '';
+            }
 
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
@@ -1523,11 +1962,17 @@
             setTimeout(() => {
                 if (currentTab === 'data') {
                     switchTab('input');
-                    setTimeout(() => document.getElementById('machineDropdownBtn').focus(), 200);
+                    setTimeout(() => {
+                        if (currentMode === 'elemen') document.getElementById('elemenNoSelect').focus();
+                        else document.getElementById('machineDropdownBtn').focus();
+                    }, 200);
                 }
             }, 1500);
         }
 
+        // ============================================================
+        // STATS
+        // ============================================================
         function getRowStats(item) {
             const laps = item.laps;
             const count = laps.length;
@@ -1545,16 +1990,12 @@
             if (filter === '__active__') return masterData.filter(d => d.line === activeLine);
             return masterData.filter(d => d.line === filter);
         }
-
         function renderDataFilterOptions() {
             const sel = document.getElementById('dataFilterLine');
             if (!sel) return;
             const currentVal = sel.value;
             const linesInData = [...new Set(masterData.map(d => d.line).filter(Boolean))].sort();
-            let html = `
-                <option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option>
-                <option value="__all__">Semua Line</option>
-            `;
+            let html = `<option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option><option value="__all__">Semua Line</option>`;
             if (linesInData.length > 0) {
                 html += '<option disabled>──────────</option>';
                 linesInData.forEach(l => { html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`; });
@@ -1564,24 +2005,27 @@
             else sel.value = '__active__';
         }
 
+        // ============================================================
+        // RENDER MASTER TABLE (dinamis per mode)
+        // ============================================================
         function renderMasterTable() {
             renderDataFilterOptions();
             const tbody = document.getElementById('masterTableBody');
-            const thead = document.querySelector('#masterTable thead tr');
-            if (!tbody || !thead) return;
+            const theadRow = document.getElementById('masterTableHeaderRow');
+            if (!tbody || !theadRow) return;
 
             const filteredData = getFilteredData();
-
             if (filteredData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data ${activeLine ? '(' + escapeHtml(activeLine) + ')' : ''}.</td></tr>`;
+                theadRow.innerHTML = `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">${currentMode === 'elemen' ? 'Proses' : 'Nama Mesin'}</th><th class="px-3 py-3 text-left font-bold border-r">${currentMode === 'elemen' ? 'Elemen' : 'Sub Mesin'}</th>`;
+                tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>`;
                 return;
             }
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             let headerHTML = `
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
-                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">${currentMode === 'elemen' ? 'Proses' : 'Nama Mesin'}</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">${currentMode === 'elemen' ? 'Elemen' : 'Sub Mesin'}</th>
             `;
             for (let i = 1; i <= maxLaps; i++) headerHTML += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
             headerHTML += `
@@ -1594,7 +2038,7 @@
                 <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Kapasitas</th>
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
-            thead.innerHTML = headerHTML;
+            theadRow.innerHTML = headerHTML;
 
             const groups = {};
             const groupOrder = [];
@@ -1639,9 +2083,7 @@
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${row.actualMachine}</td>`;
                     if (rIdx === 0) {
-                        htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">
-                            ${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span>
-                        </td>`;
+                        htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span></td>`;
                     }
                     htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
                         <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
@@ -1653,7 +2095,7 @@
 
         function deleteMasterRow(idx) {
             const item = masterData[idx];
-            if (!confirm(`Hapus data "${item.process}" (${item.subMachine}) ${item.line}?`)) return;
+            if (!confirm(`Hapus data "${item.process}"?`)) return;
             masterData.splice(idx, 1);
             saveMasterToLS();
             renderMasterTable();
@@ -1662,7 +2104,7 @@
             showToast('Data dihapus', 'warning');
         }
         function clearAllData() {
-            if (!confirm('Yakin ingin menghapus SELURUH data time study (semua line)?')) return;
+            if (!confirm('Yakin hapus SEMUA data master?')) return;
             masterData = [];
             saveMasterToLS();
             renderMasterTable();
@@ -1670,382 +2112,123 @@
             updateCounters();
             showToast('Semua data dihapus', 'warning');
         }
-
         function updateCounters() {
-            const totalMachine = masterData.length;
-            const badge = document.getElementById('dataCountBadge');
-            if (badge) {
-                badge.innerText = totalMachine;
-                badge.className = totalMachine > 0
-                    ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
-                    : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
-            }
-            const mBadge = document.getElementById('machineCountBadge');
-            if (mBadge) {
-                mBadge.innerText = machineList.length;
-                mBadge.className = machineList.length > 0
-                    ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
-                    : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
-            }
+            const t = masterData.length;
+            const b = document.getElementById('dataCountBadge');
+            if (b) { b.innerText = t; b.className = t > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+            const mb = document.getElementById('machineCountBadge');
+            if (mb) { mb.innerText = machineList.length; mb.className = machineList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+            const eb = document.getElementById('elemenCountBadge');
+            if (eb) { eb.innerText = elemenMasterList.length; eb.className = elemenMasterList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
         }
 
+        // ============================================================
+        // STANDARD CHECK
+        // ============================================================
         function renderStandardCheck() {
-            const standardInput = document.getElementById('standardUph');
+            const si = document.getElementById('standardUph');
             const headerEl = document.getElementById('standardResultHeader');
             const listEl = document.getElementById('standardResultList');
             const filterEl = document.getElementById('standardFilterLine');
-            if (!standardInput || !headerEl || !listEl) return;
-
+            if (!si || !headerEl || !listEl) return;
             if (filterEl) {
-                const currentVal = filterEl.value;
+                const cv = filterEl.value;
                 const linesInData = [...new Set(masterData.map(d => d.line).filter(Boolean))].sort();
-                let html = `
-                    <option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option>
-                    <option value="__all__">Semua Line</option>
-                `;
-                if (linesInData.length > 0) {
-                    html += '<option disabled>──────────</option>';
-                    linesInData.forEach(l => { html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`; });
-                }
+                let html = `<option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option><option value="__all__">Semua Line</option>`;
+                if (linesInData.length > 0) { html += '<option disabled>──────────</option>'; linesInData.forEach(l => { html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`; }); }
                 filterEl.innerHTML = html;
-                if (currentVal && filterEl.querySelector(`option[value="${currentVal}"]`)) filterEl.value = currentVal;
+                if (cv && filterEl.querySelector(`option[value="${cv}"]`)) filterEl.value = cv;
                 else filterEl.value = '__active__';
             }
-
-            const rawValue = standardInput.value;
+            const rawValue = si.value;
             const standard = parseFloat(rawValue) || 0;
-
-            if (!rawValue || rawValue === '' || standard <= 0) {
+            if (!rawValue || standard <= 0) {
                 headerEl.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan UPH di atas untuk mulai cek.</div>`;
                 listEl.innerHTML = '';
                 return;
             }
-
             const filter = filterEl ? filterEl.value : '__active__';
-            let filteredData;
-            let filterLabel = '';
-            if (filter === '__all__') { filteredData = masterData; filterLabel = 'Semua Line'; }
-            else if (filter === '__active__') { filteredData = masterData.filter(d => d.line === activeLine); filterLabel = activeLine; }
-            else { filteredData = masterData.filter(d => d.line === filter); filterLabel = filter; }
-
+            let fd, fl;
+            if (filter === '__all__') { fd = masterData; fl = 'Semua Line'; }
+            else if (filter === '__active__') { fd = masterData.filter(d => d.line === activeLine); fl = activeLine; }
+            else { fd = masterData.filter(d => d.line === filter); fl = filter; }
             const groups = {};
-            filteredData.forEach(item => {
+            fd.forEach(item => {
                 const key = `${item.line}||${item.no}||${item.process}`;
                 if (!groups[key]) groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, machines: [] };
-                const stats = getRowStats(item);
-                groups[key].capacity += stats.capacity;
+                groups[key].capacity += getRowStats(item).capacity;
                 groups[key].machines.push(item.subMachine);
             });
             const perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
-
             if (perProcess.length === 0) {
-                headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data untuk ${escapeHtml(filterLabel)}.</div>`;
-                listEl.innerHTML = '';
-                return;
+                headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data.</div>`;
+                listEl.innerHTML = ''; return;
             }
-
-            const belowStandard = perProcess.filter(p => p.capacity < standard);
-            const aboveStandard = perProcess.filter(p => p.capacity >= standard);
-
-            if (belowStandard.length === 0) {
-                headerEl.innerHTML = `
-                    <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
-                        <span class="text-2xl">✅</span>
-                        <div>
-                            <div class="text-sm font-bold text-emerald-700">Semua Proses di ${escapeHtml(filterLabel)} Memenuhi UPH!</div>
-                            <div class="text-[11px] text-emerald-600">${perProcess.length} proses, semua ≥ ${standard} UPH</div>
-                        </div>
-                    </div>
-                `;
-                listEl.innerHTML = '';
-                return;
+            const below = perProcess.filter(p => p.capacity < standard);
+            const above = perProcess.filter(p => p.capacity >= standard);
+            if (below.length === 0) {
+                headerEl.innerHTML = `<div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3"><span class="text-2xl">✅</span><div><div class="text-sm font-bold text-emerald-700">Semua Proses Memenuhi UPH!</div><div class="text-[11px] text-emerald-600">${perProcess.length} proses, semua ≥ ${standard} UPH</div></div></div>`;
+                listEl.innerHTML = ''; return;
             }
-
-            headerEl.innerHTML = `
-                <div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                    <span class="text-2xl">⚠️</span>
-                    <div>
-                        <div class="text-sm font-bold text-red-700">${belowStandard.length} Proses di Bawah UPH</div>
-                        <div class="text-[11px] text-red-600">${escapeHtml(filterLabel)} · UPH: ${standard}</div>
-                    </div>
-                </div>
-            `;
-
+            headerEl.innerHTML = `<div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3"><span class="text-2xl">⚠️</span><div><div class="text-sm font-bold text-red-700">${below.length} Proses di Bawah UPH</div><div class="text-[11px] text-red-600">${escapeHtml(fl)} · UPH: ${standard}</div></div></div>`;
             let listHtml = '';
-            belowStandard.forEach(p => {
+            below.forEach(p => {
                 const kurang = standard - p.capacity;
                 const percent = ((p.capacity / standard) * 100).toFixed(0);
-                listHtml += `
-                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div class="flex justify-between items-center gap-3">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(p.line)}</span>
-                                    <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(p.no)}</span>
-                                    <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
-                                </div>
-                                <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.join(', '))}</div>
+                listHtml += `<div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div class="flex justify-between items-center gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(p.line)}</span>
+                                <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(p.no)}</span>
+                                <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
                             </div>
-                            <div class="text-right">
-                                <div class="text-lg font-extrabold text-red-700">${p.capacity} <span class="text-[10px] font-medium">UPH</span></div>
-                                <div class="text-[10px] text-red-600 font-medium">Kurang ${kurang} (${percent}%)</div>
-                            </div>
+                            <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.join(', '))}</div>
                         </div>
-                        <div class="mt-2 bg-red-200 rounded-full h-1.5 overflow-hidden">
-                            <div class="bg-red-500 h-full" style="width: ${Math.min(percent, 100)}%"></div>
+                        <div class="text-right">
+                            <div class="text-lg font-extrabold text-red-700">${p.capacity} <span class="text-[10px] font-medium">UPH</span></div>
+                            <div class="text-[10px] text-red-600 font-medium">Kurang ${kurang} (${percent}%)</div>
                         </div>
                     </div>
-                `;
+                    <div class="mt-2 bg-red-200 rounded-full h-1.5 overflow-hidden"><div class="bg-red-500 h-full" style="width: ${Math.min(percent, 100)}%"></div></div>
+                </div>`;
             });
-            if (aboveStandard.length > 0) {
-                listHtml += `<div class="text-[11px] text-emerald-600 text-center pt-3 border-t border-gray-200 mt-2">✅ ${aboveStandard.length} proses sudah di atas UPH</div>`;
-            }
+            if (above.length > 0) listHtml += `<div class="text-[11px] text-emerald-600 text-center pt-3 border-t border-gray-200 mt-2">✅ ${above.length} proses sudah di atas UPH</div>`;
             listEl.innerHTML = listHtml;
         }
 
-        function generateId() { return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
-        function openMachineModal(machineId = null) {
-            editingMachineId = machineId;
-            const modal = document.getElementById('machineModal');
-            const title = document.getElementById('machineModalTitle');
-            if (machineId) {
-                title.innerText = 'Edit Mesin';
-                const m = machineList.find(x => x.id === machineId);
-                if (m) {
-                    document.getElementById('modalProcess').value = m.proses || '';
-                    document.getElementById('modalSubMachine').value = m.mesin || '';
-                }
-            } else {
-                title.innerText = 'Tambah Mesin';
-                document.getElementById('modalProcess').value = '';
-                document.getElementById('modalSubMachine').value = '';
-            }
-            modal.classList.add('active');
-            setTimeout(() => document.getElementById('modalProcess').focus(), 100);
-        }
-        function closeMachineModal() {
-            document.getElementById('machineModal').classList.remove('active');
-            editingMachineId = null;
-        }
-        function saveMachine() {
-            const proses = document.getElementById('modalProcess').value.trim();
-            const mesin = document.getElementById('modalSubMachine').value.trim();
-            if (!proses) { showToast('Nama Mesin wajib diisi!', 'error'); return; }
-            if (!mesin) { showToast('Sub Mesin wajib diisi!', 'error'); return; }
-            if (editingMachineId) {
-                const m = machineList.find(x => x.id === editingMachineId);
-                if (m) { m.proses = proses; m.mesin = mesin; }
-                showToast('✅ Mesin diperbarui', 'success');
-            } else {
-                machineList.push({ id: generateId(), proses, mesin });
-                showToast('✅ Mesin ditambahkan', 'success');
-            }
-            saveMachinesToLS();
-            renderMachineTable();
-            renderMachineDropdownList();
-            updateCounters();
-            closeMachineModal();
-        }
-        function deleteMachine(id) {
-            const m = machineList.find(x => x.id === id);
-            if (!m) return;
-            if (!confirm(`Hapus mesin "${m.mesin}" (${m.proses})?`)) return;
-            machineList = machineList.filter(x => x.id !== id);
-            selectedMachineIds.delete(id);
-            saveMachinesToLS();
-            renderMachineTable();
-            renderMachineDropdownList();
-            updateCounters();
-            showToast('Mesin dihapus', 'warning');
-        }
-        function renderMachineTable() {
-            const tbody = document.getElementById('machineTableBody');
-            if (!tbody) return;
-            const filtered = getFilteredMachines();
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${machineList.length === 0 ? 'Belum ada mesin. Klik "➕ Tambah".' : 'Tidak ada hasil pencarian.'}</td></tr>`;
-                updateBulkActionBar();
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(m => {
-                const isSelected = selectedMachineIds.has(m.id);
-                return `
-                <tr class="hover:bg-blue-50/50 ${isSelected ? 'bg-indigo-50' : ''}">
-                    <td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">
-                        <input type="checkbox" class="checkbox-custom" ${isSelected ? 'checked' : ''} onchange="toggleMachineSelection('${m.id}')">
-                    </td>
-                    <td class="px-3 py-2 border-r border-b whitespace-nowrap font-semibold text-gray-800">${escapeHtml(m.proses)}</td>
-                    <td class="px-3 py-2 border-r border-b whitespace-nowrap">
-                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100 font-medium">${escapeHtml(m.mesin)}</span>
-                    </td>
-                    <td class="px-2 py-2 text-center border-b whitespace-nowrap">
-                        <button onclick="openMachineModal('${m.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">Edit</button>
-                        <button onclick="deleteMachine('${m.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
-                    </td>
-                </tr>`;
-            }).join('');
-            updateBulkActionBar();
-        }
-
-        function openBulkImportModal() {
-            document.getElementById('bulkFileInput').value = '';
-            document.getElementById('bulkPasteArea').value = '';
-            document.getElementById('replaceExisting').checked = false;
-            document.getElementById('bulkImportModal').classList.add('active');
-        }
-        function closeBulkImportModal() { document.getElementById('bulkImportModal').classList.remove('active'); }
-
-        function processBulkImport() {
-            const fileInput = document.getElementById('bulkFileInput');
-            const pasteArea = document.getElementById('bulkPasteArea');
-            const replace = document.getElementById('replaceExisting').checked;
-
-            const processRows = (rows) => {
-                try {
-                    if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
-                    let startIdx = 0;
-                    const firstRow = rows[0].map(c => String(c == null ? '' : c).trim().toLowerCase());
-                    if (firstRow[0] === 'nama mesin' || firstRow[0] === 'nama' || firstRow[0] === 'proses' || firstRow[1] === 'sub mesin' || firstRow[1] === 'mesin' || firstRow[1] === 'jalur') startIdx = 1;
-
-                    const newItems = [];
-                    for (let i = startIdx; i < rows.length; i++) {
-                        const cells = rows[i].map(c => String(c == null ? '' : c).trim());
-                        if (cells.length < 2) continue;
-                        if (!cells[0] && !cells[1]) continue;
-                        const proses = cells[0];
-                        const mesin = cells[1];
-                        if (!proses) continue;
-                        newItems.push({ id: generateId(), proses, mesin: mesin || '-' });
-                    }
-                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
-                    if (replace) machineList = newItems;
-                    else machineList = machineList.concat(newItems);
-                    saveMachinesToLS();
-                    renderMachineTable();
-                    renderMachineDropdownList();
-                    updateCounters();
-                    closeBulkImportModal();
-                    showToast(`✅ ${newItems.length} mesin di-import`, 'success');
-                } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
-            };
-
-            const handleText = (text) => {
-                const lines = text.split(/\r?\n/).filter(l => l.trim());
-                if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
-                const firstLine = lines[0];
-                const delimiter = firstLine.includes('\t') ? '\t' : ',';
-                const rows = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, '')));
-                processRows(rows);
-            };
-
-            const file = fileInput.files[0];
-            if (file) {
-                const fileName = file.name.toLowerCase();
-                if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                    if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const data = new Uint8Array(e.target.result);
-                            const workbook = XLSX.read(data, { type: 'array' });
-                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', blankrows: false });
-                            processRows(rows);
-                        } catch (err) { showToast('❌ Gagal baca Excel', 'error'); }
-                    };
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    const reader = new FileReader();
-                    reader.onload = (e) => handleText(e.target.result);
-                    reader.readAsText(file);
-                }
-            } else if (pasteArea.value.trim()) {
-                handleText(pasteArea.value);
-            } else {
-                showToast('Pilih file Excel/CSV atau paste data dulu!', 'error');
-            }
-        }
-
-        function exportMachineCSVList(list, filename) {
-            if (list.length === 0) { showToast('Belum ada mesin!', 'error'); return; }
-            const escapeCSV = (v) => {
-                const s = String(v == null ? '' : v);
-                if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
-                return s;
-            };
-            const rows = [['Nama Mesin', 'Sub Mesin']];
-            list.forEach(m => rows.push([m.proses, m.mesin]));
-            const csvContent = rows.map(r => r.map(escapeCSV).join(',')).join('\r\n');
-            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-            if (downloadBlob(blob, filename)) showToast(`📄 ${list.length} mesin di-export`, 'success');
-        }
-
-        function exportMachineCSV() {
-            const sorted = [...machineList].sort((a, b) => {
-                const na = String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
-                if (na !== 0) return na;
-                return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
-            });
-            exportMachineCSVList(sorted, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`);
-        }
-
-        function buildDataRows(exportFilter = '__all__') {
-            let dataToExport;
-            if (exportFilter === '__all__') dataToExport = masterData;
-            else dataToExport = masterData.filter(d => d.line === exportFilter);
-
+        // ============================================================
+        // EXPORT EXCEL & CSV
+        // ============================================================
+        function buildDataRows() {
+            const dataToExport = masterData;
             const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
-            const header = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
+            const header = ['Line', 'No', currentMode === 'elemen' ? 'Proses' : 'Nama Mesin', currentMode === 'elemen' ? 'Elemen' : 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
             header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Jml Mesin', 'Total Kapasitas');
-
             const groups = {};
             const groupOrder = [];
             dataToExport.forEach(item => {
                 const key = `${item.line}||${item.no}||${item.process}`;
-                if (!groups[key]) {
-                    groups[key] = { line: item.line, no: item.no, process: item.process, rows: [], totalCapacity: 0 };
-                    groupOrder.push(key);
-                }
+                if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, rows: [], totalCapacity: 0 }; groupOrder.push(key); }
                 groups[key].rows.push(item);
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
-
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
-
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
                 const groupStartRow = rowIndex;
-
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
-                    const rowData = [
-                        rIdx === 0 ? item.line : '',
-                        rIdx === 0 ? item.no : '',
-                        rIdx === 0 ? item.process : '',
-                        item.subMachine
-                    ];
-                    for (let i = 0; i < maxLaps; i++) {
-                        rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
-                    }
-                    rowData.push(
-                        parseFloat(stats.avg.toFixed(2)),
-                        item.ngRate,
-                        parseFloat(stats.gerakan.toFixed(2)),
-                        parseFloat(stats.ctPlusG.toFixed(2)),
-                        stats.capacity,
-                        item.actualMachine,
-                        rIdx === 0 ? group.totalCapacity : ''
-                    );
+                    const rowData = [rIdx === 0 ? item.line : '', rIdx === 0 ? item.no : '', rIdx === 0 ? item.process : '', item.subMachine];
+                    for (let i = 0; i < maxLaps; i++) rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
+                    rowData.push(parseFloat(stats.avg.toFixed(2)), item.ngRate, parseFloat(stats.gerakan.toFixed(2)), parseFloat(stats.ctPlusG.toFixed(2)), stats.capacity, item.actualMachine, rIdx === 0 ? group.totalCapacity : '');
                     dataRows.push(rowData);
                     rowIndex++;
                 });
-
                 if (rowSpan > 1) {
                     const totalCol = 10 + maxLaps;
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
@@ -2054,80 +2237,40 @@
                     merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
                 }
             });
-
-            return { dataRows, merges, maxLaps, dataToExport };
-        }
-
-        function downloadBlob(blob, filename) {
-            try {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = filename;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1500);
-                return true;
-            } catch (e) {
-                showToast('❌ Gagal download. Coba Chrome.', 'error');
-                return false;
-            }
+            return { dataRows, merges, maxLaps };
         }
 
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
-
             try {
-                const { dataRows, merges, maxLaps } = buildDataRows('__all__');
+                const { dataRows, merges, maxLaps } = buildDataRows();
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(dataRows);
                 ws['!merges'] = merges;
-
                 const colWidths = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
                 for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
                 colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
                 ws['!cols'] = colWidths;
-
                 const range = XLSX.utils.decode_range(ws['!ref']);
-                const BORDER = {
-                    top: { style: 'thin', color: { rgb: '9CA3AF' } },
-                    bottom: { style: 'thin', color: { rgb: '9CA3AF' } },
-                    left: { style: 'thin', color: { rgb: '9CA3AF' } },
-                    right: { style: 'thin', color: { rgb: '9CA3AF' } }
-                };
-
+                const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
                 for (let c = 0; c <= range.e.c; c++) {
                     const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                     if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                    ws[addr].s = {
-                        font: { bold: true, sz: 11, color: { rgb: '111827' } },
-                        fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } },
-                        alignment: { horizontal: 'center', vertical: 'center' },
-                        border: BORDER
-                    };
+                    ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                 }
-
                 const groups = {};
                 const groupOrder = [];
                 masterData.forEach(item => {
                     const key = `${item.line}||${item.no}||${item.process}`;
-                    if (!groups[key]) {
-                        groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] };
-                        groupOrder.push(key);
-                    }
+                    if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] }; groupOrder.push(key); }
                     groups[key].rows.push(item);
                     groups[key].capacity += getRowStats(item).capacity;
                 });
-
                 const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
                 const perProcess = Object.values(groups);
                 const lineGroups = {};
-                perProcess.forEach(p => {
-                    if (!lineGroups[p.line]) lineGroups[p.line] = [];
-                    lineGroups[p.line].push(p);
-                });
+                perProcess.forEach(p => { if (!lineGroups[p.line]) lineGroups[p.line] = []; lineGroups[p.line].push(p); });
                 const bottleneckByLine = {};
                 Object.keys(lineGroups).forEach(line => {
                     const arr = lineGroups[line];
@@ -2135,7 +2278,6 @@
                     arr.forEach(p => { if (p.capacity < minP.capacity) minP = p; });
                     bottleneckByLine[line] = `${minP.no}||${minP.process}`;
                 });
-
                 let dataRowIdx = 1;
                 groupOrder.forEach(key => {
                     const group = groups[key];
@@ -2143,27 +2285,19 @@
                     const isBottleneck = (bottleneckByLine[group.line] === `${group.no}||${group.process}` && lineGroups[group.line].length > 1);
                     const isProblem = isBelowStandard || isBottleneck;
                     const groupStartRow = dataRowIdx;
-
                     group.rows.forEach((item, rIdx) => {
                         const rowIdx = dataRowIdx;
                         const excelRow = rowIdx + 1;
                         const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
-
                         const colS1 = XLSX.utils.encode_col(4);
                         const colSn = XLSX.utils.encode_col(4 + maxLaps - 1);
                         const colAvg = XLSX.utils.encode_col(4 + maxLaps);
                         const colGerakan = XLSX.utils.encode_col(6 + maxLaps);
                         const colCTG = XLSX.utils.encode_col(7 + maxLaps);
-                        const colKap = XLSX.utils.encode_col(8 + maxLaps);
-
                         for (let c = 0; c <= range.e.c; c++) {
                             const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
                             if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-
-                            let fill = rowBg;
-                            let font = { color: { rgb: '111827' }, sz: 11 };
-                            let align = { horizontal: 'center', vertical: 'center' };
-
+                            let fill = rowBg, font = { color: { rgb: '111827' }, sz: 11 }, align = { horizontal: 'center', vertical: 'center' };
                             if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
                             if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
                             if (c === 3) { fill = 'DBEAFE'; font = { sz: 11, color: { rgb: '1E40AF' } }; }
@@ -2176,103 +2310,156 @@
                             if (c === 9 + maxLaps) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
                             if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; }
                             if (isProblem && (c === 8 + maxLaps || c === 10 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
-
-                            ws[addr].s = {
-                                font: font,
-                                fill: { patternType: 'solid', fgColor: { rgb: fill } },
-                                alignment: align,
-                                border: BORDER
-                            };
+                            ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: align, border: BORDER };
                         }
-
                         const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 4 + maxLaps });
-                        if (ws[avgAddr]) {
-                            ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`;
-                            ws[avgAddr].v = getRowStats(item).avg;
-                            ws[avgAddr].t = 'n';
-                            ws[avgAddr].z = '0.00';
-                        }
+                        if (ws[avgAddr]) { ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`; ws[avgAddr].v = getRowStats(item).avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00'; }
                         const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
-                        if (ws[ctgAddr]) {
-                            ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`;
-                            ws[ctgAddr].v = getRowStats(item).ctPlusG;
-                            ws[ctgAddr].t = 'n';
-                            ws[ctgAddr].z = '0.00';
-                        }
+                        if (ws[ctgAddr]) { ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`; ws[ctgAddr].v = getRowStats(item).ctPlusG; ws[ctgAddr].t = 'n'; ws[ctgAddr].z = '0.00'; }
                         const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 8 + maxLaps });
-                        if (ws[kapAddr]) {
-                            ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`;
-                            ws[kapAddr].v = getRowStats(item).capacity;
-                            ws[kapAddr].t = 'n';
-                        }
-
+                        if (ws[kapAddr]) { ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`; ws[kapAddr].v = getRowStats(item).capacity; ws[kapAddr].t = 'n'; }
                         dataRowIdx++;
                     });
-
                     if (group.rows.length > 1) {
                         const totalCol = 10 + maxLaps;
                         const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
                         if (ws[totalAddr]) {
                             const colKap = XLSX.utils.encode_col(8 + maxLaps);
-                            const startRow = groupStartRow + 1;
-                            const endRow = dataRowIdx;
-                            ws[totalAddr].f = `SUM(${colKap}${startRow}:${colKap}${endRow})`;
-                            ws[totalAddr].v = group.capacity;
-                            ws[totalAddr].t = 'n';
-                            ws[totalAddr].z = '0';
+                            ws[totalAddr].f = `SUM(${colKap}${groupStartRow + 1}:${colKap}${dataRowIdx})`;
+                            ws[totalAddr].v = group.capacity; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0';
                         }
                     }
                 });
-
                 merges.forEach(merge => {
                     const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
                     if (ws[startAddr] && ws[startAddr].s) {
                         const style = ws[startAddr].s;
-                        for (let r = merge.s.r; r <= merge.e.r; r++) {
-                            for (let c = merge.s.c; c <= merge.e.c; c++) {
-                                const addr = XLSX.utils.encode_cell({ r: r, c: c });
-                                if (addr !== startAddr) {
-                                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                                    ws[addr].s = style;
-                                }
-                            }
+                        for (let r = merge.s.r; r <= merge.e.r; r++) for (let c = merge.s.c; c <= merge.e.c; c++) {
+                            const addr = XLSX.utils.encode_cell({ r, c });
+                            if (addr !== startAddr) { if (!ws[addr]) ws[addr] = { t: 's', v: '' }; ws[addr].s = style; }
                         }
                     }
                 });
-
                 ws['!rows'] = [{ hpt: 25 }];
                 for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-
                 XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                const filename = `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.xlsx`;
                 if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
-            } catch (err) {
-                console.error('Export XLSX gagal:', err);
-                showToast('❌ Gagal export Excel.', 'error');
-            }
+            } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
         }
 
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             try {
-                const { dataRows } = buildDataRows('__all__');
-                const escapeCSV = (v) => {
-                    const s = String(v == null ? '' : v);
-                    if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
-                    return s;
-                };
-                const csvContent = dataRows.map(row => row.map(escapeCSV).join(',')).join('\r\n');
-                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-                const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.csv`;
+                const { dataRows } = buildDataRows();
+                const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+                const csv = dataRows.map(row => row.map(esc).join(',')).join('\r\n');
+                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+                const filename = `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.csv`;
                 if (downloadBlob(blob, filename)) showToast('📄 File CSV diunduh', 'success');
-            } catch (err) {
-                console.error('Export CSV gagal:', err);
-                showToast('❌ Gagal export CSV.', 'error');
-            }
+            } catch (err) { console.error(err); showToast('❌ Gagal export CSV.', 'error'); }
         }
 
+        // ============================================================
+        // TAB NAVIGATION
+        // ============================================================
+        function switchTab(tabName) {
+            if (isRunning && tabName !== 'input') {
+                if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.')) return;
+                clearInterval(timerInterval); timerInterval = null;
+                setStartButton('resume');
+                setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
+                isRunning = false;
+            }
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById('tab-' + tabName);
+            if (target) target.classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+            const btn = document.getElementById('tabBtn-' + tabName);
+            if (btn) btn.classList.add('tab-active');
+            currentTab = tabName;
+            if (tabName === 'mesin') { renderMachineTable(); updateBulkActionBar(); }
+            if (tabName === 'data') { renderMasterTable(); updateCounters(); }
+            if (tabName === 'elemen') { renderElemenMasterTable(); }
+            if (tabName === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
+            if (tabName === 'input') {
+                if (currentMode === 'elemen') { populateElemenNoDropdown(); }
+                else renderMachineDropdownList();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function updateServerInfo() {
+            const se = document.getElementById('serverStatusInfo');
+            if (!se) return;
+            if (firebaseReady) { se.innerText = '✅ Online'; se.className = 'font-bold text-emerald-600'; }
+            else { se.innerText = '❌ Offline'; se.className = 'font-bold text-red-600'; }
+            const mc = document.getElementById('serverMasterCount');
+            if (mc) mc.innerText = masterData.length;
+            const lu = document.getElementById('serverLastUpdate');
+            if (lu) lu.innerText = lastServerUpdate ? new Date(lastServerUpdate).toLocaleString('id-ID') : '-';
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        async function init() {
+            // Load mode terakhir
+            const savedMode = lsLoad(LS_KEY_MODE, '');
+            const savedLine = localStorage.getItem(LS_KEY_ACTIVE_LINE);
+            if (savedLine) activeLine = savedLine;
+
+            machineList = lsLoad(LS_KEY_MACHINES, []);
+            masterData = lsLoad(LS_KEY_MASTER, []);
+            elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
+
+            updateLineDisplay();
+            renderMachineDropdownList();
+            renderMachineTable();
+            renderMasterTable();
+            updateCounters();
+            populateElemenNoDropdown();
+            renderElemenMasterTable();
+
+            setLoadingDetail('Menunggu Firebase SDK...');
+
+            const activateFirebase = async () => {
+                firebaseReady = true;
+                setLoadingDetail('Firebase siap...');
+                await loadAllFromFirebaseOnce();
+                setupFirebaseListeners();
+                setSyncStatus('online');
+                setLoadingDone();
+                // Kalau belum pilih mode, tampilkan modal mode
+                if (!savedMode) {
+                    document.getElementById('modeModal').classList.add('active');
+                } else {
+                    selectMode(savedMode);
+                }
+                if (!activeLine && savedMode) setTimeout(() => openLineModal(), 700);
+                else if (activeLine) syncUphFromActiveLine();
+            };
+            if (window.firebaseDB) { await activateFirebase(); }
+            else {
+                window.addEventListener('firebaseReady', activateFirebase, { once: true });
+                setTimeout(() => {
+                    if (!firebaseReady) {
+                        setSyncStatus('offline');
+                        setLoadingDone();
+                        if (!savedMode) document.getElementById('modeModal').classList.add('active');
+                        else selectMode(savedMode);
+                    }
+                }, 5000);
+            }
+
+            document.addEventListener('click', (e) => {
+                const wrapper = document.querySelector('.custom-dropdown-wrapper');
+                if (wrapper && !wrapper.contains(e.target)) closeMachineDropdown();
+            });
+        }
+
+        // Jalankan
         init();
     </script>
 </body>
