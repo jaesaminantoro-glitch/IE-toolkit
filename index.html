@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - All Fixed</title>
+    <title>Time Study - Multi Line</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -72,6 +72,52 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .header-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
+        }
+        .header-btn:active { transform: scale(0.92); opacity: 0.85; }
+        .header-btn .btn-icon { font-size: 18px; line-height: 1; }
+        .header-btn .btn-label { font-size: 9px; font-weight: 700; margin-top: 2px; line-height: 1; }
+
+        @media (min-width: 768px) {
+            .header-btn {
+                flex-direction: row;
+                width: auto;
+                height: auto;
+                padding: 6px 12px;
+                gap: 6px;
+            }
+            .header-btn .btn-icon { font-size: 13px; }
+            .header-btn .btn-label { font-size: 11px; margin-top: 0; }
+        }
+
+        /* Badge Line */
+        .line-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
+        }
+        .line-badge:active { transform: scale(0.95); }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
@@ -82,30 +128,75 @@
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
-    <!-- HEADER DENGAN TOMBOL EXPORT -->
+    <!-- MODAL PILIH LINE (PERTAMA KALI) -->
+    <div id="lineModal" class="modal-bg">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-base font-bold text-gray-800">🏭 Pilih Line Anda</h3>
+                <p class="text-xs text-gray-500 mt-1">Setting Line hanya untuk HP ini. Semua data time study tetap sync ke semua device.</p>
+            </div>
+            <div class="p-4 space-y-3">
+                <div id="lineListContainer" class="space-y-2">
+                    <!-- Diisi JavaScript -->
+                </div>
+                <div class="border-t border-gray-200 pt-3">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tambah Line Baru</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="newLineInput" placeholder="Contoh: Line D" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <button onclick="addNewLineFromModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">➕ Tambah</button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200">
+                <button onclick="saveLineSelection()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-sm">
+                    ✅ Set Line Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center gap-2">
             <div class="flex items-center gap-2 min-w-0">
                 <h1 class="text-base md:text-xl font-bold text-gray-800 truncate">⏱️ Time Study</h1>
-                <div class="flex items-center gap-1 text-[10px] md:text-xs text-gray-500">
-                    <span id="syncDot" class="sync-dot sync-syncing"></span>
-                    <span id="syncText" class="hidden sm:inline">Menghubungkan...</span>
-                </div>
+                <span id="syncDot" class="sync-dot sync-syncing"></span>
             </div>
             <div class="flex items-center gap-1.5 md:gap-2">
-                <button onclick="manualSync()" class="text-[10px] md:text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1.5 rounded-lg border border-blue-200 transition" title="Sync manual">🔄</button>
-                <button onclick="exportToExcelXLSX()" class="text-[10px] md:text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2 md:px-3 py-1.5 rounded-lg shadow-sm transition whitespace-nowrap" title="Export Excel">
-                    📥 <span class="hidden sm:inline">Excel</span>
+                <!-- BADGE LINE -->
+                <button onclick="openLineModal()" 
+                    id="lineBadge" 
+                    class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white"
+                    title="Klik untuk ganti Line">
+                    <span>🏷️</span>
+                    <span id="currentLineText">Pilih Line</span>
                 </button>
-                <button onclick="exportToCSV()" class="text-[10px] md:text-xs bg-amber-600 hover:bg-amber-700 text-white font-semibold px-2 md:px-3 py-1.5 rounded-lg shadow-sm transition whitespace-nowrap" title="Export CSV">
-                    📄 <span class="hidden sm:inline">CSV</span>
+
+                <button onclick="manualSync()" 
+                    class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200"
+                    title="Sync Manual">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-label">SYNC</span>
                 </button>
-                <span id="currentDate" class="text-[10px] md:text-xs text-gray-500 font-medium hidden lg:inline"></span>
+
+                <button onclick="exportToExcelXLSX()" 
+                    class="header-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                    title="Export Excel">
+                    <span class="btn-icon">📥</span>
+                    <span class="btn-label">EXCEL</span>
+                </button>
+
+                <button onclick="exportToCSV()" 
+                    class="header-btn bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+                    title="Export CSV">
+                    <span class="btn-icon">📄</span>
+                    <span class="btn-label">CSV</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <nav class="bg-white border-b border-gray-200 sticky top-[44px] md:top-[56px] z-20">
+    <nav class="bg-white border-b border-gray-200 sticky top-[52px] md:top-[60px] z-20">
         <div class="max-w-7xl mx-auto flex overflow-x-auto">
             <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
             <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
@@ -124,7 +215,17 @@
                 </div>
 
                 <div class="space-y-3">
-                    <!-- DROPDOWN MESIN -->
+                    <!-- INFO LINE -->
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex items-center justify-between">
+                        <div>
+                            <div class="text-[10px] text-indigo-600 uppercase font-semibold">Line Aktif</div>
+                            <div id="inputLineDisplay" class="text-sm font-bold text-indigo-800">-</div>
+                        </div>
+                        <button onclick="openLineModal()" class="text-[10px] bg-white border border-indigo-300 text-indigo-700 px-2 py-1 rounded font-semibold">
+                            Ganti Line
+                        </button>
+                    </div>
+
                     <div>
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih Mesin / Jalur</label>
                         <div class="relative">
@@ -133,10 +234,8 @@
                             </select>
                             <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">▼</div>
                         </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Daftar mesin diatur di tab ⚙️ Mesin</p>
                     </div>
 
-                    <!-- NO MANUAL + NAMA MESIN AUTO -->
                     <div class="grid grid-cols-3 gap-2">
                         <div class="col-span-1">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
@@ -153,19 +252,16 @@
                         </div>
                     </div>
 
-                    <!-- SUB MESIN MANUAL -->
                     <div id="customMachineWrapper" class="hidden">
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Sub Mesin Manual (Baru)</label>
                         <input type="text" id="inputSubMachineCustom" placeholder="Ketik sub mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
                     </div>
 
-                    <!-- INFO SUB MESIN -->
                     <div id="selectedMachineInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-2.5">
                         <div class="text-[10px] text-blue-600 uppercase font-semibold">Sub Mesin</div>
                         <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                     </div>
 
-                    <!-- NG / GERAKAN / JUMLAH MESIN -->
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
@@ -208,12 +304,19 @@
     <!-- TAB DATA -->
     <div id="tab-data" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-            <div class="flex justify-between items-center mb-3">
+            <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                 <div>
                     <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
                     <p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time via Firebase</p>
                 </div>
-                <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset Semua</button>
+                <div class="flex gap-2 items-center">
+                    <label class="text-[10px] text-gray-500 font-semibold">Filter Line:</label>
+                    <select id="dataFilterLine" onchange="renderMasterTable()" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                        <option value="__active__">Line Aktif</option>
+                        <option value="__all__">Semua Line</option>
+                    </select>
+                    <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset</button>
+                </div>
             </div>
 
             <div class="lg:hidden text-[10px] text-blue-700 mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded border border-blue-200">
@@ -224,6 +327,7 @@
                 <table class="min-w-full divide-y divide-gray-200 text-xs" id="masterTable">
                     <thead class="bg-yellow-100 text-gray-800">
                         <tr>
+                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                             <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
                             <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
                             <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>
@@ -237,7 +341,7 @@
                         </tr>
                     </thead>
                     <tbody id="masterTableBody" class="divide-y divide-gray-200 bg-white">
-                        <tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>
+                        <tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -251,7 +355,7 @@
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h2 class="text-sm md:text-base font-semibold text-gray-800">⚙️ Daftar Mesin</h2>
-                        <p class="text-[10px] md:text-xs text-gray-500">No diinput manual di tab Input.</p>
+                        <p class="text-[10px] md:text-xs text-gray-500">Sama untuk semua line. No diinput manual.</p>
                     </div>
                     <div class="flex gap-2 flex-wrap">
                         <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
@@ -283,28 +387,33 @@
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                 <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
                 <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
-                    <li>Daftar mesin = Nama Mesin + Sub Mesin (tanpa No)</li>
+                    <li>Daftar mesin SAMA untuk semua line</li>
                     <li>No diinput manual di tab 📝 Input</li>
-                    <li>Import support Excel (.xlsx, .xls), CSV, atau paste</li>
+                    <li>Setiap input otomatis diberi tag Line aktif</li>
                     <li>Data sync otomatis ke Firebase</li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- TAB EXPORT (HANYA STANDAR UPH + RINGKASAN) -->
+    <!-- TAB EXPORT -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah Standard</h2>
-                <div>
-                    <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Standard UPH yang Diinginkan</label>
-                    <div class="flex gap-2 items-center">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Filter Line</label>
+                        <select id="standardFilterLine" onchange="renderStandardCheck()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+                            <option value="__active__">Line Aktif</option>
+                            <option value="__all__">Semua Line</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Standard UPH</label>
                         <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
                             oninput="renderStandardCheck()"
-                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                        <span class="text-sm font-bold text-gray-600">UPH</span>
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
@@ -317,14 +426,14 @@
             </div>
 
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
-                <div class="text-xs font-bold text-blue-800 mb-2">💡 Info Firebase</div>
+                <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
                 <div class="text-[11px] text-blue-700 space-y-1">
-                    <div>Status: <span id="serverStatusInfo" class="font-bold">-</span></div>
+                    <div>Firebase: <span id="serverStatusInfo" class="font-bold">-</span></div>
                     <div>Data Master: <span id="serverMasterCount" class="font-bold">0</span></div>
                     <div>Daftar Mesin: <span id="serverMachineCount" class="font-bold">0</span></div>
                     <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
                 </div>
-                <p class="text-[10px] text-blue-600 mt-2">💡 Tombol Export Excel/CSV ada di header atas</p>
+                <p class="text-[10px] text-blue-600 mt-2">💡 Tombol Export Excel/CSV di header</p>
             </div>
         </div>
     </div>
@@ -441,7 +550,7 @@
         window.firebaseOnValue = onValue;
         window.firebaseGet = get;
 
-        console.log('✅ Firebase Realtime Database initialized');
+        console.log('✅ Firebase initialized');
         window.dispatchEvent(new Event('firebaseReady'));
     </script>
 
@@ -460,10 +569,14 @@
         let firebaseReady = false;
         let isSyncingFromRemote = false;
         let lastServerUpdate = null;
+        let lineList = [];  // Daftar line (dari Firebase)
+        let activeLine = '';  // Line aktif untuk HP ini (localStorage)
+        let tempSelectedLine = '';  // Line sementara di modal
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
         const LS_KEY_STANDARD = 'timeStudy_standardUph_v1';
+        const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
 
         function lsSaveMachines() { try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {} }
         function lsLoadMachines() { try { const r = localStorage.getItem(LS_KEY_MACHINES); if (r) machineList = JSON.parse(r); } catch(e) { machineList = []; } }
@@ -472,10 +585,8 @@
 
         function setSyncStatus(status, text) {
             const dot = document.getElementById('syncDot');
-            const t = document.getElementById('syncText');
-            if (!dot || !t) return;
+            if (!dot) return;
             dot.className = 'sync-dot ' + (status === 'online' ? 'sync-online' : status === 'offline' ? 'sync-offline' : 'sync-syncing');
-            t.innerText = text || (status === 'online' ? 'Tersinkron' : status === 'offline' ? 'Offline' : 'Sync...');
         }
         function setLoadingDone() {
             const overlay = document.getElementById('loadingOverlay');
@@ -486,6 +597,9 @@
             if (el) el.innerText = text;
         }
 
+        // ============================================================
+        // FIREBASE SYNC
+        // ============================================================
         async function saveMasterToFirebase() {
             if (!firebaseReady || isSyncingFromRemote) return;
             try {
@@ -494,9 +608,8 @@
                 await window.firebaseSet(dbRef, { data: masterData, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
             } catch (e) {
-                console.error('❌ Gagal save master:', e);
-                setSyncStatus('offline', 'Gagal simpan');
-                showToast('⚠️ Gagal sync ke Firebase', 'warning');
+                setSyncStatus('offline');
+                showToast('⚠️ Gagal sync', 'warning');
             }
         }
         async function saveMachinesToFirebase() {
@@ -507,14 +620,27 @@
                 await window.firebaseSet(dbRef, { data: machineList, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
             } catch (e) {
-                console.error('❌ Gagal save machines:', e);
-                setSyncStatus('offline', 'Gagal simpan');
-                showToast('⚠️ Gagal sync ke Firebase', 'warning');
+                setSyncStatus('offline');
+                showToast('⚠️ Gagal sync', 'warning');
             }
         }
+        async function saveLineListToFirebase() {
+            if (!firebaseReady || isSyncingFromRemote) return;
+            try {
+                setSyncStatus('syncing');
+                const dbRef = window.firebaseRef(window.firebaseDB, 'lineList');
+                await window.firebaseSet(dbRef, { data: lineList, lastUpdate: new Date().toISOString() });
+                setSyncStatus('online');
+            } catch (e) {
+                setSyncStatus('offline');
+                showToast('⚠️ Gagal sync', 'warning');
+            }
+        }
+
         function setupFirebaseListeners() {
             if (!firebaseReady) return;
 
+            // Master
             const masterRef = window.firebaseRef(window.firebaseDB, 'masterData');
             window.firebaseOnValue(masterRef, (snapshot) => {
                 const val = snapshot.val();
@@ -537,14 +663,14 @@
                 if (mc) mc.innerText = remoteData.length;
                 const lu = document.getElementById('serverLastUpdate');
                 if (lu && remoteUpdate) lu.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
-            }, (error) => { setSyncStatus('offline'); });
+            }, () => { setSyncStatus('offline'); });
 
+            // Machines
             const machinesRef = window.firebaseRef(window.firebaseDB, 'machineList');
             window.firebaseOnValue(machinesRef, (snapshot) => {
                 const val = snapshot.val();
                 if (!val) return;
                 const remoteData = val.data || [];
-                const remoteUpdate = val.lastUpdate;
                 if (isSyncingFromRemote) return;
                 if (JSON.stringify(remoteData) !== JSON.stringify(machineList)) {
                     isSyncingFromRemote = true;
@@ -555,18 +681,34 @@
                     updateCounters();
                     isSyncingFromRemote = false;
                 }
-                lastServerUpdate = remoteUpdate;
                 setSyncStatus('online');
                 const mc = document.getElementById('serverMachineCount');
                 if (mc) mc.innerText = remoteData.length;
-            }, (error) => { setSyncStatus('offline'); });
+            }, () => { setSyncStatus('offline'); });
+
+            // Lines
+            const linesRef = window.firebaseRef(window.firebaseDB, 'lineList');
+            window.firebaseOnValue(linesRef, (snapshot) => {
+                const val = snapshot.val();
+                if (!val) return;
+                const remoteData = val.data || [];
+                if (isSyncingFromRemote) return;
+                if (JSON.stringify(remoteData) !== JSON.stringify(lineList)) {
+                    isSyncingFromRemote = true;
+                    lineList = remoteData;
+                    // Kalau modal line terbuka, refresh
+                    if (document.getElementById('lineModal').classList.contains('active')) {
+                        renderLineList();
+                    }
+                    isSyncingFromRemote = false;
+                }
+            }, () => {});
         }
 
         async function manualSync() {
             showToast('🔄 Sync manual...', 'info');
             await loadAllFromFirebaseOnce();
-            if (firebaseReady) showToast('✅ Tersinkron', 'success');
-            else showToast('❌ Firebase tidak terjangkau', 'error');
+            showToast('✅ Tersinkron', 'success');
         }
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
@@ -596,6 +738,12 @@
                     updateCounters();
                     isSyncingFromRemote = false;
                 }
+                const linesRef = window.firebaseRef(window.firebaseDB, 'lineList');
+                const snap3 = await window.firebaseGet(linesRef);
+                if (snap3.exists()) {
+                    const val3 = snap3.val();
+                    lineList = val3.data || [];
+                }
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
@@ -605,21 +753,100 @@
         function saveMasterToLS() { lsSaveMaster(); if (firebaseReady) saveMasterToFirebase(); }
         function loadMasterFromLS() { lsLoadMaster(); }
 
+        // ============================================================
+        // LINE MANAGEMENT
+        // ============================================================
+        function renderLineList() {
+            const container = document.getElementById('lineListContainer');
+            if (!container) return;
+            if (lineList.length === 0) {
+                container.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line. Tambah di bawah.</div>';
+                return;
+            }
+            container.innerHTML = lineList.map(l => `
+                <button onclick="selectLineTemp('${escapeHtml(l)}')"
+                    class="w-full text-left px-3 py-2 border-2 rounded-lg transition font-semibold
+                    ${tempSelectedLine === l 
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-800' 
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}">
+                    ${tempSelectedLine === l ? '✅ ' : ''}${escapeHtml(l)}
+                </button>
+            `).join('');
+        }
+
+        function selectLineTemp(line) {
+            tempSelectedLine = line;
+            renderLineList();
+        }
+
+        function openLineModal() {
+            tempSelectedLine = activeLine || '';
+            renderLineList();
+            document.getElementById('lineModal').classList.add('active');
+            document.getElementById('newLineInput').value = '';
+        }
+        function closeLineModal() {
+            document.getElementById('lineModal').classList.remove('active');
+        }
+        function addNewLineFromModal() {
+            const inp = document.getElementById('newLineInput');
+            const val = inp.value.trim();
+            if (!val) { showToast('Ketik nama line dulu!', 'error'); return; }
+            if (lineList.includes(val)) { showToast('Line sudah ada!', 'warning'); return; }
+            lineList.push(val);
+            lineList.sort();
+            saveLineListToFirebase();
+            tempSelectedLine = val;
+            renderLineList();
+            inp.value = '';
+            showToast('✅ Line ditambahkan', 'success');
+        }
+        function saveLineSelection() {
+            if (!tempSelectedLine) {
+                showToast('Pilih Line dulu!', 'error');
+                return;
+            }
+            const oldLine = activeLine;
+            activeLine = tempSelectedLine;
+            localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
+            updateLineDisplay();
+            closeLineModal();
+            if (oldLine !== activeLine) {
+                showToast(`✅ Line diganti ke ${activeLine}`, 'success');
+            } else {
+                showToast(`✅ Line: ${activeLine}`, 'success');
+            }
+        }
+
+        function updateLineDisplay() {
+            const badge = document.getElementById('currentLineText');
+            const display = document.getElementById('inputLineDisplay');
+            if (badge) badge.innerText = activeLine || 'Pilih Line';
+            if (display) display.innerText = activeLine || '-';
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
         async function init() {
-            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
-                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-            });
+            // Load active line
+            const savedLine = localStorage.getItem(LS_KEY_ACTIVE_LINE);
+            if (savedLine) activeLine = savedLine;
+
             const savedStandard = localStorage.getItem(LS_KEY_STANDARD);
             if (savedStandard) {
                 const el = document.getElementById('standardUph');
                 if (el) el.value = savedStandard;
             }
+
             loadMachinesFromLS();
             loadMasterFromLS();
             populateMachineDropdown();
             renderMachineTable();
             renderMasterTable();
             updateCounters();
+            updateLineDisplay();
+
             setLoadingDetail('Menunggu Firebase SDK...');
 
             const activateFirebase = async () => {
@@ -629,23 +856,23 @@
                 setupFirebaseListeners();
                 setSyncStatus('online');
                 setLoadingDone();
+
+                // Kalau line belum dipilih, tampilkan modal
+                if (!activeLine) {
+                    setTimeout(() => openLineModal(), 500);
+                }
             };
             if (window.firebaseDB) { await activateFirebase(); }
             else {
                 window.addEventListener('firebaseReady', activateFirebase, { once: true });
                 setTimeout(() => {
                     if (!firebaseReady) {
-                        setSyncStatus('offline', 'Offline mode');
+                        setSyncStatus('offline');
                         setLoadingDone();
-                        showToast('⚠️ Firebase tidak terjangkau.', 'warning');
+                        if (!activeLine) setTimeout(() => openLineModal(), 500);
                     }
                 }, 5000);
             }
-
-            const stopBtn = document.getElementById('mobileStopBtn');
-            const lapBtn = document.getElementById('mobileLapBtn');
-            if (stopBtn) stopBtn.disabled = true;
-            if (lapBtn) lapBtn.disabled = true;
         }
 
         function switchTab(tabName) {
@@ -730,7 +957,7 @@
             const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
             const toast = document.createElement('div');
             toast.innerText = message;
-            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[100] toast-animate whitespace-nowrap`;
+            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[200] toast-animate whitespace-nowrap`;
             document.body.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
@@ -743,6 +970,9 @@
             return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
         }
 
+        // ============================================================
+        // TIMER
+        // ============================================================
         function toggleTimer() {
             if (!isRunning) {
                 lastLapTimestamp = Date.now();
@@ -883,6 +1113,12 @@
         }
 
         function commitStudyRow() {
+            if (!activeLine) {
+                showToast('⚠️ Pilih Line dulu!', 'error');
+                openLineModal();
+                return;
+            }
+
             const select = document.getElementById('machineSelect');
             const isCustom = select.value === '__custom__' || !select.value;
             let no, process, subMachine;
@@ -905,13 +1141,17 @@
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
             if (actualMachine < 1) { showToast('Jumlah Mesin/Jalur minimal 1!', 'error'); return; }
 
+            // Cari existing (termasuk Line)
             const existingIndex = masterData.findIndex(item =>
-                item.no === no && item.process === process && item.subMachine === subMachine
+                item.line === activeLine &&
+                item.no === no &&
+                item.process === process &&
+                item.subMachine === subMachine
             );
 
             if (existingIndex !== -1) {
                 const existing = masterData[existingIndex];
-                if (!confirm(`Mesin "${subMachine}" untuk "${process}" (No ${no}) sudah ada.\n\nGabungkan sesi baru ini?`)) return;
+                if (!confirm(`Mesin "${subMachine}" untuk "${process}" (No ${no}, ${activeLine}) sudah ada.\n\nGabungkan sesi baru ini?`)) return;
                 existing.laps = existing.laps.concat(currentLaps);
                 existing.ngRate = ngRate;
                 existing.actualMachine = actualMachine;
@@ -920,12 +1160,13 @@
                 showToast(`Sesi ditambahkan (total ${existing.laps.length} siklus)`, 'success');
             } else {
                 masterData.push({
+                    line: activeLine,
                     no, process, subMachine,
                     laps: [...currentLaps],
                     ngRate, actualMachine, gerakan,
                     sessions: 1
                 });
-                showToast('✅ Data disimpan', 'success');
+                showToast(`✅ Data disimpan (${activeLine})`, 'success');
             }
             saveMasterToLS();
 
@@ -970,17 +1211,57 @@
             return { count, avg, ctPlusG, capacity, gerakan };
         }
 
+        // ============================================================
+        // RENDER MASTER TABLE
+        // ============================================================
+        function getFilteredData() {
+            const filterEl = document.getElementById('dataFilterLine');
+            const filter = filterEl ? filterEl.value : '__active__';
+
+            if (filter === '__all__') return masterData;
+            if (filter === '__active__') return masterData.filter(d => d.line === activeLine);
+            return masterData.filter(d => d.line === filter);
+        }
+
+        function renderDataFilterOptions() {
+            const sel = document.getElementById('dataFilterLine');
+            if (!sel) return;
+            const currentVal = sel.value;
+            const linesInData = [...new Set(masterData.map(d => d.line).filter(Boolean))].sort();
+            let html = `
+                <option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option>
+                <option value="__all__">Semua Line</option>
+            `;
+            if (linesInData.length > 0) {
+                html += '<option disabled>──────────</option>';
+                linesInData.forEach(l => {
+                    html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`;
+                });
+            }
+            sel.innerHTML = html;
+            // Restore value
+            if (currentVal && sel.querySelector(`option[value="${currentVal}"]`)) {
+                sel.value = currentVal;
+            } else {
+                sel.value = '__active__';
+            }
+        }
+
         function renderMasterTable() {
+            renderDataFilterOptions();
             const tbody = document.getElementById('masterTableBody');
             const thead = document.querySelector('#masterTable thead tr');
             if (!tbody || !thead) return;
 
-            if (masterData.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>`;
+            const filteredData = getFilteredData();
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data ${activeLine ? '(' + escapeHtml(activeLine) + ')' : ''}.</td></tr>`;
                 return;
             }
-            const maxLaps = Math.max(...masterData.map(item => item.laps.length));
+            const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             let headerHTML = `
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>
@@ -999,15 +1280,20 @@
             `;
             thead.innerHTML = headerHTML;
 
+            // Group by (line + no + process)
             const groups = {};
             const groupOrder = [];
-            masterData.forEach((item, idx) => {
-                const key = `${item.no}||${item.process}`;
+            filteredData.forEach((item) => {
+                const key = `${item.line}||${item.no}||${item.process}`;
                 if (!groups[key]) {
-                    groups[key] = { no: item.no, process: item.process, rows: [], totalCapacity: 0 };
+                    groups[key] = { line: item.line, no: item.no, process: item.process, rows: [], totalCapacity: 0 };
                     groupOrder.push(key);
                 }
-                groups[key].rows.push({ ...item, originalIndex: idx });
+                // Cari original index di masterData
+                const originalIndex = masterData.findIndex(m => 
+                    m.line === item.line && m.no === item.no && m.process === item.process && m.subMachine === item.subMachine
+                );
+                groups[key].rows.push({ ...item, originalIndex });
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
 
@@ -1023,6 +1309,7 @@
                     htmlOutput += `<tr class="hover:bg-yellow-50/50 transition">`;
                     if (rIdx === 0) {
                         htmlOutput += `
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(group.line)}</td>
                             <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(group.no)}</td>
                             <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process)}</td>
                         `;
@@ -1055,7 +1342,7 @@
 
         function deleteMasterRow(idx) {
             const item = masterData[idx];
-            if (!confirm(`Hapus data "${item.process}" (${item.subMachine})?`)) return;
+            if (!confirm(`Hapus data "${item.process}" (${item.subMachine}) ${item.line}?`)) return;
             masterData.splice(idx, 1);
             saveMasterToLS();
             renderMasterTable();
@@ -1064,7 +1351,7 @@
             showToast('Data dihapus', 'warning');
         }
         function clearAllData() {
-            if (!confirm('Yakin ingin menghapus seluruh data time study?')) return;
+            if (!confirm('Yakin ingin menghapus SELURUH data time study (semua line)?')) return;
             masterData = [];
             saveMasterToLS();
             renderMasterTable();
@@ -1095,7 +1382,30 @@
             const standardInput = document.getElementById('standardUph');
             const headerEl = document.getElementById('standardResultHeader');
             const listEl = document.getElementById('standardResultList');
+            const filterEl = document.getElementById('standardFilterLine');
             if (!standardInput || !headerEl || !listEl) return;
+
+            // Populate filter dropdown
+            if (filterEl) {
+                const currentVal = filterEl.value;
+                const linesInData = [...new Set(masterData.map(d => d.line).filter(Boolean))].sort();
+                let html = `
+                    <option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option>
+                    <option value="__all__">Semua Line</option>
+                `;
+                if (linesInData.length > 0) {
+                    html += '<option disabled>──────────</option>';
+                    linesInData.forEach(l => {
+                        html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`;
+                    });
+                }
+                filterEl.innerHTML = html;
+                if (currentVal && filterEl.querySelector(`option[value="${currentVal}"]`)) {
+                    filterEl.value = currentVal;
+                } else {
+                    filterEl.value = '__active__';
+                }
+            }
 
             if (!standardInput.value || standardInput.value === '') {
                 const saved = localStorage.getItem(LS_KEY_STANDARD);
@@ -1104,10 +1414,25 @@
             const standard = parseFloat(standardInput.value) || 0;
             if (standard > 0) localStorage.setItem(LS_KEY_STANDARD, standard);
 
+            // Filter data
+            const filter = filterEl ? filterEl.value : '__active__';
+            let filteredData;
+            let filterLabel = '';
+            if (filter === '__all__') {
+                filteredData = masterData;
+                filterLabel = 'Semua Line';
+            } else if (filter === '__active__') {
+                filteredData = masterData.filter(d => d.line === activeLine);
+                filterLabel = activeLine;
+            } else {
+                filteredData = masterData.filter(d => d.line === filter);
+                filterLabel = filter;
+            }
+
             const groups = {};
-            masterData.forEach(item => {
-                const key = `${item.no}||${item.process}`;
-                if (!groups[key]) groups[key] = { no: item.no, process: item.process, capacity: 0, machines: [] };
+            filteredData.forEach(item => {
+                const key = `${item.line}||${item.no}||${item.process}`;
+                if (!groups[key]) groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, machines: [] };
                 const stats = getRowStats(item);
                 groups[key].capacity += stats.capacity;
                 groups[key].machines.push(item.subMachine);
@@ -1116,7 +1441,7 @@
             const perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
 
             if (perProcess.length === 0) {
-                headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data. Input dulu di tab 📝 Input.</div>`;
+                headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data untuk ${escapeHtml(filterLabel)}.</div>`;
                 listEl.innerHTML = '';
                 return;
             }
@@ -1134,7 +1459,7 @@
                     <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
                         <span class="text-2xl">✅</span>
                         <div>
-                            <div class="text-sm font-bold text-emerald-700">Semua Mesin Sudah Memenuhi Standard!</div>
+                            <div class="text-sm font-bold text-emerald-700">Semua Proses di ${escapeHtml(filterLabel)} Memenuhi Standard!</div>
                             <div class="text-[11px] text-emerald-600">${perProcess.length} proses, semua ≥ ${standard} UPH</div>
                         </div>
                     </div>
@@ -1148,7 +1473,7 @@
                     <span class="text-2xl">⚠️</span>
                     <div>
                         <div class="text-sm font-bold text-red-700">${belowStandard.length} Proses di Bawah Standard</div>
-                        <div class="text-[11px] text-red-600">Dari total ${perProcess.length} proses · Standard: ${standard} UPH</div>
+                        <div class="text-[11px] text-red-600">${escapeHtml(filterLabel)} · Standard: ${standard} UPH</div>
                     </div>
                 </div>
             `;
@@ -1162,6 +1487,7 @@
                         <div class="flex justify-between items-center gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(p.line)}</span>
                                     <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(p.no)}</span>
                                     <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
                                 </div>
@@ -1189,6 +1515,9 @@
             listEl.innerHTML = listHtml;
         }
 
+        // ============================================================
+        // MACHINE MANAGEMENT
+        // ============================================================
         function generateId() { return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
         function openMachineModal(machineId = null) {
             editingMachineId = machineId;
@@ -1307,7 +1636,7 @@
                         if (!proses) continue;
                         newItems.push({ id: generateId(), proses: proses, mesin: mesin || '-' });
                     }
-                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid. Format: Nama Mesin | Sub Mesin', 'error'); return; }
+                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
                     if (replace) machineList = newItems;
                     else machineList = machineList.concat(newItems);
                     saveMachinesToLS();
@@ -1315,9 +1644,8 @@
                     updateCounters();
                     populateMachineDropdown();
                     closeBulkImportModal();
-                    showToast(`✅ ${newItems.length} mesin berhasil di-import`, 'success');
+                    showToast(`✅ ${newItems.length} mesin di-import`, 'success');
                 } catch (e) {
-                    console.error('❌ Process error:', e);
                     showToast('❌ Gagal proses data: ' + e.message, 'error');
                 }
             };
@@ -1341,16 +1669,14 @@
                         try {
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array' });
-                            const firstSheetName = workbook.SheetNames[0];
-                            const worksheet = workbook.Sheets[firstSheetName];
+                            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                             const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', blankrows: false });
                             processRows(rows);
                         } catch (err) {
-                            showToast('❌ Gagal baca file Excel: ' + err.message, 'error');
+                            showToast('❌ Gagal baca file Excel', 'error');
                         }
                     };
                     reader.readAsArrayBuffer(file);
-                    showToast('📂 Membaca file Excel...', 'info');
                 } else {
                     const reader = new FileReader();
                     reader.onload = (e) => handleText(e.target.result);
@@ -1364,7 +1690,7 @@
         }
 
         function exportMachineCSV() {
-            if (machineList.length === 0) { showToast('Belum ada mesin untuk di-export!', 'error'); return; }
+            if (machineList.length === 0) { showToast('Belum ada mesin!', 'error'); return; }
             const escapeCSV = (v) => {
                 const s = String(v == null ? '' : v);
                 if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
@@ -1379,32 +1705,44 @@
             if (downloadBlob(blob, filename)) showToast('📄 Daftar mesin di-export', 'success');
         }
 
-        function buildDataRows() {
-            const maxLaps = Math.max(...masterData.map(item => item.laps.length));
-            const header = ['No', 'Nama Mesin', 'Sub Mesin'];
+        // ============================================================
+        // BUILD DATA ROWS + EXPORT
+        // ============================================================
+        function buildDataRows(exportFilter = '__all__') {
+            let dataToExport;
+            if (exportFilter === '__all__') dataToExport = masterData;
+            else dataToExport = masterData.filter(d => d.line === exportFilter);
+
+            const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
+            const header = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
             header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Gabungan UPH');
+
             const groups = {};
             const groupOrder = [];
-            masterData.forEach(item => {
-                const key = `${item.no}||${item.process}`;
+            dataToExport.forEach(item => {
+                const key = `${item.line}||${item.no}||${item.process}`;
                 if (!groups[key]) {
-                    groups[key] = { no: item.no, process: item.process, rows: [], totalCapacity: 0 };
+                    groups[key] = { line: item.line, no: item.no, process: item.process, rows: [], totalCapacity: 0 };
                     groupOrder.push(key);
                 }
                 groups[key].rows.push(item);
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
+
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
+
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
                 const groupStartRow = rowIndex;
+
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
                     const rowData = [
+                        rIdx === 0 ? item.line : '',
                         rIdx === 0 ? item.no : '',
                         rIdx === 0 ? item.process : '',
                         item.subMachine
@@ -1423,14 +1761,17 @@
                     dataRows.push(rowData);
                     rowIndex++;
                 });
+
                 if (rowSpan > 1) {
-                    const totalCol = maxLaps + 8;
+                    const totalCol = 9 + maxLaps;
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
                     merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
+                    merges.push({ s: { r: groupStartRow, c: 2 }, e: { r: rowIndex - 1, c: 2 } });
                     merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
                 }
             });
-            return { dataRows, merges, maxLaps };
+
+            return { dataRows, merges, maxLaps, dataToExport };
         }
 
         function downloadBlob(blob, filename) {
@@ -1445,31 +1786,28 @@
                 setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1500);
                 return true;
             } catch (e) {
-                showToast('❌ Gagal download. Coba browser Chrome.', 'error');
+                showToast('❌ Gagal download. Coba Chrome.', 'error');
                 return false;
             }
         }
 
-        // ============================================================
-        // EXPORT XLSX: RUMUS + WARNA + TOTAL GABUNGAN AUTO
-        // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
-            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load. Coba CSV.', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
 
             try {
-                const { dataRows, merges, maxLaps } = buildDataRows();
+                const { dataRows, merges, maxLaps } = buildDataRows('__all__');
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(dataRows);
                 ws['!merges'] = merges;
 
-                const colWidths = [{ wch: 5 }, { wch: 15 }, { wch: 15 }];
+                // Column widths: Line, No, Nama, Sub, S1..Sn, Rata, NG, Gerakan, CTG, Kap, Total
+                const colWidths = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
                 for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
                 colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
                 ws['!cols'] = colWidths;
 
                 const range = XLSX.utils.decode_range(ws['!ref']);
-
                 const BORDER = {
                     top: { style: 'thin', color: { rgb: '9CA3AF' } },
                     bottom: { style: 'thin', color: { rgb: '9CA3AF' } },
@@ -1489,13 +1827,12 @@
                     };
                 }
 
-                // Groups
                 const groups = {};
                 const groupOrder = [];
                 masterData.forEach(item => {
-                    const key = `${item.no}||${item.process}`;
+                    const key = `${item.line}||${item.no}||${item.process}`;
                     if (!groups[key]) {
-                        groups[key] = { no: item.no, process: item.process, capacity: 0, rows: [] };
+                        groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] };
                         groupOrder.push(key);
                     }
                     groups[key].rows.push(item);
@@ -1504,18 +1841,26 @@
 
                 const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
                 const perProcess = Object.values(groups);
-                let bottleneckKey = null;
-                let minCap = Infinity;
+
+                // Bottleneck per line
+                const lineGroups = {};
                 perProcess.forEach(p => {
-                    const key = `${p.no}||${p.process}`;
-                    if (p.capacity < minCap) { minCap = p.capacity; bottleneckKey = key; }
+                    if (!lineGroups[p.line]) lineGroups[p.line] = [];
+                    lineGroups[p.line].push(p);
+                });
+                const bottleneckByLine = {};
+                Object.keys(lineGroups).forEach(line => {
+                    const arr = lineGroups[line];
+                    let minP = arr[0];
+                    arr.forEach(p => { if (p.capacity < minP.capacity) minP = p; });
+                    bottleneckByLine[line] = `${minP.no}||${minP.process}`;
                 });
 
                 let dataRowIdx = 1;
                 groupOrder.forEach(key => {
                     const group = groups[key];
                     const isBelowStandard = standardUph > 0 && group.capacity < standardUph;
-                    const isBottleneck = (key === bottleneckKey && perProcess.length > 1);
+                    const isBottleneck = (bottleneckByLine[group.line] === `${group.no}||${group.process}` && lineGroups[group.line].length > 1);
                     const isProblem = isBelowStandard || isBottleneck;
                     const groupStartRow = dataRowIdx;
 
@@ -1524,12 +1869,13 @@
                         const excelRow = rowIdx + 1;
                         const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
 
-                        const colS1 = XLSX.utils.encode_col(3);
-                        const colSn = XLSX.utils.encode_col(3 + maxLaps - 1);
-                        const colAvg = XLSX.utils.encode_col(3 + maxLaps);
-                        const colGerakan = XLSX.utils.encode_col(5 + maxLaps);
-                        const colCTG = XLSX.utils.encode_col(6 + maxLaps);
-                        const colKap = XLSX.utils.encode_col(7 + maxLaps);
+                        // Kolom index: Line=0, No=1, Nama=2, Sub=3, S1..Sn=4..3+maxLaps, Rata=4+maxLaps, NG=5+maxLaps, Gerakan=6+maxLaps, CTG=7+maxLaps, Kap=8+maxLaps, Total=9+maxLaps
+                        const colS1 = XLSX.utils.encode_col(4);
+                        const colSn = XLSX.utils.encode_col(4 + maxLaps - 1);
+                        const colAvg = XLSX.utils.encode_col(4 + maxLaps);
+                        const colGerakan = XLSX.utils.encode_col(6 + maxLaps);
+                        const colCTG = XLSX.utils.encode_col(7 + maxLaps);
+                        const colKap = XLSX.utils.encode_col(8 + maxLaps);
 
                         for (let c = 0; c <= range.e.c; c++) {
                             const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
@@ -1539,44 +1885,58 @@
                             let font = { color: { rgb: '111827' }, sz: 11 };
                             let align = { horizontal: 'center', vertical: 'center' };
 
-                            if (rIdx === 0 && (c === 0 || c === 1)) {
+                            // Line column (selalu tampil)
+                            if (c === 0) {
+                                fill = 'E0E7FF';  // Indigo pucat
+                                font = { bold: true, sz: 11, color: { rgb: '3730A3' } };
+                            }
+                            // No & Nama
+                            if (rIdx === 0 && (c === 1 || c === 2)) {
                                 fill = 'FEF9E7';
                                 font = { bold: true, sz: 11, color: { rgb: '78350F' } };
                                 align.horizontal = 'left';
                             }
-                            if (c === 2) {
+                            // Sub Mesin
+                            if (c === 3) {
                                 fill = 'DBEAFE';
                                 font = { sz: 11, color: { rgb: '1E40AF' } };
                                 align.horizontal = 'left';
                             }
-                            if (c >= 3 && c < 3 + maxLaps) {
+                            // S1..Sn
+                            if (c >= 4 && c < 4 + maxLaps) {
                                 fill = 'EFF6FF';
-                                font = { sz: 11, color: { rgb: '1F2937' } };
                             }
-                            if (c === maxLaps + 3) {
+                            // Rata-rata
+                            if (c === 4 + maxLaps) {
                                 fill = 'FEF3C7';
                                 font = { bold: true, sz: 11, color: { rgb: '92400E' } };
                             }
-                            if (c === maxLaps + 4) {
+                            // NG%
+                            if (c === 5 + maxLaps) {
                                 fill = 'FFFFFF';
                             }
-                            if (c === maxLaps + 5) {
+                            // Gerakan
+                            if (c === 6 + maxLaps) {
                                 fill = 'FED7AA';
                                 font = { sz: 11, color: { rgb: '9A3412' } };
                             }
-                            if (c === maxLaps + 6) {
+                            // CT+Gerakan
+                            if (c === 7 + maxLaps) {
                                 fill = 'FFEDD5';
                                 font = { bold: true, sz: 11, color: { rgb: 'C2410C' } };
                             }
-                            if (c === maxLaps + 7) {
+                            // Kapasitas
+                            if (c === 8 + maxLaps) {
                                 fill = 'D1FAE5';
                                 font = { bold: true, sz: 11, color: { rgb: '065F46' } };
                             }
-                            if (c === maxLaps + 8) {
+                            // Total Gabungan
+                            if (c === 9 + maxLaps) {
                                 fill = 'EDE9FE';
                                 font = { bold: true, sz: 11, color: { rgb: '5B21B6' } };
                             }
-                            if (isProblem && (c === maxLaps + 7 || c === maxLaps + 8)) {
+                            // Problem row
+                            if (isProblem && (c === 8 + maxLaps || c === 9 + maxLaps)) {
                                 fill = 'FECACA';
                                 font = { bold: true, sz: 11, color: { rgb: '991B1B' } };
                             }
@@ -1590,21 +1950,21 @@
                         }
 
                         // Rumus
-                        const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
+                        const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 4 + maxLaps });
                         if (ws[avgAddr]) {
                             ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`;
                             ws[avgAddr].v = getRowStats(item).avg;
                             ws[avgAddr].t = 'n';
                             ws[avgAddr].z = '0.00';
                         }
-                        const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 6 + maxLaps });
+                        const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
                         if (ws[ctgAddr]) {
                             ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`;
                             ws[ctgAddr].v = getRowStats(item).ctPlusG;
                             ws[ctgAddr].t = 'n';
                             ws[ctgAddr].z = '0.00';
                         }
-                        const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
+                        const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 8 + maxLaps });
                         if (ws[kapAddr]) {
                             ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`;
                             ws[kapAddr].v = getRowStats(item).capacity;
@@ -1614,12 +1974,12 @@
                         dataRowIdx++;
                     });
 
-                    // RUMUS TOTAL GABUNGAN (perbaikan: set .v dan .z)
+                    // Total gabungan
                     if (group.rows.length > 1) {
-                        const totalCol = 8 + maxLaps;
+                        const totalCol = 9 + maxLaps;
                         const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
                         if (ws[totalAddr]) {
-                            const colKap = XLSX.utils.encode_col(7 + maxLaps);
+                            const colKap = XLSX.utils.encode_col(8 + maxLaps);
                             const startRow = groupStartRow + 1;
                             const endRow = dataRowIdx;
                             ws[totalAddr].f = `SUM(${colKap}${startRow}:${colKap}${endRow})`;
@@ -1630,7 +1990,6 @@
                     }
                 });
 
-                // Merged style
                 merges.forEach(merge => {
                     const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
                     if (ws[startAddr] && ws[startAddr].s) {
@@ -1653,14 +2012,10 @@
                 }
 
                 XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-                const wbout = XLSX.write(wb, {
-                    bookType: 'xlsx',
-                    type: 'array',
-                    cellStyles: true
-                });
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel (rumus + warna) diunduh', 'success');
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
                 showToast('❌ Gagal export Excel.', 'error');
@@ -1670,7 +2025,7 @@
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             try {
-                const { dataRows } = buildDataRows();
+                const { dataRows } = buildDataRows('__all__');
                 const escapeCSV = (v) => {
                     const s = String(v == null ? '' : v);
                     if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
