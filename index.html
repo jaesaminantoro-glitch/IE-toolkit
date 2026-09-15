@@ -122,7 +122,6 @@
         .custom-dropdown-btn:active { background: #f9fafb; }
         .custom-dropdown-btn.open { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 
-        /* Dropdown panel biasa (ke bawah) */
         .custom-dropdown-panel {
             position: absolute; top: calc(100% + 4px); left: 0; right: 0;
             background: white; border: 1px solid #e5e7eb; border-radius: 8px;
@@ -132,7 +131,6 @@
         }
         .custom-dropdown-panel.open { display: flex; }
 
-        /* Dropup panel (ke atas) — untuk HP biar tidak ketutup keyboard */
         .custom-dropup-panel {
             position: absolute; bottom: calc(100% + 4px); top: auto; left: 0; right: 0;
             background: white; border: 1px solid #e5e7eb; border-radius: 8px;
@@ -220,7 +218,7 @@
                     <div class="mode-card-icon">🔄</div>
                     <div class="flex-1">
                         <div class="mode-card-title">Time Study Siklus</div>
-                        <div class="mode-card-desc">Ukur cycle time line keseluruhan</div>
+                        <div class="mode-card-desc">Ukur cycle time 1 SOP keseluruhan</div>
                     </div>
                     <div class="text-3xl text-gray-300">›</div>
                 </button>
@@ -314,9 +312,95 @@
         </div>
     </div>
 
+    <!-- MODAL EDIT ELEMEN -->
+    <div id="editElemenModal" class="modal-bg" onclick="if(event.target===this) closeEditElemenModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">✏️ Edit Elemen</h3>
+                <button onclick="closeEditElemenModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">No. SOP</label>
+                    <input type="text" id="editElemenNoSop" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama SOP</label>
+                    <input type="text" id="editElemenNamaSop" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Elemen</label>
+                    <input type="text" id="editElemenName" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeEditElemenModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="saveEditedElemen()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm">💾 Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT SIKLUS -->
+    <div id="editSiklusModal" class="modal-bg" onclick="if(event.target===this) closeEditSiklusModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">✏️ Edit SOP Siklus</h3>
+                <button onclick="closeEditSiklusModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">No. SOP</label>
+                    <input type="text" id="editSiklusNoSop" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama SOP</label>
+                    <input type="text" id="editSiklusNamaSop" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeEditSiklusModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="saveEditedSiklus()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm">💾 Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BACKUP DATA -->
+    <div id="backupModal" class="modal-bg" onclick="if(event.target===this) closeBackupModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">💾 Backup & Restore Data</h3>
+                <button onclick="closeBackupModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+                    <b>💡 Info Backup</b>
+                    <div class="mt-1">Backup menyimpan semua data: Line, Master Mesin, Master Elemen, Master Siklus, dan Data Hasil Time Study.</div>
+                    <div class="mt-1" id="backupInfoLast">Last backup: -</div>
+                </div>
+
+                <button onclick="downloadBackup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-sm flex items-center justify-center gap-2">
+                    📥 Download Backup (.json)
+                </button>
+
+                <div class="border-t border-gray-200 pt-3">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Restore dari File Backup</label>
+                    <input type="file" id="restoreFileInput" accept=".json" class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 mt-2">
+                        <b>⚠️ Peringatan</b>
+                        <div class="mt-1">Restore akan <b>MENGGANTI SEMUA DATA</b> yang ada sekarang dengan data dari file backup. Pastikan sudah download backup terkini sebelum restore.</div>
+                    </div>
+                    <button onclick="restoreFromBackup()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg text-sm mt-3">
+                        ⚠️ Restore (Ganti Semua Data)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- APP CONTAINER -->
     <div id="appContainer" class="hidden">
-                <!-- HEADER -->
+
+        <!-- HEADER -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
                 <div class="header-flex">
@@ -337,18 +421,22 @@
                             <span class="btn-icon">🔄</span>
                             <span class="btn-label">SYNC</span>
                         </button>
+                        <button onclick="openBackupModal()" class="header-btn bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300" title="Backup Data">
+                            <span class="btn-icon">💾</span>
+                            <span class="btn-label">BACKUP</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </header>
-
-        <!-- TAB NAV -->
+                <!-- TAB NAV -->
         <nav class="bg-white border-b border-gray-200 sticky top-[52px] md:top-[60px] z-20">
             <div class="max-w-7xl mx-auto flex overflow-x-auto">
                 <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
                 <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
                 <button onclick="switchTab('mesin')" id="tabBtn-mesin" class="tab-btn">⚙️ Mesin <span id="machineCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
                 <button onclick="switchTab('elemen')" id="tabBtn-elemen" class="tab-btn hidden">📋 Elemen <span id="elemenCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+                <button onclick="switchTab('siklus')" id="tabBtn-siklus" class="tab-btn hidden">🔄 Siklus <span id="siklusCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
                 <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📈 Analisa</button>
             </div>
         </nav>
@@ -376,7 +464,7 @@
                         <!-- MODE MESIN: Dropdown Mesin (dropup) -->
                         <div id="machineInputWrapper">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih Mesin / Jalur</label>
-                            <div class="custom-dropdown-wrapper">
+                            <div class="custom-dropdown-wrapper" id="machineDropdownWrapper">
                                 <button type="button" id="machineDropdownBtn" onclick="toggleMachineDropdown()" class="custom-dropdown-btn">
                                     <span id="machineDropdownLabel" class="text-gray-500">-- Pilih Mesin --</span>
                                     <span class="text-gray-400">▼</span>
@@ -406,7 +494,25 @@
                                     <div id="sopDropdownList" class="custom-dropdown-list"></div>
                                 </div>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master (per Line aktif)</p>
+                        </div>
+
+                        <!-- MODE SIKLUS: Dropdown No. SOP Siklus (dropup + search) -->
+                        <div id="siklusInputWrapper" class="hidden">
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih No. SOP</label>
+                            <div class="custom-dropdown-wrapper" id="siklusDropdownWrapper">
+                                <button type="button" id="siklusDropdownBtn" onclick="toggleSiklusDropdown()" class="custom-dropdown-btn">
+                                    <span id="siklusDropdownLabel" class="text-gray-500">-- Pilih No. SOP --</span>
+                                    <span class="text-gray-400">▼</span>
+                                </button>
+                                <div id="siklusDropdownPanel" class="custom-dropup-panel">
+                                    <div class="custom-dropdown-search">
+                                        <input type="text" id="siklusSearchInput" placeholder="🔍 Cari No. SOP / Nama SOP..." oninput="renderSiklusDropdownList()" autocomplete="off">
+                                    </div>
+                                    <div id="siklusDropdownList" class="custom-dropdown-list"></div>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-1">Nama SOP otomatis tampil (per Line aktif)</p>
                         </div>
 
                         <!-- INFO ELEMEN AKTIF -->
@@ -417,6 +523,13 @@
                             <div class="mt-2 bg-blue-200 rounded-full h-1.5 overflow-hidden">
                                 <div id="elemenProgressBar" class="bg-blue-600 h-full transition-all" style="width: 0%"></div>
                             </div>
+                        </div>
+
+                        <!-- INFO SIKLUS AKTIF -->
+                        <div id="siklusActiveInfo" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                            <div class="text-[10px] text-emerald-600 uppercase font-semibold mb-1">Sedang Direkam</div>
+                            <div id="siklusActiveName" class="text-base font-bold text-emerald-800">-</div>
+                            <div class="text-xs text-emerald-600 mt-1">1 LAP = 1 siklus SOP selesai</div>
                         </div>
 
                         <!-- NO + NAMA -->
@@ -466,8 +579,13 @@
                             </div>
                         </div>
 
-                        <!-- Field Elemen: info allowance -->
+                        <!-- Field Elemen & Siklus: Info Allowance -->
                         <div id="elemenFieldGrid" class="hidden">
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-2.5 text-xs text-purple-800">
+                                <b>Allowance:</b> 10% (statis) — otomatis diterapkan di rumus SMH
+                            </div>
+                        </div>
+                        <div id="siklusFieldGrid" class="hidden">
                             <div class="bg-purple-50 border border-purple-200 rounded-lg p-2.5 text-xs text-purple-800">
                                 <b>Allowance:</b> 10% (statis) — otomatis diterapkan di rumus SMH
                             </div>
@@ -496,8 +614,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- TAB DATA -->
+                <!-- TAB DATA -->
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
@@ -544,7 +661,8 @@
                 </div>
             </div>
         </div>
-                <!-- TAB MESIN (khusus mode mesin) -->
+
+        <!-- TAB MESIN (khusus mode mesin) -->
         <div id="tab-mesin" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -623,31 +741,39 @@
                     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                         <div>
                             <h2 class="text-sm md:text-base font-semibold text-gray-800">📋 Master Elemen Proses</h2>
-                            <p class="text-[10px] md:text-xs text-gray-500">Upload Excel dengan kolom: No. SOP | Nama SOP | Elemen</p>
+                            <p class="text-[10px] md:text-xs text-gray-500">Upload Excel kolom: No. SOP | Nama SOP | Elemen (per Line aktif)</p>
                         </div>
                         <div class="flex gap-2 flex-wrap">
                             <button onclick="openElemenImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
                             <button onclick="exportElemenCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
-                            <button onclick="clearAllElemen()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset</button>
+                            <button onclick="clearAllElemen()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset Line Ini</button>
                         </div>
                     </div>
 
-                    <div class="relative mb-3">
-                        <input type="text" id="elemenSearch" oninput="renderElemenMasterTable()" placeholder="🔍 Cari elemen..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <label class="text-[10px] text-gray-500 font-semibold whitespace-nowrap">Filter Line:</label>
+                        <select id="elemenFilterLine" onchange="renderElemenMasterTable()" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                            <option value="__active__">Line Aktif</option>
+                            <option value="__all__">Semua Line</option>
+                        </select>
+                        <div class="relative flex-1 min-w-[150px]">
+                            <input type="text" id="elemenSearch" oninput="renderElemenMasterTable()" placeholder="🔍 Cari elemen..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
                     </div>
 
                     <div class="table-scroll border border-gray-200 rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200 text-xs">
                             <thead class="bg-purple-100 text-gray-800">
                                 <tr>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                                     <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
                                     <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
                                     <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Elemen</th>
-                                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
+                                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-28">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="elemenMasterTableBody" class="divide-y divide-gray-200 bg-white">
-                                <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "📥 Import".</td></tr>
+                                <tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "📥 Import".</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -658,17 +784,73 @@
                     <div class="text-[11px] text-purple-700 space-y-1">
                         <div>Kolom: <b>Nomor SOP | Nama SOP | Process Description</b></div>
                         <div>Contoh: <span class="font-mono bg-white px-1 rounded">1.0 | Pemasangan battery | Ambil battery</span></div>
+                        <div>Import otomatis tersimpan untuk <b>Line aktif</b> saat ini</div>
                         <div>Baris judul di atas header otomatis di-skip</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB ANALISA -->
+        <!-- TAB SIKLUS (khusus mode siklus) -->
+        <div id="tab-siklus" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div>
+                            <h2 class="text-sm md:text-base font-semibold text-gray-800">🔄 Master SOP Siklus</h2>
+                            <p class="text-[10px] md:text-xs text-gray-500">Upload Excel kolom: No. SOP | Nama SOP (per Line aktif)</p>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="openSiklusImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
+                            <button onclick="exportSiklusCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
+                            <button onclick="clearAllSiklus()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset Line Ini</button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <label class="text-[10px] text-gray-500 font-semibold whitespace-nowrap">Filter Line:</label>
+                        <select id="siklusFilterLine" onchange="renderSiklusMasterTable()" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                            <option value="__active__">Line Aktif</option>
+                            <option value="__all__">Semua Line</option>
+                        </select>
+                        <div class="relative flex-1 min-w-[150px]">
+                            <input type="text" id="siklusSearch" oninput="renderSiklusMasterTable()" placeholder="🔍 Cari SOP siklus..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div class="table-scroll border border-gray-200 rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200 text-xs">
+                            <thead class="bg-emerald-100 text-gray-800">
+                                <tr>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
+                                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-28">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="siklusMasterTableBody" class="divide-y divide-gray-200 bg-white">
+                                <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada SOP siklus. Klik "📥 Import".</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-4">
+                    <div class="text-xs font-bold text-emerald-800 mb-2">💡 Format Import Excel</div>
+                    <div class="text-[11px] text-emerald-700 space-y-1">
+                        <div>Kolom: <b>Nomor SOP | Nama SOP</b></div>
+                        <div>Contoh: <span class="font-mono bg-white px-1 rounded">1.0 | Pemasangan battery</span></div>
+                        <div>Import otomatis tersimpan untuk <b>Line aktif</b> saat ini</div>
+                        <div>Baris judul di atas header otomatis di-skip</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                <!-- TAB ANALISA -->
         <div id="tab-export" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                    <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah UPH</h2>
+                    <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Proses di Bawah UPH</h2>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Filter Line</label>
@@ -718,7 +900,6 @@
                 </div>
                 <div class="text-center text-[10px] text-gray-400 mt-1.5">
                     <span id="mobileStatus">Idle</span>
-                    <div class="text-gray-500 mt-0.5">🎚️ Vol+ LAP/START · Vol- STOP/RESET</div>
                 </div>
             </div>
         </div>
@@ -800,7 +981,7 @@
                         1.0 | Pemasangan battery | Ambil battery<br>
                         1.0 | Pemasangan battery | Positioning battery
                     </div>
-                    <div class="mt-1">💡 Baris judul di atas header otomatis di-skip.</div>
+                    <div class="mt-1">💡 Import untuk Line: <b id="elemenImportLine">-</b></div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File Excel/CSV</label>
@@ -813,12 +994,50 @@
                 </div>
                 <div class="flex items-center gap-2 pt-1">
                     <input type="checkbox" id="elemenReplaceExisting" class="rounded">
-                    <label for="elemenReplaceExisting" class="text-xs text-gray-700">Ganti semua elemen (reset dulu)</label>
+                    <label for="elemenReplaceExisting" class="text-xs text-gray-700">Ganti semua elemen untuk Line ini</label>
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
                 <button onclick="closeElemenImportModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
                 <button onclick="processElemenImport()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg text-sm">📥 Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMPORT SIKLUS -->
+    <div id="siklusImportModal" class="modal-bg" onclick="if(event.target===this) closeSiklusImportModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">📥 Import Master SOP Siklus</h3>
+                <button onclick="closeSiklusImportModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-800">
+                    <div class="font-bold mb-1">Format Excel (2 kolom):</div>
+                    <div class="font-mono text-[10px] bg-white p-2 rounded border mb-2">
+                        Nomor SOP | Nama SOP<br>
+                        1.0 | Pemasangan battery<br>
+                        2.0 | Press Lensa
+                    </div>
+                    <div class="mt-1">💡 Import untuk Line: <b id="siklusImportLine">-</b></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File Excel/CSV</label>
+                    <input type="file" id="siklusFileInput" accept=".csv,.txt,.xlsx,.xls" class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                </div>
+                <div class="text-center text-xs text-gray-400 font-semibold">— ATAU —</div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Copy-Paste dari Excel</label>
+                    <textarea id="siklusPasteArea" rows="6" placeholder="1.0&#9;Pemasangan battery&#10;2.0&#9;Press Lensa" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="siklusReplaceExisting" class="rounded">
+                    <label for="siklusReplaceExisting" class="text-xs text-gray-700">Ganti semua SOP siklus untuk Line ini</label>
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeSiklusImportModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="processSiklusImport()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg text-sm">📥 Import</button>
             </div>
         </div>
     </div>
@@ -878,13 +1097,21 @@
         let selectedMachineIds = new Set();
         let uphUserOverride = false;
 
-        // Master Elemen
-        let elemenMasterList = [];
+        // Master Elemen (per line)
+        let elemenMasterList = []; // [{id, line, noSop, namaSop, elemen}]
         let currentElemenNo = '';
         let currentElemenNama = '';
         let activeElemenList = [];
         let currentElemenIndex = 0;
         let currentCycleNum = 1;
+        let editingElemenId = null;
+
+        // Master Siklus (per line)
+        let siklusMasterList = []; // [{id, line, noSop, namaSop}]
+        let currentSiklusNo = '';
+        let currentSiklusNama = '';
+        let activeSiklusList = [];
+        let editingSiklusId = null;
 
         const ALLOWANCE_FIXED = 0.10;
 
@@ -892,7 +1119,8 @@
         const LS_KEY_MASTER = 'timeStudy_master_v2';
         const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
         const LS_KEY_MODE = 'timeStudy_mode_v1';
-        const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v2';
+        const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v3';
+        const LS_KEY_SIKLUS_MASTER = 'timeStudy_siklusMaster_v1';
 
         // ============================================================
         // UTILS
@@ -991,36 +1219,52 @@
 
             const machineWrapper = document.getElementById('machineInputWrapper');
             const elemenWrapper = document.getElementById('elemenInputWrapper');
+            const siklusWrapper = document.getElementById('siklusInputWrapper');
             const tabMesin = document.getElementById('tabBtn-mesin');
             const tabElemen = document.getElementById('tabBtn-elemen');
+            const tabSiklus = document.getElementById('tabBtn-siklus');
             const mesinFieldGrid = document.getElementById('mesinFieldGrid');
             const elemenFieldGrid = document.getElementById('elemenFieldGrid');
+            const siklusFieldGrid = document.getElementById('siklusFieldGrid');
             const elemenActiveInfo = document.getElementById('elemenActiveInfo');
+            const siklusActiveInfo = document.getElementById('siklusActiveInfo');
 
             if (currentMode === 'mesin') {
                 machineWrapper.classList.remove('hidden');
                 elemenWrapper.classList.add('hidden');
+                siklusWrapper.classList.add('hidden');
                 tabMesin.classList.remove('hidden');
                 tabElemen.classList.add('hidden');
+                tabSiklus.classList.add('hidden');
                 mesinFieldGrid.classList.remove('hidden');
                 elemenFieldGrid.classList.add('hidden');
+                siklusFieldGrid.classList.add('hidden');
                 elemenActiveInfo.classList.add('hidden');
+                siklusActiveInfo.classList.add('hidden');
             } else if (currentMode === 'elemen') {
                 machineWrapper.classList.add('hidden');
                 elemenWrapper.classList.remove('hidden');
+                siklusWrapper.classList.add('hidden');
                 tabMesin.classList.add('hidden');
                 tabElemen.classList.remove('hidden');
+                tabSiklus.classList.add('hidden');
                 mesinFieldGrid.classList.add('hidden');
                 elemenFieldGrid.classList.remove('hidden');
+                siklusFieldGrid.classList.add('hidden');
                 elemenActiveInfo.classList.remove('hidden');
+                siklusActiveInfo.classList.add('hidden');
             } else if (currentMode === 'siklus') {
-                machineWrapper.classList.remove('hidden');
+                machineWrapper.classList.add('hidden');
                 elemenWrapper.classList.add('hidden');
+                siklusWrapper.classList.remove('hidden');
                 tabMesin.classList.add('hidden');
                 tabElemen.classList.add('hidden');
-                mesinFieldGrid.classList.remove('hidden');
+                tabSiklus.classList.remove('hidden');
+                mesinFieldGrid.classList.add('hidden');
                 elemenFieldGrid.classList.add('hidden');
+                siklusFieldGrid.classList.remove('hidden');
                 elemenActiveInfo.classList.add('hidden');
+                siklusActiveInfo.classList.remove('hidden');
             }
 
             updateLapButtonLabel();
@@ -1030,6 +1274,9 @@
             if (currentMode === 'elemen') {
                 renderSopDropdownList();
                 renderElemenMasterTable();
+            } else if (currentMode === 'siklus') {
+                renderSiklusDropdownList();
+                renderSiklusMasterTable();
             }
         }
 
@@ -1066,6 +1313,14 @@
             try {
                 setSyncStatus('syncing');
                 await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'elemenMaster'), { data: elemenMasterList, lastUpdate: new Date().toISOString() });
+                setSyncStatus('online');
+            } catch (e) { setSyncStatus('offline'); }
+        }
+        async function saveSiklusMasterToFirebase() {
+            if (!firebaseReady || isSyncingFromRemote) return;
+            try {
+                setSyncStatus('syncing');
+                await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'siklusMaster'), { data: siklusMasterList, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
@@ -1113,6 +1368,24 @@
                         renderSopDropdownList();
                         renderElemenMasterTable();
                     }
+                    updateCounters();
+                    isSyncingFromRemote = false;
+                }
+            }, () => {});
+
+            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'siklusMaster'), (snap) => {
+                const val = snap.val();
+                if (!val || isSyncingFromRemote) return;
+                const remoteData = val.data || [];
+                if (JSON.stringify(remoteData) !== JSON.stringify(siklusMasterList)) {
+                    isSyncingFromRemote = true;
+                    siklusMasterList = remoteData;
+                    lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+                    if (currentMode === 'siklus') {
+                        renderSiklusDropdownList();
+                        renderSiklusMasterTable();
+                    }
+                    updateCounters();
                     isSyncingFromRemote = false;
                 }
             }, () => {});
@@ -1157,6 +1430,8 @@
                 if (snap2.exists()) machineList = snap2.val().data || [];
                 const snap3 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'elemenMaster'));
                 if (snap3.exists()) elemenMasterList = snap3.val().data || [];
+                const snap4 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'siklusMaster'));
+                if (snap4.exists()) siklusMasterList = snap4.val().data || [];
 
                 const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
                 const snapM = await window.firebaseGet(window.firebaseRef(window.firebaseDB, activeNode));
@@ -1167,6 +1442,7 @@
 
                 lsSave(LS_KEY_MACHINES, machineList);
                 lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
                 lsSave(LS_KEY_MASTER, masterData);
 
                 renderMachineDropdownList();
@@ -1175,6 +1451,7 @@
                 renderStandardCheck();
                 updateCounters();
                 if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
+                if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
                 syncUphFromActiveLine();
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
@@ -1261,6 +1538,8 @@
             syncUphFromActiveLine();
             closeLineModal();
             renderMasterTable();
+            if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
+            if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
             showToast(`✅ Line: ${activeLine}`, 'success');
         }
         function updateLineDisplay() {
@@ -1289,21 +1568,34 @@
             let updateCount = 0;
             if (newName !== oldName) {
                 masterData.forEach(item => { if (item.line === oldName) { item.line = newName; updateCount++; } });
+                elemenMasterList.forEach(item => { if (item.line === oldName) { item.line = newName; updateCount++; } });
+                siklusMasterList.forEach(item => { if (item.line === oldName) { item.line = newName; updateCount++; } });
                 if (activeLine === oldName) { activeLine = newName; localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine); updateLineDisplay(); }
                 if (tempSelectedLine === oldName) tempSelectedLine = newName;
             }
             saveLineListToFirebase();
-            if (updateCount > 0) saveMasterToLS();
+            if (updateCount > 0) {
+                saveMasterToLS();
+                if (firebaseReady) { saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); }
+                lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+            }
             if (activeLine === newName) { uphUserOverride = false; syncUphFromActiveLine(); }
             renderLineList();
             closeEditLineModal();
             renderMasterTable();
             renderStandardCheck();
+            renderElemenMasterTable();
+            renderSiklusMasterTable();
             showToast('✅ Line diupdate', 'success');
         }
         function deleteLineFromModal(lineName) {
             const dataCount = masterData.filter(d => d.line === lineName).length;
-            if (!confirm(`Hapus Line "${lineName}"?${dataCount > 0 ? `\n\n⚠️ Ada ${dataCount} data dengan Line ini.` : ''}`)) return;
+            const elemenCount = elemenMasterList.filter(d => d.line === lineName).length;
+            const siklusCount = siklusMasterList.filter(d => d.line === lineName).length;
+            let msg = `Hapus Line "${lineName}"?`;
+            if (dataCount + elemenCount + siklusCount > 0) msg += `\n\n⚠️ Data terkait:\n- ${dataCount} hasil time study\n- ${elemenCount} master elemen\n- ${siklusCount} master siklus`;
+            if (!confirm(msg)) return;
             lineList = lineList.filter(l => l.name !== lineName);
             if (activeLine === lineName) { activeLine = ''; localStorage.removeItem(LS_KEY_ACTIVE_LINE); updateLineDisplay(); }
             if (tempSelectedLine === lineName) tempSelectedLine = '';
@@ -1534,8 +1826,7 @@
             const selected = machineList.filter(m => selectedMachineIds.has(m.id));
             exportMachineCSVList(selected, `Selected_Mesin_${selected.length}.csv`);
         }
-
-        // ============================================================
+                // ============================================================
         // MACHINE IMPORT/EXPORT
         // ============================================================
         function openBulkImportModal() {
@@ -1627,19 +1918,24 @@
         }
 
         // ============================================================
-        // ELEMEN MASTER (Import & List)
+        // ELEMEN MASTER — IMPORT
         // ============================================================
         function openElemenImportModal() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
             document.getElementById('elemenFileInput').value = '';
             document.getElementById('elemenPasteArea').value = '';
             document.getElementById('elemenReplaceExisting').checked = false;
+            const el = document.getElementById('elemenImportLine');
+            if (el) el.innerText = activeLine;
             document.getElementById('elemenImportModal').classList.add('active');
         }
         function closeElemenImportModal() { document.getElementById('elemenImportModal').classList.remove('active'); }
         function processElemenImport() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             const fileInput = document.getElementById('elemenFileInput');
             const pasteArea = document.getElementById('elemenPasteArea');
             const replace = document.getElementById('elemenReplaceExisting').checked;
+            const currentLineImport = activeLine;
             const processRows = (rows) => {
                 try {
                     if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
@@ -1658,18 +1954,21 @@
                         const elemen = cells[2];
                         if (!noSop && !namaSop && !elemen) continue;
                         if (!elemen) continue;
-                        newItems.push({ id: generateId('e_'), noSop: noSop || '-', namaSop: namaSop || '-', elemen });
+                        newItems.push({ id: generateId('e_'), line: currentLineImport, noSop: noSop || '-', namaSop: namaSop || '-', elemen });
                     }
                     if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
-                    if (replace) elemenMasterList = newItems;
-                    else elemenMasterList = elemenMasterList.concat(newItems);
+                    if (replace) {
+                        elemenMasterList = elemenMasterList.filter(e => e.line !== currentLineImport).concat(newItems);
+                    } else {
+                        elemenMasterList = elemenMasterList.concat(newItems);
+                    }
                     lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                     if (firebaseReady) saveElemenMasterToFirebase();
                     renderSopDropdownList();
                     renderElemenMasterTable();
                     updateCounters();
                     closeElemenImportModal();
-                    showToast(`✅ ${newItems.length} elemen di-import`, 'success');
+                    showToast(`✅ ${newItems.length} elemen di-import untuk ${currentLineImport}`, 'success');
                 } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
             };
             const handleText = (text) => {
@@ -1706,20 +2005,39 @@
         function renderElemenMasterTable() {
             const tbody = document.getElementById('elemenMasterTableBody');
             if (!tbody) return;
-            const search = (document.getElementById('elemenSearch')?.value || '').toLowerCase().trim();
+            const filterLine = document.getElementById('elemenFilterLine')?.value || '__active__';
             let filtered = elemenMasterList;
-            if (search) filtered = elemenMasterList.filter(e => String(e.noSop).toLowerCase().includes(search) || String(e.namaSop).toLowerCase().includes(search) || String(e.elemen).toLowerCase().includes(search));
+            if (filterLine === '__active__') filtered = elemenMasterList.filter(e => e.line === activeLine);
+            else if (filterLine !== '__all__') filtered = elemenMasterList.filter(e => e.line === filterLine);
+            const search = (document.getElementById('elemenSearch')?.value || '').toLowerCase().trim();
+            if (search) filtered = filtered.filter(e => String(e.noSop).toLowerCase().includes(search) || String(e.namaSop).toLowerCase().includes(search) || String(e.elemen).toLowerCase().includes(search) || String(e.line).toLowerCase().includes(search));
+            // Update filter dropdown options
+            const sel = document.getElementById('elemenFilterLine');
+            if (sel) {
+                const linesInData = [...new Set(elemenMasterList.map(e => e.line).filter(Boolean))].sort();
+                const currentVal = sel.value;
+                let html = `<option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option><option value="__all__">Semua Line</option>`;
+                if (linesInData.length > 0) {
+                    html += '<option disabled>──────</option>';
+                    linesInData.forEach(l => { html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`; });
+                }
+                sel.innerHTML = html;
+                if (currentVal && sel.querySelector(`option[value="${currentVal}"]`)) sel.value = currentVal;
+                else sel.value = '__active__';
+            }
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
             tbody.innerHTML = filtered.map(e => `
                 <tr class="hover:bg-purple-50/30">
+                    <td class="px-2 py-2 text-center border-r border-b"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(e.line || '-')}</span></td>
                     <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(e.noSop)}</td>
                     <td class="px-3 py-2 border-r border-b">${escapeHtml(e.namaSop)}</td>
                     <td class="px-3 py-2 border-r border-b font-medium">${escapeHtml(e.elemen)}</td>
-                    <td class="px-2 py-2 text-center border-b">
-                        <button onclick="deleteElemenMaster('${e.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    <td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="openEditElemenModal('${e.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">✏️</button>
+                        <button onclick="deleteElemenMaster('${e.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">🗑️</button>
                     </td>
                 </tr>`).join('');
         }
@@ -1733,26 +2051,229 @@
             updateCounters();
         }
         function clearAllElemen() {
-            if (!confirm('Yakin hapus SEMUA master elemen?')) return;
-            elemenMasterList = [];
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
+            if (!confirm(`Yakin hapus SEMUA master elemen untuk Line "${activeLine}"?`)) return;
+            elemenMasterList = elemenMasterList.filter(e => e.line !== activeLine);
             lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
             if (firebaseReady) saveElemenMasterToFirebase();
             renderElemenMasterTable();
             renderSopDropdownList();
             updateCounters();
-            showToast('Master elemen direset', 'warning');
+            showToast(`Master elemen ${activeLine} direset`, 'warning');
         }
         function exportElemenCSV() {
             if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-            const rows = [['No. SOP', 'Nama SOP', 'Elemen']];
-            elemenMasterList.forEach(e => rows.push([e.noSop, e.namaSop, e.elemen]));
+            const rows = [['Line', 'No. SOP', 'Nama SOP', 'Elemen']];
+            elemenMasterList.forEach(e => rows.push([e.line, e.noSop, e.namaSop, e.elemen]));
             const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
         }
-                // ============================================================
-        // SOP DROPDOWN (dropup + search)
+
+        // Edit Elemen
+        function openEditElemenModal(id) {
+            const e = elemenMasterList.find(x => x.id === id);
+            if (!e) return;
+            editingElemenId = id;
+            document.getElementById('editElemenNoSop').value = e.noSop || '';
+            document.getElementById('editElemenNamaSop').value = e.namaSop || '';
+            document.getElementById('editElemenName').value = e.elemen || '';
+            document.getElementById('editElemenModal').classList.add('active');
+        }
+        function closeEditElemenModal() { document.getElementById('editElemenModal').classList.remove('active'); editingElemenId = null; }
+        function saveEditedElemen() {
+            if (!editingElemenId) return;
+            const noSop = document.getElementById('editElemenNoSop').value.trim();
+            const namaSop = document.getElementById('editElemenNamaSop').value.trim();
+            const elemen = document.getElementById('editElemenName').value.trim();
+            if (!noSop || !namaSop || !elemen) { showToast('⚠️ Semua field wajib diisi!', 'error'); return; }
+            const e = elemenMasterList.find(x => x.id === editingElemenId);
+            if (e) { e.noSop = noSop; e.namaSop = namaSop; e.elemen = elemen; }
+            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+            if (firebaseReady) saveElemenMasterToFirebase();
+            renderElemenMasterTable();
+            renderSopDropdownList();
+            closeEditElemenModal();
+            showToast('✅ Elemen diperbarui', 'success');
+        }
+
+        // ============================================================
+        // SIKLUS MASTER — IMPORT
+        // ============================================================
+        function openSiklusImportModal() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
+            document.getElementById('siklusFileInput').value = '';
+            document.getElementById('siklusPasteArea').value = '';
+            document.getElementById('siklusReplaceExisting').checked = false;
+            const el = document.getElementById('siklusImportLine');
+            if (el) el.innerText = activeLine;
+            document.getElementById('siklusImportModal').classList.add('active');
+        }
+        function closeSiklusImportModal() { document.getElementById('siklusImportModal').classList.remove('active'); }
+        function processSiklusImport() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
+            const fileInput = document.getElementById('siklusFileInput');
+            const pasteArea = document.getElementById('siklusPasteArea');
+            const replace = document.getElementById('siklusReplaceExisting').checked;
+            const currentLineImport = activeLine;
+            const processRows = (rows) => {
+                try {
+                    if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
+                    let startIdx = 0;
+                    for (let i = 0; i < rows.length; i++) {
+                        const r = rows[i].map(c => String(c == null ? '' : c).trim().toLowerCase());
+                        if (r[0] && (r[0].includes('nomor sop') || r[0] === 'no sop' || r[0] === 'no. sop')) { startIdx = i + 1; break; }
+                        if (r[0] === 'nomor' && r[1] && r[1].includes('sop')) { startIdx = i + 1; break; }
+                    }
+                    const newItems = [];
+                    for (let i = startIdx; i < rows.length; i++) {
+                        const cells = rows[i].map(c => String(c == null ? '' : c).trim());
+                        if (cells.length < 2) continue;
+                        const noSop = cells[0];
+                        const namaSop = cells[1];
+                        if (!noSop && !namaSop) continue;
+                        if (!namaSop) continue;
+                        newItems.push({ id: generateId('s_'), line: currentLineImport, noSop: noSop || '-', namaSop });
+                    }
+                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
+                    if (replace) {
+                        siklusMasterList = siklusMasterList.filter(s => s.line !== currentLineImport).concat(newItems);
+                    } else {
+                        siklusMasterList = siklusMasterList.concat(newItems);
+                    }
+                    lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+                    if (firebaseReady) saveSiklusMasterToFirebase();
+                    renderSiklusDropdownList();
+                    renderSiklusMasterTable();
+                    updateCounters();
+                    closeSiklusImportModal();
+                    showToast(`✅ ${newItems.length} SOP siklus di-import untuk ${currentLineImport}`, 'success');
+                } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
+            };
+            const handleText = (text) => {
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
+                const delimiter = lines[0].includes('\t') ? '\t' : ',';
+                const rows = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, '')));
+                processRows(rows);
+            };
+            const file = fileInput.files[0];
+            if (file) {
+                const fn = file.name.toLowerCase();
+                if (fn.endsWith('.xlsx') || fn.endsWith('.xls')) {
+                    if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const wb = XLSX.read(data, { type: 'array' });
+                            const ws = wb.Sheets[wb.SheetNames[0]];
+                            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false });
+                            processRows(rows);
+                        } catch (err) { showToast('❌ Gagal baca Excel', 'error'); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => handleText(e.target.result);
+                    reader.readAsText(file);
+                }
+            } else if (pasteArea.value.trim()) handleText(pasteArea.value);
+            else showToast('Pilih file atau paste data dulu!', 'error');
+        }
+        function renderSiklusMasterTable() {
+            const tbody = document.getElementById('siklusMasterTableBody');
+            if (!tbody) return;
+            const filterLine = document.getElementById('siklusFilterLine')?.value || '__active__';
+            let filtered = siklusMasterList;
+            if (filterLine === '__active__') filtered = siklusMasterList.filter(s => s.line === activeLine);
+            else if (filterLine !== '__all__') filtered = siklusMasterList.filter(s => s.line === filterLine);
+            const search = (document.getElementById('siklusSearch')?.value || '').toLowerCase().trim();
+            if (search) filtered = filtered.filter(s => String(s.noSop).toLowerCase().includes(search) || String(s.namaSop).toLowerCase().includes(search) || String(s.line).toLowerCase().includes(search));
+            const sel = document.getElementById('siklusFilterLine');
+            if (sel) {
+                const linesInData = [...new Set(siklusMasterList.map(s => s.line).filter(Boolean))].sort();
+                const currentVal = sel.value;
+                let html = `<option value="__active__">Line Aktif (${escapeHtml(activeLine || '-')})</option><option value="__all__">Semua Line</option>`;
+                if (linesInData.length > 0) {
+                    html += '<option disabled>──────</option>';
+                    linesInData.forEach(l => { html += `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`; });
+                }
+                sel.innerHTML = html;
+                if (currentVal && sel.querySelector(`option[value="${currentVal}"]`)) sel.value = currentVal;
+                else sel.value = '__active__';
+            }
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(s => `
+                <tr class="hover:bg-emerald-50/30">
+                    <td class="px-2 py-2 text-center border-r border-b"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(s.line || '-')}</span></td>
+                    <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(s.noSop)}</td>
+                    <td class="px-3 py-2 border-r border-b">${escapeHtml(s.namaSop)}</td>
+                    <td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="openEditSiklusModal('${s.id}')" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">✏️</button>
+                        <button onclick="deleteSiklusMaster('${s.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">🗑️</button>
+                    </td>
+                </tr>`).join('');
+        }
+        function deleteSiklusMaster(id) {
+            if (!confirm('Hapus SOP siklus ini?')) return;
+            siklusMasterList = siklusMasterList.filter(s => s.id !== id);
+            lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+            if (firebaseReady) saveSiklusMasterToFirebase();
+            renderSiklusMasterTable();
+            renderSiklusDropdownList();
+            updateCounters();
+        }
+        function clearAllSiklus() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
+            if (!confirm(`Yakin hapus SEMUA SOP siklus untuk Line "${activeLine}"?`)) return;
+            siklusMasterList = siklusMasterList.filter(s => s.line !== activeLine);
+            lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+            if (firebaseReady) saveSiklusMasterToFirebase();
+            renderSiklusMasterTable();
+            renderSiklusDropdownList();
+            updateCounters();
+            showToast(`Master siklus ${activeLine} direset`, 'warning');
+        }
+        function exportSiklusCSV() {
+            if (siklusMasterList.length === 0) { showToast('Belum ada SOP siklus!', 'error'); return; }
+            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            const rows = [['Line', 'No. SOP', 'Nama SOP']];
+            siklusMasterList.forEach(s => rows.push([s.line, s.noSop, s.namaSop]));
+            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            if (downloadBlob(blob, `Master_Siklus_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master siklus di-export', 'success');
+        }
+        function openEditSiklusModal(id) {
+            const s = siklusMasterList.find(x => x.id === id);
+            if (!s) return;
+            editingSiklusId = id;
+            document.getElementById('editSiklusNoSop').value = s.noSop || '';
+            document.getElementById('editSiklusNamaSop').value = s.namaSop || '';
+            document.getElementById('editSiklusModal').classList.add('active');
+        }
+        function closeEditSiklusModal() { document.getElementById('editSiklusModal').classList.remove('active'); editingSiklusId = null; }
+        function saveEditedSiklus() {
+            if (!editingSiklusId) return;
+            const noSop = document.getElementById('editSiklusNoSop').value.trim();
+            const namaSop = document.getElementById('editSiklusNamaSop').value.trim();
+            if (!noSop || !namaSop) { showToast('⚠️ Semua field wajib diisi!', 'error'); return; }
+            const s = siklusMasterList.find(x => x.id === editingSiklusId);
+            if (s) { s.noSop = noSop; s.namaSop = namaSop; }
+            lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+            if (firebaseReady) saveSiklusMasterToFirebase();
+            renderSiklusMasterTable();
+            renderSiklusDropdownList();
+            closeEditSiklusModal();
+            showToast('✅ SOP siklus diperbarui', 'success');
+        }
+
+        // ============================================================
+        // DROPDOWN SOP ELEMEN
         // ============================================================
         function toggleSopDropdown() {
             const panel = document.getElementById('sopDropdownPanel');
@@ -1769,33 +2290,33 @@
                 }, 250);
             }
         }
-
         function closeSopDropdown() {
             document.getElementById('sopDropdownPanel')?.classList.remove('open');
             document.getElementById('sopDropdownBtn')?.classList.remove('open');
             const si = document.getElementById('sopSearchInput');
             if (si) si.value = '';
         }
-
         function renderSopDropdownList() {
             const list = document.getElementById('sopDropdownList');
             if (!list) return;
             const search = (document.getElementById('sopSearchInput')?.value || '').toLowerCase().trim();
-            const nos = [...new Set(elemenMasterList.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+            // Filter per Line aktif
+            const filteredByLine = elemenMasterList.filter(e => e.line === activeLine);
+            const nos = [...new Set(filteredByLine.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
             let filtered = nos;
             if (search) {
                 filtered = nos.filter(no => {
-                    const first = elemenMasterList.find(e => e.noSop === no);
+                    const first = filteredByLine.find(e => e.noSop === no);
                     const nama = (first?.namaSop || '').toLowerCase();
                     return String(no).toLowerCase().includes(search) || nama.includes(search);
                 });
             }
             let html = '';
             if (filtered.length === 0) {
-                html = `<div class="custom-dropdown-empty">Tidak ada SOP cocok</div>`;
+                html = `<div class="custom-dropdown-empty">${filteredByLine.length === 0 ? 'Belum ada SOP untuk Line ini' : 'Tidak ada SOP cocok'}</div>`;
             } else {
                 filtered.forEach(no => {
-                    const first = elemenMasterList.find(e => e.noSop === no);
+                    const first = filteredByLine.find(e => e.noSop === no);
                     const isSelected = currentElemenNo === no;
                     html += `<div class="custom-dropdown-item ${isSelected ? 'selected' : ''}" onclick="selectSop('${escapeHtml(no)}')">
                         ${isSelected ? '✅ ' : ''}${escapeHtml(no)} · ${escapeHtml(first?.namaSop || '')}
@@ -1804,7 +2325,6 @@
             }
             list.innerHTML = html;
         }
-
         function selectSop(no) {
             closeSopDropdown();
             if (!no) return;
@@ -1815,7 +2335,7 @@
                 updateLapsUI();
             }
             currentElemenNo = no;
-            activeElemenList = elemenMasterList.filter(e => e.noSop === no);
+            activeElemenList = elemenMasterList.filter(e => e.line === activeLine && e.noSop === no);
             if (activeElemenList.length > 0) currentElemenNama = activeElemenList[0].namaSop;
             currentElemenIndex = 0;
             currentCycleNum = 1;
@@ -1831,7 +2351,6 @@
             updateLapButtonLabel();
             renderSopDropdownList();
         }
-
         function updateElemenActiveInfo() {
             const nameEl = document.getElementById('elemenActiveName');
             const progressText = document.getElementById('elemenProgressText');
@@ -1849,6 +2368,87 @@
             progressBar.style.width = `${((currentElemenIndex + 1) / activeElemenList.length) * 100}%`;
         }
 
+        // ============================================================
+        // DROPDOWN SOP SIKLUS
+        // ============================================================
+        function toggleSiklusDropdown() {
+            const panel = document.getElementById('siklusDropdownPanel');
+            const btn = document.getElementById('siklusDropdownBtn');
+            if (!panel || !btn) return;
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open'); btn.classList.remove('open');
+            } else {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                setTimeout(() => {
+                    panel.classList.add('open'); btn.classList.add('open');
+                    document.getElementById('siklusSearchInput')?.focus();
+                    renderSiklusDropdownList();
+                }, 250);
+            }
+        }
+        function closeSiklusDropdown() {
+            document.getElementById('siklusDropdownPanel')?.classList.remove('open');
+            document.getElementById('siklusDropdownBtn')?.classList.remove('open');
+            const si = document.getElementById('siklusSearchInput');
+            if (si) si.value = '';
+        }
+        function renderSiklusDropdownList() {
+            const list = document.getElementById('siklusDropdownList');
+            if (!list) return;
+            const search = (document.getElementById('siklusSearchInput')?.value || '').toLowerCase().trim();
+            const filteredByLine = siklusMasterList.filter(s => s.line === activeLine);
+            const nos = [...new Set(filteredByLine.map(s => s.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+            let filtered = nos;
+            if (search) {
+                filtered = nos.filter(no => {
+                    const first = filteredByLine.find(s => s.noSop === no);
+                    const nama = (first?.namaSop || '').toLowerCase();
+                    return String(no).toLowerCase().includes(search) || nama.includes(search);
+                });
+            }
+            let html = '';
+            if (filtered.length === 0) {
+                html = `<div class="custom-dropdown-empty">${filteredByLine.length === 0 ? 'Belum ada SOP untuk Line ini' : 'Tidak ada SOP cocok'}</div>`;
+            } else {
+                filtered.forEach(no => {
+                    const first = filteredByLine.find(s => s.noSop === no);
+                    const isSelected = currentSiklusNo === no;
+                    html += `<div class="custom-dropdown-item ${isSelected ? 'selected' : ''}" onclick="selectSiklus('${escapeHtml(no)}')">
+                        ${isSelected ? '✅ ' : ''}${escapeHtml(no)} · ${escapeHtml(first?.namaSop || '')}
+                    </div>`;
+                });
+            }
+            list.innerHTML = html;
+        }
+        function selectSiklus(no) {
+            closeSiklusDropdown();
+            if (!no) return;
+            if (currentSiklusNo === no) return;
+            if (currentLaps.length > 0) {
+                if (!confirm('⚠️ Ganti SOP akan reset siklus yang belum disimpan. Lanjutkan?')) return;
+                currentLaps = [];
+                updateLapsUI();
+            }
+            currentSiklusNo = no;
+            activeSiklusList = siklusMasterList.filter(s => s.line === activeLine && s.noSop === no);
+            if (activeSiklusList.length > 0) currentSiklusNama = activeSiklusList[0].namaSop;
+            const label = document.getElementById('siklusDropdownLabel');
+            if (label) {
+                label.innerText = `${no} · ${currentSiklusNama}`;
+                label.className = 'text-gray-800 font-semibold';
+            }
+            document.getElementById('inputNo').value = no;
+            document.getElementById('inputProcess').value = currentSiklusNama;
+            document.getElementById('siklusActiveInfo').classList.remove('hidden');
+            const nameEl = document.getElementById('siklusActiveName');
+            if (nameEl) nameEl.innerText = `${no} · ${currentSiklusNama}`;
+            updateLapButtonLabel();
+            renderSiklusDropdownList();
+        }
+
+        // ============================================================
+        // LAP BUTTON LABEL
+        // ============================================================
         function updateLapButtonLabel() {
             const btn = document.getElementById('mobileLapBtn');
             if (!btn) return;
@@ -1856,6 +2456,8 @@
                 const current = activeElemenList[currentElemenIndex];
                 const shortName = current ? current.elemen.substring(0, 14) : '';
                 btn.innerText = `✔️ SELESAI: ${shortName}${shortName.length >= 14 ? '…' : ''}`;
+            } else if (currentMode === 'siklus' && currentSiklusNo) {
+                btn.innerText = `✔️ SELESAI SOP`;
             } else {
                 btn.innerText = '⏱️ LAP';
             }
@@ -1898,18 +2500,18 @@
                     const currentEl = activeElemenList[currentElemenIndex];
                     currentLaps.push({
                         dur: parseFloat(dur.toFixed(2)),
-                        noSop: currentElemenNo,
-                        namaSop: currentElemenNama,
-                        elemen: currentEl ? currentEl.elemen : '-',
-                        cycleNum: currentCycleNum
+                        noSop: currentElemenNo, namaSop: currentElemenNama,
+                        elemen: currentEl ? currentEl.elemen : '-', cycleNum: currentCycleNum
                     });
                     currentElemenIndex++;
-                    if (currentElemenIndex >= activeElemenList.length) {
-                        currentElemenIndex = 0;
-                        currentCycleNum++;
-                    }
+                    if (currentElemenIndex >= activeElemenList.length) { currentElemenIndex = 0; currentCycleNum++; }
                     updateElemenActiveInfo();
                     updateLapButtonLabel();
+                } else if (currentMode === 'siklus' && currentSiklusNo) {
+                    currentLaps.push({
+                        dur: parseFloat(dur.toFixed(2)),
+                        noSop: currentSiklusNo, namaSop: currentSiklusNama
+                    });
                 } else {
                     currentLaps.push(parseFloat(dur.toFixed(2)));
                 }
@@ -1943,9 +2545,7 @@
                 if (navigator.vibrate) navigator.vibrate(30);
             }
         }
-
         function stopTimer() {
-            // STOP tidak auto-LAP (sesuai permintaan)
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
             setStartButton('start');
@@ -1965,7 +2565,6 @@
             }
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
-
         function handleStopReset() {
             if (isRunning) { stopTimer(); return; }
             if (!isRunning) {
@@ -1989,54 +2588,6 @@
         }
 
         // ============================================================
-        // VOLUME BUTTONS
-        // ============================================================
-        function setupVolumeButtons() {
-            document.addEventListener('keydown', (e) => {
-                const tag = (e.target.tagName || '').toUpperCase();
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
-
-                const key = e.key;
-                const code = e.keyCode || e.which;
-
-                // Volume Up → LAP (running) / START-RESUME (berhenti)
-                if (key === 'AudioVolumeUp' || code === 174) {
-                    e.preventDefault();
-                    if (isRunning) {
-                        recordLap();
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    } else {
-                        toggleTimer();
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    }
-                    return;
-                }
-
-                // Volume Down → STOP (running) / RESET (berhenti)
-                if (key === 'AudioVolumeDown' || code === 175) {
-                    e.preventDefault();
-                    if (isRunning) {
-                        stopTimer();
-                        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-                    } else {
-                        handleStopReset();
-                        if (navigator.vibrate) navigator.vibrate(50);
-                    }
-                    return;
-                }
-
-                // Bonus: MediaPlayPause (headset remote) → START/PAUSE
-                if (key === 'MediaPlayPause' || code === 179) {
-                    e.preventDefault();
-                    toggleTimer();
-                    if (navigator.vibrate) navigator.vibrate(50);
-                    return;
-                }
-            });
-            console.log('✅ Volume button listener aktif');
-        }
-
-        // ============================================================
         // RECORD LAP
         // ============================================================
         function recordLap() {
@@ -2050,10 +2601,8 @@
                 const currentEl = activeElemenList[currentElemenIndex];
                 currentLaps.push({
                     dur: parseFloat(dur.toFixed(2)),
-                    noSop: currentElemenNo,
-                    namaSop: currentElemenNama,
-                    elemen: currentEl.elemen,
-                    cycleNum: currentCycleNum
+                    noSop: currentElemenNo, namaSop: currentElemenNama,
+                    elemen: currentEl.elemen, cycleNum: currentCycleNum
                 });
                 updateLapsUI();
                 document.getElementById('lapSplitPreview').innerText = `✔️ ${currentEl.elemen}: ${dur.toFixed(2)}s`;
@@ -2065,6 +2614,13 @@
                 }
                 updateElemenActiveInfo();
                 updateLapButtonLabel();
+            } else if (currentMode === 'siklus' && currentSiklusNo) {
+                currentLaps.push({
+                    dur: parseFloat(dur.toFixed(2)),
+                    noSop: currentSiklusNo, namaSop: currentSiklusNama
+                });
+                updateLapsUI();
+                document.getElementById('lapSplitPreview').innerText = `✔️ ${currentSiklusNo}: ${dur.toFixed(2)}s`;
             } else {
                 currentLaps.push(parseFloat(dur.toFixed(2)));
                 updateLapsUI();
@@ -2073,7 +2629,6 @@
             setButtonEnabled('commitBtn', true);
             if (navigator.vibrate) navigator.vibrate(30);
         }
-
         function removeLap(index) {
             const removed = currentLaps[index];
             currentLaps.splice(index, 1);
@@ -2082,16 +2637,9 @@
                 if (lastLap) {
                     currentCycleNum = lastLap.cycleNum;
                     const lastIdx = activeElemenList.findIndex(e => e.elemen === lastLap.elemen);
-                    if (lastIdx === activeElemenList.length - 1) {
-                        currentCycleNum = lastLap.cycleNum + 1;
-                        currentElemenIndex = 0;
-                    } else {
-                        currentElemenIndex = lastIdx + 1;
-                    }
-                } else {
-                    currentElemenIndex = 0;
-                    currentCycleNum = 1;
-                }
+                    if (lastIdx === activeElemenList.length - 1) { currentCycleNum = lastLap.cycleNum + 1; currentElemenIndex = 0; }
+                    else { currentElemenIndex = lastIdx + 1; }
+                } else { currentElemenIndex = 0; currentCycleNum = 1; }
                 updateElemenActiveInfo();
                 updateLapButtonLabel();
             }
@@ -2102,7 +2650,6 @@
                 document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             }
         }
-
         function updateLapsUI() {
             const container = document.getElementById('currentLapsContainer');
             const badge = document.getElementById('lapCounterBadge');
@@ -2115,15 +2662,14 @@
             container.innerHTML = currentLaps.map((lap, i) => {
                 const isLatest = (i === currentLaps.length - 1);
                 const cls = isLatest ? 'bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-200';
-                let durVal, elemenLabel = '';
+                let durVal, label = '';
                 if (typeof lap === 'object' && lap !== null) {
                     durVal = lap.dur;
-                    elemenLabel = ` · ${escapeHtml(lap.elemen)} (P${lap.cycleNum})`;
-                } else {
-                    durVal = lap;
-                }
+                    if (lap.elemen) label = ` · ${escapeHtml(lap.elemen)} (P${lap.cycleNum})`;
+                    else if (lap.noSop) label = ` · SOP ${escapeHtml(lap.noSop)}`;
+                } else { durVal = lap; }
                 return `<div class="flex items-center gap-1 ${cls} px-2 py-1 rounded-md font-mono text-xs md:text-sm font-bold border">
-                    <span>C${i + 1}: ${durVal.toFixed(2)}s${elemenLabel}</span>
+                    <span>C${i + 1}: ${durVal.toFixed(2)}s${label}</span>
                     <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-0.5 text-sm">×</button>
                 </div>`;
             }).join('');
@@ -2136,22 +2682,19 @@
         function commitStudyRow() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
             if (currentMode === 'elemen') commitElemenRow();
+            else if (currentMode === 'siklus') commitSiklusRow();
             else commitMesinRow();
         }
-
         function commitElemenRow() {
             if (!currentElemenNo || activeElemenList.length === 0) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
-
             const grouped = {};
             currentLaps.forEach(lap => {
                 if (typeof lap !== 'object' || !lap.elemen) return;
                 if (!grouped[lap.elemen]) grouped[lap.elemen] = [];
                 grouped[lap.elemen].push(lap.dur);
             });
-
             if (Object.keys(grouped).length === 0) { showToast('⚠️ Tidak ada data elemen valid!', 'error'); return; }
-
             Object.keys(grouped).forEach(elemenName => {
                 const existingIndex = masterData.findIndex(item =>
                     item.line === activeLine && item.noSop === currentElemenNo && item.namaSop === currentElemenNama && item.elemen === elemenName
@@ -2171,12 +2714,35 @@
                     });
                 }
             });
-
             saveMasterToLS();
             showToast(`✅ ${Object.keys(grouped).length} elemen disimpan`, 'success');
             resetStopwatchAfterCommit();
         }
-
+        function commitSiklusRow() {
+            if (!currentSiklusNo) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
+            if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
+            const durs = currentLaps.filter(l => typeof l === 'object' && l.dur).map(l => l.dur);
+            if (durs.length === 0) { showToast('⚠️ Tidak ada data siklus valid!', 'error'); return; }
+            const existingIndex = masterData.findIndex(item =>
+                item.line === activeLine && item.noSop === currentSiklusNo && item.namaSop === currentSiklusNama
+            );
+            if (existingIndex !== -1) {
+                const existing = masterData[existingIndex];
+                if (!existing.noSop) existing.noSop = currentSiklusNo;
+                if (!existing.namaSop) existing.namaSop = currentSiklusNama;
+                if (!existing.line) existing.line = activeLine;
+                existing.laps = existing.laps.concat(durs);
+                existing.sessions = (existing.sessions || 1) + 1;
+            } else {
+                masterData.push({
+                    line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama,
+                    laps: [...durs], sessions: 1
+                });
+            }
+            saveMasterToLS();
+            showToast(`✅ Data siklus disimpan`, 'success');
+            resetStopwatchAfterCommit();
+        }
         function commitMesinRow() {
             let no, process, subMachine;
             const isCustom = selectedMachineId === '__custom__' || !selectedMachineId;
@@ -2195,7 +2761,6 @@
             if (!no) no = '-';
             if (!process) { showToast('⚠️ Nama mesin wajib diisi!', 'error'); return; }
             if (!subMachine) subMachine = '-';
-
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
             const gerakanRaw = document.getElementById('inputGerakan').value.trim();
             if (!gerakanRaw) { showToast('⚠️ Isi Gerakan (detik)!', 'error'); document.getElementById('inputGerakan').focus(); return; }
@@ -2203,7 +2768,6 @@
             if (isNaN(gerakan) || gerakan < 0) { showToast('⚠️ Gerakan harus angka ≥ 0!', 'error'); return; }
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
             if (currentLaps.length === 0) { showToast('⚠️ Rekam minimal 1 siklus!', 'error'); return; }
-
             const existingIndex = masterData.findIndex(item =>
                 item.line === activeLine && item.no === no && item.process === process && item.subMachine === subMachine
             );
@@ -2219,18 +2783,16 @@
                 existing.actualMachine = actualMachine;
                 existing.gerakan = gerakan;
                 existing.sessions = (existing.sessions || 1) + 1;
-                showToast('Sesi ditambahkan', 'success');
             } else {
                 masterData.push({
                     line: activeLine, no, process, subMachine,
                     laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1
                 });
-                showToast(`✅ Data disimpan (${activeLine})`, 'success');
             }
             saveMasterToLS();
+            showToast(`✅ Data disimpan (${activeLine})`, 'success');
             resetStopwatchAfterCommit();
         }
-
         function resetStopwatchAfterCommit() {
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
@@ -2253,13 +2815,16 @@
                 const sopLabel = document.getElementById('sopDropdownLabel');
                 if (sopLabel) { sopLabel.innerText = '-- Pilih No. SOP --'; sopLabel.className = 'text-gray-500'; }
                 document.getElementById('elemenActiveInfo').classList.add('hidden');
-                currentElemenNo = '';
-                currentElemenNama = '';
-                activeElemenList = [];
-                currentElemenIndex = 0;
-                currentCycleNum = 1;
-                updateLapButtonLabel();
+                currentElemenNo = ''; currentElemenNama = ''; activeElemenList = [];
+                currentElemenIndex = 0; currentCycleNum = 1;
             }
+            if (currentMode === 'siklus') {
+                const siklusLabel = document.getElementById('siklusDropdownLabel');
+                if (siklusLabel) { siklusLabel.innerText = '-- Pilih No. SOP --'; siklusLabel.className = 'text-gray-500'; }
+                document.getElementById('siklusActiveInfo').classList.add('hidden');
+                currentSiklusNo = ''; currentSiklusNama = ''; activeSiklusList = [];
+            }
+            updateLapButtonLabel();
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
             setButtonEnabled('stopBtn', false);
@@ -2270,11 +2835,7 @@
             renderStandardCheck();
             updateCounters();
             switchTab('data');
-            setTimeout(() => {
-                if (currentTab === 'data') {
-                    switchTab('input');
-                }
-            }, 1500);
+            setTimeout(() => { if (currentTab === 'data') switchTab('input'); }, 1500);
         }
 
         // ============================================================
@@ -2285,11 +2846,11 @@
             const count = laps.length;
             const values = laps.map(b => typeof b === 'object' && b !== null ? parseFloat(b.dur) || 0 : parseFloat(b) || 0);
             const avg = count > 0 ? values.reduce((a, b) => a + b, 0) / count : 0;
-
-            if (currentMode === 'elemen') {
+            if (currentMode === 'elemen' || currentMode === 'siklus') {
                 const allowance = ALLOWANCE_FIXED;
                 const smh = avg * (1 + allowance);
-                return { count, avg, allowance, smh };
+                const uph = smh > 0 ? Math.round(3600 / smh) : 0;
+                return { count, avg, allowance, smh, uph };
             } else {
                 const gerakan = (item.gerakan !== undefined && item.gerakan !== null) ? parseFloat(item.gerakan) || 0 : 0;
                 const actualMachine = (item.actualMachine !== undefined && item.actualMachine !== null) ? parseFloat(item.actualMachine) || 1 : 1;
@@ -2298,7 +2859,6 @@
                 return { count, avg, ctPlusG, capacity, gerakan, actualMachine };
             }
         }
-
         function getFilteredData() {
             const filterEl = document.getElementById('dataFilterLine');
             const filter = filterEl ? filterEl.value : '__active__';
@@ -2329,20 +2889,19 @@
             const tbody = document.getElementById('masterTableBody');
             const theadRow = document.getElementById('masterTableHeaderRow');
             if (!tbody || !theadRow) return;
-
             const filteredData = getFilteredData();
             if (filteredData.length === 0) {
-                const cols = currentMode === 'elemen'
-                    ? `<th class="px-2 py-3 text-center font-bold border-r">No. SOP</th><th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th><th class="px-3 py-3 text-left font-bold border-r">Elemen</th>`
-                    : `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">Nama Mesin</th><th class="px-3 py-3 text-left font-bold border-r">Sub Mesin</th>`;
+                const cols = currentMode === 'mesin'
+                    ? `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">Nama Mesin</th><th class="px-3 py-3 text-left font-bold border-r">Sub Mesin</th>`
+                    : `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No. SOP</th><th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th>${currentMode === 'elemen' ? '<th class="px-3 py-3 text-left font-bold border-r">Elemen</th>' : ''}`;
                 theadRow.innerHTML = cols;
                 tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>`;
                 return;
             }
             if (currentMode === 'elemen') renderMasterTableElemen(filteredData, tbody, theadRow);
+            else if (currentMode === 'siklus') renderMasterTableSiklus(filteredData, tbody, theadRow);
             else renderMasterTableMesin(filteredData, tbody, theadRow);
         }
-
         function renderMasterTableMesin(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             let headerHTML = `
@@ -2363,20 +2922,15 @@
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
             theadRow.innerHTML = headerHTML;
-
             const groups = {};
             const groupOrder = [];
             filteredData.forEach((item) => {
                 const key = `${item.line}||${item.no}||${item.process}`;
-                if (!groups[key]) {
-                    groups[key] = { line: item.line, no: item.no, process: item.process, rows: [], totalCapacity: 0 };
-                    groupOrder.push(key);
-                }
+                if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, rows: [], totalCapacity: 0 }; groupOrder.push(key); }
                 const originalIndex = masterData.findIndex(m => m.line === item.line && m.no === item.no && m.process === item.process && m.subMachine === item.subMachine);
                 groups[key].rows.push({ ...item, originalIndex });
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
-
             let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
@@ -2392,17 +2946,13 @@
                             <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process || '-')}</td>
                         `;
                     }
-                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">
-                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine || '-')}</span>${sessionBadge}
-                    </td>`;
+                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine || '-')}</span>${sessionBadge}</td>`;
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = row.laps[i];
                         if (lapVal !== undefined && lapVal !== null) {
                             const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
                             htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
-                        } else {
-                            htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
-                        }
+                        } else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
                     }
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${row.ngRate !== undefined ? row.ngRate : 0}%</td>`;
@@ -2410,20 +2960,16 @@
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${stats.actualMachine}</td>`;
-                    if (rIdx === 0) {
-                        htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span></td>`;
-                    }
-                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
-                        <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
-                    </td></tr>`;
+                    if (rIdx === 0) htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span></td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
                 });
             });
             tbody.innerHTML = htmlOutput;
         }
-
         function renderMasterTableElemen(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             let headerHTML = `
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Elemen</th>
@@ -2438,21 +2984,16 @@
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
             theadRow.innerHTML = headerHTML;
-
             const groups = {};
             const groupOrder = [];
             filteredData.forEach((item) => {
                 const key = `${item.line}||${item.noSop}||${item.namaSop}`;
-                if (!groups[key]) {
-                    groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 };
-                    groupOrder.push(key);
-                }
+                if (!groups[key]) { groups[key] = { line: item.line, noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
                 const originalIndex = masterData.findIndex(m => m.line === item.line && m.noSop === item.noSop && m.namaSop === item.namaSop && m.elemen === item.elemen);
                 const stats = getRowStats(item);
                 groups[key].rows.push({ ...item, originalIndex, stats });
                 groups[key].totalSmh += stats.smh;
             });
-
             let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
@@ -2464,6 +3005,7 @@
                     htmlOutput += `<tr class="hover:bg-purple-50/30 transition">`;
                     if (rIdx === 0) {
                         htmlOutput += `
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(group.line || '-')}</span></td>
                             <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(group.noSop || '-')}</td>
                             <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(group.namaSop || '-')}</td>
                         `;
@@ -2474,9 +3016,7 @@
                         if (lapVal !== undefined && lapVal !== null) {
                             const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
                             htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
-                        } else {
-                            htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
-                        }
+                        } else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
                     }
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-purple-700 bg-purple-50 border-r border-b whitespace-nowrap">${stats.allowance.toFixed(2)}</td>`;
@@ -2485,18 +3025,55 @@
                         htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold text-emerald-700 bg-emerald-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalSmh.toFixed(2)} <span class="text-[10px] font-medium">s</span></td>`;
                         htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold text-pink-700 bg-pink-50 border-r border-b align-middle whitespace-nowrap text-sm">${uph} <span class="text-[10px] font-medium">UPH</span></td>`;
                     }
-                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
-                        <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
-                    </td></tr>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
                 });
             });
             tbody.innerHTML = htmlOutput;
         }
-
+        function renderMasterTableSiklus(filteredData, tbody, theadRow) {
+            const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
+            let headerHTML = `
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
+            `;
+            for (let i = 1; i <= maxLaps; i++) headerHTML += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
+            headerHTML += `
+                <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Average</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Allowance</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">SMH</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-pink-100 text-pink-900 whitespace-nowrap">UPH</th>
+                <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
+            `;
+            theadRow.innerHTML = headerHTML;
+            let htmlOutput = '';
+            filteredData.forEach((item) => {
+                const stats = getRowStats(item);
+                const originalIndex = masterData.findIndex(m => m.line === item.line && m.noSop === item.noSop && m.namaSop === item.namaSop);
+                const sessionBadge = item.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${item.sessions} sesi</span>` : '';
+                htmlOutput += `<tr class="hover:bg-emerald-50/30 transition">`;
+                htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(item.line || '-')}</span></td>`;
+                htmlOutput += `<td class="px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 whitespace-nowrap text-emerald-700">${escapeHtml(item.noSop || '-')}</td>`;
+                htmlOutput += `<td class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40 whitespace-nowrap">${escapeHtml(item.namaSop || '-')}${sessionBadge}</td>`;
+                for (let i = 0; i < maxLaps; i++) {
+                    const lapVal = item.laps[i];
+                    if (lapVal !== undefined && lapVal !== null) {
+                        const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
+                        htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
+                    } else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                }
+                htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
+                htmlOutput += `<td class="px-2 py-2 text-center font-mono text-purple-700 bg-purple-50 border-r border-b whitespace-nowrap">${stats.allowance.toFixed(2)}</td>`;
+                htmlOutput += `<td class="px-2 py-2 text-center font-mono font-bold text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.smh.toFixed(2)}</td>`;
+                htmlOutput += `<td class="px-2 py-2 text-center font-extrabold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap text-sm">${stats.uph} <span class="text-[10px] font-medium">UPH</span></td>`;
+                htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
+            });
+            tbody.innerHTML = htmlOutput;
+        }
         function deleteMasterRow(idx) {
             const item = masterData[idx];
             if (!item) return;
-            const label = item.elemen || item.process || 'data';
+            const label = item.elemen || item.namaSop || item.process || 'data';
             if (!confirm(`Hapus data "${label}"?`)) return;
             masterData.splice(idx, 1);
             saveMasterToLS();
@@ -2506,7 +3083,7 @@
             showToast('Data dihapus', 'warning');
         }
         function clearAllData() {
-            if (!confirm('Yakin hapus SEMUA data master?')) return;
+            if (!confirm('Yakin hapus SEMUA data master (hasil time study)?')) return;
             masterData = [];
             saveMasterToLS();
             renderMasterTable();
@@ -2522,6 +3099,8 @@
             if (mb) { mb.innerText = machineList.length; mb.className = machineList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
             const eb = document.getElementById('elemenCountBadge');
             if (eb) { eb.innerText = elemenMasterList.length; eb.className = elemenMasterList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+            const sb = document.getElementById('siklusCountBadge');
+            if (sb) { sb.innerText = siklusMasterList.length; sb.className = siklusMasterList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
         }
 
         // ============================================================
@@ -2554,7 +3133,6 @@
             if (filter === '__all__') { fd = masterData; fl = 'Semua Line'; }
             else if (filter === '__active__') { fd = masterData.filter(d => d.line === activeLine); fl = activeLine; }
             else { fd = masterData.filter(d => d.line === filter); fl = filter; }
-
             let perProcess;
             if (currentMode === 'elemen') {
                 const groups = {};
@@ -2570,6 +3148,12 @@
                     capacity: g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0,
                     machines: g.elements
                 })).sort((a, b) => a.capacity - b.capacity);
+            } else if (currentMode === 'siklus') {
+                perProcess = fd.map(item => ({
+                    line: item.line, no: item.noSop, process: item.namaSop,
+                    capacity: getRowStats(item).uph,
+                    machines: []
+                })).sort((a, b) => a.capacity - b.capacity);
             } else {
                 const groups = {};
                 fd.forEach(item => {
@@ -2580,7 +3164,6 @@
                 });
                 perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
             }
-
             if (perProcess.length === 0) {
                 headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data.</div>`;
                 listEl.innerHTML = ''; return;
@@ -2604,7 +3187,7 @@
                                 <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(String(p.no))}</span>
                                 <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
                             </div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.filter(Boolean).join(', '))}</div>
+                            ${p.machines.length > 0 ? `<div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.filter(Boolean).join(', '))}</div>` : ''}
                         </div>
                         <div class="text-right">
                             <div class="text-lg font-extrabold text-red-700">${p.capacity} <span class="text-[10px] font-medium">UPH</span></div>
@@ -2624,26 +3207,23 @@
         function buildElemenDataRows() {
             const dataToExport = masterData;
             const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
-            const header = ['No. SOP', 'Nama SOP', 'Elemen'];
+            const header = ['Line', 'No. SOP', 'Nama SOP', 'Elemen'];
             for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
             header.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'UPH');
-
             const groups = {};
             const groupOrder = [];
             dataToExport.forEach(item => {
                 const key = `${item.line}||${item.noSop}||${item.namaSop}`;
-                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
+                if (!groups[key]) { groups[key] = { line: item.line, noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
                 const stats = getRowStats(item);
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
-
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
-            const colTotalSmh = 3 + maxLaps + 3;
+            const colTotalSmh = 4 + maxLaps + 3;
             const colUph = colTotalSmh + 1;
-
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
@@ -2651,7 +3231,7 @@
                 const uph = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
                 group.rows.forEach((item, rIdx) => {
                     const stats = item.stats;
-                    const rowData = [rIdx === 0 ? item.noSop : '', rIdx === 0 ? item.namaSop : '', item.elemen];
+                    const rowData = [rIdx === 0 ? item.line : '', rIdx === 0 ? item.noSop : '', rIdx === 0 ? item.namaSop : '', item.elemen];
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = item.laps[i];
                         if (lapVal !== undefined && lapVal !== null) {
@@ -2659,32 +3239,26 @@
                             rowData.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
                         } else rowData.push('');
                     }
-                    rowData.push(
-                        parseFloat(stats.avg.toFixed(2)),
-                        ALLOWANCE_FIXED,
-                        parseFloat(stats.smh.toFixed(2)),
-                        rIdx === 0 ? parseFloat(group.totalSmh.toFixed(2)) : '',
-                        rIdx === 0 ? uph : ''
-                    );
+                    rowData.push(parseFloat(stats.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(stats.smh.toFixed(2)), rIdx === 0 ? parseFloat(group.totalSmh.toFixed(2)) : '', rIdx === 0 ? uph : '');
                     dataRows.push(rowData);
                     rowIndex++;
                 });
                 if (rowSpan >= 1) {
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
                     merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
+                    merges.push({ s: { r: groupStartRow, c: 2 }, e: { r: rowIndex - 1, c: 2 } });
                     merges.push({ s: { r: groupStartRow, c: colTotalSmh }, e: { r: rowIndex - 1, c: colTotalSmh } });
                     merges.push({ s: { r: groupStartRow, c: colUph }, e: { r: rowIndex - 1, c: colUph } });
                 }
             });
             return { dataRows, merges, maxLaps };
         }
-
         function exportElemenXLSX() {
             const { dataRows, merges, maxLaps } = buildElemenDataRows();
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(dataRows);
             ws['!merges'] = merges;
-            const colWidths = [{ wch: 10 }, { wch: 22 }, { wch: 24 }];
+            const colWidths = [{ wch: 10 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
             for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 9 });
             colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 });
             ws['!cols'] = colWidths;
@@ -2700,12 +3274,12 @@
             const groupOrder = [];
             masterData.forEach(item => {
                 const key = `${item.line}||${item.noSop}||${item.namaSop}`;
-                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
+                if (!groups[key]) { groups[key] = { line: item.line, noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
                 const stats = getRowStats(item);
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
-            const colAvg = 3 + maxLaps;
+            const colAvg = 4 + maxLaps;
             const colAllow = colAvg + 1;
             const colSmh = colAllow + 1;
             const colTotalSmh = colSmh + 1;
@@ -2720,9 +3294,10 @@
                         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                         let fill = 'FFFFFF';
                         let font = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 0) fill = 'EDE9FE';
-                        else if (c === 1) fill = 'F5F3FF';
-                        else if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
+                        if (c === 0) fill = 'E0E7FF';
+                        else if (c === 1) fill = 'EDE9FE';
+                        else if (c === 2) fill = 'F5F3FF';
+                        else if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
                         else if (c === colAvg) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
                         else if (c === colAllow) fill = 'F3E8FF';
                         else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
@@ -2732,8 +3307,8 @@
                     }
                     const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAvg });
                     if (ws[avgAddr]) {
-                        const firstCT = XLSX.utils.encode_col(3);
-                        const lastCT = XLSX.utils.encode_col(3 + maxLaps - 1);
+                        const firstCT = XLSX.utils.encode_col(4);
+                        const lastCT = XLSX.utils.encode_col(4 + maxLaps - 1);
                         ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
                         ws[avgAddr].v = stats.avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00';
                     }
@@ -2767,6 +3342,94 @@
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
             const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
+        }
+
+        // ============================================================
+        // EXPORT — SIKLUS
+        // ============================================================
+        function buildSiklusDataRows() {
+            const dataToExport = masterData;
+            const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
+            const header = ['Line', 'No. SOP', 'Nama SOP'];
+            for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
+            header.push('Average (s)', 'Allowance', 'SMH (s)', 'UPH');
+            const dataRows = [header];
+            dataToExport.forEach(item => {
+                const stats = getRowStats(item);
+                const rowData = [item.line, item.noSop, item.namaSop];
+                for (let i = 0; i < maxLaps; i++) {
+                    const lapVal = item.laps[i];
+                    if (lapVal !== undefined && lapVal !== null) {
+                        const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
+                        rowData.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
+                    } else rowData.push('');
+                }
+                rowData.push(parseFloat(stats.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(stats.smh.toFixed(2)), stats.uph);
+                dataRows.push(rowData);
+            });
+            return { dataRows, maxLaps };
+        }
+        function exportSiklusXLSX() {
+            const { dataRows, maxLaps } = buildSiklusDataRows();
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(dataRows);
+            const colWidths = [{ wch: 10 }, { wch: 10 }, { wch: 22 }];
+            for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 9 });
+            colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 });
+            ws['!cols'] = colWidths;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= range.e.c; c++) {
+                const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER };
+            }
+            const colAvg = 3 + maxLaps;
+            const colAllow = colAvg + 1;
+            const colSmh = colAllow + 1;
+            const colUph = colSmh + 1;
+            for (let rowIdx = 1; rowIdx < dataRows.length; rowIdx++) {
+                for (let c = 0; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
+                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                    let fill = 'FFFFFF';
+                    let font = { color: { rgb: '111827' }, sz: 11 };
+                    if (c === 0) fill = 'E0E7FF';
+                    else if (c === 1) fill = 'EDE9FE';
+                    else if (c === 2) fill = 'F5F3FF';
+                    else if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
+                    else if (c === colAvg) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                    else if (c === colAllow) fill = 'F3E8FF';
+                    else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                    else if (c === colUph) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                    ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+                }
+                const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAvg });
+                if (ws[avgAddr]) {
+                    const firstCT = XLSX.utils.encode_col(3);
+                    const lastCT = XLSX.utils.encode_col(3 + maxLaps - 1);
+                    ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
+                }
+                const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAllow });
+                if (ws[allowAddr]) { ws[allowAddr].v = ALLOWANCE_FIXED; ws[allowAddr].t = 'n'; ws[allowAddr].z = '0.00'; }
+                const smhAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colSmh });
+                if (ws[smhAddr]) {
+                    const avgColLetter = XLSX.utils.encode_col(colAvg);
+                    const allowColLetter = XLSX.utils.encode_col(colAllow);
+                    ws[smhAddr].f = `${avgColLetter}${rowIdx + 1}*(1+${allowColLetter}${rowIdx + 1})`;
+                }
+                const uphAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colUph });
+                if (ws[uphAddr]) {
+                    const smhColLetter = XLSX.utils.encode_col(colSmh);
+                    ws[uphAddr].f = `ROUND(3600/${smhColLetter}${rowIdx + 1},0)`;
+                }
+            }
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Siklus_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
         }
 
         // ============================================================
@@ -2817,7 +3480,6 @@
             });
             return { dataRows, merges, maxLaps };
         }
-
         function exportMesinXLSX() {
             const { dataRows, merges, maxLaps } = buildMesinDataRows();
             const wb = XLSX.utils.book_new();
@@ -2834,76 +3496,6 @@
                 if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                 ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
             }
-            let rowIdx = 1;
-            const groups = {};
-            const groupOrder = [];
-            masterData.forEach(item => {
-                const key = `${item.line}||${item.no}||${item.process}`;
-                if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] }; groupOrder.push(key); }
-                groups[key].rows.push(item);
-                groups[key].capacity += getRowStats(item).capacity;
-            });
-            const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
-            const perProcess = Object.values(groups);
-            const lineGroups = {};
-            perProcess.forEach(p => { if (!lineGroups[p.line]) lineGroups[p.line] = []; lineGroups[p.line].push(p); });
-            const bottleneckByLine = {};
-            Object.keys(lineGroups).forEach(line => {
-                const arr = lineGroups[line];
-                let minP = arr[0];
-                arr.forEach(p => { if (p.capacity < minP.capacity) minP = p; });
-                bottleneckByLine[line] = `${minP.no}||${minP.process}`;
-            });
-            groupOrder.forEach(key => {
-                const group = groups[key];
-                const isBelowStandard = standardUph > 0 && group.capacity < standardUph;
-                const isBottleneck = (bottleneckByLine[group.line] === `${group.no}||${group.process}` && lineGroups[group.line].length > 1);
-                const isProblem = isBelowStandard || isBottleneck;
-                const groupStartRow = rowIdx;
-                group.rows.forEach((item, rIdx) => {
-                    const stats = getRowStats(item);
-                    const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
-                    for (let c = 0; c <= range.e.c; c++) {
-                        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
-                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                        let fill = rowBg;
-                        let font = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
-                        if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
-                        if (c === 3) fill = 'DBEAFE';
-                        if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
-                        if (c === 4 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        if (c === 5 + maxLaps) fill = 'FFFFFF';
-                        if (c === 6 + maxLaps) fill = 'FED7AA';
-                        if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        if (c === 9 + maxLaps) fill = 'FCE7F3';
-                        if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; }
-                        if (isProblem && (c === 8 + maxLaps || c === 10 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
-                        ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
-                    }
-                    rowIdx++;
-                });
-                if (group.rows.length > 1) {
-                    const totalCol = 10 + maxLaps;
-                    const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
-                    if (ws[totalAddr]) {
-                        const colKap = XLSX.utils.encode_col(8 + maxLaps);
-                        ws[totalAddr].f = `SUM(${colKap}${groupStartRow + 1}:${colKap}${rowIdx})`;
-                        ws[totalAddr].v = group.capacity; ws[totalAddr].t = 'n';
-                    }
-                }
-            });
-            merges.forEach(merge => {
-                const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
-                if (ws[startAddr] && ws[startAddr].s) {
-                    const style = ws[startAddr].s;
-                    for (let r = merge.s.r; r <= merge.e.r; r++) for (let c = merge.s.c; c <= merge.e.c; c++) {
-                        const addr = XLSX.utils.encode_cell({ r, c });
-                        if (addr !== startAddr) { if (!ws[addr]) ws[addr] = { t: 's', v: '' }; ws[addr].s = style; }
-                    }
-                }
-            });
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
@@ -2917,20 +3509,101 @@
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
             try {
                 if (currentMode === 'elemen') exportElemenXLSX();
+                else if (currentMode === 'siklus') exportSiklusXLSX();
                 else exportMesinXLSX();
             } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
         }
-
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             try {
-                const { dataRows } = currentMode === 'elemen' ? buildElemenDataRows() : buildMesinDataRows();
+                let dataRows;
+                if (currentMode === 'elemen') dataRows = buildElemenDataRows().dataRows;
+                else if (currentMode === 'siklus') dataRows = buildSiklusDataRows().dataRows;
+                else dataRows = buildMesinDataRows().dataRows;
                 const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
                 const csv = dataRows.map(row => row.map(esc).join(',')).join('\r\n');
                 const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-                const filename = `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.csv`;
-                if (downloadBlob(blob, filename)) showToast('📄 File CSV diunduh', 'success');
+                if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 File CSV diunduh', 'success');
             } catch (err) { console.error(err); showToast('❌ Gagal export CSV.', 'error'); }
+        }
+
+        // ============================================================
+        // BACKUP / RESTORE
+        // ============================================================
+        function openBackupModal() {
+            const info = document.getElementById('backupInfoLast');
+            const lastBackup = localStorage.getItem('timeStudy_lastBackup');
+            if (info) info.innerText = lastBackup ? `Last backup: ${new Date(lastBackup).toLocaleString('id-ID')}` : 'Last backup: belum pernah';
+            document.getElementById('restoreFileInput').value = '';
+            document.getElementById('backupModal').classList.add('active');
+        }
+        function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
+        function downloadBackup() {
+            const backup = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                lineList,
+                machineList,
+                elemenMasterList,
+                siklusMasterList,
+                masterData
+            };
+            const json = JSON.stringify(backup, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const fname = `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`;
+            if (downloadBlob(blob, fname)) {
+                localStorage.setItem('timeStudy_lastBackup', new Date().toISOString());
+                const info = document.getElementById('backupInfoLast');
+                if (info) info.innerText = `Last backup: ${new Date().toLocaleString('id-ID')}`;
+                showToast('📥 Backup diunduh', 'success');
+            }
+        }
+        function restoreFromBackup() {
+            const fileInput = document.getElementById('restoreFileInput');
+            const file = fileInput.files[0];
+            if (!file) { showToast('Pilih file backup dulu!', 'error'); return; }
+            if (!confirm('⚠️ PERHATIAN!\n\nRestore akan MENGGANTI SEMUA DATA yang ada sekarang dengan data dari file backup.\n\nData lama akan HILANG.\n\nLanjutkan?')) return;
+            if (!confirm('Konfirmasi terakhir: Yakin restore? Data lama akan ditimpa.')) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    if (!backup || typeof backup !== 'object') throw new Error('Format file tidak valid');
+                    lineList = backup.lineList || [];
+                    machineList = backup.machineList || [];
+                    elemenMasterList = backup.elemenMasterList || [];
+                    siklusMasterList = backup.siklusMasterList || [];
+                    masterData = backup.masterData || [];
+                    lsSave(LS_KEY_MACHINES, machineList);
+                    lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                    lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+                    lsSave(LS_KEY_MASTER, masterData);
+                    if (firebaseReady) {
+                        saveLineListToFirebase();
+                        saveMachinesToFirebase();
+                        saveElemenMasterToFirebase();
+                        saveSiklusMasterToFirebase();
+                        saveMasterToFirebase();
+                    }
+                    renderLineList();
+                    renderMachineTable();
+                    renderMachineDropdownList();
+                    renderElemenMasterTable();
+                    renderSiklusMasterTable();
+                    renderMasterTable();
+                    renderStandardCheck();
+                    updateLineDisplay();
+                    updateCounters();
+                    if (currentMode === 'elemen') renderSopDropdownList();
+                    if (currentMode === 'siklus') renderSiklusDropdownList();
+                    closeBackupModal();
+                    showToast('✅ Restore berhasil! Semua data diganti.', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToast('❌ Gagal restore: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
         }
 
         // ============================================================
@@ -2956,9 +3629,11 @@
             if (tabName === 'mesin') { renderMachineTable(); updateBulkActionBar(); }
             if (tabName === 'data') { renderMasterTable(); updateCounters(); }
             if (tabName === 'elemen') { renderElemenMasterTable(); }
+            if (tabName === 'siklus') { renderSiklusMasterTable(); }
             if (tabName === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
             if (tabName === 'input') {
-                if (currentMode === 'elemen') { renderSopDropdownList(); }
+                if (currentMode === 'elemen') renderSopDropdownList();
+                else if (currentMode === 'siklus') renderSiklusDropdownList();
                 else renderMachineDropdownList();
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2985,6 +3660,7 @@
             machineList = lsLoad(LS_KEY_MACHINES, []);
             masterData = lsLoad(LS_KEY_MASTER, []);
             elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
+            siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
 
             updateLineDisplay();
             renderMachineDropdownList();
@@ -2993,6 +3669,8 @@
             updateCounters();
             renderSopDropdownList();
             renderElemenMasterTable();
+            renderSiklusDropdownList();
+            renderSiklusMasterTable();
 
             setLoadingDetail('Menunggu Firebase SDK...');
 
@@ -3026,24 +3704,22 @@
 
             // Tutup dropdown ketika klik di luar
             document.addEventListener('click', (e) => {
-                const machineWrapper = document.getElementById('machineDropdownBtn');
-                const machinePanel = document.getElementById('machineDropdownPanel');
-                if (machinePanel && machinePanel.classList.contains('open')) {
-                    if (machineWrapper && !machineWrapper.contains(e.target) && !machinePanel.contains(e.target)) {
-                        closeMachineDropdown();
-                    }
+                const mBtn = document.getElementById('machineDropdownBtn');
+                const mPanel = document.getElementById('machineDropdownPanel');
+                if (mPanel && mPanel.classList.contains('open')) {
+                    if (mBtn && !mBtn.contains(e.target) && !mPanel.contains(e.target)) closeMachineDropdown();
                 }
-                const sopBtn = document.getElementById('sopDropdownBtn');
-                const sopPanel = document.getElementById('sopDropdownPanel');
-                if (sopPanel && sopPanel.classList.contains('open')) {
-                    if (sopBtn && !sopBtn.contains(e.target) && !sopPanel.contains(e.target)) {
-                        closeSopDropdown();
-                    }
+                const sBtn = document.getElementById('sopDropdownBtn');
+                const sPanel = document.getElementById('sopDropdownPanel');
+                if (sPanel && sPanel.classList.contains('open')) {
+                    if (sBtn && !sBtn.contains(e.target) && !sPanel.contains(e.target)) closeSopDropdown();
+                }
+                const skBtn = document.getElementById('siklusDropdownBtn');
+                const skPanel = document.getElementById('siklusDropdownPanel');
+                if (skPanel && skPanel.classList.contains('open')) {
+                    if (skBtn && !skBtn.contains(e.target) && !skPanel.contains(e.target)) closeSiklusDropdown();
                 }
             });
-
-            // Aktifkan tombol volume
-            setupVolumeButtons();
         }
 
         // Jalankan
