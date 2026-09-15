@@ -3,19 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Mobile Export</title>
+    <title>Time Study - 3 Tab Layout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         .timer-display { user-select: none; -webkit-user-select: none; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast-animate { animation: slideIn 0.3s ease-out; }
-        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .table-scroll::-webkit-scrollbar { height: 8px; }
-        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .table-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
 
-        /* TOMBOL KONTROL BAWAH (KHUSUS HP) */
+        /* Tab Navigation */
+        .tab-btn {
+            flex: 1;
+            padding: 12px 8px;
+            font-weight: 700;
+            font-size: 13px;
+            color: #6b7280;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tab-btn.tab-active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+            background: #eef2ff;
+        }
+        .tab-btn:not(.tab-active):active {
+            background: #f3f4f6;
+        }
+
+        /* Bottom Controls */
         .bottom-controls {
             position: fixed;
             bottom: 0;
@@ -28,9 +47,6 @@
             z-index: 40;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
             border-top: 1px solid #374151;
-        }
-        @media (min-width: 768px) {
-            .bottom-controls { display: none; }
         }
         .bottom-controls-btn {
             flex: 1;
@@ -55,59 +71,59 @@
         }
 
         body { padding-bottom: 110px; }
-        @media (min-width: 768px) {
-            body { padding-bottom: 0; }
-        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
 
-    <div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
-
-        <!-- ============================================================ -->
-        <!-- HEADER -->
-        <!-- ============================================================ -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                <div class="w-full md:w-auto">
-                    <h1 class="text-lg md:text-2xl font-bold text-gray-800">⏱️ Time Study</h1>
-                    <p class="text-gray-500 text-xs md:text-sm mt-0.5">Rekam siklus, hitung kapasitas, export Excel.</p>
-                </div>
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-                    <span id="currentDate" class="bg-blue-50 text-blue-700 px-2 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium border border-blue-200 text-center whitespace-nowrap"></span>
-                    <div class="flex gap-2">
-                        <button onclick="exportToExcelXLSX()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm shadow-sm transition whitespace-nowrap">
-                            📥 Excel
-                        </button>
-                        <button onclick="exportToCSV()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm shadow-sm transition whitespace-nowrap">
-                            📄 CSV
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center">
+            <h1 class="text-base md:text-xl font-bold text-gray-800">⏱️ Time Study</h1>
+            <span id="currentDate" class="text-[10px] md:text-xs text-gray-500 font-medium"></span>
         </div>
+    </header>
 
-        <!-- ============================================================ -->
-        <!-- PANEL STOPWATCH -->
-        <!-- ============================================================ -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+    <!-- ============================================================ -->
+    <!-- TAB NAVIGATION -->
+    <!-- ============================================================ -->
+    <nav class="bg-white border-b border-gray-200 sticky top-[44px] md:top-[56px] z-20">
+        <div class="max-w-7xl mx-auto flex">
+            <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">
+                📝 Input
+            </button>
+            <button onclick="switchTab('data')" id="tabBtn-data" class="tab-btn">
+                📊 Data <span id="dataCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span>
+            </button>
+            <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">
+                📥 Export
+            </button>
+        </div>
+    </nav>
 
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base md:text-lg font-semibold text-gray-800 flex items-center gap-2">🎯 Panel Stopwatch</h2>
-                <span id="timerStatus" class="text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">Idle</span>
-            </div>
+    <!-- ============================================================ -->
+    <!-- TAB CONTENT: INPUT -->
+    <!-- ============================================================ -->
+    <div id="tab-input" class="tab-content">
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- FORM INPUT -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm md:text-base font-semibold text-gray-800">🎯 Input Data</h2>
+                    <span id="timerStatus" class="text-[10px] md:text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">Idle</span>
+                </div>
+
+                <!-- FORM -->
                 <div class="space-y-3">
                     <div class="grid grid-cols-3 gap-2">
                         <div class="col-span-1">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">No</label>
-                            <input type="text" id="inputNo" placeholder="9" class="w-full px-2 md:px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="inputNo" placeholder="9" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Proses</label>
-                            <input type="text" id="inputProcess" placeholder="Double screw" class="w-full px-2 md:px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                            <input type="text" id="inputProcess" placeholder="Double screw" class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
 
@@ -128,90 +144,136 @@
                     </div>
                 </div>
 
-                <!-- TIMER -->
-                <div class="bg-gray-900 rounded-xl p-4 md:p-5 text-center text-white shadow-inner border border-gray-800">
-                    <div class="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
-                    <div id="timerDisplay" class="timer-display text-4xl sm:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
-                    <div id="lapSplitPreview" class="text-[10px] md:text-xs font-mono text-blue-400 mb-3 h-4">Split Terakhir: --:--.--</div>
+                <!-- TIMER DISPLAY -->
+                <div class="mt-4 bg-gray-900 rounded-xl p-4 text-center text-white shadow-inner border border-gray-800">
+                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
+                    <div id="timerDisplay" class="timer-display text-4xl md:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
+                    <div id="lapSplitPreview" class="text-[10px] md:text-xs font-mono text-blue-400 h-4">Split Terakhir: --:--.--</div>
+                </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        <button id="startStopBtn" onclick="toggleTimer()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 md:py-2.5 px-2 rounded-lg transition shadow text-sm md:text-xs">Start</button>
-                        <button id="stopBtn" onclick="stopTimer()" disabled class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 md:py-2.5 px-2 rounded-lg transition opacity-50 cursor-not-allowed shadow text-sm md:text-xs">Stop</button>
-                        <button id="lapBtn" onclick="recordLap()" disabled class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 md:py-2.5 px-2 rounded-lg transition opacity-50 cursor-not-allowed shadow text-sm md:text-xs">Lap</button>
-                        <button onclick="resetTimer()" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 md:py-2.5 px-2 rounded-lg transition text-sm md:text-xs">Reset</button>
+                <!-- CHIP SIKLUS -->
+                <div class="mt-4">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
+                        <span id="lapCounterBadge" class="text-[10px] md:text-xs text-gray-500 font-medium">0 Siklus</span>
+                    </div>
+                    <div id="currentLapsContainer" class="flex flex-wrap gap-1.5 min-h-[50px] max-h-32 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-gray-400 italic text-[10px] md:text-xs self-center">Belum ada siklus direkam.</span>
                     </div>
                 </div>
-            </div>
 
-            <!-- CHIP SIKLUS -->
-            <div class="mt-4">
-                <div class="flex justify-between items-center mb-1.5">
-                    <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
-                    <span id="lapCounterBadge" class="text-[10px] md:text-xs text-gray-500 font-medium">0 Siklus</span>
-                </div>
-                <div id="currentLapsContainer" class="flex flex-wrap gap-1.5 min-h-[50px] max-h-32 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                    <span class="text-gray-400 italic text-[10px] md:text-xs self-center">Belum ada siklus direkam.</span>
-                </div>
-            </div>
-
-            <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
-                💾 Simpan ke Master Data
-            </button>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- TABEL MASTER DATA -->
-        <!-- ============================================================ -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
-            <div class="flex justify-between items-start md:items-center mb-3 gap-2">
-                <div class="flex-1">
-                    <h2 class="text-base md:text-lg font-semibold text-gray-800">📋 Master Data</h2>
-                    <p class="text-[10px] md:text-xs text-gray-500">Proses di-merge jika punya beberapa mesin.</p>
-                </div>
-                <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 hover:text-red-800 font-medium bg-red-50 hover:bg-red-100 px-2 md:px-3 py-1.5 rounded-lg border border-red-200 transition whitespace-nowrap">Reset Semua</button>
-            </div>
-
-            <div class="lg:hidden text-[10px] text-blue-700 mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded border border-blue-200">
-                <span>👉</span>
-                <span>Geser tabel ke kanan / kiri untuk melihat semua kolom</span>
-            </div>
-
-            <div class="table-scroll border border-gray-200 rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200 text-xs" id="masterTable">
-                    <thead class="bg-yellow-100 text-gray-800">
-                        <tr>
-                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                            <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
-                            <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
-                            <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
-                            <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                            <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
-                            <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterTableBody" class="divide-y divide-gray-200 bg-white">
-                        <tr>
-                            <td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- TOMBOL SIMPAN -->
+                <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
+                    💾 Simpan ke Master Data
+                </button>
             </div>
         </div>
     </div>
 
     <!-- ============================================================ -->
-    <!-- TOMBOL KONTROL BAWAH (KHUSUS HP) -->
+    <!-- TAB CONTENT: DATA (CARD VIEW) -->
     <!-- ============================================================ -->
-    <div class="bottom-controls md:hidden">
-        <div class="flex gap-2">
-            <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
-            <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
-            <button id="mobileStopBtn" onclick="stopTimer()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP</button>
+    <div id="tab-data" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
+                    <p class="text-[10px] md:text-xs text-gray-500">1 mesin = 1 card. Total gabungan per proses di bawah card.</p>
+                </div>
+                <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset Semua</button>
+            </div>
+
+            <div id="mobileCards" class="space-y-3">
+                <div class="text-center text-gray-400 italic py-12 text-sm bg-white rounded-xl border border-gray-200">
+                    Belum ada data. Input dulu di tab 📝 Input.
+                </div>
+            </div>
+
+            <!-- Ringkasan Total -->
+            <div id="dataSummary" class="hidden mt-4 bg-gradient-to-r from-emerald-50 to-purple-50 rounded-xl border border-emerald-200 p-4">
+                <div class="text-xs font-semibold text-gray-600 uppercase mb-2">📈 Ringkasan</div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <div class="text-[10px] text-gray-500">Total Mesin</div>
+                        <div id="summaryTotalMachine" class="font-bold text-gray-800">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-gray-500">Total Siklus</div>
+                        <div id="summaryTotalLaps" class="font-bold text-gray-800">0</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="text-center text-[10px] text-gray-400 mt-1.5">
-            <span id="mobileStatus">Idle</span>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB CONTENT: EXPORT -->
+    <!-- ============================================================ -->
+    <div id="tab-export" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📈 Ringkasan Data</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-500 uppercase">Total Mesin</div>
+                        <div id="exportTotalMachine" class="text-2xl font-bold text-blue-700">0</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-500 uppercase">Total Siklus</div>
+                        <div id="exportTotalLaps" class="text-2xl font-bold text-yellow-700">0</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-500 uppercase">Total Proses</div>
+                        <div id="exportTotalProcess" class="text-2xl font-bold text-purple-700">0</div>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-3">
+                        <div class="text-[10px] text-gray-500 uppercase">Kapasitas Total</div>
+                        <div id="exportTotalCapacity" class="text-2xl font-bold text-emerald-700">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
+
+                <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3 flex items-center justify-center gap-2">
+                    📥 Export Excel (.xlsx)
+                </button>
+                <p class="text-[10px] text-gray-500 mb-4">Format terbaik — auto-merge, siap dibuka di Excel/WPS/Sheets.</p>
+
+                <button onclick="exportToCSV()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3 flex items-center justify-center gap-2">
+                    📄 Export CSV (.csv)
+                </button>
+                <p class="text-[10px] text-gray-500">Format cadangan — universal, tapi tanpa auto-merge.</p>
+            </div>
+
+            <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
+                <div class="text-xs font-bold text-blue-800 mb-2">💡 Tips</div>
+                <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
+                    <li>File tersimpan di folder <b>Download</b> HP</li>
+                    <li>Buka pakai <b>WPS Office</b> atau <b>Google Sheets</b></li>
+                    <li>Kalau download gagal, <b>wajib pakai Chrome</b> (bukan browser in-app)</li>
+                    <li>Export rutin setiap selesai shift untuk backup</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TOMBOL KONTROL BAWAH (FIXED) -->
+    <!-- ============================================================ -->
+    <div class="bottom-controls">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex gap-2">
+                <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
+                <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
+                <button id="mobileStopBtn" onclick="stopTimer()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP</button>
+            </div>
+            <div class="text-center text-[10px] text-gray-400 mt-1.5">
+                <span id="mobileStatus">Idle</span>
+            </div>
         </div>
     </div>
 
@@ -226,10 +288,42 @@
         let currentLaps = [];
         let masterData = [];
         let lastLapTimestamp = 0;
+        let currentTab = 'input';
 
         document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
             weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
         });
+
+        // ============================================================
+        // TAB NAVIGATION
+        // ============================================================
+        function switchTab(tabName) {
+            // Warning kalau timer sedang jalan & pindah tab
+            if (isRunning && tabName !== 'input') {
+                if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.\n\nLanjutkan?')) {
+                    return;
+                }
+                // Auto-pause saat pindah tab
+                clearInterval(timerInterval);
+                timerInterval = null;
+                setStartButton('resume');
+                setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
+                isRunning = false;
+            }
+
+            // Sembunyikan semua tab
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            // Update tombol tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('tab-active'));
+            document.getElementById('tabBtn-' + tabName).classList.add('tab-active');
+
+            currentTab = tabName;
+
+            // Scroll ke atas
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         // ============================================================
         // UTILITAS
@@ -246,27 +340,18 @@
         function setTimerStatus(text, colorClasses) {
             const badge = document.getElementById('timerStatus');
             badge.innerText = text;
-            badge.className = 'text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-semibold ' + colorClasses;
+            badge.className = 'text-[10px] md:text-xs px-2 py-1 rounded-full font-semibold ' + colorClasses;
             const mobileStatus = document.getElementById('mobileStatus');
             if (mobileStatus) mobileStatus.innerText = text;
         }
 
         function setStartButton(mode) {
-            const btn = document.getElementById('startStopBtn');
             const mobileBtn = document.getElementById('mobileStartBtn');
-            const base = 'text-white font-semibold py-3 md:py-2.5 px-2 rounded-lg transition shadow text-sm md:text-xs';
-
             if (mode === 'start') {
-                btn.innerText = 'Start';
-                btn.className = 'bg-green-600 hover:bg-green-700 ' + base;
                 if (mobileBtn) { mobileBtn.innerText = '▶️ START'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
             } else if (mode === 'pause') {
-                btn.innerText = 'Pause';
-                btn.className = 'bg-yellow-600 hover:bg-yellow-700 ' + base;
                 if (mobileBtn) { mobileBtn.innerText = '⏸️ PAUSE'; mobileBtn.className = 'bottom-controls-btn bg-yellow-600'; }
             } else if (mode === 'resume') {
-                btn.innerText = 'Resume';
-                btn.className = 'bg-green-600 hover:bg-green-700 ' + base;
                 if (mobileBtn) { mobileBtn.innerText = '▶️ RESUME'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
             }
         }
@@ -290,7 +375,7 @@
             const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
             const toast = document.createElement('div');
             toast.innerText = message;
-            toast.className = `fixed bottom-24 md:bottom-4 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-50 toast-animate whitespace-nowrap`;
+            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-50 toast-animate whitespace-nowrap`;
             document.body.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
@@ -442,11 +527,7 @@
                 showToast('✅ Data disimpan', 'success');
             }
 
-            renderMasterTable();
-            resetStopwatchAfterCommit();
-        }
-
-        function resetStopwatchAfterCommit() {
+            // PENTING: Reset timer tapi PERTAHANKAN No + Nama Proses
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
             elapsedTime = 0;
@@ -456,12 +537,27 @@
             document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             document.getElementById('inputSubMachine').value = '';
             document.getElementById('inputActualMachine').value = '1';
+            // No & Nama Proses TIDAK direset — biar bisa lanjut input mesin berikutnya
+
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
             setButtonEnabled('stopBtn', false);
             setButtonEnabled('lapBtn', false);
             setButtonEnabled('commitBtn', false);
             updateLapsUI();
+            renderMasterTable();
+
+            // AUTO-PINDAH TAB: Input → Data (lihat hasil) → balik Input setelah 1.5 detik
+            switchTab('data');
+            setTimeout(() => {
+                if (currentTab === 'data') {
+                    switchTab('input');
+                    // Fokus ke input Mesin / Jalur
+                    setTimeout(() => {
+                        document.getElementById('inputSubMachine').focus();
+                    }, 200);
+                }
+            }, 1500);
         }
 
         // ============================================================
@@ -477,48 +573,24 @@
         }
 
         // ============================================================
-        // RENDER TABEL
+        // RENDER CARD VIEW (TAB DATA)
         // ============================================================
         function renderMasterTable() {
-            const tbody = document.getElementById('masterTableBody');
-            const thead = document.querySelector('#masterTable thead tr');
+            renderMobileCards();
+            updateCounters();
+        }
+
+        function renderMobileCards() {
+            const container = document.getElementById('mobileCards');
+            const summary = document.getElementById('dataSummary');
 
             if (masterData.length === 0) {
-                thead.innerHTML = `
-                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
-                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
-                    <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
-                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
-                    <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
-                    <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                    <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
-                    <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
-                `;
-                tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>`;
+                container.innerHTML = '<div class="text-center text-gray-400 italic py-12 text-sm bg-white rounded-xl border border-gray-200">Belum ada data. Input dulu di tab 📝 Input.</div>';
+                summary.classList.add('hidden');
                 return;
             }
 
-            const maxLaps = Math.max(...masterData.map(item => item.laps.length));
-
-            let headerHTML = `
-                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
-                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Mesin / Jalur</th>
-            `;
-            for (let i = 1; i <= maxLaps; i++) {
-                headerHTML += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
-            }
-            headerHTML += `
-                <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
-                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">NG%</th>
-                <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">CT + Gerakan</th>
-                <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Kapasitas</th>
-                <th class="px-3 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Total Gabungan UPH</th>
-                <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
-            `;
-            thead.innerHTML = headerHTML;
-
+            // Group by (No + Process)
             const groups = {};
             const groupOrder = [];
             masterData.forEach((item, idx) => {
@@ -531,58 +603,100 @@
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
 
-            let htmlOutput = '';
+            let html = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
-                const rowSpan = group.rows.length;
+                const isMulti = group.rows.length > 1;
 
+                // Header proses (jika multi mesin)
+                if (isMulti) {
+                    html += `
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mt-2">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <span class="bg-yellow-200 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded">No ${group.no}</span>
+                                    <span class="font-bold text-gray-800 ml-1">${group.process}</span>
+                                </div>
+                                <span class="text-[10px] text-gray-500">${group.rows.length} mesin</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Card per mesin
                 group.rows.forEach((row, rIdx) => {
                     const stats = getRowStats(row);
                     const sessionBadge = row.sessions > 1
-                        ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions} sesi</span>`
+                        ? `<span class="text-[9px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions}×</span>`
                         : '';
 
-                    htmlOutput += `<tr class="hover:bg-yellow-50/50 transition">`;
+                    html += `
+                        <div class="bg-white rounded-xl border border-gray-200 p-3 mb-2">
+                            <div class="flex justify-between items-start mb-2 gap-2">
+                                <div class="flex-1 min-w-0">
+                                    ${!isMulti ? `
+                                        <span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${row.no}</span>
+                                        <span class="font-bold text-gray-800 ml-1 text-sm">${row.process}</span>
+                                    ` : `
+                                        <span class="text-xs text-gray-600">Mesin ${rIdx + 1}</span>
+                                    `}
+                                    <div class="text-[11px] text-gray-500 mt-0.5 truncate">
+                                        <span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100 font-mono">${row.subMachine}</span>
+                                        ${sessionBadge}
+                                    </div>
+                                </div>
+                                <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 text-[10px] bg-red-50 px-2 py-1 rounded border border-red-200 whitespace-nowrap">Hapus</button>
+                            </div>
 
-                    if (rIdx === 0) {
-                        htmlOutput += `
-                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${group.no}</td>
-                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${group.process}</td>
-                        `;
-                    }
+                            <div class="grid grid-cols-4 gap-1.5 text-[10px] mb-2">
+                                <div class="bg-blue-50 rounded p-1.5 text-center">
+                                    <div class="text-gray-500">Siklus</div>
+                                    <div class="font-bold text-blue-700">${stats.count}×</div>
+                                </div>
+                                <div class="bg-yellow-50 rounded p-1.5 text-center">
+                                    <div class="text-gray-500">Rata²</div>
+                                    <div class="font-bold text-yellow-700">${stats.avg.toFixed(2)}</div>
+                                </div>
+                                <div class="bg-orange-50 rounded p-1.5 text-center">
+                                    <div class="text-gray-500">CT+G</div>
+                                    <div class="font-bold text-orange-700">${stats.ctPlusG.toFixed(2)}</div>
+                                </div>
+                                <div class="bg-emerald-50 rounded p-1.5 text-center">
+                                    <div class="text-gray-500">Kap.</div>
+                                    <div class="font-bold text-emerald-700">${stats.capacity}</div>
+                                </div>
+                            </div>
 
-                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">
-                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${row.subMachine}</span>${sessionBadge}
-                    </td>`;
-
-                    for (let i = 0; i < maxLaps; i++) {
-                        const lapVal = row.laps[i];
-                        if (lapVal !== undefined) htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${lapVal.toFixed(2)}</td>`;
-                        else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
-                    }
-
-                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
-                    htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${row.ngRate}%</td>`;
-                    htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
-                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
-
-                    if (rIdx === 0) {
-                        htmlOutput += `
-                            <td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">
-                                ${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span>
-                            </td>
-                        `;
-                    }
-
-                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
-                        <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
-                    </td>`;
-
-                    htmlOutput += `</tr>`;
+                            <div class="text-[10px] text-gray-500 bg-gray-50 p-1.5 rounded border border-gray-100">
+                                <div class="font-mono text-gray-700 break-words leading-relaxed">
+                                    ${row.laps.map((l, i) => `<span class="inline-block bg-white px-1.5 py-0.5 rounded border border-gray-200 mr-0.5 mb-0.5">S${i + 1}: ${l.toFixed(2)}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 });
+
+                // Total gabungan (kalau multi mesin)
+                if (isMulti) {
+                    html += `
+                        <div class="bg-gradient-to-r from-purple-50 to-emerald-50 rounded-lg border border-purple-200 px-3 py-2 mb-2 -mt-1">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[11px] font-bold text-purple-800">📊 Total Gabungan</span>
+                                <span class="text-base font-extrabold text-purple-700">${group.totalCapacity} <span class="text-[10px] font-normal">UPH</span></span>
+                            </div>
+                        </div>
+                    `;
+                }
             });
 
-            tbody.innerHTML = htmlOutput;
+            container.innerHTML = html;
+
+            // Show summary
+            summary.classList.remove('hidden');
+            const totalMachine = masterData.length;
+            const totalLaps = masterData.reduce((sum, item) => sum + item.laps.length, 0);
+            document.getElementById('summaryTotalMachine').innerText = totalMachine;
+            document.getElementById('summaryTotalLaps').innerText = totalLaps;
         }
 
         function deleteMasterRow(idx) {
@@ -594,15 +708,48 @@
         }
 
         function clearAllData() {
-            if (confirm('Yakin ingin menghapus seluruh data?')) {
-                masterData = [];
-                renderMasterTable();
-                showToast('Semua data dihapus', 'warning');
-            }
+            if (!confirm('Yakin ingin menghapus seluruh data?')) return;
+            masterData = [];
+            renderMasterTable();
+            showToast('Semua data dihapus', 'warning');
         }
 
         // ============================================================
-        // BUILD XLSX WORKBOOK (dipakai oleh XLSX & CSV export)
+        // UPDATE COUNTERS
+        // ============================================================
+        function updateCounters() {
+            const totalMachine = masterData.length;
+            const totalLaps = masterData.reduce((sum, item) => sum + item.laps.length, 0);
+
+            // Badge di tab Data
+            const badge = document.getElementById('dataCountBadge');
+            badge.innerText = totalMachine;
+            if (totalMachine > 0) {
+                badge.className = 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full';
+            } else {
+                badge.className = 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
+            }
+
+            // Summary di tab Export
+            const totalProcess = new Set(masterData.map(item => `${item.no}||${item.process}`)).size;
+            const totalCapacity = (() => {
+                const groups = {};
+                masterData.forEach(item => {
+                    const key = `${item.no}||${item.process}`;
+                    if (!groups[key]) groups[key] = 0;
+                    groups[key] += getRowStats(item).capacity;
+                });
+                return Object.values(groups).reduce((a, b) => a + b, 0);
+            })();
+
+            document.getElementById('exportTotalMachine').innerText = totalMachine;
+            document.getElementById('exportTotalLaps').innerText = totalLaps;
+            document.getElementById('exportTotalProcess').innerText = totalProcess;
+            document.getElementById('exportTotalCapacity').innerText = totalCapacity + ' UPH';
+        }
+
+        // ============================================================
+        // BUILD DATA ROWS (untuk Excel & CSV)
         // ============================================================
         function buildDataRows() {
             const maxLaps = Math.max(...masterData.map(item => item.laps.length));
@@ -664,10 +811,9 @@
         }
 
         // ============================================================
-        // DOWNLOAD BLOB UNIVERSAL (untuk HP & PC)
+        // DOWNLOAD BLOB
         // ============================================================
         function downloadBlob(blob, filename) {
-            // Metode 1: Blob URL + anchor click (paling universal)
             try {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -676,8 +822,6 @@
                 link.style.display = 'none';
                 document.body.appendChild(link);
                 link.click();
-
-                // Cleanup
                 setTimeout(() => {
                     document.body.removeChild(link);
                     URL.revokeObjectURL(url);
@@ -685,21 +829,13 @@
                 return true;
             } catch (e) {
                 console.error('Download gagal:', e);
-                // Metode 2: Fallback buka di tab baru
-                try {
-                    const url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-                    return true;
-                } catch (e2) {
-                    console.error('Fallback download gagal:', e2);
-                    showToast('❌ Gagal download. Coba buka di Chrome desktop.', 'error');
-                    return false;
-                }
+                showToast('❌ Gagal download. Coba browser Chrome.', 'error');
+                return false;
             }
         }
 
         // ============================================================
-        // EXPORT XLSX (DENGAN BLOB METHOD)
+        // EXPORT XLSX
         // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) {
@@ -707,24 +843,21 @@
                 return;
             }
             if (typeof XLSX === 'undefined') {
-                showToast('❌ SheetJS belum ke-load. Coba pakai CSV.', 'error');
+                showToast('❌ SheetJS belum ke-load. Coba CSV.', 'error');
                 return;
             }
 
             try {
                 const { dataRows, merges, maxLaps } = buildDataRows();
-
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(dataRows);
                 ws['!merges'] = merges;
 
-                // Lebar kolom
                 const colWidths = [{ wch: 5 }, { wch: 18 }, { wch: 12 }];
                 for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
                 colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
                 ws['!cols'] = colWidths;
 
-                // Format 2 desimal
                 const range = XLSX.utils.decode_range(ws['!ref']);
                 for (let r = 1; r <= range.e.r; r++) {
                     const avgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 3 });
@@ -734,14 +867,11 @@
                 }
 
                 XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-
-                // ==== BLOB METHOD (bukan XLSX.writeFile) ====
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-                const success = downloadBlob(blob, filename);
-                if (success) {
+                if (downloadBlob(blob, filename)) {
                     showToast('📥 File Excel berhasil diunduh', 'success');
                 }
             } catch (err) {
@@ -751,7 +881,7 @@
         }
 
         // ============================================================
-        // EXPORT CSV (FALLBACK - PALING UNIVERSAL)
+        // EXPORT CSV
         // ============================================================
         function exportToCSV() {
             if (masterData.length === 0) {
@@ -761,8 +891,6 @@
 
             try {
                 const { dataRows } = buildDataRows();
-
-                // Escape CSV: bungkus dengan kutip, escape kutip ganda
                 const escapeCSV = (v) => {
                     const s = String(v == null ? '' : v);
                     if (s.includes(',') || s.includes('"') || s.includes('\n')) {
@@ -770,15 +898,11 @@
                     }
                     return s;
                 };
-
                 const csvContent = dataRows.map(row => row.map(escapeCSV).join(',')).join('\r\n');
-
-                // Pakai BOM UTF-8 supaya Excel baca karakter Indonesia dengan benar
                 const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.csv`;
 
-                const success = downloadBlob(blob, filename);
-                if (success) {
+                if (downloadBlob(blob, filename)) {
                     showToast('📄 File CSV berhasil diunduh', 'success');
                 }
             } catch (err) {
@@ -790,11 +914,12 @@
         // ============================================================
         // INIT
         // ============================================================
-        (function initMobileButtons() {
+        (function init() {
             const mobileStopBtn = document.getElementById('mobileStopBtn');
             const mobileLapBtn = document.getElementById('mobileLapBtn');
             if (mobileStopBtn) mobileStopBtn.disabled = true;
             if (mobileLapBtn) mobileLapBtn.disabled = true;
+            updateCounters();
         })();
     </script>
 </body>
