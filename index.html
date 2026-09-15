@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Firebase Sync + Standard UPH</title>
+    <title>Time Study - Firebase + Warna Excel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
         .timer-display { user-select: none; -webkit-user-select: none; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -280,7 +280,6 @@
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
 
-            <!-- INPUT STANDARD UPH -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah Standard</h2>
                 <div>
@@ -295,7 +294,6 @@
                 </div>
             </div>
 
-            <!-- HASIL CEK STANDARD -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <div id="standardResultHeader" class="mb-3">
                     <div class="text-sm text-gray-400 italic text-center py-4">Memuat...</div>
@@ -303,18 +301,17 @@
                 <div id="standardResultList" class="space-y-2"></div>
             </div>
 
-            <!-- EXPORT DATA -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
                 <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
-                    📥 Export Excel (.xlsx)
+                    📥 Export Excel (.xlsx) — Dengan Warna
                 </button>
                 <button onclick="exportToCSV()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
                     📄 Export CSV (.csv)
                 </button>
+                <p class="text-[10px] text-gray-500 text-center">💡 File Excel berwarna — header kuning, bottleneck merah, normal hijau</p>
             </div>
 
-            <!-- INFO FIREBASE -->
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                 <div class="text-xs font-bold text-blue-800 mb-2">💡 Info Firebase</div>
                 <div class="text-[11px] text-blue-700 space-y-1">
@@ -529,10 +526,10 @@
                 }
                 lastServerUpdate = remoteUpdate;
                 setSyncStatus('online');
-                const masterCount = document.getElementById('serverMasterCount');
-                if (masterCount) masterCount.innerText = remoteData.length;
-                const lastUpdateEl = document.getElementById('serverLastUpdate');
-                if (lastUpdateEl && remoteUpdate) lastUpdateEl.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
+                const mc = document.getElementById('serverMasterCount');
+                if (mc) mc.innerText = remoteData.length;
+                const lu = document.getElementById('serverLastUpdate');
+                if (lu && remoteUpdate) lu.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
             }, (error) => { console.error('❌ Listener master error:', error); setSyncStatus('offline'); });
 
             const machinesRef = window.firebaseRef(window.firebaseDB, 'machineList');
@@ -554,8 +551,8 @@
                 }
                 lastServerUpdate = remoteUpdate;
                 setSyncStatus('online');
-                const machineCount = document.getElementById('serverMachineCount');
-                if (machineCount) machineCount.innerText = remoteData.length;
+                const mc = document.getElementById('serverMachineCount');
+                if (mc) mc.innerText = remoteData.length;
             }, (error) => { console.error('❌ Listener machines error:', error); setSyncStatus('offline'); });
         }
 
@@ -606,7 +603,6 @@
             document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
                 weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
             });
-            // Load standard UPH dari localStorage
             const savedStandard = localStorage.getItem(LS_KEY_STANDARD);
             if (savedStandard) {
                 const el = document.getElementById('standardUph');
@@ -766,7 +762,6 @@
                 if (navigator.vibrate) navigator.vibrate(30);
             }
         }
-
         function stopTimer() {
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
@@ -790,7 +785,6 @@
             }
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
-
         function recordLap() {
             if (!isRunning) return;
             const now = Date.now();
@@ -1096,35 +1090,23 @@
             }
         }
 
-        // ============================================================
-        // CEK STANDARD UPH
-        // ============================================================
         function renderStandardCheck() {
             const standardInput = document.getElementById('standardUph');
             const headerEl = document.getElementById('standardResultHeader');
             const listEl = document.getElementById('standardResultList');
             if (!standardInput || !headerEl || !listEl) return;
 
-            // Load dari localStorage kalau kosong
             if (!standardInput.value || standardInput.value === '') {
                 const saved = localStorage.getItem(LS_KEY_STANDARD);
                 if (saved) standardInput.value = saved;
             }
-
             const standard = parseFloat(standardInput.value) || 0;
+            if (standard > 0) localStorage.setItem(LS_KEY_STANDARD, standard);
 
-            // Save ke localStorage
-            if (standard > 0) {
-                localStorage.setItem(LS_KEY_STANDARD, standard);
-            }
-
-            // Group by (No + Proses)
             const groups = {};
             masterData.forEach(item => {
                 const key = `${item.no}||${item.process}`;
-                if (!groups[key]) {
-                    groups[key] = { no: item.no, process: item.process, capacity: 0, machines: [] };
-                }
+                if (!groups[key]) groups[key] = { no: item.no, process: item.process, capacity: 0, machines: [] };
                 const stats = getRowStats(item);
                 groups[key].capacity += stats.capacity;
                 groups[key].machines.push(item.subMachine);
@@ -1137,7 +1119,6 @@
                 listEl.innerHTML = '';
                 return;
             }
-
             if (standard <= 0) {
                 headerEl.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan Standard UPH di atas untuk mulai cek.</div>`;
                 listEl.innerHTML = '';
@@ -1204,13 +1185,10 @@
                     </div>
                 `;
             }
-
             listEl.innerHTML = listHtml;
         }
 
-        function generateId() {
-            return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        }
+        function generateId() { return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
         function openMachineModal(machineId = null) {
             editingMachineId = machineId;
             const modal = document.getElementById('machineModal');
@@ -1324,9 +1302,7 @@
                     const delimiter = firstLine.includes('\t') ? '\t' : ',';
                     let startIdx = 0;
                     const firstCells = firstLine.split(delimiter).map(c => c.trim().toLowerCase().replace(/^"|"$/g, ''));
-                    if (firstCells[0] === 'no' || firstCells[1] === 'nama mesin' || firstCells[1] === 'proses' || firstCells[1] === 'nama proses') {
-                        startIdx = 1;
-                    }
+                    if (firstCells[0] === 'no' || firstCells[1] === 'nama mesin' || firstCells[1] === 'proses' || firstCells[1] === 'nama proses') startIdx = 1;
                     const newItems = [];
                     for (let i = startIdx; i < lines.length; i++) {
                         const cells = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
@@ -1453,20 +1429,26 @@
             }
         }
 
+        // ============================================================
+        // EXPORT XLSX DENGAN WARNA
+        // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
-            if (typeof XLSX === 'undefined') { showToast('❌ SheetJS belum ke-load. Coba CSV.', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load. Coba CSV.', 'error'); return; }
+
             try {
                 const { dataRows, merges, maxLaps } = buildDataRows();
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.aoa_to_sheet(dataRows);
                 ws['!merges'] = merges;
 
+                // === LEBAR KOLOM ===
                 const colWidths = [{ wch: 5 }, { wch: 15 }, { wch: 15 }];
                 for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
                 colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
                 ws['!cols'] = colWidths;
 
+                // === FORMAT ANGKA 2 DESIMAL ===
                 const range = XLSX.utils.decode_range(ws['!ref']);
                 for (let r = 1; r <= range.e.r; r++) {
                     const avgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 3 });
@@ -1477,11 +1459,185 @@
                     if (ws[ctgCell] && typeof ws[ctgCell].v === 'number') ws[ctgCell].z = '0.00';
                 }
 
+                // ============================================================
+                // STYLING
+                // ============================================================
+                const BORDER = {
+                    top: { style: 'thin', color: { rgb: '9CA3AF' } },
+                    bottom: { style: 'thin', color: { rgb: '9CA3AF' } },
+                    left: { style: 'thin', color: { rgb: '9CA3AF' } },
+                    right: { style: 'thin', color: { rgb: '9CA3AF' } }
+                };
+
+                // ---------- 1. HEADER ROW ----------
+                for (let c = 0; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                    ws[addr].s = {
+                        font: { bold: true, sz: 11, color: { rgb: '111827' } },
+                        fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } },  // Kuning
+                        alignment: { horizontal: 'center', vertical: 'center' },
+                        border: BORDER
+                    };
+                }
+
+                // ---------- 2. GROUP & BOTTLENECK DETECTION ----------
+                const groups = {};
+                const groupOrder = [];
+                masterData.forEach(item => {
+                    const key = `${item.no}||${item.process}`;
+                    if (!groups[key]) {
+                        groups[key] = { no: item.no, process: item.process, capacity: 0, rows: [] };
+                        groupOrder.push(key);
+                    }
+                    groups[key].rows.push(item);
+                    groups[key].capacity += getRowStats(item).capacity;
+                });
+
+                const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
+                const perProcess = Object.values(groups);
+                let bottleneckKey = null;
+                let minCap = Infinity;
+                perProcess.forEach(p => {
+                    const key = `${p.no}||${p.process}`;
+                    if (p.capacity < minCap) { minCap = p.capacity; bottleneckKey = key; }
+                });
+
+                // ---------- 3. WARNA PER BARIS ----------
+                let dataRowIdx = 1;
+                groupOrder.forEach(key => {
+                    const group = groups[key];
+                    const isBelowStandard = standardUph > 0 && group.capacity < standardUph;
+                    const isBottleneck = (key === bottleneckKey && perProcess.length > 1);
+
+                    group.rows.forEach((item, rIdx) => {
+                        const rowIdx = dataRowIdx;
+
+                        // Warna dasar baris (hijau/merah)
+                        const isProblem = isBelowStandard || isBottleneck;
+                        const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';  // Merah muda / Hijau muda
+
+                        for (let c = 0; c <= range.e.c; c++) {
+                            const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
+                            if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+
+                            // Default style
+                            let fill = rowBg;
+                            let font = { color: { rgb: '111827' }, sz: 11 };
+                            let align = { horizontal: 'center', vertical: 'center' };
+
+                            // === OVERRIDE PER KOLOM ===
+
+                            // No & Nama Mesin (baris pertama grup) → kuning pucat
+                            if (rIdx === 0 && (c === 0 || c === 1)) {
+                                fill = 'FEF9E7';
+                                font = { bold: true, sz: 11, color: { rgb: '78350F' } };
+                                align.horizontal = 'left';
+                            }
+
+                            // Sub Mesin → biru pucat
+                            if (c === 2) {
+                                fill = 'DBEAFE';
+                                font = { sz: 11, color: { rgb: '1E40AF' } };
+                                align.horizontal = 'left';
+                            }
+
+                            // S1..Sn → biru sangat pucat
+                            if (c >= 3 && c < 3 + maxLaps) {
+                                fill = 'EFF6FF';
+                                font = { sz: 11, color: { rgb: '1F2937' } };
+                            }
+
+                            // Rata-rata → kuning
+                            if (c === maxLaps + 3) {
+                                fill = 'FEF3C7';
+                                font = { bold: true, sz: 11, color: { rgb: '92400E' } };
+                            }
+
+                            // NG% → putih
+                            if (c === maxLaps + 4) {
+                                fill = 'FFFFFF';
+                                font = { sz: 11, color: { rgb: '111827' } };
+                            }
+
+                            // Gerakan → orange pucat
+                            if (c === maxLaps + 5) {
+                                fill = 'FED7AA';
+                                font = { sz: 11, color: { rgb: '9A3412' } };
+                            }
+
+                            // CT + Gerakan → orange
+                            if (c === maxLaps + 6) {
+                                fill = 'FFEDD5';
+                                font = { bold: true, sz: 11, color: { rgb: 'C2410C' } };
+                            }
+
+                            // Kapasitas → hijau pucat
+                            if (c === maxLaps + 7) {
+                                fill = 'D1FAE5';
+                                font = { bold: true, sz: 11, color: { rgb: '065F46' } };
+                            }
+
+                            // Total Gabungan UPH → ungu pucat
+                            if (c === maxLaps + 8) {
+                                fill = 'EDE9FE';
+                                font = { bold: true, sz: 11, color: { rgb: '5B21B6' } };
+                            }
+
+                            // Baris problem → override warna kolom dengan merah
+                            if (isProblem) {
+                                // Khusus kolom Kapasitas & CT+G di baris problem → merah
+                                if (c === maxLaps + 7 || c === maxLaps + 8) {
+                                    fill = 'FECACA';  // bg-red-200
+                                    font = { bold: true, sz: 11, color: { rgb: '991B1B' } };
+                                }
+                            }
+
+                            ws[addr].s = {
+                                font: font,
+                                fill: { patternType: 'solid', fgColor: { rgb: fill } },
+                                alignment: align,
+                                border: BORDER
+                            };
+                        }
+
+                        dataRowIdx++;
+                    });
+                });
+
+                // ---------- 4. APPLY STYLE KE MERGED CELLS ----------
+                merges.forEach(merge => {
+                    const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
+                    if (ws[startAddr] && ws[startAddr].s) {
+                        const style = ws[startAddr].s;
+                        for (let r = merge.s.r; r <= merge.e.r; r++) {
+                            for (let c = merge.s.c; c <= merge.e.c; c++) {
+                                const addr = XLSX.utils.encode_cell({ r: r, c: c });
+                                if (addr !== startAddr) {
+                                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                                    ws[addr].s = style;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // ---------- 5. ROW HEIGHT ----------
+                ws['!rows'] = [{ hpt: 25 }];  // header height
+                for (let r = 1; r <= range.e.r; r++) {
+                    ws['!rows'][r] = { hpt: 20 };
+                }
+
+                // === TULIS FILE ===
                 XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const wbout = XLSX.write(wb, {
+                    bookType: 'xlsx',
+                    type: 'array',
+                    cellStyles: true
+                });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel berwarna diunduh', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
                 showToast('❌ Gagal export Excel.', 'error');
