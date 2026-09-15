@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Firebase Sync + Bottleneck</title>
+    <title>Time Study - Firebase Sync + Standard UPH</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         .timer-display { user-select: none; -webkit-user-select: none; }
         @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -72,26 +72,16 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .bottleneck-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #fef3c7; color: #92400e;
-            padding: 2px 8px; border-radius: 6px;
-            font-size: 10px; font-weight: 700;
-            border: 1px solid #fde68a;
-        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
 
-    <!-- LOADING OVERLAY -->
     <div id="loadingOverlay">
         <div class="spinner mb-4"></div>
         <div class="text-sm text-gray-600 font-medium">Menghubungkan ke Firebase...</div>
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
-    <!-- HEADER -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center gap-2">
             <div class="flex items-center gap-2 min-w-0">
@@ -108,7 +98,6 @@
         </div>
     </header>
 
-    <!-- TAB NAV -->
     <nav class="bg-white border-b border-gray-200 sticky top-[44px] md:top-[56px] z-20">
         <div class="max-w-7xl mx-auto flex overflow-x-auto">
             <button onclick="switchTab('input')" id="tabBtn-input" class="tab-btn tab-active">📝 Input</button>
@@ -151,16 +140,15 @@
                     </div>
 
                     <div id="customMachineWrapper" class="hidden">
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Mesin Manual (Baru)</label>
-                        <input type="text" id="inputSubMachineCustom" placeholder="Ketik nama mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Sub Mesin Manual (Baru)</label>
+                        <input type="text" id="inputSubMachineCustom" placeholder="Ketik sub mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
                     </div>
 
                     <div id="selectedMachineInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-2.5">
-                        <div class="text-[10px] text-blue-600 uppercase font-semibold">Mesin Terpilih</div>
+                        <div class="text-[10px] text-blue-600 uppercase font-semibold">Sub Mesin</div>
                         <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                     </div>
 
-                    <!-- 3 KOLOM: NG Rate, Gerakan, Jml Unit -->
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
@@ -291,35 +279,31 @@
     <!-- TAB EXPORT -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📈 Ringkasan Data</h2>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-blue-50 rounded-lg p-3">
-                        <div class="text-[10px] text-gray-500 uppercase">Total Mesin</div>
-                        <div id="exportTotalMachine" class="text-2xl font-bold text-blue-700">0</div>
-                    </div>
-                    <div class="bg-yellow-50 rounded-lg p-3">
-                        <div class="text-[10px] text-gray-500 uppercase">Total Siklus</div>
-                        <div id="exportTotalLaps" class="text-2xl font-bold text-yellow-700">0</div>
-                    </div>
-                    <div class="bg-purple-50 rounded-lg p-3">
-                        <div class="text-[10px] text-gray-500 uppercase">Total Proses</div>
-                        <div id="exportTotalProcess" class="text-2xl font-bold text-purple-700">0</div>
-                    </div>
-                    <div class="bg-emerald-50 rounded-lg p-3 border-2 border-emerald-300">
-                        <div class="text-[10px] text-gray-500 uppercase">Kapasitas Line (Bottleneck)</div>
-                        <div id="exportTotalCapacity" class="text-2xl font-bold text-emerald-700">0</div>
-                        <div id="exportBottleneckInfo" class="text-[10px] text-emerald-600 mt-1 font-medium">-</div>
-                    </div>
-                </div>
 
-                <!-- Detail Per Proses -->
-                <div id="capacityBreakdown" class="mt-4 hidden">
-                    <div class="text-xs font-bold text-gray-700 uppercase mb-2">📊 Kapasitas Per Proses</div>
-                    <div id="capacityBreakdownList" class="space-y-1.5"></div>
+            <!-- INPUT STANDARD UPH -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah Standard</h2>
+                <div>
+                    <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Standard UPH yang Diinginkan</label>
+                    <div class="flex gap-2 items-center">
+                        <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
+                            oninput="renderStandardCheck()"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
+                        <span class="text-sm font-bold text-gray-600">UPH</span>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-1">Masukkan target kapasitas. Sistem akan menampilkan mesin yang di bawah standard.</p>
                 </div>
             </div>
 
+            <!-- HASIL CEK STANDARD -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
+                <div id="standardResultHeader" class="mb-3">
+                    <div class="text-sm text-gray-400 italic text-center py-4">Memuat...</div>
+                </div>
+                <div id="standardResultList" class="space-y-2"></div>
+            </div>
+
+            <!-- EXPORT DATA -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
                 <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
                 <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
@@ -330,6 +314,7 @@
                 </button>
             </div>
 
+            <!-- INFO FIREBASE -->
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                 <div class="text-xs font-bold text-blue-800 mb-2">💡 Info Firebase</div>
                 <div class="text-[11px] text-blue-700 space-y-1">
@@ -422,13 +407,8 @@
         </div>
     </div>
 
-    <!-- ============================================================ -->
     <!-- FIREBASE SDK -->
-    <!-- ============================================================ -->
     <script type="module">
-        // ============================================================
-        // FIREBASE CONFIG
-        // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
             authDomain: "time-study-6f689.firebaseapp.com",
@@ -458,13 +438,8 @@
         window.dispatchEvent(new Event('firebaseReady'));
     </script>
 
-    <!-- ============================================================ -->
     <!-- APP SCRIPT -->
-    <!-- ============================================================ -->
     <script>
-        // ============================================================
-        // STATE
-        // ============================================================
         let startTime = 0;
         let elapsedTime = 0;
         let timerInterval = null;
@@ -479,28 +454,15 @@
         let isSyncingFromRemote = false;
         let lastServerUpdate = null;
 
-        // ============================================================
-        // LOCALSTORAGE
-        // ============================================================
         const LS_KEY_MACHINES = 'timeStudy_machines_v1';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
+        const LS_KEY_STANDARD = 'timeStudy_standardUph_v1';
 
-        function lsSaveMachines() {
-            try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {}
-        }
-        function lsLoadMachines() {
-            try { const r = localStorage.getItem(LS_KEY_MACHINES); if (r) machineList = JSON.parse(r); } catch(e) { machineList = []; }
-        }
-        function lsSaveMaster() {
-            try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {}
-        }
-        function lsLoadMaster() {
-            try { const r = localStorage.getItem(LS_KEY_MASTER); if (r) masterData = JSON.parse(r); } catch(e) { masterData = []; }
-        }
+        function lsSaveMachines() { try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {} }
+        function lsLoadMachines() { try { const r = localStorage.getItem(LS_KEY_MACHINES); if (r) machineList = JSON.parse(r); } catch(e) { machineList = []; } }
+        function lsSaveMaster() { try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {} }
+        function lsLoadMaster() { try { const r = localStorage.getItem(LS_KEY_MASTER); if (r) masterData = JSON.parse(r); } catch(e) { masterData = []; } }
 
-        // ============================================================
-        // FIREBASE SYNC
-        // ============================================================
         function setSyncStatus(status, text) {
             const dot = document.getElementById('syncDot');
             const t = document.getElementById('syncText');
@@ -508,14 +470,9 @@
             dot.className = 'sync-dot ' + (status === 'online' ? 'sync-online' : status === 'offline' ? 'sync-offline' : 'sync-syncing');
             t.innerText = text || (status === 'online' ? 'Tersinkron' : status === 'offline' ? 'Offline' : 'Sync...');
         }
-
         function setLoadingDone() {
             const overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                overlay.style.opacity = '0';
-                overlay.style.transition = 'opacity 0.3s';
-                setTimeout(() => overlay.remove(), 350);
-            }
+            if (overlay) { overlay.style.opacity = '0'; overlay.style.transition = 'opacity 0.3s'; setTimeout(() => overlay.remove(), 350); }
         }
         function setLoadingDetail(text) {
             const el = document.getElementById('loadingDetail');
@@ -527,10 +484,7 @@
             try {
                 setSyncStatus('syncing');
                 const dbRef = window.firebaseRef(window.firebaseDB, 'masterData');
-                await window.firebaseSet(dbRef, {
-                    data: masterData,
-                    lastUpdate: new Date().toISOString()
-                });
+                await window.firebaseSet(dbRef, { data: masterData, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
                 console.log('✅ Master data tersimpan ke Firebase');
             } catch (e) {
@@ -539,16 +493,12 @@
                 showToast('⚠️ Gagal sync ke Firebase', 'warning');
             }
         }
-
         async function saveMachinesToFirebase() {
             if (!firebaseReady || isSyncingFromRemote) return;
             try {
                 setSyncStatus('syncing');
                 const dbRef = window.firebaseRef(window.firebaseDB, 'machineList');
-                await window.firebaseSet(dbRef, {
-                    data: machineList,
-                    lastUpdate: new Date().toISOString()
-                });
+                await window.firebaseSet(dbRef, { data: machineList, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
                 console.log('✅ Daftar mesin tersimpan ke Firebase');
             } catch (e) {
@@ -557,7 +507,6 @@
                 showToast('⚠️ Gagal sync ke Firebase', 'warning');
             }
         }
-
         function setupFirebaseListeners() {
             if (!firebaseReady) return;
 
@@ -574,6 +523,7 @@
                     masterData = remoteData;
                     lsSaveMaster();
                     renderMasterTable();
+                    renderStandardCheck();
                     updateCounters();
                     isSyncingFromRemote = false;
                 }
@@ -582,13 +532,8 @@
                 const masterCount = document.getElementById('serverMasterCount');
                 if (masterCount) masterCount.innerText = remoteData.length;
                 const lastUpdateEl = document.getElementById('serverLastUpdate');
-                if (lastUpdateEl && remoteUpdate) {
-                    lastUpdateEl.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
-                }
-            }, (error) => {
-                console.error('❌ Listener master error:', error);
-                setSyncStatus('offline');
-            });
+                if (lastUpdateEl && remoteUpdate) lastUpdateEl.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
+            }, (error) => { console.error('❌ Listener master error:', error); setSyncStatus('offline'); });
 
             const machinesRef = window.firebaseRef(window.firebaseDB, 'machineList');
             window.firebaseOnValue(machinesRef, (snapshot) => {
@@ -611,10 +556,7 @@
                 setSyncStatus('online');
                 const machineCount = document.getElementById('serverMachineCount');
                 if (machineCount) machineCount.innerText = remoteData.length;
-            }, (error) => {
-                console.error('❌ Listener machines error:', error);
-                setSyncStatus('offline');
-            });
+            }, (error) => { console.error('❌ Listener machines error:', error); setSyncStatus('offline'); });
         }
 
         async function manualSync() {
@@ -623,7 +565,6 @@
             if (firebaseReady) showToast('✅ Tersinkron dengan Firebase', 'success');
             else showToast('❌ Firebase tidak terjangkau', 'error');
         }
-
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
             try {
@@ -635,6 +576,7 @@
                     masterData = val.data || [];
                     lsSaveMaster();
                     renderMasterTable();
+                    renderStandardCheck();
                     updateCounters();
                     isSyncingFromRemote = false;
                     lastServerUpdate = val.lastUpdate;
@@ -652,10 +594,7 @@
                     isSyncingFromRemote = false;
                 }
                 setSyncStatus('online');
-            } catch (e) {
-                console.error('Load error:', e);
-                setSyncStatus('offline');
-            }
+            } catch (e) { console.error('Load error:', e); setSyncStatus('offline'); }
         }
 
         function saveMachinesToLS() { lsSaveMachines(); if (firebaseReady) saveMachinesToFirebase(); }
@@ -663,13 +602,16 @@
         function saveMasterToLS() { lsSaveMaster(); if (firebaseReady) saveMasterToFirebase(); }
         function loadMasterFromLS() { lsLoadMaster(); }
 
-        // ============================================================
-        // INIT
-        // ============================================================
         async function init() {
             document.getElementById('currentDate').innerText = new Date().toLocaleDateString('id-ID', {
                 weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
             });
+            // Load standard UPH dari localStorage
+            const savedStandard = localStorage.getItem(LS_KEY_STANDARD);
+            if (savedStandard) {
+                const el = document.getElementById('standardUph');
+                if (el) el.value = savedStandard;
+            }
             loadMachinesFromLS();
             loadMasterFromLS();
             populateMachineDropdown();
@@ -687,10 +629,8 @@
                 setLoadingDone();
                 console.log('✅ Firebase mode aktif');
             };
-
-            if (window.firebaseDB) {
-                await activateFirebase();
-            } else {
+            if (window.firebaseDB) { await activateFirebase(); }
+            else {
                 window.addEventListener('firebaseReady', activateFirebase, { once: true });
                 setTimeout(() => {
                     if (!firebaseReady) {
@@ -708,9 +648,6 @@
             if (lapBtn) lapBtn.disabled = true;
         }
 
-        // ============================================================
-        // TAB NAVIGATION
-        // ============================================================
         function switchTab(tabName) {
             if (isRunning && tabName !== 'input') {
                 if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.\n\nLanjutkan?')) return;
@@ -728,13 +665,14 @@
 
             if (tabName === 'mesin') renderMachineTable();
             if (tabName === 'data') { renderMasterTable(); updateCounters(); }
-            if (tabName === 'export') { updateCounters(); updateServerInfo(); }
+            if (tabName === 'export') { updateServerInfo(); renderStandardCheck(); }
             if (tabName === 'input') populateMachineDropdown();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateServerInfo() {
             const statusEl = document.getElementById('serverStatusInfo');
+            if (!statusEl) return;
             if (firebaseReady) {
                 statusEl.innerText = '✅ Online';
                 statusEl.className = 'font-bold text-emerald-600';
@@ -742,16 +680,14 @@
                 statusEl.innerText = '❌ Offline';
                 statusEl.className = 'font-bold text-red-600';
             }
-            document.getElementById('serverMasterCount').innerText = masterData.length;
-            document.getElementById('serverMachineCount').innerText = machineList.length;
-            document.getElementById('serverLastUpdate').innerText = lastServerUpdate
-                ? new Date(lastServerUpdate).toLocaleString('id-ID')
-                : '-';
+            const mc = document.getElementById('serverMasterCount');
+            if (mc) mc.innerText = masterData.length;
+            const mc2 = document.getElementById('serverMachineCount');
+            if (mc2) mc2.innerText = machineList.length;
+            const lu = document.getElementById('serverLastUpdate');
+            if (lu) lu.innerText = lastServerUpdate ? new Date(lastServerUpdate).toLocaleString('id-ID') : '-';
         }
 
-        // ============================================================
-        // UTILITAS
-        // ============================================================
         function formatTimeMs(ms) {
             if (ms < 0) ms = 0;
             const totalSec = ms / 1000;
@@ -760,15 +696,15 @@
             const cs = Math.floor((ms % 1000) / 10);
             return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
         }
-
         function setTimerStatus(text, colorClasses) {
             const badge = document.getElementById('timerStatus');
-            badge.innerText = text;
-            badge.className = 'text-[10px] md:text-xs px-2 py-1 rounded-full font-semibold ' + colorClasses;
-            const mobileStatus = document.getElementById('mobileStatus');
-            if (mobileStatus) mobileStatus.innerText = text;
+            if (badge) {
+                badge.innerText = text;
+                badge.className = 'text-[10px] md:text-xs px-2 py-1 rounded-full font-semibold ' + colorClasses;
+            }
+            const ms = document.getElementById('mobileStatus');
+            if (ms) ms.innerText = text;
         }
-
         function setStartButton(mode) {
             const mobileBtn = document.getElementById('mobileStartBtn');
             if (!mobileBtn) return;
@@ -776,7 +712,6 @@
             else if (mode === 'pause') { mobileBtn.innerText = '⏸️ PAUSE'; mobileBtn.className = 'bottom-controls-btn bg-yellow-600'; }
             else if (mode === 'resume') { mobileBtn.innerText = '▶️ RESUME'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
         }
-
         function setButtonEnabled(id, enabled) {
             const btn = document.getElementById(id);
             if (btn) {
@@ -787,11 +722,10 @@
             const mapping = { 'stopBtn': 'mobileStopBtn', 'lapBtn': 'mobileLapBtn', 'startStopBtn': 'mobileStartBtn' };
             const mobileId = mapping[id];
             if (mobileId) {
-                const mobileBtn = document.getElementById(mobileId);
-                if (mobileBtn) mobileBtn.disabled = !enabled;
+                const mb = document.getElementById(mobileId);
+                if (mb) mb.disabled = !enabled;
             }
         }
-
         function showToast(message, type = 'info') {
             const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
             const toast = document.createElement('div');
@@ -804,15 +738,11 @@
                 setTimeout(() => toast.remove(), 300);
             }, 1800);
         }
-
         function escapeHtml(s) {
             if (s == null) return '';
             return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
         }
 
-        // ============================================================
-        // TIMER
-        // ============================================================
         function toggleTimer() {
             if (!isRunning) {
                 lastLapTimestamp = Date.now();
@@ -873,7 +803,6 @@
             setButtonEnabled('commitBtn', true);
             if (navigator.vibrate) navigator.vibrate(30);
         }
-
         function removeLap(index) {
             currentLaps.splice(index, 1);
             updateLapsUI();
@@ -883,10 +812,10 @@
                 document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             }
         }
-
         function updateLapsUI() {
             const container = document.getElementById('currentLapsContainer');
             const badge = document.getElementById('lapCounterBadge');
+            if (!container || !badge) return;
             badge.innerText = `${currentLaps.length} Siklus`;
             if (currentLaps.length === 0) {
                 container.innerHTML = '<span class="text-gray-400 italic text-[10px] md:text-xs self-center">Belum ada siklus direkam.</span>';
@@ -900,21 +829,16 @@
             `).join('');
         }
 
-        // ============================================================
-        // DROPDOWN MESIN
-        // ============================================================
         function populateMachineDropdown() {
             const select = document.getElementById('machineSelect');
             if (!select) return;
             const currentValue = select.value;
             select.innerHTML = '<option value="">-- Pilih Mesin --</option>';
-
             const sorted = [...machineList].sort((a, b) => {
                 const na = String(a.no), nb = String(b.no);
                 if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
                 return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
             });
-
             sorted.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
@@ -924,16 +848,13 @@
                 opt.dataset.mesin = m.mesin;
                 select.appendChild(opt);
             });
-
             const optCustom = document.createElement('option');
             optCustom.value = '__custom__';
             optCustom.textContent = '➕ Lainnya (ketik manual)';
             select.appendChild(optCustom);
-
             if (currentValue && (currentValue === '__custom__' || select.querySelector(`option[value="${currentValue}"]`))) {
                 select.value = currentValue;
             }
-
             const badge = document.getElementById('machineCountBadge');
             if (badge) {
                 badge.innerText = machineList.length;
@@ -968,13 +889,9 @@
             }
         }
 
-        // ============================================================
-        // COMMIT TIME STUDY
-        // ============================================================
         function commitStudyRow() {
             const select = document.getElementById('machineSelect');
             const isCustom = select.value === '__custom__' || !select.value;
-
             let no, process, subMachine;
             if (isCustom) {
                 no = document.getElementById('inputNo').value.trim() || '-';
@@ -986,7 +903,6 @@
                 process = opt.dataset.proses || '';
                 subMachine = opt.dataset.mesin || '-';
             }
-
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
             const gerakan = parseFloat(document.getElementById('inputGerakan').value) || 0;
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
@@ -1017,7 +933,6 @@
                 });
                 showToast('✅ Data disimpan', 'success');
             }
-
             saveMasterToLS();
 
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
@@ -1038,6 +953,7 @@
             setButtonEnabled('commitBtn', false);
             updateLapsUI();
             renderMasterTable();
+            renderStandardCheck();
             updateCounters();
 
             switchTab('data');
@@ -1049,34 +965,26 @@
             }, 1500);
         }
 
-        // ============================================================
-        // STATISTIK (dengan Gerakan manual)
-        // ============================================================
         function getRowStats(item) {
             const laps = item.laps;
             const count = laps.length;
             const avg = count > 0 ? laps.reduce((a, b) => a + b, 0) / count : 0;
-            // Gerakan: pakai manual kalau ada, kalau tidak default 3 (untuk data lama)
             const gerakan = item.gerakan !== undefined ? parseFloat(item.gerakan) : 3.0;
             const ctPlusG = avg + gerakan;
             const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * item.actualMachine) : 0;
             return { count, avg, ctPlusG, capacity, gerakan };
         }
 
-        // ============================================================
-        // RENDER MASTER TABLE
-        // ============================================================
         function renderMasterTable() {
             const tbody = document.getElementById('masterTableBody');
             const thead = document.querySelector('#masterTable thead tr');
+            if (!tbody || !thead) return;
 
             if (masterData.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data time study yang dimasukkan.</td></tr>`;
                 return;
             }
-
             const maxLaps = Math.max(...masterData.map(item => item.laps.length));
-
             let headerHTML = `
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
@@ -1112,13 +1020,11 @@
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
-
                 group.rows.forEach((row, rIdx) => {
                     const stats = getRowStats(row);
                     const sessionBadge = row.sessions > 1
                         ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions} sesi</span>`
                         : '';
-
                     htmlOutput += `<tr class="hover:bg-yellow-50/50 transition">`;
                     if (rIdx === 0) {
                         htmlOutput += `
@@ -1158,26 +1064,22 @@
             masterData.splice(idx, 1);
             saveMasterToLS();
             renderMasterTable();
+            renderStandardCheck();
             updateCounters();
             showToast('Data dihapus', 'warning');
         }
-
         function clearAllData() {
             if (!confirm('Yakin ingin menghapus seluruh data time study?')) return;
             masterData = [];
             saveMasterToLS();
             renderMasterTable();
+            renderStandardCheck();
             updateCounters();
             showToast('Semua data dihapus', 'warning');
         }
 
-        // ============================================================
-        // COUNTERS (dengan Bottleneck MIN)
-        // ============================================================
         function updateCounters() {
             const totalMachine = masterData.length;
-            const totalLaps = masterData.reduce((sum, item) => sum + item.laps.length, 0);
-
             const badge = document.getElementById('dataCountBadge');
             if (badge) {
                 badge.innerText = totalMachine;
@@ -1185,79 +1087,6 @@
                     ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full'
                     : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
             }
-
-            // Group kapasitas per (No + Proses)
-            const groups = {};
-            masterData.forEach(item => {
-                const key = `${item.no}||${item.process}`;
-                if (!groups[key]) groups[key] = { no: item.no, process: item.process, capacity: 0 };
-                groups[key].capacity += getRowStats(item).capacity;
-            });
-
-            const perProcess = Object.values(groups);
-            const totalProcess = perProcess.length;
-
-            // ========================================================
-            // KAPASITAS LINE = MIN (bottleneck)
-            // ========================================================
-            let bottleneckCapacity = 0;
-            let bottleneckProcess = null;
-            if (perProcess.length > 0) {
-                let minCap = Infinity;
-                perProcess.forEach(p => {
-                    if (p.capacity < minCap) {
-                        minCap = p.capacity;
-                        bottleneckProcess = p;
-                    }
-                });
-                bottleneckCapacity = minCap;
-            }
-
-            const el1 = document.getElementById('exportTotalMachine');
-            if (el1) el1.innerText = totalMachine;
-            const el2 = document.getElementById('exportTotalLaps');
-            if (el2) el2.innerText = totalLaps;
-            const el3 = document.getElementById('exportTotalProcess');
-            if (el3) el3.innerText = totalProcess;
-            const el4 = document.getElementById('exportTotalCapacity');
-            if (el4) el4.innerText = bottleneckCapacity + ' UPH';
-
-            // Info bottleneck
-            const bnInfo = document.getElementById('exportBottleneckInfo');
-            if (bnInfo) {
-                if (bottleneckProcess && totalProcess > 1) {
-                    bnInfo.innerText = `⚠️ Bottleneck: No ${bottleneckProcess.no} - ${bottleneckProcess.process}`;
-                } else if (totalProcess === 1) {
-                    bnInfo.innerText = '✅ Hanya 1 proses';
-                } else {
-                    bnInfo.innerText = '-';
-                }
-            }
-
-            // Breakdown per proses
-            const breakdownEl = document.getElementById('capacityBreakdown');
-            const breakdownList = document.getElementById('capacityBreakdownList');
-            if (breakdownEl && breakdownList) {
-                if (perProcess.length > 1) {
-                    breakdownEl.classList.remove('hidden');
-                    const sorted = [...perProcess].sort((a, b) => a.capacity - b.capacity);
-                    breakdownList.innerHTML = sorted.map((p, i) => {
-                        const isBottleneck = p === bottleneckProcess;
-                        return `
-                            <div class="flex justify-between items-center text-xs px-3 py-2 rounded-lg ${isBottleneck ? 'bg-red-50 border border-red-200' : 'bg-gray-50 border border-gray-200'}">
-                                <div class="flex items-center gap-2">
-                                    ${isBottleneck ? '<span class="bottleneck-badge">⚠️ BOTTLENECK</span>' : ''}
-                                    <span class="font-semibold text-gray-700">No ${escapeHtml(p.no)} · ${escapeHtml(p.process)}</span>
-                                </div>
-                                <span class="font-bold ${isBottleneck ? 'text-red-700' : 'text-gray-700'}">${p.capacity} UPH</span>
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    breakdownEl.classList.add('hidden');
-                }
-            }
-
             const mBadge = document.getElementById('machineCountBadge');
             if (mBadge) {
                 mBadge.innerText = machineList.length;
@@ -1268,12 +1097,120 @@
         }
 
         // ============================================================
-        // MACHINE MANAGEMENT
+        // CEK STANDARD UPH
         // ============================================================
+        function renderStandardCheck() {
+            const standardInput = document.getElementById('standardUph');
+            const headerEl = document.getElementById('standardResultHeader');
+            const listEl = document.getElementById('standardResultList');
+            if (!standardInput || !headerEl || !listEl) return;
+
+            // Load dari localStorage kalau kosong
+            if (!standardInput.value || standardInput.value === '') {
+                const saved = localStorage.getItem(LS_KEY_STANDARD);
+                if (saved) standardInput.value = saved;
+            }
+
+            const standard = parseFloat(standardInput.value) || 0;
+
+            // Save ke localStorage
+            if (standard > 0) {
+                localStorage.setItem(LS_KEY_STANDARD, standard);
+            }
+
+            // Group by (No + Proses)
+            const groups = {};
+            masterData.forEach(item => {
+                const key = `${item.no}||${item.process}`;
+                if (!groups[key]) {
+                    groups[key] = { no: item.no, process: item.process, capacity: 0, machines: [] };
+                }
+                const stats = getRowStats(item);
+                groups[key].capacity += stats.capacity;
+                groups[key].machines.push(item.subMachine);
+            });
+
+            const perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
+
+            if (perProcess.length === 0) {
+                headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data. Input dulu di tab 📝 Input.</div>`;
+                listEl.innerHTML = '';
+                return;
+            }
+
+            if (standard <= 0) {
+                headerEl.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan Standard UPH di atas untuk mulai cek.</div>`;
+                listEl.innerHTML = '';
+                return;
+            }
+
+            const belowStandard = perProcess.filter(p => p.capacity < standard);
+            const aboveStandard = perProcess.filter(p => p.capacity >= standard);
+
+            if (belowStandard.length === 0) {
+                headerEl.innerHTML = `
+                    <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                        <span class="text-2xl">✅</span>
+                        <div>
+                            <div class="text-sm font-bold text-emerald-700">Semua Mesin Sudah Memenuhi Standard!</div>
+                            <div class="text-[11px] text-emerald-600">${perProcess.length} proses, semua ≥ ${standard} UPH</div>
+                        </div>
+                    </div>
+                `;
+                listEl.innerHTML = '';
+                return;
+            }
+
+            headerEl.innerHTML = `
+                <div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                    <span class="text-2xl">⚠️</span>
+                    <div>
+                        <div class="text-sm font-bold text-red-700">${belowStandard.length} Proses di Bawah Standard</div>
+                        <div class="text-[11px] text-red-600">Dari total ${perProcess.length} proses · Standard: ${standard} UPH</div>
+                    </div>
+                </div>
+            `;
+
+            let listHtml = '';
+            belowStandard.forEach(p => {
+                const kurang = standard - p.capacity;
+                const percent = ((p.capacity / standard) * 100).toFixed(0);
+                listHtml += `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <div class="flex justify-between items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(p.no)}</span>
+                                    <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
+                                </div>
+                                <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.join(', '))}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-lg font-extrabold text-red-700">${p.capacity} <span class="text-[10px] font-medium">UPH</span></div>
+                                <div class="text-[10px] text-red-600 font-medium">Kurang ${kurang} (${percent}%)</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 bg-red-200 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-red-500 h-full" style="width: ${Math.min(percent, 100)}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (aboveStandard.length > 0) {
+                listHtml += `
+                    <div class="text-[11px] text-emerald-600 text-center pt-3 border-t border-gray-200 mt-2">
+                        ✅ ${aboveStandard.length} proses sudah di atas standard
+                    </div>
+                `;
+            }
+
+            listEl.innerHTML = listHtml;
+        }
+
         function generateId() {
             return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
         }
-
         function openMachineModal(machineId = null) {
             editingMachineId = machineId;
             const modal = document.getElementById('machineModal');
@@ -1295,27 +1232,19 @@
             modal.classList.add('active');
             setTimeout(() => document.getElementById('modalNo').focus(), 100);
         }
-
         function closeMachineModal() {
             document.getElementById('machineModal').classList.remove('active');
             editingMachineId = null;
         }
-
         function saveMachine() {
             const no = document.getElementById('modalNo').value.trim();
             const proses = document.getElementById('modalProcess').value.trim();
             const mesin = document.getElementById('modalSubMachine').value.trim();
-
             if (!proses) { showToast('Nama Mesin wajib diisi!', 'error'); return; }
             if (!mesin) { showToast('Sub Mesin wajib diisi!', 'error'); return; }
-
             if (editingMachineId) {
                 const m = machineList.find(x => x.id === editingMachineId);
-                if (m) {
-                    m.no = no || '-';
-                    m.proses = proses;
-                    m.mesin = mesin;
-                }
+                if (m) { m.no = no || '-'; m.proses = proses; m.mesin = mesin; }
                 showToast('✅ Mesin diperbarui', 'success');
             } else {
                 machineList.push({ id: generateId(), no: no || '-', proses, mesin });
@@ -1327,7 +1256,6 @@
             populateMachineDropdown();
             closeMachineModal();
         }
-
         function deleteMachine(id) {
             const m = machineList.find(x => x.id === id);
             if (!m) return;
@@ -1339,11 +1267,10 @@
             populateMachineDropdown();
             showToast('Mesin dihapus', 'warning');
         }
-
         function renderMachineTable() {
             const tbody = document.getElementById('machineTableBody');
+            if (!tbody) return;
             const search = (document.getElementById('machineSearch')?.value || '').toLowerCase().trim();
-
             let filtered = machineList;
             if (search) {
                 filtered = machineList.filter(m =>
@@ -1357,12 +1284,10 @@
                 if (na !== nb) return na.localeCompare(nb, undefined, { numeric: true });
                 return String(a.mesin).localeCompare(String(b.mesin), undefined, { numeric: true });
             });
-
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${machineList.length === 0 ? 'Belum ada mesin. Klik "➕ Tambah".' : 'Tidak ada hasil pencarian.'}</td></tr>`;
                 return;
             }
-
             tbody.innerHTML = filtered.map(m => `
                 <tr class="hover:bg-blue-50/50">
                     <td class="px-2 py-2 text-center font-bold border-r border-b whitespace-nowrap">${escapeHtml(m.no)}</td>
@@ -1378,9 +1303,6 @@
             `).join('');
         }
 
-        // ============================================================
-        // BULK IMPORT
-        // ============================================================
         function openBulkImportModal() {
             document.getElementById('bulkFileInput').value = '';
             document.getElementById('bulkPasteArea').value = '';
@@ -1390,25 +1312,21 @@
         function closeBulkImportModal() {
             document.getElementById('bulkImportModal').classList.remove('active');
         }
-
         function processBulkImport() {
             const fileInput = document.getElementById('bulkFileInput');
             const pasteArea = document.getElementById('bulkPasteArea');
             const replace = document.getElementById('replaceExisting').checked;
-
             const handleText = (text) => {
                 try {
                     const lines = text.split(/\r?\n/).filter(l => l.trim());
                     if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
                     const firstLine = lines[0];
                     const delimiter = firstLine.includes('\t') ? '\t' : ',';
-
                     let startIdx = 0;
                     const firstCells = firstLine.split(delimiter).map(c => c.trim().toLowerCase().replace(/^"|"$/g, ''));
                     if (firstCells[0] === 'no' || firstCells[1] === 'nama mesin' || firstCells[1] === 'proses' || firstCells[1] === 'nama proses') {
                         startIdx = 1;
                     }
-
                     const newItems = [];
                     for (let i = startIdx; i < lines.length; i++) {
                         const cells = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
@@ -1417,12 +1335,9 @@
                         if (!proses || !mesin) continue;
                         newItems.push({ id: generateId(), no: no || '-', proses, mesin });
                     }
-
                     if (newItems.length === 0) { showToast('Tidak ada data valid!', 'error'); return; }
-
                     if (replace) machineList = newItems;
                     else machineList = machineList.concat(newItems);
-
                     saveMachinesToLS();
                     renderMachineTable();
                     updateCounters();
@@ -1434,7 +1349,6 @@
                     showToast('❌ Gagal parse data', 'error');
                 }
             };
-
             const file = fileInput.files[0];
             if (file) {
                 const reader = new FileReader();
@@ -1447,9 +1361,6 @@
             }
         }
 
-        // ============================================================
-        // EXPORT MACHINE CSV
-        // ============================================================
         function exportMachineCSV() {
             if (machineList.length === 0) { showToast('Belum ada mesin untuk di-export!', 'error'); return; }
             const escapeCSV = (v) => {
@@ -1470,15 +1381,11 @@
             if (downloadBlob(blob, filename)) showToast('📄 Daftar mesin di-export', 'success');
         }
 
-        // ============================================================
-        // BUILD DATA ROWS
-        // ============================================================
         function buildDataRows() {
             const maxLaps = Math.max(...masterData.map(item => item.laps.length));
             const header = ['No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
             header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Gabungan UPH');
-
             const groups = {};
             const groupOrder = [];
             masterData.forEach(item => {
@@ -1490,16 +1397,13 @@
                 groups[key].rows.push(item);
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
-
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
-
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
                 const groupStartRow = rowIndex;
-
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
                     const rowData = [
@@ -1521,7 +1425,6 @@
                     dataRows.push(rowData);
                     rowIndex++;
                 });
-
                 if (rowSpan > 1) {
                     const totalCol = maxLaps + 8;
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
@@ -1529,13 +1432,9 @@
                     merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
                 }
             });
-
             return { dataRows, merges, maxLaps };
         }
 
-        // ============================================================
-        // DOWNLOAD BLOB
-        // ============================================================
         function downloadBlob(blob, filename) {
             try {
                 const url = URL.createObjectURL(blob);
@@ -1554,9 +1453,6 @@
             }
         }
 
-        // ============================================================
-        // EXPORT XLSX
-        // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ SheetJS belum ke-load. Coba CSV.', 'error'); return; }
@@ -1592,9 +1488,6 @@
             }
         }
 
-        // ============================================================
-        // EXPORT CSV
-        // ============================================================
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             try {
@@ -1614,9 +1507,6 @@
             }
         }
 
-        // ============================================================
-        // START
-        // ============================================================
         init();
     </script>
 </body>
