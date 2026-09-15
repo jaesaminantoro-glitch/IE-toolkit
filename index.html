@@ -121,6 +121,8 @@
         }
         .custom-dropdown-btn:active { background: #f9fafb; }
         .custom-dropdown-btn.open { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+        /* Dropdown panel biasa (ke bawah) */
         .custom-dropdown-panel {
             position: absolute; top: calc(100% + 4px); left: 0; right: 0;
             background: white; border: 1px solid #e5e7eb; border-radius: 8px;
@@ -129,7 +131,27 @@
             flex-direction: column;
         }
         .custom-dropdown-panel.open { display: flex; }
-        .custom-dropdown-search { padding: 8px; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+
+        /* Dropup panel (ke atas) — untuk HP biar tidak ketutup keyboard */
+        .custom-dropup-panel {
+            position: absolute; bottom: calc(100% + 4px); top: auto; left: 0; right: 0;
+            background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+            box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50; display: none; max-height: 260px; overflow: hidden;
+            flex-direction: column;
+        }
+        .custom-dropup-panel.open { display: flex; }
+
+        .custom-dropdown-search {
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
         .custom-dropdown-search input { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; }
         .custom-dropdown-list { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         .custom-dropdown-item {
@@ -351,7 +373,7 @@
                             </button>
                         </div>
 
-                        <!-- MODE MESIN: Dropdown Mesin -->
+                        <!-- MODE MESIN: Dropdown Mesin (dropup) -->
                         <div id="machineInputWrapper">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih Mesin / Jalur</label>
                             <div class="custom-dropdown-wrapper">
@@ -359,7 +381,7 @@
                                     <span id="machineDropdownLabel" class="text-gray-500">-- Pilih Mesin --</span>
                                     <span class="text-gray-400">▼</span>
                                 </button>
-                                <div id="machineDropdownPanel" class="custom-dropdown-panel">
+                                <div id="machineDropdownPanel" class="custom-dropup-panel">
                                     <div class="custom-dropdown-search">
                                         <input type="text" id="machineSearchInput" placeholder="🔍 Cari mesin..." oninput="renderMachineDropdownList()" autocomplete="off">
                                     </div>
@@ -369,16 +391,25 @@
                             <p class="text-[10px] text-gray-400 mt-1">Total: <span id="totalMachines">0</span> mesin</p>
                         </div>
 
-                        <!-- MODE ELEMEN: Dropdown No. SOP -->
+                        <!-- MODE ELEMEN: Dropdown No. SOP (dropup + search) -->
                         <div id="elemenInputWrapper" class="hidden">
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih No. SOP</label>
-                            <select id="elemenNoSelect" onchange="onElemenNoChange(this)" class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-sm bg-white font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Pilih No. SOP --</option>
-                            </select>
+                            <div class="custom-dropdown-wrapper" id="sopDropdownWrapper">
+                                <button type="button" id="sopDropdownBtn" onclick="toggleSopDropdown()" class="custom-dropdown-btn">
+                                    <span id="sopDropdownLabel" class="text-gray-500">-- Pilih No. SOP --</span>
+                                    <span class="text-gray-400">▼</span>
+                                </button>
+                                <div id="sopDropdownPanel" class="custom-dropup-panel">
+                                    <div class="custom-dropdown-search">
+                                        <input type="text" id="sopSearchInput" placeholder="🔍 Cari No. SOP / Nama SOP..." oninput="renderSopDropdownList()" autocomplete="off">
+                                    </div>
+                                    <div id="sopDropdownList" class="custom-dropdown-list"></div>
+                                </div>
+                            </div>
                             <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master</p>
                         </div>
 
-                        <!-- INFO ELEMEN AKTIF (khusus mode elemen) -->
+                        <!-- INFO ELEMEN AKTIF -->
                         <div id="elemenActiveInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Sedang Direkam</div>
                             <div id="elemenActiveName" class="text-base font-bold text-blue-800">-</div>
@@ -415,7 +446,7 @@
                             <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                         </div>
 
-                        <!-- Field Mesin: NG, Gerakan, Jumlah Mesin -->
+                        <!-- Field Mesin -->
                         <div id="mesinFieldGrid" class="grid grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
@@ -435,7 +466,7 @@
                             </div>
                         </div>
 
-                        <!-- Field Elemen: Info Allowance statis -->
+                        <!-- Field Elemen: info allowance -->
                         <div id="elemenFieldGrid" class="hidden">
                             <div class="bg-purple-50 border border-purple-200 rounded-lg p-2.5 text-xs text-purple-800">
                                 <b>Allowance:</b> 10% (statis) — otomatis diterapkan di rumus SMH
@@ -454,7 +485,7 @@
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
                             <span id="lapCounterBadge" class="text-[10px] md:text-xs text-gray-500 font-medium">0 Siklus</span>
                         </div>
-                        <div id="currentLapsContainer" class="laps-scroll flex flex-wrap gap-2 min-h-[60px] max-h-56 overflow-y-auto p-2.5 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div id="currentLapsContainer" class="laps-scroll flex flex-wrap gap-1.5 min-h-[50px] max-h-48 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-lg">
                             <span class="text-gray-400 italic text-xs md:text-sm self-center">Belum ada siklus direkam.</span>
                         </div>
                     </div>
@@ -687,6 +718,7 @@
                 </div>
                 <div class="text-center text-[10px] text-gray-400 mt-1.5">
                     <span id="mobileStatus">Idle</span>
+                    <div class="text-gray-500 mt-0.5">🎚️ Vol+ LAP/START · Vol- STOP/RESET</div>
                 </div>
             </div>
         </div>
@@ -996,7 +1028,7 @@
             renderStandardCheck();
             updateCounters();
             if (currentMode === 'elemen') {
-                populateElemenNoDropdown();
+                renderSopDropdownList();
                 renderElemenMasterTable();
             }
         }
@@ -1078,7 +1110,7 @@
                     elemenMasterList = remoteData;
                     lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                     if (currentMode === 'elemen') {
-                        populateElemenNoDropdown();
+                        renderSopDropdownList();
                         renderElemenMasterTable();
                     }
                     isSyncingFromRemote = false;
@@ -1142,7 +1174,7 @@
                 renderMasterTable();
                 renderStandardCheck();
                 updateCounters();
-                if (currentMode === 'elemen') { populateElemenNoDropdown(); renderElemenMasterTable(); }
+                if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
                 syncUphFromActiveLine();
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
@@ -1286,17 +1318,23 @@
         function toggleMachineDropdown() {
             const panel = document.getElementById('machineDropdownPanel');
             const btn = document.getElementById('machineDropdownBtn');
-            if (panel.classList.contains('open')) closeMachineDropdown();
-            else {
-                panel.classList.add('open'); btn.classList.add('open');
-                setTimeout(() => document.getElementById('machineSearchInput').focus(), 100);
-                renderMachineDropdownList();
+            if (!panel || !btn) return;
+            if (panel.classList.contains('open')) {
+                closeMachineDropdown();
+            } else {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                setTimeout(() => {
+                    panel.classList.add('open'); btn.classList.add('open');
+                    document.getElementById('machineSearchInput')?.focus();
+                    renderMachineDropdownList();
+                }, 250);
             }
         }
         function closeMachineDropdown() {
-            document.getElementById('machineDropdownPanel').classList.remove('open');
-            document.getElementById('machineDropdownBtn').classList.remove('open');
-            document.getElementById('machineSearchInput').value = '';
+            document.getElementById('machineDropdownPanel')?.classList.remove('open');
+            document.getElementById('machineDropdownBtn')?.classList.remove('open');
+            const si = document.getElementById('machineSearchInput');
+            if (si) si.value = '';
         }
         function renderMachineDropdownList() {
             const list = document.getElementById('machineDropdownList');
@@ -1627,7 +1665,7 @@
                     else elemenMasterList = elemenMasterList.concat(newItems);
                     lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                     if (firebaseReady) saveElemenMasterToFirebase();
-                    populateElemenNoDropdown();
+                    renderSopDropdownList();
                     renderElemenMasterTable();
                     updateCounters();
                     closeElemenImportModal();
@@ -1691,7 +1729,7 @@
             lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
             if (firebaseReady) saveElemenMasterToFirebase();
             renderElemenMasterTable();
-            populateElemenNoDropdown();
+            renderSopDropdownList();
             updateCounters();
         }
         function clearAllElemen() {
@@ -1700,7 +1738,7 @@
             lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
             if (firebaseReady) saveElemenMasterToFirebase();
             renderElemenMasterTable();
-            populateElemenNoDropdown();
+            renderSopDropdownList();
             updateCounters();
             showToast('Master elemen direset', 'warning');
         }
@@ -1714,40 +1752,65 @@
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
         }
                 // ============================================================
-        // POPULATE DROPDOWN SOP
+        // SOP DROPDOWN (dropup + search)
         // ============================================================
-        function populateElemenNoDropdown() {
-            const sel = document.getElementById('elemenNoSelect');
-            if (!sel) return;
-            const nos = [...new Set(elemenMasterList.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
-            const currentVal = sel.value;
-            sel.innerHTML = '<option value="">-- Pilih No. SOP --</option>' + nos.map(no => {
-                const first = elemenMasterList.find(e => e.noSop === no);
-                return `<option value="${escapeHtml(no)}">${escapeHtml(no)} · ${escapeHtml(first?.namaSop || '')}</option>`;
-            }).join('');
-            if (currentVal && nos.includes(currentVal)) sel.value = currentVal;
+        function toggleSopDropdown() {
+            const panel = document.getElementById('sopDropdownPanel');
+            const btn = document.getElementById('sopDropdownBtn');
+            if (!panel || !btn) return;
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open'); btn.classList.remove('open');
+            } else {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                setTimeout(() => {
+                    panel.classList.add('open'); btn.classList.add('open');
+                    document.getElementById('sopSearchInput')?.focus();
+                    renderSopDropdownList();
+                }, 250);
+            }
         }
 
-        function onElemenNoChange(sel) {
-            const no = sel.value;
-            if (!no) {
-                currentElemenNo = '';
-                currentElemenNama = '';
-                activeElemenList = [];
-                currentElemenIndex = 0;
-                currentCycleNum = 1;
-                document.getElementById('inputNo').value = '';
-                document.getElementById('inputProcess').value = '';
-                document.getElementById('elemenActiveInfo').classList.add('hidden');
-                updateLapButtonLabel();
-                return;
+        function closeSopDropdown() {
+            document.getElementById('sopDropdownPanel')?.classList.remove('open');
+            document.getElementById('sopDropdownBtn')?.classList.remove('open');
+            const si = document.getElementById('sopSearchInput');
+            if (si) si.value = '';
+        }
+
+        function renderSopDropdownList() {
+            const list = document.getElementById('sopDropdownList');
+            if (!list) return;
+            const search = (document.getElementById('sopSearchInput')?.value || '').toLowerCase().trim();
+            const nos = [...new Set(elemenMasterList.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+            let filtered = nos;
+            if (search) {
+                filtered = nos.filter(no => {
+                    const first = elemenMasterList.find(e => e.noSop === no);
+                    const nama = (first?.namaSop || '').toLowerCase();
+                    return String(no).toLowerCase().includes(search) || nama.includes(search);
+                });
             }
-            // Cek dulu kalau ada siklus yang belum disimpan
+            let html = '';
+            if (filtered.length === 0) {
+                html = `<div class="custom-dropdown-empty">Tidak ada SOP cocok</div>`;
+            } else {
+                filtered.forEach(no => {
+                    const first = elemenMasterList.find(e => e.noSop === no);
+                    const isSelected = currentElemenNo === no;
+                    html += `<div class="custom-dropdown-item ${isSelected ? 'selected' : ''}" onclick="selectSop('${escapeHtml(no)}')">
+                        ${isSelected ? '✅ ' : ''}${escapeHtml(no)} · ${escapeHtml(first?.namaSop || '')}
+                    </div>`;
+                });
+            }
+            list.innerHTML = html;
+        }
+
+        function selectSop(no) {
+            closeSopDropdown();
+            if (!no) return;
+            if (currentElemenNo === no) return;
             if (currentLaps.length > 0) {
-                if (!confirm('⚠️ Ganti SOP akan reset siklus yang belum disimpan. Lanjutkan?')) {
-                    sel.value = currentElemenNo;
-                    return;
-                }
+                if (!confirm('⚠️ Ganti SOP akan reset siklus yang belum disimpan. Lanjutkan?')) return;
                 currentLaps = [];
                 updateLapsUI();
             }
@@ -1756,11 +1819,17 @@
             if (activeElemenList.length > 0) currentElemenNama = activeElemenList[0].namaSop;
             currentElemenIndex = 0;
             currentCycleNum = 1;
+            const label = document.getElementById('sopDropdownLabel');
+            if (label) {
+                label.innerText = `${no} · ${currentElemenNama}`;
+                label.className = 'text-gray-800 font-semibold';
+            }
             document.getElementById('inputNo').value = no;
             document.getElementById('inputProcess').value = currentElemenNama;
             document.getElementById('elemenActiveInfo').classList.remove('hidden');
             updateElemenActiveInfo();
             updateLapButtonLabel();
+            renderSopDropdownList();
         }
 
         function updateElemenActiveInfo() {
@@ -1834,6 +1903,13 @@
                         elemen: currentEl ? currentEl.elemen : '-',
                         cycleNum: currentCycleNum
                     });
+                    currentElemenIndex++;
+                    if (currentElemenIndex >= activeElemenList.length) {
+                        currentElemenIndex = 0;
+                        currentCycleNum++;
+                    }
+                    updateElemenActiveInfo();
+                    updateLapButtonLabel();
                 } else {
                     currentLaps.push(parseFloat(dur.toFixed(2)));
                 }
@@ -1913,7 +1989,55 @@
         }
 
         // ============================================================
-        // RECORD LAP (mesin vs elemen)
+        // VOLUME BUTTONS
+        // ============================================================
+        function setupVolumeButtons() {
+            document.addEventListener('keydown', (e) => {
+                const tag = (e.target.tagName || '').toUpperCase();
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+
+                const key = e.key;
+                const code = e.keyCode || e.which;
+
+                // Volume Up → LAP (running) / START-RESUME (berhenti)
+                if (key === 'AudioVolumeUp' || code === 174) {
+                    e.preventDefault();
+                    if (isRunning) {
+                        recordLap();
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    } else {
+                        toggleTimer();
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    }
+                    return;
+                }
+
+                // Volume Down → STOP (running) / RESET (berhenti)
+                if (key === 'AudioVolumeDown' || code === 175) {
+                    e.preventDefault();
+                    if (isRunning) {
+                        stopTimer();
+                        if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+                    } else {
+                        handleStopReset();
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    }
+                    return;
+                }
+
+                // Bonus: MediaPlayPause (headset remote) → START/PAUSE
+                if (key === 'MediaPlayPause' || code === 179) {
+                    e.preventDefault();
+                    toggleTimer();
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    return;
+                }
+            });
+            console.log('✅ Volume button listener aktif');
+        }
+
+        // ============================================================
+        // RECORD LAP
         // ============================================================
         function recordLap() {
             if (!isRunning) { showToast('⏱️ Timer tidak jalan', 'warning'); return; }
@@ -1933,7 +2057,6 @@
                 });
                 updateLapsUI();
                 document.getElementById('lapSplitPreview').innerText = `✔️ ${currentEl.elemen}: ${dur.toFixed(2)}s`;
-                // Advance ke elemen berikutnya
                 currentElemenIndex++;
                 if (currentElemenIndex >= activeElemenList.length) {
                     currentElemenIndex = 0;
@@ -1999,9 +2122,9 @@
                 } else {
                     durVal = lap;
                 }
-                return `<div class="flex items-center gap-1.5 ${cls} px-3 py-1.5 rounded-md font-mono text-sm md:text-base font-bold border">
+                return `<div class="flex items-center gap-1 ${cls} px-2 py-1 rounded-md font-mono text-xs md:text-sm font-bold border">
                     <span>C${i + 1}: ${durVal.toFixed(2)}s${elemenLabel}</span>
-                    <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-1 text-lg">×</button>
+                    <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-0.5 text-sm">×</button>
                 </div>`;
             }).join('');
             setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
@@ -2043,12 +2166,8 @@
                     existing.sessions = (existing.sessions || 1) + 1;
                 } else {
                     masterData.push({
-                        line: activeLine,
-                        noSop: currentElemenNo,
-                        namaSop: currentElemenNama,
-                        elemen: elemenName,
-                        laps: [...grouped[elemenName]],
-                        sessions: 1
+                        line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama,
+                        elemen: elemenName, laps: [...grouped[elemenName]], sessions: 1
                     });
                 }
             });
@@ -2131,7 +2250,8 @@
             document.getElementById('customMachineWrapper').classList.add('hidden');
             document.getElementById('selectedMachineInfo').classList.add('hidden');
             if (currentMode === 'elemen') {
-                document.getElementById('elemenNoSelect').value = '';
+                const sopLabel = document.getElementById('sopDropdownLabel');
+                if (sopLabel) { sopLabel.innerText = '-- Pilih No. SOP --'; sopLabel.className = 'text-gray-500'; }
                 document.getElementById('elemenActiveInfo').classList.add('hidden');
                 currentElemenNo = '';
                 currentElemenNama = '';
@@ -2153,10 +2273,6 @@
             setTimeout(() => {
                 if (currentTab === 'data') {
                     switchTab('input');
-                    setTimeout(() => {
-                        if (currentMode === 'elemen') document.getElementById('elemenNoSelect').focus();
-                        else document.getElementById('machineDropdownBtn').focus();
-                    }, 200);
                 }
             }, 1500);
         }
@@ -2842,7 +2958,7 @@
             if (tabName === 'elemen') { renderElemenMasterTable(); }
             if (tabName === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
             if (tabName === 'input') {
-                if (currentMode === 'elemen') { populateElemenNoDropdown(); }
+                if (currentMode === 'elemen') { renderSopDropdownList(); }
                 else renderMachineDropdownList();
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2875,7 +2991,7 @@
             renderMachineTable();
             renderMasterTable();
             updateCounters();
-            populateElemenNoDropdown();
+            renderSopDropdownList();
             renderElemenMasterTable();
 
             setLoadingDetail('Menunggu Firebase SDK...');
@@ -2908,10 +3024,26 @@
                 }, 5000);
             }
 
+            // Tutup dropdown ketika klik di luar
             document.addEventListener('click', (e) => {
-                const wrapper = document.querySelector('.custom-dropdown-wrapper');
-                if (wrapper && !wrapper.contains(e.target)) closeMachineDropdown();
+                const machineWrapper = document.getElementById('machineDropdownBtn');
+                const machinePanel = document.getElementById('machineDropdownPanel');
+                if (machinePanel && machinePanel.classList.contains('open')) {
+                    if (machineWrapper && !machineWrapper.contains(e.target) && !machinePanel.contains(e.target)) {
+                        closeMachineDropdown();
+                    }
+                }
+                const sopBtn = document.getElementById('sopDropdownBtn');
+                const sopPanel = document.getElementById('sopDropdownPanel');
+                if (sopPanel && sopPanel.classList.contains('open')) {
+                    if (sopBtn && !sopBtn.contains(e.target) && !sopPanel.contains(e.target)) {
+                        closeSopDropdown();
+                    }
+                }
             });
+
+            // Aktifkan tombol volume
+            setupVolumeButtons();
         }
 
         // Jalankan
