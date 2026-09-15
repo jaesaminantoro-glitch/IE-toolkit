@@ -320,14 +320,19 @@
                         <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                     </div>
 
+                    <!-- INPUT: NG / GERAKAN / JUMLAH MESIN -->
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
                             <input type="number" id="inputNgRate" value="2" step="0.1" min="0" max="100" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                         </div>
                         <div>
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Gerakan (s)</label>
-                            <input type="number" id="inputGerakan" value="3" step="0.1" min="0" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-orange-600">
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
+                                Gerakan (s) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" id="inputGerakan" placeholder="Ketik" step="0.1" min="0" inputmode="decimal" 
+                                class="w-full px-3 py-2 border-2 border-orange-300 rounded-lg text-sm font-bold text-orange-600 bg-white focus:ring-2 focus:ring-orange-500">
+                            <p class="text-[9px] text-gray-400 mt-0.5">Wajib isi</p>
                         </div>
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jumlah Mesin / Jalur</label>
@@ -336,23 +341,30 @@
                     </div>
                 </div>
 
+                <!-- TIMER DISPLAY -->
                 <div class="mt-4 bg-gray-900 rounded-xl p-4 text-center text-white shadow-inner border border-gray-800">
                     <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Total Elapsed</div>
                     <div id="timerDisplay" class="timer-display text-4xl md:text-5xl font-mono font-bold tracking-wider text-green-400 mb-1">00:00.00</div>
                     <div id="lapSplitPreview" class="text-[10px] md:text-xs font-mono text-blue-400 h-4">Split Terakhir: --:--.--</div>
                 </div>
 
+                <!-- REKAMAN SIKLUS dengan angka lebih besar -->
                 <div class="mt-4">
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
                         <span id="lapCounterBadge" class="text-[10px] md:text-xs text-gray-500 font-medium">0 Siklus</span>
                     </div>
-                    <div id="currentLapsContainer" class="flex flex-wrap gap-1.5 min-h-[50px] max-h-32 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                        <span class="text-gray-400 italic text-[10px] md:text-xs self-center">Belum ada siklus direkam.</span>
+                    <div id="currentLapsContainer" class="flex flex-wrap gap-2 min-h-[60px] max-h-40 overflow-y-auto p-2.5 bg-gray-50 border border-gray-200 rounded-lg">
+                        <span class="text-gray-400 italic text-xs md:text-sm self-center">Belum ada siklus direkam.</span>
                     </div>
                 </div>
 
-                <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
+                <!-- TOMBOL RESET (DI ATAS SIMPAN, BUKAN DI BARIS START/LAP/STOP) -->
+                <button onclick="resetStopwatchCurrent()" class="mt-3 w-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition border border-gray-300 text-sm flex items-center justify-center gap-2">
+                    🔄 Reset Stopwatch
+                </button>
+
+                <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
                     💾 Simpan ke Master Data
                 </button>
             </div>
@@ -667,7 +679,6 @@
                 return { name: String(item.name || ''), uph: parseFloat(item.uph) || 500 };
             }).filter(l => l.name);
         }
-        function getLineNames() { return lineList.map(l => l.name); }
         function getLineUph(lineName) {
             const found = lineList.find(l => l.name === lineName);
             return found ? parseFloat(found.uph) || 0 : 0;
@@ -818,9 +829,6 @@
         function saveMasterToLS() { lsSaveMaster(); if (firebaseReady) saveMasterToFirebase(); }
         function loadMasterFromLS() { lsLoadMaster(); }
 
-        // ============================================================
-        // UPH SYNC
-        // ============================================================
         function syncUphFromActiveLine() {
             if (uphUserOverride) return;
             if (!activeLine) return;
@@ -846,7 +854,6 @@
             renderStandardCheck();
         }
 
-        // CUSTOM DROPDOWN
         function toggleMachineDropdown() {
             const panel = document.getElementById('machineDropdownPanel');
             const btn = document.getElementById('machineDropdownBtn');
@@ -931,7 +938,6 @@
             closeMachineDropdown();
         }
 
-        // LINE MANAGEMENT
         function renderLineList() {
             const container = document.getElementById('lineListContainer');
             if (!container) return;
@@ -1057,7 +1063,6 @@
             if (display) display.innerText = activeLine || '-';
         }
 
-        // MULTI-SELECT
         function toggleMachineSelection(id) {
             if (selectedMachineIds.has(id)) selectedMachineIds.delete(id);
             else selectedMachineIds.add(id);
@@ -1365,15 +1370,38 @@
             if (!container || !badge) return;
             badge.innerText = `${currentLaps.length} Siklus`;
             if (currentLaps.length === 0) {
-                container.innerHTML = '<span class="text-gray-400 italic text-[10px] md:text-xs self-center">Belum ada siklus direkam.</span>';
+                container.innerHTML = '<span class="text-gray-400 italic text-xs md:text-sm self-center">Belum ada siklus direkam.</span>';
                 return;
             }
+            // Angka siklus lebih besar: text-base (16px) di mobile, text-lg di desktop
             container.innerHTML = currentLaps.map((lap, i) => `
-                <div class="flex items-center gap-1 bg-blue-50 text-blue-800 px-2 py-1 rounded-md font-mono text-[10px] md:text-xs font-bold border border-blue-200">
+                <div class="flex items-center gap-1.5 bg-blue-50 text-blue-800 px-3 py-1.5 rounded-md font-mono text-base md:text-lg font-bold border border-blue-200">
                     <span>C${i + 1}: ${lap.toFixed(2)}s</span>
-                    <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-1">×</button>
+                    <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-1 text-lg">×</button>
                 </div>
             `).join('');
+        }
+
+        // Reset stopwatch (tanpa konfirmasi)
+        function resetStopwatchCurrent() {
+            if (isRunning || currentLaps.length > 0) {
+                if (!confirm('Reset stopwatch? Semua siklus yang belum disimpan akan dihapus.')) return;
+            }
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            elapsedTime = 0;
+            lastLapTimestamp = 0;
+            currentLaps = [];
+            document.getElementById('timerDisplay').innerText = '00:00.00';
+            document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
+            setStartButton('start');
+            setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
+            setButtonEnabled('stopBtn', false);
+            setButtonEnabled('lapBtn', false);
+            setButtonEnabled('commitBtn', false);
+            updateLapsUI();
+            showToast('Stopwatch direset', 'info');
         }
 
         function commitStudyRow() {
@@ -1397,7 +1425,23 @@
                 subMachine = m.mesin || '-';
             }
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
-            const gerakan = parseFloat(document.getElementById('inputGerakan').value) || 0;
+
+            // ============================================================
+            // VALIDASI: Gerakan WAJIB diisi
+            // ============================================================
+            const gerakanRaw = document.getElementById('inputGerakan').value.trim();
+            if (!gerakanRaw || gerakanRaw === '') {
+                showToast('⚠️ Mohon isi Gerakan (detik)!', 'error');
+                document.getElementById('inputGerakan').focus();
+                return;
+            }
+            const gerakan = parseFloat(gerakanRaw);
+            if (isNaN(gerakan) || gerakan < 0) {
+                showToast('⚠️ Gerakan harus angka positif!', 'error');
+                document.getElementById('inputGerakan').focus();
+                return;
+            }
+
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
 
             if (!no || no === '-') { showToast('⚠️ Mohon isi No terlebih dahulu!', 'error'); document.getElementById('inputNo').focus(); return; }
@@ -1432,7 +1476,8 @@
             document.getElementById('timerDisplay').innerText = '00:00.00';
             document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             document.getElementById('inputActualMachine').value = '1';
-            document.getElementById('inputGerakan').value = '3';
+            // Reset Gerakan ke kosong (karena wajib isi)
+            document.getElementById('inputGerakan').value = '';
             document.getElementById('inputNo').value = '';
             document.getElementById('inputSubMachineCustom').value = '';
             selectedMachineId = '';
@@ -1465,7 +1510,7 @@
             const laps = item.laps;
             const count = laps.length;
             const avg = count > 0 ? laps.reduce((a, b) => a + b, 0) / count : 0;
-            const gerakan = item.gerakan !== undefined ? parseFloat(item.gerakan) : 3.0;
+            const gerakan = item.gerakan !== undefined ? parseFloat(item.gerakan) : 0;
             const ctPlusG = avg + gerakan;
             const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * item.actualMachine) : 0;
             return { count, avg, ctPlusG, capacity, gerakan };
@@ -1736,7 +1781,6 @@
             listEl.innerHTML = listHtml;
         }
 
-        // MACHINE MANAGEMENT
         function generateId() { return 'm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
         function openMachineModal(machineId = null) {
             editingMachineId = machineId;
@@ -1823,7 +1867,6 @@
             updateBulkActionBar();
         }
 
-        // BULK IMPORT
         function openBulkImportModal() {
             document.getElementById('bulkFileInput').value = '';
             document.getElementById('bulkPasteArea').value = '';
@@ -1926,9 +1969,6 @@
             exportMachineCSVList(sorted, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`);
         }
 
-        // ============================================================
-        // BUILD DATA ROWS (dengan kolom Jml Mesin)
-        // ============================================================
         function buildDataRows(exportFilter = '__all__') {
             let dataToExport;
             if (exportFilter === '__all__') dataToExport = masterData;
@@ -1937,7 +1977,6 @@
             const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
             const header = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
-            // Header dengan Jml Mesin di antara Kapasitas & Total Kapasitas
             header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Jml Mesin', 'Total Kapasitas');
 
             const groups = {};
@@ -1972,14 +2011,13 @@
                     for (let i = 0; i < maxLaps; i++) {
                         rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
                     }
-                    // Data row dengan Jml Mesin
                     rowData.push(
                         parseFloat(stats.avg.toFixed(2)),
                         item.ngRate,
                         parseFloat(stats.gerakan.toFixed(2)),
                         parseFloat(stats.ctPlusG.toFixed(2)),
                         stats.capacity,
-                        item.actualMachine,       // ← Jml Mesin
+                        item.actualMachine,
                         rIdx === 0 ? group.totalCapacity : ''
                     );
                     dataRows.push(rowData);
@@ -1987,7 +2025,6 @@
                 });
 
                 if (rowSpan > 1) {
-                    // Total Kapasitas sekarang di kolom 10 + maxLaps (bukan 9 + maxLaps)
                     const totalCol = 10 + maxLaps;
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
                     merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
@@ -2016,9 +2053,6 @@
             }
         }
 
-        // ============================================================
-        // EXPORT EXCEL dengan Jml Mesin
-        // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
@@ -2029,11 +2063,9 @@
                 const ws = XLSX.utils.aoa_to_sheet(dataRows);
                 ws['!merges'] = merges;
 
-                // Lebar kolom: Line | No | Nama | Sub | S1..Sn | Rata | NG | Gerakan | CTG | Kapasitas | JmlMesin | TotalKapasitas
                 const colWidths = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
                 for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
                 colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
-                //                                                                                            ↑ Jml Mesin
                 ws['!cols'] = colWidths;
 
                 const range = XLSX.utils.decode_range(ws['!ref']);
@@ -2044,7 +2076,6 @@
                     right: { style: 'thin', color: { rgb: '9CA3AF' } }
                 };
 
-                // Header style
                 for (let c = 0; c <= range.e.c; c++) {
                     const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                     if (!ws[addr]) ws[addr] = { t: 's', v: '' };
@@ -2096,9 +2127,6 @@
                         const excelRow = rowIdx + 1;
                         const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
 
-                        // Column index:
-                        // Line=0, No=1, Nama=2, Sub=3, S1..Sn=4..(3+maxLaps), Rata=4+maxLaps, NG=5+maxLaps,
-                        // Gerakan=6+maxLaps, CTG=7+maxLaps, Kapasitas=8+maxLaps, JmlMesin=9+maxLaps, Total=10+maxLaps
                         const colS1 = XLSX.utils.encode_col(4);
                         const colSn = XLSX.utils.encode_col(4 + maxLaps - 1);
                         const colAvg = XLSX.utils.encode_col(4 + maxLaps);
@@ -2122,9 +2150,9 @@
                             if (c === 5 + maxLaps) fill = 'FFFFFF';
                             if (c === 6 + maxLaps) { fill = 'FED7AA'; font = { sz: 11, color: { rgb: '9A3412' } }; }
                             if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                            if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }  // Kapasitas
-                            if (c === 9 + maxLaps) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }  // Jml Mesin (pink)
-                            if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; } // Total Kapasitas
+                            if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                            if (c === 9 + maxLaps) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                            if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; }
                             if (isProblem && (c === 8 + maxLaps || c === 10 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
 
                             ws[addr].s = {
@@ -2135,7 +2163,6 @@
                             };
                         }
 
-                        // Rumus Rata-rata
                         const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 4 + maxLaps });
                         if (ws[avgAddr]) {
                             ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`;
@@ -2143,7 +2170,6 @@
                             ws[avgAddr].t = 'n';
                             ws[avgAddr].z = '0.00';
                         }
-                        // Rumus CT + Gerakan
                         const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
                         if (ws[ctgAddr]) {
                             ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`;
@@ -2151,7 +2177,6 @@
                             ws[ctgAddr].t = 'n';
                             ws[ctgAddr].z = '0.00';
                         }
-                        // Rumus Kapasitas
                         const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 8 + maxLaps });
                         if (ws[kapAddr]) {
                             ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`;
@@ -2162,7 +2187,6 @@
                         dataRowIdx++;
                     });
 
-                    // Rumus Total Kapasitas (kolom 10 + maxLaps)
                     if (group.rows.length > 1) {
                         const totalCol = 10 + maxLaps;
                         const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
@@ -2178,7 +2202,6 @@
                     }
                 });
 
-                // Apply style ke merged cells
                 merges.forEach(merge => {
                     const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
                     if (ws[startAddr] && ws[startAddr].s) {
@@ -2202,7 +2225,7 @@
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
                 const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh (dengan Jml Mesin)', 'success');
+                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
             } catch (err) {
                 console.error('Export XLSX gagal:', err);
                 showToast('❌ Gagal export Excel.', 'error');
