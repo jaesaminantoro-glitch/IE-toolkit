@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Export Excel Auto Merge</title>
+    <title>Time Study - Mobile Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -14,6 +14,51 @@
         .table-scroll::-webkit-scrollbar { height: 8px; }
         .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .table-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+
+        /* ====== TOMBOL KONTROL BAWAH (KHUSUS HP) ====== */
+        .bottom-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(17, 24, 39, 0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 10px 12px 12px;
+            z-index: 40;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+            border-top: 1px solid #374151;
+        }
+        @media (min-width: 768px) {
+            .bottom-controls { display: none; }
+        }
+        .bottom-controls-btn {
+            flex: 1;
+            padding: 18px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+            transition: transform 0.1s, opacity 0.15s, background-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            border: none;
+            cursor: pointer;
+        }
+        .bottom-controls-btn:active:not(:disabled) {
+            transform: scale(0.95);
+            opacity: 0.85;
+        }
+        .bottom-controls-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* Padding bawah di body supaya konten tidak ketutup tombol */
+        body { padding-bottom: 110px; }
+        @media (min-width: 768px) {
+            body { padding-bottom: 0; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
@@ -94,7 +139,6 @@
                     </div>
                 </div>
             </div>
-            <!-- ^^^ TUTUP GRID DI SINI ^^^ -->
 
             <!-- CHIP SIKLUS — FULL WIDTH DI BAWAH GRID -->
             <div class="mt-4">
@@ -155,6 +199,33 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- TOMBOL KONTROL BAWAH (KHUSUS HP) -->
+    <!-- ============================================================ -->
+    <div class="bottom-controls md:hidden">
+        <div class="flex gap-2">
+            <!-- START / PAUSE / RESUME -->
+            <button id="mobileStartBtn" onclick="toggleTimer()" 
+                class="bottom-controls-btn bg-green-600">
+                ▶️ START
+            </button>
+            <!-- LAP -->
+            <button id="mobileLapBtn" onclick="recordLap()" disabled
+                class="bottom-controls-btn bg-blue-600">
+                ⏱️ LAP
+            </button>
+            <!-- STOP -->
+            <button id="mobileStopBtn" onclick="stopTimer()" disabled
+                class="bottom-controls-btn bg-red-600">
+                ⏹️ STOP
+            </button>
+        </div>
+        <!-- Status kecil di bawah tombol -->
+        <div class="text-center text-[10px] text-gray-400 mt-1.5">
+            <span id="mobileStatus">Idle</span>
+        </div>
+    </div>
+
     <script>
         // ============================================================
         // STATE GLOBAL
@@ -187,28 +258,68 @@
             const badge = document.getElementById('timerStatus');
             badge.innerText = text;
             badge.className = 'text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-semibold ' + colorClasses;
+
+            // Update status kecil di bawah tombol HP
+            const mobileStatus = document.getElementById('mobileStatus');
+            if (mobileStatus) mobileStatus.innerText = text;
         }
 
         function setStartButton(mode) {
             const btn = document.getElementById('startStopBtn');
+            const mobileBtn = document.getElementById('mobileStartBtn');
             const base = 'text-white font-semibold py-3 md:py-2.5 px-2 rounded-lg transition shadow text-sm md:text-xs';
-            if (mode === 'start') { btn.innerText = 'Start'; btn.className = 'bg-green-600 hover:bg-green-700 ' + base; }
-            else if (mode === 'pause') { btn.innerText = 'Pause'; btn.className = 'bg-yellow-600 hover:bg-yellow-700 ' + base; }
-            else if (mode === 'resume') { btn.innerText = 'Resume'; btn.className = 'bg-green-600 hover:bg-green-700 ' + base; }
+
+            if (mode === 'start') {
+                btn.innerText = 'Start';
+                btn.className = 'bg-green-600 hover:bg-green-700 ' + base;
+                if (mobileBtn) {
+                    mobileBtn.innerText = '▶️ START';
+                    mobileBtn.className = 'bottom-controls-btn bg-green-600';
+                }
+            } else if (mode === 'pause') {
+                btn.innerText = 'Pause';
+                btn.className = 'bg-yellow-600 hover:bg-yellow-700 ' + base;
+                if (mobileBtn) {
+                    mobileBtn.innerText = '⏸️ PAUSE';
+                    mobileBtn.className = 'bottom-controls-btn bg-yellow-600';
+                }
+            } else if (mode === 'resume') {
+                btn.innerText = 'Resume';
+                btn.className = 'bg-green-600 hover:bg-green-700 ' + base;
+                if (mobileBtn) {
+                    mobileBtn.innerText = '▶️ RESUME';
+                    mobileBtn.className = 'bottom-controls-btn bg-green-600';
+                }
+            }
         }
 
         function setButtonEnabled(id, enabled) {
+            // Update tombol desktop
             const btn = document.getElementById(id);
-            btn.disabled = !enabled;
-            if (enabled) btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            else btn.classList.add('opacity-50', 'cursor-not-allowed');
+            if (btn) {
+                btn.disabled = !enabled;
+                if (enabled) btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                else btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Sinkronkan dengan tombol HP
+            const mapping = {
+                'stopBtn': 'mobileStopBtn',
+                'lapBtn': 'mobileLapBtn',
+                'startStopBtn': 'mobileStartBtn'
+            };
+            const mobileId = mapping[id];
+            if (mobileId) {
+                const mobileBtn = document.getElementById(mobileId);
+                if (mobileBtn) mobileBtn.disabled = !enabled;
+            }
         }
 
         function showToast(message, type = 'info') {
             const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
             const toast = document.createElement('div');
             toast.innerText = message;
-            toast.className = `fixed bottom-4 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-50 toast-animate whitespace-nowrap`;
+            toast.className = `fixed bottom-24 md:bottom-4 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-50 toast-animate whitespace-nowrap`;
             document.body.appendChild(toast);
             setTimeout(() => {
                 toast.style.opacity = '0';
@@ -233,12 +344,14 @@
                 setButtonEnabled('stopBtn', true);
                 setButtonEnabled('lapBtn', true);
                 isRunning = true;
+                if (navigator.vibrate) navigator.vibrate(30);
             } else {
                 clearInterval(timerInterval);
                 timerInterval = null;
                 setStartButton('resume');
                 setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
                 isRunning = false;
+                if (navigator.vibrate) navigator.vibrate(30);
             }
         }
 
@@ -263,6 +376,7 @@
                 document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
                 setTimerStatus('Stopped', 'bg-red-100 text-red-700');
             }
+            if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
 
         function recordLap() {
@@ -533,7 +647,7 @@
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
             header.push('Rata-rata', 'NG%', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Gabungan UPH');
 
-            // === 2. Group by (No + Process) — SAMA SEPERTI HTML ===
+            // === 2. Group by (No + Process) ===
             const groups = {};
             const groupOrder = [];
             masterData.forEach(item => {
@@ -546,10 +660,10 @@
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
 
-            // === 3. Bangun data rows + merge ===
+            // === 3. Data rows + merge ===
             const dataRows = [header];
             const merges = [];
-            let rowIndex = 1;  // row 0 = header
+            let rowIndex = 1;
 
             groupOrder.forEach(key => {
                 const group = groups[key];
@@ -559,58 +673,48 @@
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
 
-                    // Kolom No & Proses hanya di baris pertama grup
                     const rowData = [
                         rIdx === 0 ? item.no : '',
                         rIdx === 0 ? item.process : '',
                         item.subMachine
                     ];
 
-                    // Siklus S1..Sn
                     for (let i = 0; i < maxLaps; i++) {
                         rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
                     }
 
-                    // Statistik
                     rowData.push(
                         parseFloat(stats.avg.toFixed(2)),
                         item.ngRate,
                         parseFloat(stats.ctPlusG.toFixed(2)),
                         stats.capacity,
-                        rIdx === 0 ? group.totalCapacity : ''  // Total hanya di baris pertama
+                        rIdx === 0 ? group.totalCapacity : ''
                     );
 
                     dataRows.push(rowData);
                     rowIndex++;
                 });
 
-                // Merge untuk grup ini
                 if (rowSpan > 1) {
-                    const totalCol = maxLaps + 7;  // Kolom Total Gabungan (index yang benar)
+                    const totalCol = maxLaps + 7;
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
                     merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
                     merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
                 }
             });
 
-            // === 4. Buat worksheet ===
+            // === 4. Worksheet ===
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.aoa_to_sheet(dataRows);
-
-            // === 5. Terapkan merge ===
             ws['!merges'] = merges;
 
-            // === 6. Lebar kolom ===
+            // === 5. Lebar kolom ===
             const colWidths = [{ wch: 5 }, { wch: 18 }, { wch: 12 }];
             for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
-            colWidths.push({ wch: 10 });  // Rata-rata
-            colWidths.push({ wch: 6 });   // NG%
-            colWidths.push({ wch: 12 });  // CT + Gerakan
-            colWidths.push({ wch: 14 });  // Kapasitas
-            colWidths.push({ wch: 20 });  // Total Gabungan
+            colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
             ws['!cols'] = colWidths;
 
-            // === 7. Format 2 desimal untuk Rata-rata & CT + Gerakan ===
+            // === 6. Format 2 desimal ===
             const range = XLSX.utils.decode_range(ws['!ref']);
             for (let r = 1; r <= range.e.r; r++) {
                 const avgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 3 });
@@ -620,13 +724,23 @@
                 if (ws[ctgCell] && typeof ws[ctgCell].v === 'number') ws[ctgCell].z = '0.00';
             }
 
-            // === 8. Tulis file ===
+            // === 7. Tulis file ===
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
             const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
             XLSX.writeFile(wb, filename);
 
-            showToast('📥 File Excel (.xlsx) berhasil diunduh', 'success');
+            showToast('📥 File Excel berhasil diunduh', 'success');
         }
+
+        // ============================================================
+        // INIT — Sinkronkan tombol HP saat pertama load
+        // ============================================================
+        (function initMobileButtons() {
+            const mobileStopBtn = document.getElementById('mobileStopBtn');
+            const mobileLapBtn = document.getElementById('mobileLapBtn');
+            if (mobileStopBtn) mobileStopBtn.disabled = true;
+            if (mobileLapBtn) mobileLapBtn.disabled = true;
+        })();
     </script>
 </body>
 </html>
