@@ -37,7 +37,7 @@
             user-select: none; border: none; cursor: pointer;
         }
         .bottom-controls-btn:active:not(:disabled) { transform: scale(0.95); opacity: 0.85; }
-        .bottom-controls-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .bottom-controls-btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
         .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .table-scroll::-webkit-scrollbar { height: 8px; }
@@ -143,7 +143,6 @@
 
         .checkbox-custom { width: 20px; height: 20px; cursor: pointer; accent-color: #4f46e5; }
 
-        /* Mode selection cards */
         .mode-card {
             display: flex; align-items: center; gap: 16px;
             padding: 20px; border: 3px solid #e5e7eb; border-radius: 16px;
@@ -192,7 +191,7 @@
                     <div class="mode-card-icon">📋</div>
                     <div class="flex-1">
                         <div class="mode-card-title">Time Study Elemen</div>
-                        <div class="mode-card-desc">Ukur breakdown gerakan per elemen proses</div>
+                        <div class="mode-card-desc">Ukur breakdown gerakan per elemen dalam No. SOP</div>
                     </div>
                     <div class="text-3xl text-gray-300">›</div>
                 </button>
@@ -293,8 +292,7 @@
             </div>
         </div>
     </div>
-
-    <!-- APP CONTAINER (muncul setelah pilih mode) -->
+        <!-- APP CONTAINER -->
     <div id="appContainer" class="hidden">
 
         <!-- HEADER -->
@@ -317,14 +315,6 @@
                         <button onclick="manualSync()" class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200" title="Sync">
                             <span class="btn-icon">🔄</span>
                             <span class="btn-label">SYNC</span>
-                        </button>
-                        <button onclick="exportToExcelXLSX()" class="header-btn bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm" title="Export Excel">
-                            <span class="btn-icon">📥</span>
-                            <span class="btn-label">EXCEL</span>
-                        </button>
-                        <button onclick="exportToCSV()" class="header-btn bg-amber-600 hover:bg-amber-700 text-white shadow-sm" title="Export CSV">
-                            <span class="btn-icon">📄</span>
-                            <span class="btn-label">CSV</span>
                         </button>
                     </div>
                 </div>
@@ -380,20 +370,20 @@
                             <p class="text-[10px] text-gray-400 mt-1">Total: <span id="totalMachines">0</span> mesin</p>
                         </div>
 
-                        <!-- MODE ELEMEN: Dropdown No Proses -->
+                        <!-- MODE ELEMEN: Dropdown No. SOP -->
                         <div id="elemenInputWrapper" class="hidden">
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih No Proses</label>
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">1️⃣ Pilih No. SOP</label>
                             <select id="elemenNoSelect" onchange="onElemenNoChange(this)" class="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-sm bg-white font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Pilih No Proses --</option>
+                                <option value="">-- Pilih No. SOP --</option>
                             </select>
                             <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master</p>
                             <div id="elemenListPreview" class="hidden mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
-                                <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Elemen untuk No ini:</div>
+                                <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Elemen untuk No. SOP ini:</div>
                                 <div id="elemenListPreviewItems" class="space-y-1"></div>
                             </div>
                         </div>
 
-                        <!-- NO + NAMA (auto dari dropdown mesin) -->
+                        <!-- NO + NAMA -->
                         <div class="grid grid-cols-3 gap-2">
                             <div class="col-span-1">
                                 <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">
@@ -404,8 +394,8 @@
                                 <p class="text-[9px] text-gray-400 mt-0.5">Manual</p>
                             </div>
                             <div class="col-span-2">
-                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Mesin (auto)</label>
-                                <input type="text" id="inputProcess" placeholder="Pilih mesin dulu" readonly
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Nama Mesin / SOP (auto)</label>
+                                <input type="text" id="inputProcess" placeholder="Pilih dulu" readonly
                                     class="w-full px-2 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50">
                             </div>
                         </div>
@@ -420,7 +410,8 @@
                             <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                         </div>
 
-                        <div class="grid grid-cols-3 gap-3">
+                        <!-- Field Mesin: NG, Gerakan, Jumlah Mesin -->
+                        <div id="mesinFieldGrid" class="grid grid-cols-3 gap-3">
                             <div>
                                 <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
                                 <input type="number" id="inputNgRate" value="2" step="0.1" min="0" max="100" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
@@ -436,6 +427,14 @@
                             <div>
                                 <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jumlah Mesin / Jalur</label>
                                 <input type="number" id="inputActualMachine" value="1" min="1" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-600">
+                            </div>
+                        </div>
+
+                        <!-- Field Elemen: Allowance saja -->
+                        <div id="elemenFieldGrid" class="grid grid-cols-1 gap-3 hidden">
+                            <div>
+                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Allowance (desimal, mis. 0.1 = 10%)</label>
+                                <input type="number" id="inputAllowance" value="0.1" step="0.01" min="0" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-purple-700">
                             </div>
                         </div>
                     </div>
@@ -456,8 +455,6 @@
                         </div>
                     </div>
 
-                    <!-- Tombol Reset Stopwatch DIHAPUS sesuai permintaan -->
-
                     <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
                         💾 Simpan ke Master Data
                     </button>
@@ -473,13 +470,27 @@
                         <h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2>
                         <p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time via Firebase</p>
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <label class="text-[10px] text-gray-500 font-semibold">Filter Line:</label>
+                </div>
+
+                <!-- Toolbar: Filter + Export + Reset -->
+                <div class="flex flex-wrap items-center gap-2 mb-3 bg-white border border-gray-200 rounded-lg p-2">
+                    <div class="flex items-center gap-1.5">
+                        <label class="text-[10px] text-gray-500 font-semibold whitespace-nowrap">Filter Line:</label>
                         <select id="dataFilterLine" onchange="renderMasterTable()" class="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
                             <option value="__active__">Line Aktif</option>
                             <option value="__all__">Semua Line</option>
                         </select>
-                        <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg border border-red-200 transition">Reset</button>
+                    </div>
+                    <div class="flex items-center gap-1.5 ml-auto flex-wrap">
+                        <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">
+                            📥 EXCEL
+                        </button>
+                        <button onclick="exportToCSV()" class="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">
+                            📄 CSV
+                        </button>
+                        <button onclick="clearAllData()" class="text-[11px] text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg border border-red-200 transition font-semibold">
+                            🗑️ Reset
+                        </button>
                     </div>
                 </div>
 
@@ -579,7 +590,7 @@
                     <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                         <div>
                             <h2 class="text-sm md:text-base font-semibold text-gray-800">📋 Master Elemen Proses</h2>
-                            <p class="text-[10px] md:text-xs text-gray-500">Upload Excel dengan kolom: No | Nama Proses | Nama Elemen | Kategori</p>
+                            <p class="text-[10px] md:text-xs text-gray-500">Upload Excel dengan kolom: No. SOP | Nama SOP | Elemen</p>
                         </div>
                         <div class="flex gap-2 flex-wrap">
                             <button onclick="openElemenImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
@@ -596,15 +607,14 @@
                         <table class="min-w-full divide-y divide-gray-200 text-xs">
                             <thead class="bg-purple-100 text-gray-800">
                                 <tr>
-                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Proses</th>
-                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Elemen</th>
-                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Kategori</th>
+                                    <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
+                                    <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Elemen</th>
                                     <th class="px-2 py-3 text-center font-bold whitespace-nowrap w-24">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="elemenMasterTableBody" class="divide-y divide-gray-200 bg-white">
-                                <tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "📥 Import".</td></tr>
+                                <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "📥 Import".</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -613,9 +623,9 @@
                 <div class="bg-purple-50 rounded-xl border border-purple-200 p-4">
                     <div class="text-xs font-bold text-purple-800 mb-2">💡 Format Import Excel</div>
                     <div class="text-[11px] text-purple-700 space-y-1">
-                        <div>Kolom: <b>No | Nama Proses | Nama Elemen | Kategori</b></div>
-                        <div>Contoh: <span class="font-mono bg-white px-1 rounded">5-1 | Press Lensa | Ambil Part | VA</span></div>
-                        <div>Kategori: VA (Value Added), NNVA (Necessary Non-Value Added), NVA (Non-Value Added)</div>
+                        <div>Kolom: <b>Nomor SOP | Nama SOP | Process Description</b></div>
+                        <div>Contoh: <span class="font-mono bg-white px-1 rounded">1.0 | Pemasangan battery | Ambil battery</span></div>
+                        <div>Baris judul di atas header otomatis di-skip</div>
                     </div>
                 </div>
             </div>
@@ -679,8 +689,7 @@
             </div>
         </div>
     </div><!-- end appContainer -->
-
-    <!-- MODAL MESIN -->
+        <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -750,14 +759,14 @@
             </div>
             <div class="p-4 space-y-3">
                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-800">
-                    <div class="font-bold mb-1">Format Excel (4 kolom):</div>
+                    <div class="font-bold mb-1">Format Excel (3 kolom):</div>
                     <div class="font-mono text-[10px] bg-white p-2 rounded border mb-2">
-                        No | Nama Proses | Nama Elemen | Kategori<br>
-                        5-1 | Press Lensa | Ambil Part | VA<br>
-                        5-1 | Press Lensa | Pasang Lensa | VA<br>
-                        5-1 | Press Lensa | Kencangkan | VA<br>
-                        5-1 | Press Lensa | Cek Visual | NNVA
+                        Nomor SOP | Nama SOP | Process Description<br>
+                        1.0 | Pemasangan battery | Ambil battery<br>
+                        1.0 | Pemasangan battery | Positioning battery<br>
+                        1.0 | Pemasangan battery | Pasang connector
                     </div>
+                    <div class="mt-1">💡 Baris judul di atas header otomatis di-skip.</div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File Excel/CSV</label>
@@ -766,7 +775,7 @@
                 <div class="text-center text-xs text-gray-400 font-semibold">— ATAU —</div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Copy-Paste dari Excel</label>
-                    <textarea id="elemenPasteArea" rows="8" placeholder="5-1&#9;Press Lensa&#9;Ambil Part&#9;VA&#10;5-1&#9;Press Lensa&#9;Pasang Lensa&#9;VA" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
+                    <textarea id="elemenPasteArea" rows="8" placeholder="1.0&#9;Pemasangan battery&#9;Ambil battery&#10;1.0&#9;Pemasangan battery&#9;Positioning battery" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
                 </div>
                 <div class="flex items-center gap-2 pt-1">
                     <input type="checkbox" id="elemenReplaceExisting" class="rounded">
@@ -837,15 +846,15 @@
         let uphUserOverride = false;
 
         // Master Elemen
-        let elemenMasterList = []; // [{id, no, proses, elemen, kategori}]
+        let elemenMasterList = []; // [{id, noSop, namaSop, elemen}]
         let currentElemenNo = '';
-        let currentElemenProses = '';
+        let currentElemenNama = '';
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v2';
         const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
         const LS_KEY_MODE = 'timeStudy_mode_v1';
-        const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v1';
+        const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v2';
 
         // ============================================================
         // UTILS
@@ -915,7 +924,6 @@
             document.getElementById('modeModal').classList.remove('active');
             document.getElementById('appContainer').classList.remove('hidden');
             applyModeToUI();
-            // Jika belum pilih line, tampilkan line modal
             setTimeout(() => {
                 if (!activeLine) openLineModal();
             }, 300);
@@ -924,6 +932,7 @@
             if (isRunning || currentLaps.length > 0) {
                 if (!confirm('⚠️ Timer sedang jalan / ada siklus belum disimpan.\n\nGanti mode akan reset siklus. Lanjutkan?')) return;
             }
+            autoLapBeforeStop();
             clearInterval(timerInterval);
             timerInterval = null;
             isRunning = false;
@@ -934,7 +943,6 @@
             document.getElementById('modeModal').classList.add('active');
         }
         function applyModeToUI() {
-            // Update judul header dinamis
             const titleMap = {
                 'mesin': '⏱️ Time Study Mesin',
                 'elemen': '⏱️ Time Study Elemen',
@@ -943,30 +951,36 @@
             const titleEl = document.getElementById('appTitle');
             if (titleEl) titleEl.innerText = titleMap[currentMode] || '⏱️ Time Study';
 
-            // Show/hide machine wrapper & elemen wrapper
             const machineWrapper = document.getElementById('machineInputWrapper');
             const elemenWrapper = document.getElementById('elemenInputWrapper');
             const tabMesin = document.getElementById('tabBtn-mesin');
             const tabElemen = document.getElementById('tabBtn-elemen');
+            const mesinFieldGrid = document.getElementById('mesinFieldGrid');
+            const elemenFieldGrid = document.getElementById('elemenFieldGrid');
 
             if (currentMode === 'mesin') {
                 machineWrapper.classList.remove('hidden');
                 elemenWrapper.classList.add('hidden');
                 tabMesin.classList.remove('hidden');
                 tabElemen.classList.add('hidden');
+                mesinFieldGrid.classList.remove('hidden');
+                elemenFieldGrid.classList.add('hidden');
             } else if (currentMode === 'elemen') {
                 machineWrapper.classList.add('hidden');
                 elemenWrapper.classList.remove('hidden');
                 tabMesin.classList.add('hidden');
                 tabElemen.classList.remove('hidden');
+                mesinFieldGrid.classList.add('hidden');
+                elemenFieldGrid.classList.remove('hidden');
             } else if (currentMode === 'siklus') {
                 machineWrapper.classList.remove('hidden');
                 elemenWrapper.classList.add('hidden');
                 tabMesin.classList.add('hidden');
                 tabElemen.classList.add('hidden');
+                mesinFieldGrid.classList.remove('hidden');
+                elemenFieldGrid.classList.add('hidden');
             }
 
-            // Update data table
             renderMasterTable();
             renderStandardCheck();
             updateCounters();
@@ -1060,7 +1074,6 @@
                 }
             }, () => {});
 
-            // Listeners untuk 3 node master
             ['masterDataMesin', 'masterDataElemen', 'masterDataSiklus'].forEach(node => {
                 window.firebaseOnValue(window.firebaseRef(window.firebaseDB, node), (snap) => {
                     const val = snap.val();
@@ -1149,8 +1162,7 @@
             document.getElementById('uphSourceHint').innerText = 'Auto dari Line';
             renderStandardCheck();
         }
-
-        // ============================================================
+                // ============================================================
         // LINE MANAGEMENT
         // ============================================================
         function renderLineList() {
@@ -1213,7 +1225,6 @@
             if (badge) badge.innerText = activeLine || 'Pilih Line';
             if (display) display.innerText = activeLine || '-';
         }
-
         function openEditLineModal(lineName) {
             editingLineOldName = lineName;
             const l = lineList.find(x => x.name === lineName);
@@ -1583,18 +1594,21 @@
                 try {
                     if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
                     let startIdx = 0;
-                    const firstRow = rows[0].map(c => String(c == null ? '' : c).trim().toLowerCase());
-                    if (firstRow[0] === 'no' || firstRow[1] === 'nama proses' || firstRow[2] === 'nama elemen') startIdx = 1;
+                    for (let i = 0; i < rows.length; i++) {
+                        const r = rows[i].map(c => String(c == null ? '' : c).trim().toLowerCase());
+                        if (r[0] && (r[0].includes('nomor sop') || r[0] === 'no sop' || r[0] === 'no. sop')) { startIdx = i + 1; break; }
+                        if (r[0] === 'nomor' && r[1] && r[1].includes('sop')) { startIdx = i + 1; break; }
+                    }
                     const newItems = [];
                     for (let i = startIdx; i < rows.length; i++) {
                         const cells = rows[i].map(c => String(c == null ? '' : c).trim());
                         if (cells.length < 3) continue;
-                        const no = cells[0];
-                        const proses = cells[1];
+                        const noSop = cells[0];
+                        const namaSop = cells[1];
                         const elemen = cells[2];
-                        const kategori = cells[3] || 'VA';
-                        if (!proses || !elemen) continue;
-                        newItems.push({ id: generateId('e_'), no: no || '-', proses, elemen, kategori });
+                        if (!noSop && !namaSop && !elemen) continue;
+                        if (!elemen) continue;
+                        newItems.push({ id: generateId('e_'), noSop: noSop || '-', namaSop: namaSop || '-', elemen });
                     }
                     if (newItems.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
                     if (replace) elemenMasterList = newItems;
@@ -1644,23 +1658,20 @@
             if (!tbody) return;
             const search = (document.getElementById('elemenSearch')?.value || '').toLowerCase().trim();
             let filtered = elemenMasterList;
-            if (search) filtered = elemenMasterList.filter(e => String(e.no).toLowerCase().includes(search) || String(e.proses).toLowerCase().includes(search) || String(e.elemen).toLowerCase().includes(search));
+            if (search) filtered = elemenMasterList.filter(e => String(e.noSop).toLowerCase().includes(search) || String(e.namaSop).toLowerCase().includes(search) || String(e.elemen).toLowerCase().includes(search));
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
-            tbody.innerHTML = filtered.map(e => {
-                const kategoriColor = e.kategori === 'VA' ? 'bg-emerald-100 text-emerald-800' : (e.kategori === 'NNVA' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
-                return `<tr class="hover:bg-purple-50/30">
-                    <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(e.no)}</td>
-                    <td class="px-3 py-2 border-r border-b">${escapeHtml(e.proses)}</td>
+            tbody.innerHTML = filtered.map(e => `
+                <tr class="hover:bg-purple-50/30">
+                    <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(e.noSop)}</td>
+                    <td class="px-3 py-2 border-r border-b">${escapeHtml(e.namaSop)}</td>
                     <td class="px-3 py-2 border-r border-b font-medium">${escapeHtml(e.elemen)}</td>
-                    <td class="px-2 py-2 text-center border-r border-b"><span class="${kategoriColor} text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(e.kategori)}</span></td>
                     <td class="px-2 py-2 text-center border-b">
                         <button onclick="deleteElemenMaster('${e.id}')" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
                     </td>
-                </tr>`;
-            }).join('');
+                </tr>`).join('');
         }
         function deleteElemenMaster(id) {
             if (!confirm('Hapus elemen ini?')) return;
@@ -1684,8 +1695,8 @@
         function exportElemenCSV() {
             if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-            const rows = [['No', 'Nama Proses', 'Nama Elemen', 'Kategori']];
-            elemenMasterList.forEach(e => rows.push([e.no, e.proses, e.elemen, e.kategori]));
+            const rows = [['No. SOP', 'Nama SOP', 'Elemen']];
+            elemenMasterList.forEach(e => rows.push([e.noSop, e.namaSop, e.elemen]));
             const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
@@ -1693,11 +1704,11 @@
         function populateElemenNoDropdown() {
             const sel = document.getElementById('elemenNoSelect');
             if (!sel) return;
-            const nos = [...new Set(elemenMasterList.map(e => e.no))].sort();
+            const nos = [...new Set(elemenMasterList.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
             const currentVal = sel.value;
-            sel.innerHTML = '<option value="">-- Pilih No Proses --</option>' + nos.map(no => {
-                const first = elemenMasterList.find(e => e.no === no);
-                return `<option value="${escapeHtml(no)}">${escapeHtml(no)} · ${escapeHtml(first?.proses || '')}</option>`;
+            sel.innerHTML = '<option value="">-- Pilih No. SOP --</option>' + nos.map(no => {
+                const first = elemenMasterList.find(e => e.noSop === no);
+                return `<option value="${escapeHtml(no)}">${escapeHtml(no)} · ${escapeHtml(first?.namaSop || '')}</option>`;
             }).join('');
             if (currentVal && nos.includes(currentVal)) sel.value = currentVal;
         }
@@ -1705,28 +1716,25 @@
             const no = sel.value;
             if (!no) {
                 currentElemenNo = '';
-                currentElemenProses = '';
+                currentElemenNama = '';
                 document.getElementById('inputNo').value = '';
                 document.getElementById('inputProcess').value = '';
                 document.getElementById('elemenListPreview').classList.add('hidden');
                 return;
             }
             currentElemenNo = no;
-            const items = elemenMasterList.filter(e => e.no === no);
-            if (items.length > 0) currentElemenProses = items[0].proses;
+            const items = elemenMasterList.filter(e => e.noSop === no);
+            if (items.length > 0) currentElemenNama = items[0].namaSop;
             document.getElementById('inputNo').value = no;
-            document.getElementById('inputProcess').value = currentElemenProses;
+            document.getElementById('inputProcess').value = currentElemenNama;
             const preview = document.getElementById('elemenListPreview');
             const previewItems = document.getElementById('elemenListPreviewItems');
             preview.classList.remove('hidden');
-            previewItems.innerHTML = items.map((e, i) => {
-                const katColor = e.kategori === 'VA' ? 'bg-emerald-100 text-emerald-800' : (e.kategori === 'NNVA' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
-                return `<div class="flex items-center gap-2 text-xs">
+            previewItems.innerHTML = items.map((e, i) => `
+                <div class="flex items-center gap-2 text-xs">
                     <span class="font-mono font-bold text-blue-700 bg-white px-1.5 py-0.5 rounded border">E${i + 1}</span>
                     <span class="flex-1 font-medium">${escapeHtml(e.elemen)}</span>
-                    <span class="${katColor} text-[10px] font-bold px-1.5 py-0.5 rounded">${escapeHtml(e.kategori)}</span>
-                </div>`;
-            }).join('');
+                </div>`).join('');
         }
 
         // ============================================================
@@ -1746,22 +1754,32 @@
             else if (mode === 'resume') { b.innerText = '▶️ RESUME'; b.className = 'bottom-controls-btn bg-green-600'; }
         }
         function setButtonEnabled(id, enabled) {
-            const applyState = (b) => {
-                if (!b) return;
-                b.disabled = !enabled;
-                if (enabled) {
-                    b.classList.remove('opacity-50', 'cursor-not-allowed');
-                    b.style.pointerEvents = '';
-                } else {
-                    b.classList.add('opacity-50', 'cursor-not-allowed');
-                    b.style.pointerEvents = 'none'; // PERBAIKAN BUG: blokir tap walau disabled attribute telat ke-apply
-                }
-            };
-            applyState(document.getElementById(id));
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = !enabled;
+                if (enabled) btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                else btn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
             const mapping = { 'stopBtn': 'mobileStopBtn', 'lapBtn': 'mobileLapBtn', 'startStopBtn': 'mobileStartBtn' };
             const mid = mapping[id];
-            if (mid) applyState(document.getElementById(mid)); // PERBAIKAN BUG: dulu tombol mobile tidak dapat class visual disabled
+            if (mid) { const mb = document.getElementById(mid); if (mb) mb.disabled = !enabled; }
         }
+
+        // ------------------------------------------------------------
+        // AUTO-LAP: simpan sisa waktu sebelum stop/pause/pindah tab
+        // ------------------------------------------------------------
+        function autoLapBeforeStop() {
+            if (!isRunning) return;
+            const now = Date.now();
+            const dur = (now - lastLapTimestamp) / 1000;
+            if (dur >= 0.1) {
+                currentLaps.push(parseFloat(dur.toFixed(2)));
+                updateLapsUI();
+                setButtonEnabled('commitBtn', true);
+                document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s (auto)`;
+            }
+        }
+
         function toggleTimer() {
             if (!isRunning) {
                 lastLapTimestamp = Date.now();
@@ -1773,19 +1791,21 @@
                 setStartButton('pause');
                 setTimerStatus('Running', 'bg-green-100 text-green-700');
                 setButtonEnabled('stopBtn', true);
-                setButtonEnabled('lapBtn', true);   // <-- LAP aktif saat running
+                setButtonEnabled('lapBtn', true);
                 isRunning = true;
                 if (navigator.vibrate) navigator.vibrate(30);
             } else {
+                autoLapBeforeStop();
                 clearInterval(timerInterval); timerInterval = null;
                 setStartButton('resume');
                 setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
                 isRunning = false;
-                setButtonEnabled('lapBtn', false);  // <-- PERBAIKAN: LAP disabled saat paused
+                setButtonEnabled('lapBtn', false);
                 if (navigator.vibrate) navigator.vibrate(30);
             }
         }
         function stopTimer() {
+            autoLapBeforeStop();
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
             setStartButton('start');
@@ -1805,22 +1825,11 @@
             }
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
-
-        // ============================================================
-        // HANDLE STOP / RESET (SIKLUS TIDAK IKUT TERHAPUS)
-        // ============================================================
         function handleStopReset() {
-            // Jika timer sedang berjalan → STOP
-            if (isRunning) {
-                stopTimer();
-                return;
-            }
-            // Jika timer berhenti → RESET elapsed time saja (SIKLUS TETAP TERSIMPAN)
+            if (isRunning) { stopTimer(); return; }
             if (!isRunning) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                elapsedTime = 0;
-                lastLapTimestamp = Date.now();
+                clearInterval(timerInterval); timerInterval = null;
+                elapsedTime = 0; lastLapTimestamp = Date.now();
                 document.getElementById('timerDisplay').innerText = '00:00.00';
                 setStartButton('start');
                 setButtonEnabled('stopBtn', false);
@@ -1837,15 +1846,8 @@
                 showToast('⏱️ Timer direset (siklus tetap tersimpan)', 'info');
             }
         }
-
         function recordLap() {
-            // Guard ganda: timer harus running DAN interval-nya masih aktif.
-            // (PERBAIKAN BUG: sebelumnya hanya cek isRunning, sekarang cek timerInterval juga
-            // supaya lap tidak bisa tercatat saat timer sedang paused, walau tombol sempat ter-tap.)
-            if (!isRunning || !timerInterval) {
-                showToast('⏱️ Timer sedang paused/berhenti, LAP tidak aktif', 'warning');
-                return;
-            }
+            if (!isRunning) { showToast('⏱️ Timer tidak jalan', 'warning'); return; }
             const now = Date.now();
             const dur = (now - lastLapTimestamp) / 1000;
             lastLapTimestamp = now;
@@ -1884,24 +1886,6 @@
             }).join('');
             setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
         }
-        function resetStopwatchCurrent() {
-            clearInterval(timerInterval); timerInterval = null;
-            isRunning = false; elapsedTime = 0; lastLapTimestamp = Date.now();
-            document.getElementById('timerDisplay').innerText = '00:00.00';
-            if (currentLaps.length > 0) {
-                document.getElementById('lapSplitPreview').innerText = `✅ ${currentLaps.length} siklus siap di-commit`;
-                setTimerStatus('Siap Commit', 'bg-indigo-100 text-indigo-700');
-                setButtonEnabled('commitBtn', true);
-            } else {
-                document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
-                setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
-                setButtonEnabled('commitBtn', false);
-            }
-            setStartButton('start');
-            setButtonEnabled('stopBtn', false);
-            setButtonEnabled('lapBtn', false);
-            showToast('⏱️ Timer direset (siklus tetap)', 'info');
-        }
 
         // ============================================================
         // COMMIT
@@ -1909,41 +1893,71 @@
         function commitStudyRow() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
 
-            let no, process, subMachine;
             if (currentMode === 'elemen') {
-                no = currentElemenNo || document.getElementById('inputNo').value.trim();
-                process = currentElemenProses || document.getElementById('inputProcess').value.trim();
-                subMachine = 'Elemen';
-                if (!no) { showToast('⚠️ Pilih No Proses dulu!', 'error'); return; }
+                commitElemenRow();
             } else {
-                const isCustom = selectedMachineId === '__custom__' || !selectedMachineId;
-                if (isCustom) {
-                    no = document.getElementById('inputNo').value.trim() || '-';
-                    process = document.getElementById('inputProcess').value.trim();
-                    subMachine = document.getElementById('inputSubMachineCustom').value.trim() || '-';
-                } else {
-                    const m = machineList.find(x => x.id === selectedMachineId);
-                    if (!m) { showToast('Mesin tidak ditemukan!', 'error'); return; }
-                    no = document.getElementById('inputNo').value.trim() || '-';
-                    process = m.proses || '';
-                    subMachine = m.mesin || '-';
-                }
+                commitMesinRow();
             }
+        }
 
+        function commitElemenRow() {
+            const noSop = currentElemenNo || document.getElementById('inputNo').value.trim();
+            const namaSop = currentElemenNama || document.getElementById('inputProcess').value.trim();
+            const elemen = prompt('Nama elemen yang direkam?\n(Ketik nama elemen dari daftar di atas)');
+            if (!elemen) { showToast('⚠️ Nama elemen wajib diisi!', 'error'); return; }
+            const allowanceRaw = document.getElementById('inputAllowance').value.trim();
+            const allowance = parseFloat(allowanceRaw);
+            if (isNaN(allowance) || allowance < 0) { showToast('⚠️ Allowance harus angka ≥ 0!', 'error'); return; }
+            if (!noSop) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
+            if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
+
+            const existingIndex = masterData.findIndex(item =>
+                item.line === activeLine && item.noSop === noSop && item.namaSop === namaSop && item.elemen === elemen
+            );
+            if (existingIndex !== -1) {
+                const existing = masterData[existingIndex];
+                if (!confirm(`"${elemen}" (No. SOP ${noSop}) sudah ada.\n\nGabungkan sesi baru?`)) return;
+                existing.laps = existing.laps.concat(currentLaps);
+                existing.allowance = allowance;
+                existing.sessions = (existing.sessions || 1) + 1;
+                showToast('Sesi ditambahkan', 'success');
+            } else {
+                masterData.push({
+                    line: activeLine, noSop, namaSop, elemen,
+                    laps: [...currentLaps], allowance, sessions: 1
+                });
+                showToast(`✅ Data elemen disimpan`, 'success');
+            }
+            saveMasterToLS();
+            resetStopwatchAfterCommit();
+        }
+
+        function commitMesinRow() {
+            let no, process, subMachine;
+            const isCustom = selectedMachineId === '__custom__' || !selectedMachineId;
+            if (isCustom) {
+                no = document.getElementById('inputNo').value.trim() || '-';
+                process = document.getElementById('inputProcess').value.trim();
+                subMachine = document.getElementById('inputSubMachineCustom').value.trim() || '-';
+            } else {
+                const m = machineList.find(x => x.id === selectedMachineId);
+                if (!m) { showToast('Mesin tidak ditemukan!', 'error'); return; }
+                no = document.getElementById('inputNo').value.trim() || '-';
+                process = m.proses || '';
+                subMachine = m.mesin || '-';
+            }
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
             const gerakanRaw = document.getElementById('inputGerakan').value.trim();
             if (!gerakanRaw) { showToast('⚠️ Mohon isi Gerakan (detik)!', 'error'); document.getElementById('inputGerakan').focus(); return; }
             const gerakan = parseFloat(gerakanRaw);
             if (isNaN(gerakan) || gerakan < 0) { showToast('⚠️ Gerakan harus angka positif!', 'error'); return; }
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
-
             if (!process) { showToast('Mohon pilih/isi nama proses!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
 
             const existingIndex = masterData.findIndex(item =>
                 item.line === activeLine && item.no === no && item.process === process && item.subMachine === subMachine
             );
-
             if (existingIndex !== -1) {
                 const existing = masterData[existingIndex];
                 if (!confirm(`"${process}" (No ${no}) sudah ada.\n\nGabungkan sesi baru?`)) return;
@@ -1952,7 +1966,7 @@
                 existing.actualMachine = actualMachine;
                 existing.gerakan = gerakan;
                 existing.sessions = (existing.sessions || 1) + 1;
-                showToast(`Sesi ditambahkan`, 'success');
+                showToast('Sesi ditambahkan', 'success');
             } else {
                 masterData.push({ line: activeLine, no, process, subMachine, laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1 });
                 showToast(`✅ Data disimpan (${activeLine})`, 'success');
@@ -1983,9 +1997,8 @@
                 document.getElementById('elemenNoSelect').value = '';
                 document.getElementById('elemenListPreview').classList.add('hidden');
                 currentElemenNo = '';
-                currentElemenProses = '';
+                currentElemenNama = '';
             }
-
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
             setButtonEnabled('stopBtn', false);
@@ -1995,7 +2008,6 @@
             renderMasterTable();
             renderStandardCheck();
             updateCounters();
-
             switchTab('data');
             setTimeout(() => {
                 if (currentTab === 'data') {
@@ -2012,13 +2024,19 @@
         // STATS
         // ============================================================
         function getRowStats(item) {
-            const laps = item.laps;
+            const laps = item.laps || [];
             const count = laps.length;
             const avg = count > 0 ? laps.reduce((a, b) => a + b, 0) / count : 0;
-            const gerakan = item.gerakan !== undefined ? parseFloat(item.gerakan) : 0;
-            const ctPlusG = avg + gerakan;
-            const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * item.actualMachine) : 0;
-            return { count, avg, ctPlusG, capacity, gerakan };
+            if (currentMode === 'elemen') {
+                const allowance = item.allowance !== undefined ? parseFloat(item.allowance) : 0;
+                const smh = avg * (1 + allowance);
+                return { count, avg, allowance, smh };
+            } else {
+                const gerakan = item.gerakan !== undefined ? parseFloat(item.gerakan) : 0;
+                const ctPlusG = avg + gerakan;
+                const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * item.actualMachine) : 0;
+                return { count, avg, ctPlusG, capacity, gerakan };
+            }
         }
 
         function getFilteredData() {
@@ -2044,7 +2062,7 @@
         }
 
         // ============================================================
-        // RENDER MASTER TABLE (dinamis per mode)
+        // RENDER MASTER TABLE
         // ============================================================
         function renderMasterTable() {
             renderDataFilterOptions();
@@ -2054,16 +2072,27 @@
 
             const filteredData = getFilteredData();
             if (filteredData.length === 0) {
-                theadRow.innerHTML = `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">${currentMode === 'elemen' ? 'Proses' : 'Nama Mesin'}</th><th class="px-3 py-3 text-left font-bold border-r">${currentMode === 'elemen' ? 'Elemen' : 'Sub Mesin'}</th>`;
+                const cols = currentMode === 'elemen'
+                    ? `<th class="px-2 py-3 text-center font-bold border-r">No. SOP</th><th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th><th class="px-3 py-3 text-left font-bold border-r">Elemen</th>`
+                    : `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">Nama Mesin</th><th class="px-3 py-3 text-left font-bold border-r">Sub Mesin</th>`;
+                theadRow.innerHTML = cols;
                 tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>`;
                 return;
             }
+            if (currentMode === 'elemen') {
+                renderMasterTableElemen(filteredData, tbody, theadRow);
+            } else {
+                renderMasterTableMesin(filteredData, tbody, theadRow);
+            }
+        }
+
+        function renderMasterTableMesin(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             let headerHTML = `
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">${currentMode === 'elemen' ? 'Proses' : 'Nama Mesin'}</th>
-                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">${currentMode === 'elemen' ? 'Elemen' : 'Sub Mesin'}</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>
             `;
             for (let i = 1; i <= maxLaps; i++) headerHTML += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
             headerHTML += `
@@ -2131,9 +2160,78 @@
             tbody.innerHTML = htmlOutput;
         }
 
+        function renderMasterTableElemen(filteredData, tbody, theadRow) {
+            const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
+            let headerHTML = `
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
+                <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Elemen</th>
+            `;
+            for (let i = 1; i <= maxLaps; i++) headerHTML += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
+            headerHTML += `
+                <th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Average</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-purple-100 text-purple-900 whitespace-nowrap">Allowance</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-orange-100 whitespace-nowrap">SMH</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-emerald-100 text-emerald-900 whitespace-nowrap">Total SMH</th>
+                <th class="px-2 py-3 text-center font-bold border-r bg-pink-100 text-pink-900 whitespace-nowrap">UPH</th>
+                <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
+            `;
+            theadRow.innerHTML = headerHTML;
+
+            const groups = {};
+            const groupOrder = [];
+            filteredData.forEach((item) => {
+                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
+                if (!groups[key]) {
+                    groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 };
+                    groupOrder.push(key);
+                }
+                const originalIndex = masterData.findIndex(m => m.line === item.line && m.noSop === item.noSop && m.namaSop === item.namaSop && m.elemen === item.elemen);
+                const stats = getRowStats(item);
+                groups[key].rows.push({ ...item, originalIndex, stats });
+                groups[key].totalSmh += stats.smh;
+            });
+
+            let htmlOutput = '';
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const rowSpan = group.rows.length;
+                const uph = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
+                group.rows.forEach((row, rIdx) => {
+                    const stats = row.stats;
+                    const sessionBadge = row.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions} sesi</span>` : '';
+                    htmlOutput += `<tr class="hover:bg-purple-50/30 transition">`;
+                    if (rIdx === 0) {
+                        htmlOutput += `
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(group.noSop)}</td>
+                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(group.namaSop)}</td>
+                        `;
+                    }
+                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">${escapeHtml(row.elemen)}${sessionBadge}</td>`;
+                    for (let i = 0; i < maxLaps; i++) {
+                        const lapVal = row.laps[i];
+                        if (lapVal !== undefined) htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${lapVal.toFixed(2)}</td>`;
+                        else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                    }
+                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center font-mono text-purple-700 bg-purple-50 border-r border-b whitespace-nowrap">${stats.allowance.toFixed(2)}</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center font-mono font-bold text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.smh.toFixed(2)}</td>`;
+                    if (rIdx === 0) {
+                        htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold text-emerald-700 bg-emerald-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalSmh.toFixed(2)} <span class="text-[10px] font-medium">s</span></td>`;
+                        htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold text-pink-700 bg-pink-50 border-r border-b align-middle whitespace-nowrap text-sm">${uph} <span class="text-[10px] font-medium">UPH</span></td>`;
+                    }
+                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    </td></tr>`;
+                });
+            });
+            tbody.innerHTML = htmlOutput;
+        }
+
         function deleteMasterRow(idx) {
             const item = masterData[idx];
-            if (!confirm(`Hapus data "${item.process}"?`)) return;
+            const label = item.elemen || item.process;
+            if (!confirm(`Hapus data "${label}"?`)) return;
             masterData.splice(idx, 1);
             saveMasterToLS();
             renderMasterTable();
@@ -2190,14 +2288,33 @@
             if (filter === '__all__') { fd = masterData; fl = 'Semua Line'; }
             else if (filter === '__active__') { fd = masterData.filter(d => d.line === activeLine); fl = activeLine; }
             else { fd = masterData.filter(d => d.line === filter); fl = filter; }
-            const groups = {};
-            fd.forEach(item => {
-                const key = `${item.line}||${item.no}||${item.process}`;
-                if (!groups[key]) groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, machines: [] };
-                groups[key].capacity += getRowStats(item).capacity;
-                groups[key].machines.push(item.subMachine);
-            });
-            const perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
+
+            let perProcess;
+            if (currentMode === 'elemen') {
+                const groups = {};
+                fd.forEach(item => {
+                    const key = `${item.line}||${item.noSop}||${item.namaSop}`;
+                    if (!groups[key]) groups[key] = { no: item.noSop, process: item.namaSop, totalSmh: 0, elements: [] };
+                    groups[key].totalSmh += getRowStats(item).smh;
+                    groups[key].elements.push(item.elemen);
+                });
+                perProcess = Object.values(groups).map(g => ({
+                    line: (fd.find(x => x.noSop === g.no) || {}).line || '-',
+                    no: g.no, process: g.process,
+                    capacity: g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0,
+                    machines: g.elements
+                })).sort((a, b) => a.capacity - b.capacity);
+            } else {
+                const groups = {};
+                fd.forEach(item => {
+                    const key = `${item.line}||${item.no}||${item.process}`;
+                    if (!groups[key]) groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, machines: [] };
+                    groups[key].capacity += getRowStats(item).capacity;
+                    groups[key].machines.push(item.subMachine);
+                });
+                perProcess = Object.values(groups).sort((a, b) => a.capacity - b.capacity);
+            }
+
             if (perProcess.length === 0) {
                 headerEl.innerHTML = `<div class="text-sm text-gray-400 italic text-center py-4">Belum ada data.</div>`;
                 listEl.innerHTML = ''; return;
@@ -2218,7 +2335,7 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(p.line)}</span>
-                                <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(p.no)}</span>
+                                <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(String(p.no))}</span>
                                 <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
                             </div>
                             <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.join(', '))}</div>
@@ -2236,12 +2353,12 @@
         }
 
         // ============================================================
-        // EXPORT EXCEL & CSV
+        // EXPORT
         // ============================================================
-        function buildDataRows() {
+        function buildMesinDataRows() {
             const dataToExport = masterData;
             const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
-            const header = ['Line', 'No', currentMode === 'elemen' ? 'Proses' : 'Nama Mesin', currentMode === 'elemen' ? 'Elemen' : 'Sub Mesin'];
+            const header = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
             header.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas (U/H)', 'Jml Mesin', 'Total Kapasitas');
             const groups = {};
@@ -2278,120 +2395,228 @@
             return { dataRows, merges, maxLaps };
         }
 
+        function buildElemenDataRows() {
+            const dataToExport = masterData;
+            const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
+            const header = ['No. SOP', 'Nama SOP', 'Elemen'];
+            for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
+            header.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'UPH');
+            const groups = {};
+            const groupOrder = [];
+            dataToExport.forEach(item => {
+                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
+                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
+                const stats = getRowStats(item);
+                groups[key].rows.push({ ...item, stats });
+                groups[key].totalSmh += stats.smh;
+            });
+            const dataRows = [header];
+            const merges = [];
+            let rowIndex = 1;
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const rowSpan = group.rows.length;
+                const groupStartRow = rowIndex;
+                const uph = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
+                group.rows.forEach((item, rIdx) => {
+                    const stats = item.stats;
+                    const rowData = [rIdx === 0 ? item.noSop : '', rIdx === 0 ? item.namaSop : '', item.elemen];
+                    for (let i = 0; i < maxLaps; i++) rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
+                    rowData.push(parseFloat(stats.avg.toFixed(2)), stats.allowance, parseFloat(stats.smh.toFixed(2)), rIdx === 0 ? parseFloat(group.totalSmh.toFixed(2)) : '', rIdx === 0 ? uph : '');
+                    dataRows.push(rowData);
+                    rowIndex++;
+                });
+                if (rowSpan > 1) {
+                    merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
+                    merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
+                    const totalCol = 3 + maxLaps + 2 + 1;
+                    merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
+                    merges.push({ s: { r: groupStartRow, c: totalCol + 1 }, e: { r: rowIndex - 1, c: totalCol + 1 } });
+                }
+            });
+            return { dataRows, merges, maxLaps };
+        }
+
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
             try {
-                const { dataRows, merges, maxLaps } = buildDataRows();
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(dataRows);
-                ws['!merges'] = merges;
-                const colWidths = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
-                for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
-                colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
-                ws['!cols'] = colWidths;
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-                for (let c = 0; c <= range.e.c; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: 0, c: c });
-                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                    ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
-                }
-                const groups = {};
-                const groupOrder = [];
-                masterData.forEach(item => {
-                    const key = `${item.line}||${item.no}||${item.process}`;
-                    if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] }; groupOrder.push(key); }
-                    groups[key].rows.push(item);
-                    groups[key].capacity += getRowStats(item).capacity;
-                });
-                const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
-                const perProcess = Object.values(groups);
-                const lineGroups = {};
-                perProcess.forEach(p => { if (!lineGroups[p.line]) lineGroups[p.line] = []; lineGroups[p.line].push(p); });
-                const bottleneckByLine = {};
-                Object.keys(lineGroups).forEach(line => {
-                    const arr = lineGroups[line];
-                    let minP = arr[0];
-                    arr.forEach(p => { if (p.capacity < minP.capacity) minP = p; });
-                    bottleneckByLine[line] = `${minP.no}||${minP.process}`;
-                });
-                let dataRowIdx = 1;
-                groupOrder.forEach(key => {
-                    const group = groups[key];
-                    const isBelowStandard = standardUph > 0 && group.capacity < standardUph;
-                    const isBottleneck = (bottleneckByLine[group.line] === `${group.no}||${group.process}` && lineGroups[group.line].length > 1);
-                    const isProblem = isBelowStandard || isBottleneck;
-                    const groupStartRow = dataRowIdx;
-                    group.rows.forEach((item, rIdx) => {
-                        const rowIdx = dataRowIdx;
-                        const excelRow = rowIdx + 1;
-                        const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
-                        const colS1 = XLSX.utils.encode_col(4);
-                        const colSn = XLSX.utils.encode_col(4 + maxLaps - 1);
-                        const colAvg = XLSX.utils.encode_col(4 + maxLaps);
-                        const colGerakan = XLSX.utils.encode_col(6 + maxLaps);
-                        const colCTG = XLSX.utils.encode_col(7 + maxLaps);
-                        for (let c = 0; c <= range.e.c; c++) {
-                            const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
-                            if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                            let fill = rowBg, font = { color: { rgb: '111827' }, sz: 11 }, align = { horizontal: 'center', vertical: 'center' };
-                            if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
-                            if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
-                            if (c === 3) { fill = 'DBEAFE'; font = { sz: 11, color: { rgb: '1E40AF' } }; }
-                            if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
-                            if (c === 4 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                            if (c === 5 + maxLaps) fill = 'FFFFFF';
-                            if (c === 6 + maxLaps) { fill = 'FED7AA'; font = { sz: 11, color: { rgb: '9A3412' } }; }
-                            if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                            if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                            if (c === 9 + maxLaps) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
-                            if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; }
-                            if (isProblem && (c === 8 + maxLaps || c === 10 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
-                            ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: align, border: BORDER };
-                        }
-                        const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 4 + maxLaps });
-                        if (ws[avgAddr]) { ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`; ws[avgAddr].v = getRowStats(item).avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00'; }
-                        const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
-                        if (ws[ctgAddr]) { ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`; ws[ctgAddr].v = getRowStats(item).ctPlusG; ws[ctgAddr].t = 'n'; ws[ctgAddr].z = '0.00'; }
-                        const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 8 + maxLaps });
-                        if (ws[kapAddr]) { ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`; ws[kapAddr].v = getRowStats(item).capacity; ws[kapAddr].t = 'n'; }
-                        dataRowIdx++;
-                    });
-                    if (group.rows.length > 1) {
-                        const totalCol = 10 + maxLaps;
-                        const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
-                        if (ws[totalAddr]) {
-                            const colKap = XLSX.utils.encode_col(8 + maxLaps);
-                            ws[totalAddr].f = `SUM(${colKap}${groupStartRow + 1}:${colKap}${dataRowIdx})`;
-                            ws[totalAddr].v = group.capacity; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0';
-                        }
-                    }
-                });
-                merges.forEach(merge => {
-                    const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
-                    if (ws[startAddr] && ws[startAddr].s) {
-                        const style = ws[startAddr].s;
-                        for (let r = merge.s.r; r <= merge.e.r; r++) for (let c = merge.s.c; c <= merge.e.c; c++) {
-                            const addr = XLSX.utils.encode_cell({ r, c });
-                            if (addr !== startAddr) { if (!ws[addr]) ws[addr] = { t: 's', v: '' }; ws[addr].s = style; }
-                        }
-                    }
-                });
-                ws['!rows'] = [{ hpt: 25 }];
-                for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-                XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const filename = `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📥 File Excel diunduh', 'success');
+                if (currentMode === 'elemen') exportElemenXLSX();
+                else exportMesinXLSX();
             } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
+        }
+
+        function exportElemenXLSX() {
+            const { dataRows, merges, maxLaps } = buildElemenDataRows();
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(dataRows);
+            ws['!merges'] = merges;
+            const colWidths = [{ wch: 10 }, { wch: 22 }, { wch: 24 }];
+            for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 9 });
+            colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 });
+            ws['!cols'] = colWidths;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= range.e.c; c++) {
+                const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER };
+            }
+            let rowIdx = 1;
+            const groupOrder = [];
+            const groups = {};
+            masterData.forEach(item => {
+                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
+                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
+                const stats = getRowStats(item);
+                groups[key].rows.push({ ...item, stats });
+                groups[key].totalSmh += stats.smh;
+            });
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const rowSpan = group.rows.length;
+                const groupStartRow = rowIdx;
+                const totalCol = 3 + maxLaps + 2;
+                group.rows.forEach((item, rIdx) => {
+                    const stats = item.stats;
+                    for (let c = 0; c <= range.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
+                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                        let fill = 'FFFFFF', font = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === 0) fill = 'EDE9FE';
+                        if (c === 1) fill = 'F5F3FF';
+                        if (c === 2) fill = 'FFFFFF';
+                        if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
+                        if (c === 3 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        if (c === 3 + maxLaps + 1) fill = 'F3E8FF';
+                        if (c === 3 + maxLaps + 2) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        if (c === totalCol) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        if (c === totalCol + 1) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                        ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+                    }
+                    const avgCol = XLSX.utils.encode_col(3 + maxLaps);
+                    const smhCol = XLSX.utils.encode_col(3 + maxLaps + 2);
+                    const totalColLetter = XLSX.utils.encode_col(totalCol);
+                    const uphCol = XLSX.utils.encode_col(totalCol + 1);
+                    const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
+                    if (ws[avgAddr]) { ws[avgAddr].f = `AVERAGE(${XLSX.utils.encode_col(3)}${rowIdx + 1}:${XLSX.utils.encode_col(2 + maxLaps)}${rowIdx + 1})`; ws[avgAddr].v = stats.avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00'; }
+                    const smhAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps + 2 });
+                    if (ws[smhAddr]) { ws[smhAddr].f = `${avgCol}${rowIdx + 1}*(1+${XLSX.utils.encode_col(3 + maxLaps + 1)}${rowIdx + 1})`; ws[smhAddr].v = stats.smh; ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00'; }
+                    rowIdx++;
+                });
+                if (rowSpan >= 1) {
+                    const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
+                    const smhColLetter = XLSX.utils.encode_col(3 + maxLaps + 2);
+                    if (ws[totalAddr]) { ws[totalAddr].f = `SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx})`; ws[totalAddr].v = group.totalSmh; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00'; }
+                    const uphAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol + 1 });
+                    if (ws[uphAddr]) { ws[uphAddr].f = `ROUND(3600/${totalColLetter}${groupStartRow + 1},0)`; ws[uphAddr].v = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0; ws[uphAddr].t = 'n'; }
+                }
+            });
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
+        }
+
+        function exportMesinXLSX() {
+            const { dataRows, merges, maxLaps } = buildMesinDataRows();
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(dataRows);
+            ws['!merges'] = merges;
+            const colWidths = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
+            for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
+            colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
+            ws['!cols'] = colWidths;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= range.e.c; c++) {
+                const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+            }
+            let rowIdx = 1;
+            const groups = {};
+            const groupOrder = [];
+            masterData.forEach(item => {
+                const key = `${item.line}||${item.no}||${item.process}`;
+                if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] }; groupOrder.push(key); }
+                groups[key].rows.push(item);
+                groups[key].capacity += getRowStats(item).capacity;
+            });
+            const standardUph = parseFloat(document.getElementById('standardUph')?.value) || 0;
+            const perProcess = Object.values(groups);
+            const lineGroups = {};
+            perProcess.forEach(p => { if (!lineGroups[p.line]) lineGroups[p.line] = []; lineGroups[p.line].push(p); });
+            const bottleneckByLine = {};
+            Object.keys(lineGroups).forEach(line => {
+                const arr = lineGroups[line];
+                let minP = arr[0];
+                arr.forEach(p => { if (p.capacity < minP.capacity) minP = p; });
+                bottleneckByLine[line] = `${minP.no}||${minP.process}`;
+            });
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const isBelowStandard = standardUph > 0 && group.capacity < standardUph;
+                const isBottleneck = (bottleneckByLine[group.line] === `${group.no}||${group.process}` && lineGroups[group.line].length > 1);
+                const isProblem = isBelowStandard || isBottleneck;
+                const groupStartRow = rowIdx;
+                group.rows.forEach((item, rIdx) => {
+                    const stats = getRowStats(item);
+                    const rowBg = isProblem ? 'FEE2E2' : 'D1FAE5';
+                    for (let c = 0; c <= range.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
+                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                        let fill = rowBg, font = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
+                        if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
+                        if (c === 3) fill = 'DBEAFE';
+                        if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
+                        if (c === 4 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        if (c === 5 + maxLaps) fill = 'FFFFFF';
+                        if (c === 6 + maxLaps) fill = 'FED7AA';
+                        if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        if (c === 9 + maxLaps) fill = 'FCE7F3';
+                        if (c === 10 + maxLaps) { fill = 'EDE9FE'; font = { bold: true, sz: 11, color: { rgb: '5B21B6' } }; }
+                        if (isProblem && (c === 8 + maxLaps || c === 10 + maxLaps)) { fill = 'FECACA'; font = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
+                        ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+                    }
+                    rowIdx++;
+                });
+                if (group.rows.length > 1) {
+                    const totalCol = 10 + maxLaps;
+                    const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
+                    if (ws[totalAddr]) {
+                        const colKap = XLSX.utils.encode_col(8 + maxLaps);
+                        ws[totalAddr].f = `SUM(${colKap}${groupStartRow + 1}:${colKap}${rowIdx})`;
+                        ws[totalAddr].v = group.capacity; ws[totalAddr].t = 'n';
+                    }
+                }
+            });
+            merges.forEach(merge => {
+                const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
+                if (ws[startAddr] && ws[startAddr].s) {
+                    const style = ws[startAddr].s;
+                    for (let r = merge.s.r; r <= merge.e.r; r++) for (let c = merge.s.c; c <= merge.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r, c });
+                        if (addr !== startAddr) { if (!ws[addr]) ws[addr] = { t: 's', v: '' }; ws[addr].s = style; }
+                    }
+                }
+            });
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Mesin_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
         }
 
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             try {
-                const { dataRows } = buildDataRows();
+                const { dataRows } = currentMode === 'elemen' ? buildElemenDataRows() : buildMesinDataRows();
                 const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
                 const csv = dataRows.map(row => row.map(esc).join(',')).join('\r\n');
                 const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
@@ -2406,11 +2631,12 @@
         function switchTab(tabName) {
             if (isRunning && tabName !== 'input') {
                 if (!confirm('⚠️ Timer sedang jalan. Pindah tab akan pause timer.')) return;
+                autoLapBeforeStop();
                 clearInterval(timerInterval); timerInterval = null;
                 setStartButton('resume');
                 setTimerStatus('Paused', 'bg-yellow-100 text-yellow-700');
                 isRunning = false;
-                setButtonEnabled('lapBtn', false);  // <-- pastikan LAP disabled saat pause
+                setButtonEnabled('lapBtn', false);
             }
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById('tab-' + tabName);
@@ -2444,7 +2670,6 @@
         // INIT
         // ============================================================
         async function init() {
-            // Load mode terakhir
             const savedMode = lsLoad(LS_KEY_MODE, '');
             const savedLine = localStorage.getItem(LS_KEY_ACTIVE_LINE);
             if (savedLine) activeLine = savedLine;
@@ -2470,7 +2695,6 @@
                 setupFirebaseListeners();
                 setSyncStatus('online');
                 setLoadingDone();
-                // Kalau belum pilih mode, tampilkan modal mode
                 if (!savedMode) {
                     document.getElementById('modeModal').classList.add('active');
                 } else {
