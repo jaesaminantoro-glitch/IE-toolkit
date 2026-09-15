@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - No Manual + Import Excel</title>
+    <title>Time Study - All Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -82,6 +82,7 @@
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
+    <!-- HEADER DENGAN TOMBOL EXPORT -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3 flex justify-between items-center gap-2">
             <div class="flex items-center gap-2 min-w-0">
@@ -91,9 +92,15 @@
                     <span id="syncText" class="hidden sm:inline">Menghubungkan...</span>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 md:gap-2">
                 <button onclick="manualSync()" class="text-[10px] md:text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-1.5 rounded-lg border border-blue-200 transition" title="Sync manual">🔄</button>
-                <span id="currentDate" class="text-[10px] md:text-xs text-gray-500 font-medium hidden sm:inline"></span>
+                <button onclick="exportToExcelXLSX()" class="text-[10px] md:text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-2 md:px-3 py-1.5 rounded-lg shadow-sm transition whitespace-nowrap" title="Export Excel">
+                    📥 <span class="hidden sm:inline">Excel</span>
+                </button>
+                <button onclick="exportToCSV()" class="text-[10px] md:text-xs bg-amber-600 hover:bg-amber-700 text-white font-semibold px-2 md:px-3 py-1.5 rounded-lg shadow-sm transition whitespace-nowrap" title="Export CSV">
+                    📄 <span class="hidden sm:inline">CSV</span>
+                </button>
+                <span id="currentDate" class="text-[10px] md:text-xs text-gray-500 font-medium hidden lg:inline"></span>
             </div>
         </div>
     </header>
@@ -146,7 +153,7 @@
                         </div>
                     </div>
 
-                    <!-- SUB MESIN MANUAL (kalau pilih "Lainnya") -->
+                    <!-- SUB MESIN MANUAL -->
                     <div id="customMachineWrapper" class="hidden">
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Sub Mesin Manual (Baru)</label>
                         <input type="text" id="inputSubMachineCustom" placeholder="Ketik sub mesin baru..." class="w-full px-3 py-2 border border-amber-300 rounded-lg text-sm bg-amber-50">
@@ -158,7 +165,7 @@
                         <div id="selectedMachineName" class="text-sm font-bold text-blue-800">-</div>
                     </div>
 
-                    <!-- NG / GERAKAN / JML UNIT -->
+                    <!-- NG / GERAKAN / JUMLAH MESIN -->
                     <div class="grid grid-cols-3 gap-3">
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">NG Rate (%)</label>
@@ -169,7 +176,7 @@
                             <input type="number" id="inputGerakan" value="3" step="0.1" min="0" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-orange-600">
                         </div>
                         <div>
-                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jml Unit</label>
+                            <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Jumlah Mesin / Jalur</label>
                             <input type="number" id="inputActualMachine" value="1" min="1" inputmode="numeric" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-blue-600">
                         </div>
                     </div>
@@ -244,7 +251,7 @@
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h2 class="text-sm md:text-base font-semibold text-gray-800">⚙️ Daftar Mesin</h2>
-                        <p class="text-[10px] md:text-xs text-gray-500">Kelola daftar mesin. No diinput manual di tab Input.</p>
+                        <p class="text-[10px] md:text-xs text-gray-500">No diinput manual di tab Input.</p>
                     </div>
                     <div class="flex gap-2 flex-wrap">
                         <button onclick="openMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
@@ -278,14 +285,14 @@
                 <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
                     <li>Daftar mesin = Nama Mesin + Sub Mesin (tanpa No)</li>
                     <li>No diinput manual di tab 📝 Input</li>
-                    <li>Import support Excel (.xlsx, .xls), CSV, atau paste dari Excel</li>
+                    <li>Import support Excel (.xlsx, .xls), CSV, atau paste</li>
                     <li>Data sync otomatis ke Firebase</li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- TAB EXPORT -->
+    <!-- TAB EXPORT (HANYA STANDAR UPH + RINGKASAN) -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
 
@@ -309,17 +316,6 @@
                 <div id="standardResultList" class="space-y-2"></div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">📥 Export Data</h2>
-                <button onclick="exportToExcelXLSX()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
-                    📥 Export Excel (.xlsx) — Rumus + Warna
-                </button>
-                <button onclick="exportToCSV()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-4 rounded-xl shadow-md transition mb-3">
-                    📄 Export CSV (.csv)
-                </button>
-                <p class="text-[10px] text-gray-500 text-center">💡 File Excel: rumus aktif + warna. Ubah data → auto recalculate.</p>
-            </div>
-
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                 <div class="text-xs font-bold text-blue-800 mb-2">💡 Info Firebase</div>
                 <div class="text-[11px] text-blue-700 space-y-1">
@@ -328,6 +324,7 @@
                     <div>Daftar Mesin: <span id="serverMachineCount" class="font-bold">0</span></div>
                     <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
                 </div>
+                <p class="text-[10px] text-blue-600 mt-2">💡 Tombol Export Excel/CSV ada di header atas</p>
             </div>
         </div>
     </div>
@@ -346,7 +343,7 @@
         </div>
     </div>
 
-    <!-- MODAL MESIN (TANPA NO) -->
+    <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -370,7 +367,7 @@
         </div>
     </div>
 
-    <!-- MODAL BULK IMPORT (SUPPORT EXCEL) -->
+    <!-- MODAL BULK IMPORT -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -388,7 +385,7 @@
                     <div class="text-[10px] flex items-center gap-2 flex-wrap">
                         <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ Excel (.xlsx)</span>
                         <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ Excel (.xls)</span>
-                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ CSV (.csv)</span>
+                        <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ CSV</span>
                         <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-semibold">✅ Paste</span>
                     </div>
                 </div>
@@ -396,7 +393,6 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih File Excel atau CSV</label>
                     <input type="file" id="bulkFileInput" accept=".csv,.txt,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" class="w-full text-sm border border-gray-300 rounded-lg p-2">
-                    <p class="text-[10px] text-gray-400 mt-1">File <b>.xlsx</b>, <b>.xls</b>, atau <b>.csv</b></p>
                 </div>
 
                 <div class="text-center text-xs text-gray-400 font-semibold">— ATAU —</div>
@@ -404,7 +400,6 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Copy-Paste dari Excel</label>
                     <textarea id="bulkPasteArea" rows="6" placeholder="Press Lensa&#9;Mesin 1&#10;Axxon&#9;Mesin 1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
-                    <p class="text-[10px] text-gray-400 mt-1">Blok di Excel → Ctrl+C → Paste di sini</p>
                 </div>
 
                 <div class="flex items-center gap-2 pt-1">
@@ -466,7 +461,7 @@
         let isSyncingFromRemote = false;
         let lastServerUpdate = null;
 
-        const LS_KEY_MACHINES = 'timeStudy_machines_v2';  // v2: tanpa No
+        const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
         const LS_KEY_STANDARD = 'timeStudy_standardUph_v1';
 
@@ -498,7 +493,6 @@
                 const dbRef = window.firebaseRef(window.firebaseDB, 'masterData');
                 await window.firebaseSet(dbRef, { data: masterData, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
-                console.log('✅ Master data tersimpan ke Firebase');
             } catch (e) {
                 console.error('❌ Gagal save master:', e);
                 setSyncStatus('offline', 'Gagal simpan');
@@ -512,7 +506,6 @@
                 const dbRef = window.firebaseRef(window.firebaseDB, 'machineList');
                 await window.firebaseSet(dbRef, { data: machineList, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
-                console.log('✅ Daftar mesin tersimpan ke Firebase');
             } catch (e) {
                 console.error('❌ Gagal save machines:', e);
                 setSyncStatus('offline', 'Gagal simpan');
@@ -530,7 +523,6 @@
                 const remoteUpdate = val.lastUpdate;
                 if (isSyncingFromRemote) return;
                 if (JSON.stringify(remoteData) !== JSON.stringify(masterData)) {
-                    console.log('🔄 Master data ter-update dari Firebase:', remoteData.length, 'items');
                     isSyncingFromRemote = true;
                     masterData = remoteData;
                     lsSaveMaster();
@@ -545,7 +537,7 @@
                 if (mc) mc.innerText = remoteData.length;
                 const lu = document.getElementById('serverLastUpdate');
                 if (lu && remoteUpdate) lu.innerText = new Date(remoteUpdate).toLocaleString('id-ID');
-            }, (error) => { console.error('❌ Listener master error:', error); setSyncStatus('offline'); });
+            }, (error) => { setSyncStatus('offline'); });
 
             const machinesRef = window.firebaseRef(window.firebaseDB, 'machineList');
             window.firebaseOnValue(machinesRef, (snapshot) => {
@@ -555,7 +547,6 @@
                 const remoteUpdate = val.lastUpdate;
                 if (isSyncingFromRemote) return;
                 if (JSON.stringify(remoteData) !== JSON.stringify(machineList)) {
-                    console.log('🔄 Daftar mesin ter-update dari Firebase:', remoteData.length, 'items');
                     isSyncingFromRemote = true;
                     machineList = remoteData;
                     lsSaveMachines();
@@ -568,13 +559,13 @@
                 setSyncStatus('online');
                 const mc = document.getElementById('serverMachineCount');
                 if (mc) mc.innerText = remoteData.length;
-            }, (error) => { console.error('❌ Listener machines error:', error); setSyncStatus('offline'); });
+            }, (error) => { setSyncStatus('offline'); });
         }
 
         async function manualSync() {
             showToast('🔄 Sync manual...', 'info');
             await loadAllFromFirebaseOnce();
-            if (firebaseReady) showToast('✅ Tersinkron dengan Firebase', 'success');
+            if (firebaseReady) showToast('✅ Tersinkron', 'success');
             else showToast('❌ Firebase tidak terjangkau', 'error');
         }
         async function loadAllFromFirebaseOnce() {
@@ -606,7 +597,7 @@
                     isSyncingFromRemote = false;
                 }
                 setSyncStatus('online');
-            } catch (e) { console.error('Load error:', e); setSyncStatus('offline'); }
+            } catch (e) { setSyncStatus('offline'); }
         }
 
         function saveMachinesToLS() { lsSaveMachines(); if (firebaseReady) saveMachinesToFirebase(); }
@@ -638,17 +629,15 @@
                 setupFirebaseListeners();
                 setSyncStatus('online');
                 setLoadingDone();
-                console.log('✅ Firebase mode aktif');
             };
             if (window.firebaseDB) { await activateFirebase(); }
             else {
                 window.addEventListener('firebaseReady', activateFirebase, { once: true });
                 setTimeout(() => {
                     if (!firebaseReady) {
-                        console.warn('⚠️ Firebase tidak ready dalam 5s');
                         setSyncStatus('offline', 'Offline mode');
                         setLoadingDone();
-                        showToast('⚠️ Firebase tidak terjangkau. Mode offline.', 'warning');
+                        showToast('⚠️ Firebase tidak terjangkau.', 'warning');
                     }
                 }, 5000);
             }
@@ -885,7 +874,6 @@
                 infoWrapper.classList.remove('hidden');
                 document.getElementById('inputProcess').value = selectedOpt.dataset.proses || '';
                 document.getElementById('selectedMachineName').innerText = selectedOpt.dataset.mesin || '';
-                // Fokus ke input No biar user langsung ketik
                 setTimeout(() => document.getElementById('inputNo').focus(), 100);
             } else {
                 customWrapper.classList.add('hidden');
@@ -912,11 +900,10 @@
             const gerakan = parseFloat(document.getElementById('inputGerakan').value) || 0;
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
 
-            // VALIDASI
             if (!no || no === '-') { showToast('⚠️ Mohon isi No terlebih dahulu!', 'error'); document.getElementById('inputNo').focus(); return; }
             if (!process) { showToast('Mohon pilih mesin dulu!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
-            if (actualMachine < 1) { showToast('Jumlah unit mesin minimal 1!', 'error'); return; }
+            if (actualMachine < 1) { showToast('Jumlah Mesin/Jalur minimal 1!', 'error'); return; }
 
             const existingIndex = masterData.findIndex(item =>
                 item.no === no && item.process === process && item.subMachine === subMachine
@@ -951,7 +938,7 @@
             document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             document.getElementById('inputActualMachine').value = '1';
             document.getElementById('inputGerakan').value = '3';
-            document.getElementById('inputNo').value = '';  // Reset No setelah simpan
+            document.getElementById('inputNo').value = '';
             if (isCustom) document.getElementById('inputSubMachineCustom').value = '';
 
             setStartButton('start');
@@ -1298,65 +1285,31 @@
             document.getElementById('bulkImportModal').classList.remove('active');
         }
 
-        // ============================================================
-        // BULK IMPORT (Support Excel + CSV + Paste)
-        // ============================================================
         function processBulkImport() {
             const fileInput = document.getElementById('bulkFileInput');
             const pasteArea = document.getElementById('bulkPasteArea');
             const replace = document.getElementById('replaceExisting').checked;
 
-            // Proses array of rows (dari Excel atau text)
             const processRows = (rows) => {
                 try {
-                    if (!rows || rows.length === 0) {
-                        showToast('Data kosong!', 'error');
-                        return;
-                    }
-
-                    console.log('📊 Total baris:', rows.length);
-
-                    // Deteksi header (skip baris pertama kalau ada "nama mesin" / "proses")
+                    if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
                     let startIdx = 0;
                     const firstRow = rows[0].map(c => String(c == null ? '' : c).trim().toLowerCase());
-                    if (
-                        firstRow[0] === 'nama mesin' ||
-                        firstRow[0] === 'nama' ||
-                        firstRow[0] === 'proses' ||
-                        firstRow[1] === 'sub mesin' ||
-                        firstRow[1] === 'mesin' ||
-                        firstRow[1] === 'jalur'
-                    ) {
-                        startIdx = 1;
-                        console.log('   Header terdeteksi, skip baris pertama');
-                    }
+                    if (firstRow[0] === 'nama mesin' || firstRow[0] === 'nama' || firstRow[0] === 'proses' || firstRow[1] === 'sub mesin' || firstRow[1] === 'mesin' || firstRow[1] === 'jalur') startIdx = 1;
 
                     const newItems = [];
                     for (let i = startIdx; i < rows.length; i++) {
                         const cells = rows[i].map(c => String(c == null ? '' : c).trim());
                         if (cells.length < 2) continue;
                         if (!cells[0] && !cells[1]) continue;
-
                         const proses = cells[0];
                         const mesin = cells[1];
-
                         if (!proses) continue;
-
-                        newItems.push({
-                            id: generateId(),
-                            proses: proses,
-                            mesin: mesin || '-'
-                        });
+                        newItems.push({ id: generateId(), proses: proses, mesin: mesin || '-' });
                     }
-
-                    if (newItems.length === 0) {
-                        showToast('❌ Tidak ada data valid. Format: Nama Mesin | Sub Mesin', 'error');
-                        return;
-                    }
-
+                    if (newItems.length === 0) { showToast('❌ Tidak ada data valid. Format: Nama Mesin | Sub Mesin', 'error'); return; }
                     if (replace) machineList = newItems;
                     else machineList = machineList.concat(newItems);
-
                     saveMachinesToLS();
                     renderMachineTable();
                     updateCounters();
@@ -1369,64 +1322,41 @@
                 }
             };
 
-            // Proses text (CSV / paste)
             const handleText = (text) => {
                 const lines = text.split(/\r?\n/).filter(l => l.trim());
                 if (lines.length === 0) { showToast('Data kosong!', 'error'); return; }
                 const firstLine = lines[0];
                 const delimiter = firstLine.includes('\t') ? '\t' : ',';
-                const rows = lines.map(line =>
-                    line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''))
-                );
+                const rows = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^"|"$/g, '')));
                 processRows(rows);
             };
 
             const file = fileInput.files[0];
-
             if (file) {
                 const fileName = file.name.toLowerCase();
-                console.log('📁 File:', file.name, '| Size:', file.size);
-
-                // === FILE EXCEL (.xlsx / .xls) ===
                 if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
-                    if (typeof XLSX === 'undefined') {
-                        showToast('❌ Library Excel belum ke-load. Refresh halaman.', 'error');
-                        return;
-                    }
+                    if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         try {
                             const data = new Uint8Array(e.target.result);
                             const workbook = XLSX.read(data, { type: 'array' });
-                            console.log('📊 Sheet names:', workbook.SheetNames);
                             const firstSheetName = workbook.SheetNames[0];
                             const worksheet = workbook.Sheets[firstSheetName];
-                            const rows = XLSX.utils.sheet_to_json(worksheet, {
-                                header: 1,
-                                defval: '',
-                                blankrows: false
-                            });
-                            console.log('✅ Excel terbaca:', rows.length, 'baris');
+                            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', blankrows: false });
                             processRows(rows);
                         } catch (err) {
-                            console.error('❌ Excel parse error:', err);
                             showToast('❌ Gagal baca file Excel: ' + err.message, 'error');
                         }
                     };
-                    reader.onerror = () => showToast('❌ Gagal baca file', 'error');
                     reader.readAsArrayBuffer(file);
                     showToast('📂 Membaca file Excel...', 'info');
-
                 } else {
-                    // === FILE CSV / TXT ===
                     const reader = new FileReader();
                     reader.onload = (e) => handleText(e.target.result);
                     reader.readAsText(file);
-                    showToast('📂 Membaca file CSV...', 'info');
                 }
-
             } else if (pasteArea.value.trim()) {
-                // === PASTE DARI EXCEL/CSV ===
                 handleText(pasteArea.value);
             } else {
                 showToast('Pilih file Excel/CSV atau paste data dulu!', 'error');
@@ -1441,9 +1371,7 @@
                 return s;
             };
             const rows = [['Nama Mesin', 'Sub Mesin']];
-            const sorted = [...machineList].sort((a, b) => {
-                return String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true });
-            });
+            const sorted = [...machineList].sort((a, b) => String(a.proses).localeCompare(String(b.proses), undefined, { numeric: true }));
             sorted.forEach(m => rows.push([m.proses, m.mesin]));
             const csvContent = rows.map(r => r.map(escapeCSV).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1517,14 +1445,13 @@
                 setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1500);
                 return true;
             } catch (e) {
-                console.error('Download gagal:', e);
                 showToast('❌ Gagal download. Coba browser Chrome.', 'error');
                 return false;
             }
         }
 
         // ============================================================
-        // EXPORT XLSX: RUMUS + WARNA
+        // EXPORT XLSX: RUMUS + WARNA + TOTAL GABUNGAN AUTO
         // ============================================================
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
@@ -1632,7 +1559,6 @@
                             }
                             if (c === maxLaps + 4) {
                                 fill = 'FFFFFF';
-                                font = { sz: 11, color: { rgb: '111827' } };
                             }
                             if (c === maxLaps + 5) {
                                 fill = 'FED7AA';
@@ -1667,25 +1593,28 @@
                         const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
                         if (ws[avgAddr]) {
                             ws[avgAddr].f = `AVERAGE(${colS1}${excelRow}:${colSn}${excelRow})`;
+                            ws[avgAddr].v = getRowStats(item).avg;
                             ws[avgAddr].t = 'n';
                             ws[avgAddr].z = '0.00';
                         }
                         const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 6 + maxLaps });
                         if (ws[ctgAddr]) {
                             ws[ctgAddr].f = `${colAvg}${excelRow}+${colGerakan}${excelRow}`;
+                            ws[ctgAddr].v = getRowStats(item).ctPlusG;
                             ws[ctgAddr].t = 'n';
                             ws[ctgAddr].z = '0.00';
                         }
                         const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 7 + maxLaps });
                         if (ws[kapAddr]) {
                             ws[kapAddr].f = `ROUND(3600/${colCTG}${excelRow}*${item.actualMachine},0)`;
+                            ws[kapAddr].v = getRowStats(item).capacity;
                             ws[kapAddr].t = 'n';
                         }
 
                         dataRowIdx++;
                     });
 
-                    // Rumus total gabungan
+                    // RUMUS TOTAL GABUNGAN (perbaikan: set .v dan .z)
                     if (group.rows.length > 1) {
                         const totalCol = 8 + maxLaps;
                         const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
@@ -1694,7 +1623,9 @@
                             const startRow = groupStartRow + 1;
                             const endRow = dataRowIdx;
                             ws[totalAddr].f = `SUM(${colKap}${startRow}:${colKap}${endRow})`;
+                            ws[totalAddr].v = group.capacity;
                             ws[totalAddr].t = 'n';
+                            ws[totalAddr].z = '0';
                         }
                     }
                 });
