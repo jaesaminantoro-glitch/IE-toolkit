@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Line + Analisa</title>
+    <title>Time Study - Multi Line</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -18,9 +18,7 @@
             transition: all 0.2s; -webkit-tap-highlight-color: transparent;
             white-space: nowrap;
         }
-        .tab-btn.tab-active {
-            color: #4F46E5; border-bottom-color: #4F46E5; background: #eef2ff;
-        }
+        .tab-btn.tab-active { color: #4F46E5; border-bottom-color: #4F46E5; background: #eef2ff; }
         .tab-btn:not(.tab-active):active { background: #f3f4f6; }
 
         .bottom-controls {
@@ -74,18 +72,10 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .header-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border-radius: 10px; border: none; cursor: pointer;
             transition: transform 0.1s, opacity 0.15s;
-            -webkit-tap-highlight-color: transparent;
-            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent; flex-shrink: 0;
         }
         .header-btn:active { transform: scale(0.92); opacity: 0.85; }
         .header-btn .btn-icon { font-size: 18px; line-height: 1; }
@@ -108,8 +98,7 @@
 
         .custom-dropdown-wrapper { position: relative; }
         .custom-dropdown-btn {
-            width: 100%; padding: 10px 12px;
-            border: 2px solid #93c5fd; border-radius: 8px;
+            width: 100%; padding: 10px 12px; border: 2px solid #93c5fd; border-radius: 8px;
             background: white; text-align: left; font-size: 14px;
             cursor: pointer; display: flex; justify-content: space-between;
             align-items: center; gap: 8px;
@@ -120,7 +109,7 @@
         .custom-dropdown-panel {
             position: absolute; top: calc(100% + 4px); left: 0; right: 0;
             background: white; border: 1px solid #e5e7eb; border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             z-index: 50; display: none; max-height: 300px; overflow: hidden;
             flex-direction: column;
         }
@@ -137,12 +126,7 @@
         .custom-dropdown-item.selected { background: #eef2ff; color: #4f46e5; font-weight: 700; }
         .custom-dropdown-empty { padding: 20px; text-align: center; color: #9ca3af; font-size: 13px; font-style: italic; }
 
-        .checkbox-custom {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #4f46e5;
-        }
+        .checkbox-custom { width: 20px; height: 20px; cursor: pointer; accent-color: #4f46e5; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
@@ -158,15 +142,20 @@
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200">
                 <h3 class="text-base font-bold text-gray-800">🏭 Pilih Line Anda</h3>
-                <p class="text-xs text-gray-500 mt-1">Setting Line hanya untuk HP ini. Semua data time study tetap sync ke semua device.</p>
+                <p class="text-xs text-gray-500 mt-1">Setiap line punya UPH sendiri. Setting Line hanya untuk HP ini.</p>
             </div>
             <div class="p-4 space-y-3">
+                <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1">
+                    <span>Nama Line</span>
+                    <span>UPH</span>
+                </div>
                 <div id="lineListContainer" class="space-y-2"></div>
                 <div class="border-t border-gray-200 pt-3">
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tambah Line Baru</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="newLineInput" placeholder="Contoh: Line D" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <button onclick="addNewLineFromModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg whitespace-nowrap">➕ Tambah</button>
+                    <div class="flex gap-2 items-center">
+                        <input type="text" id="newLineInput" placeholder="Nama Line" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="number" id="newLineUph" placeholder="UPH" min="0" step="10" value="500" class="w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm font-bold text-indigo-700 text-center">
+                        <button onclick="addNewLineFromModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg whitespace-nowrap">➕</button>
                     </div>
                 </div>
             </div>
@@ -189,6 +178,10 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Line</label>
                     <input type="text" id="editLineInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">UPH</label>
+                    <input type="number" id="editLineUph" min="0" step="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-indigo-700">
                 </div>
                 <p class="text-[10px] text-gray-500">💡 Mengubah nama line akan mengubah semua data time study yang menggunakan line ini.</p>
             </div>
@@ -235,7 +228,7 @@
                 <span id="syncDot" class="sync-dot sync-syncing"></span>
             </div>
             <div class="flex items-center gap-1.5 md:gap-2">
-                <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white" title="Klik untuk ganti Line">
+                <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white">
                     <span>🏷️</span>
                     <span id="currentLineText">Pilih Line</span>
                 </button>
@@ -438,14 +431,14 @@
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
                             <label for="selectAllCheckbox" class="text-xs font-bold text-indigo-800 cursor-pointer">
-                                Pilih Semua (<span id="selectedCount">0</span> terpilih)
+                                Pilih Semua (<span id="selectedCount">0</span>)
                             </label>
                         </div>
                         <div class="flex gap-2 flex-wrap">
-                            <button onclick="openBulkEditMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">✏️ Edit Pilihan</button>
-                            <button onclick="deleteBulkSelected()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">🗑️ Hapus Pilihan</button>
-                            <button onclick="exportSelectedMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">📄 Export Pilihan</button>
-                            <button onclick="clearSelection()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">❌ Batal</button>
+                            <button onclick="openBulkEditMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">✏️ Edit</button>
+                            <button onclick="deleteBulkSelected()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">🗑️ Hapus</button>
+                            <button onclick="exportSelectedMachineCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">📄 Export</button>
+                            <button onclick="clearSelection()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg">❌</button>
                         </div>
                     </div>
                 </div>
@@ -455,7 +448,7 @@
                         <thead class="bg-blue-100 text-gray-800">
                             <tr>
                                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap w-10">
-                                    <input type="checkbox" id="selectAllHeaderCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom" title="Pilih Semua">
+                                    <input type="checkbox" id="selectAllHeaderCheckbox" onchange="toggleSelectAll(this.checked)" class="checkbox-custom">
                                 </th>
                                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
                                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin / Jalur</th>
@@ -469,27 +462,27 @@
                 </div>
 
                 <div id="selectionInfo" class="hidden mt-2 text-[11px] text-indigo-700 text-center bg-indigo-50 py-2 rounded">
-                    💡 <b><span id="selectedCountBottom">0</span> mesin dipilih</b> — gunakan tombol di atas untuk edit/hapus/export.
+                    💡 <b><span id="selectedCountBottom">0</span> mesin dipilih</b>
                 </div>
             </div>
 
             <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                 <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
                 <ul class="text-[11px] text-blue-700 space-y-1 list-disc list-inside">
-                    <li><b>➕ Tambah</b> — tambah 1 mesin</li>
-                    <li><b>📥 Import</b> — import banyak dari Excel/CSV</li>
-                    <li><b>📄 Export All</b> — export semua mesin ke CSV</li>
-                    <li><b>☑️ Checkbox</b> — pilih mesin untuk edit/hapus/export massal</li>
+                    <li>Daftar mesin SAMA untuk semua line</li>
+                    <li>No diinput manual di tab 📝 Input</li>
+                    <li>Setiap input otomatis diberi tag Line aktif</li>
+                    <li>Data sync otomatis ke Firebase</li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <!-- TAB ANALISA (sebelumnya EXPORT) -->
+    <!-- TAB ANALISA -->
     <div id="tab-export" class="tab-content hidden">
         <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
-                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah Standard</h2>
+                <h2 class="text-sm md:text-base font-semibold text-gray-800 mb-3">🎯 Cek Mesin di Bawah UPH</h2>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Filter Line</label>
@@ -499,13 +492,14 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Standard UPH</label>
+                        <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">UPH</label>
                         <div class="flex gap-2 items-center">
                             <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
-                                oninput="renderStandardCheck()"
+                                oninput="onUphInputChange()"
                                 class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
                             <button onclick="clearStandardUph()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap" title="Kosongkan">✖️</button>
                         </div>
+                        <p class="text-[10px] text-gray-400 mt-1" id="uphSourceHint">Auto dari Line</p>
                     </div>
                 </div>
             </div>
@@ -525,7 +519,6 @@
                     <div>Daftar Mesin: <span id="serverMachineCount" class="font-bold">0</span></div>
                     <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
                 </div>
-                <p class="text-[10px] text-blue-600 mt-2">💡 Tombol Export Excel/CSV ada di header atas</p>
             </div>
         </div>
     </div>
@@ -649,22 +642,48 @@
         let firebaseReady = false;
         let isSyncingFromRemote = false;
         let lastServerUpdate = null;
+        // lineList: array of { name: string, uph: number }
         let lineList = [];
         let activeLine = '';
         let tempSelectedLine = '';
         let editingLineOldName = '';
         let selectedMachineId = '';
         let selectedMachineIds = new Set();
+        let uphUserOverride = false; // user sudah override manual
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v1';
-        const LS_KEY_STANDARD = 'timeStudy_standardUph_v1';
         const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
 
         function lsSaveMachines() { try { localStorage.setItem(LS_KEY_MACHINES, JSON.stringify(machineList)); } catch(e) {} }
         function lsLoadMachines() { try { const r = localStorage.getItem(LS_KEY_MACHINES); if (r) machineList = JSON.parse(r); } catch(e) { machineList = []; } }
         function lsSaveMaster() { try { localStorage.setItem(LS_KEY_MASTER, JSON.stringify(masterData)); } catch(e) {} }
         function lsLoadMaster() { try { const r = localStorage.getItem(LS_KEY_MASTER); if (r) masterData = JSON.parse(r); } catch(e) { masterData = []; } }
+
+        // ============================================================
+        // HELPER: Line list selalu array of { name, uph }
+        // ============================================================
+        function normalizeLineList(raw) {
+            if (!Array.isArray(raw)) return [];
+            return raw.map(item => {
+                if (typeof item === 'string') {
+                    // Migrasi dari format lama (string) → object
+                    return { name: item, uph: 500 };
+                }
+                return {
+                    name: String(item.name || ''),
+                    uph: parseFloat(item.uph) || 500
+                };
+            }).filter(l => l.name);
+        }
+
+        function getLineNames() {
+            return lineList.map(l => l.name);
+        }
+        function getLineUph(lineName) {
+            const found = lineList.find(l => l.name === lineName);
+            return found ? parseFloat(found.uph) || 0 : 0;
+        }
 
         function setSyncStatus(status) {
             const dot = document.getElementById('syncDot');
@@ -753,11 +772,13 @@
             window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snapshot) => {
                 const val = snapshot.val();
                 if (!val) return;
-                const remoteData = val.data || [];
+                const remoteData = normalizeLineList(val.data || []);
                 if (isSyncingFromRemote) return;
                 if (JSON.stringify(remoteData) !== JSON.stringify(lineList)) {
                     isSyncingFromRemote = true;
                     lineList = remoteData;
+                    // Update UPH input kalau line aktif punya UPH
+                    syncUphFromActiveLine();
                     if (document.getElementById('lineModal').classList.contains('active')) {
                         renderLineList();
                     }
@@ -800,8 +821,9 @@
                 const snap3 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'lineList'));
                 if (snap3.exists()) {
                     const val3 = snap3.val();
-                    lineList = val3.data || [];
+                    lineList = normalizeLineList(val3.data || []);
                 }
+                syncUphFromActiveLine();
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
@@ -810,6 +832,35 @@
         function loadMachinesFromLS() { lsLoadMachines(); }
         function saveMasterToLS() { lsSaveMaster(); if (firebaseReady) saveMasterToFirebase(); }
         function loadMasterFromLS() { lsLoadMaster(); }
+
+        // ============================================================
+        // UPH — sync dengan Line aktif
+        // ============================================================
+        function syncUphFromActiveLine() {
+            if (uphUserOverride) return; // user override, jangan timpa
+            if (!activeLine) return;
+            const uph = getLineUph(activeLine);
+            if (uph > 0) {
+                const el = document.getElementById('standardUph');
+                if (el) el.value = uph;
+                const hint = document.getElementById('uphSourceHint');
+                if (hint) hint.innerText = `Auto dari Line: ${activeLine}`;
+            }
+        }
+        function onUphInputChange() {
+            // Tandai user sudah override manual
+            uphUserOverride = true;
+            const hint = document.getElementById('uphSourceHint');
+            if (hint) hint.innerText = 'Manual override';
+            renderStandardCheck();
+        }
+        function clearStandardUph() {
+            document.getElementById('standardUph').value = '';
+            uphUserOverride = false;
+            const hint = document.getElementById('uphSourceHint');
+            if (hint) hint.innerText = 'Auto dari Line';
+            renderStandardCheck();
+        }
 
         // CUSTOM DROPDOWN
         function toggleMachineDropdown() {
@@ -905,34 +956,39 @@
                 return;
             }
             container.innerHTML = lineList.map(l => `
-                <div class="flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
-                    <button onclick="selectLineTemp('${escapeHtml(l)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l ? 'text-emerald-800' : 'text-gray-700'}">
-                        ${tempSelectedLine === l ? '✅ ' : ''}${escapeHtml(l)}
+                <div class="flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
+                    <button onclick="selectLineTemp('${escapeHtml(l.name)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l.name ? 'text-emerald-800' : 'text-gray-700'}">
+                        ${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}
                     </button>
-                    <button onclick="openEditLineModal('${escapeHtml(l)}')" class="text-blue-500 hover:text-blue-700 px-2 py-1 text-sm">✏️</button>
-                    <button onclick="deleteLineFromModal('${escapeHtml(l)}')" class="text-red-500 hover:text-red-700 px-2 py-1 text-sm">🗑️</button>
+                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${l.uph} UPH</span>
+                    <button onclick="openEditLineModal('${escapeHtml(l.name)}')" class="text-blue-500 hover:text-blue-700 px-1 py-1 text-sm">✏️</button>
+                    <button onclick="deleteLineFromModal('${escapeHtml(l.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
                 </div>
             `).join('');
         }
-        function selectLineTemp(line) { tempSelectedLine = line; renderLineList(); }
+        function selectLineTemp(lineName) { tempSelectedLine = lineName; renderLineList(); }
         function openLineModal() {
             tempSelectedLine = activeLine || '';
             renderLineList();
             document.getElementById('lineModal').classList.add('active');
             document.getElementById('newLineInput').value = '';
+            document.getElementById('newLineUph').value = '500';
         }
         function closeLineModal() { document.getElementById('lineModal').classList.remove('active'); }
         function addNewLineFromModal() {
             const inp = document.getElementById('newLineInput');
+            const uphInp = document.getElementById('newLineUph');
             const val = inp.value.trim();
+            const uph = parseFloat(uphInp.value) || 0;
             if (!val) { showToast('Ketik nama line dulu!', 'error'); return; }
-            if (lineList.includes(val)) { showToast('Line sudah ada!', 'warning'); return; }
-            lineList.push(val);
-            lineList.sort();
+            if (lineList.find(l => l.name === val)) { showToast('Line sudah ada!', 'warning'); return; }
+            lineList.push({ name: val, uph: uph });
+            lineList.sort((a, b) => a.name.localeCompare(b.name));
             saveLineListToFirebase();
             tempSelectedLine = val;
             renderLineList();
             inp.value = '';
+            uphInp.value = '500';
             showToast('✅ Line ditambahkan', 'success');
         }
         function saveLineSelection() {
@@ -940,13 +996,18 @@
             activeLine = tempSelectedLine;
             localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
             updateLineDisplay();
+            // Auto-set UPH dari Line
+            uphUserOverride = false;
+            syncUphFromActiveLine();
             closeLineModal();
             showToast(`✅ Line: ${activeLine}`, 'success');
         }
 
         function openEditLineModal(lineName) {
             editingLineOldName = lineName;
+            const l = lineList.find(x => x.name === lineName);
             document.getElementById('editLineInput').value = lineName;
+            document.getElementById('editLineUph').value = l ? l.uph : 500;
             document.getElementById('editLineModal').classList.add('active');
             setTimeout(() => document.getElementById('editLineInput').focus(), 100);
         }
@@ -956,35 +1017,52 @@
         }
         function saveEditedLine() {
             const newName = document.getElementById('editLineInput').value.trim();
+            const newUph = parseFloat(document.getElementById('editLineUph').value) || 0;
             if (!newName) { showToast('Nama line tidak boleh kosong!', 'error'); return; }
-            if (newName === editingLineOldName) { closeEditLineModal(); return; }
-            if (lineList.includes(newName)) { showToast('Nama line sudah ada!', 'warning'); return; }
+            if (newName === editingLineOldName && newUph === getLineUph(editingLineOldName)) {
+                closeEditLineModal();
+                return;
+            }
+            if (newName !== editingLineOldName && lineList.find(l => l.name === newName)) {
+                showToast('Nama line sudah ada!', 'warning');
+                return;
+            }
 
             const oldName = editingLineOldName;
-            const idx = lineList.indexOf(oldName);
-            if (idx !== -1) lineList[idx] = newName;
-            lineList.sort();
+            const idx = lineList.findIndex(l => l.name === oldName);
+            if (idx !== -1) {
+                lineList[idx] = { name: newName, uph: newUph };
+            }
+            lineList.sort((a, b) => a.name.localeCompare(b.name));
 
             let updateCount = 0;
-            masterData.forEach(item => {
-                if (item.line === oldName) { item.line = newName; updateCount++; }
-            });
-            if (activeLine === oldName) {
-                activeLine = newName;
-                localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
-                updateLineDisplay();
+            if (newName !== oldName) {
+                masterData.forEach(item => {
+                    if (item.line === oldName) { item.line = newName; updateCount++; }
+                });
+                if (activeLine === oldName) {
+                    activeLine = newName;
+                    localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
+                    updateLineDisplay();
+                }
+                if (tempSelectedLine === oldName) tempSelectedLine = newName;
             }
-            if (tempSelectedLine === oldName) tempSelectedLine = newName;
 
             saveLineListToFirebase();
             if (updateCount > 0) saveMasterToLS();
+
+            // Re-sync UPH jika line aktif berubah
+            if (activeLine === newName) {
+                uphUserOverride = false;
+                syncUphFromActiveLine();
+            }
 
             renderLineList();
             closeEditLineModal();
             renderMasterTable();
             renderStandardCheck();
 
-            showToast(`✅ Line diubah (${updateCount} data terupdate)`, 'success');
+            showToast(`✅ Line diupdate`, 'success');
         }
         function deleteLineFromModal(lineName) {
             const dataCount = masterData.filter(d => d.line === lineName).length;
@@ -992,7 +1070,7 @@
             if (dataCount > 0) msg += `\n\n⚠️ Ada ${dataCount} data time study dengan Line ini.\nData time study TIDAK akan terhapus, tapi Line-nya jadi tidak valid.`;
             if (!confirm(msg)) return;
 
-            lineList = lineList.filter(l => l !== lineName);
+            lineList = lineList.filter(l => l.name !== lineName);
             if (activeLine === lineName) {
                 activeLine = '';
                 localStorage.removeItem(LS_KEY_ACTIVE_LINE);
@@ -1012,7 +1090,7 @@
             if (display) display.innerText = activeLine || '-';
         }
 
-        // MULTI-SELECT
+        // MULTI-SELECT MESIN
         function toggleMachineSelection(id) {
             if (selectedMachineIds.has(id)) selectedMachineIds.delete(id);
             else selectedMachineIds.add(id);
@@ -1069,7 +1147,7 @@
         function deleteBulkSelected() {
             const count = selectedMachineIds.size;
             if (count === 0) return;
-            if (!confirm(`Hapus ${count} mesin yang dipilih?\n\nTindakan ini tidak bisa dibatalkan.`)) return;
+            if (!confirm(`Hapus ${count} mesin yang dipilih?`)) return;
             machineList = machineList.filter(m => !selectedMachineIds.has(m.id));
             selectedMachineIds.clear();
             saveMachinesToLS();
@@ -1122,12 +1200,6 @@
             updateCounters();
             updateLineDisplay();
 
-            const savedStandard = localStorage.getItem(LS_KEY_STANDARD);
-            if (savedStandard) {
-                const el = document.getElementById('standardUph');
-                if (el) el.value = savedStandard;
-            }
-
             setLoadingDetail('Menunggu Firebase SDK...');
 
             const activateFirebase = async () => {
@@ -1138,6 +1210,7 @@
                 setSyncStatus('online');
                 setLoadingDone();
                 if (!activeLine) setTimeout(() => openLineModal(), 500);
+                else syncUphFromActiveLine();
             };
             if (window.firebaseDB) { await activateFirebase(); }
             else {
@@ -1174,7 +1247,7 @@
 
             if (tabName === 'mesin') { renderMachineTable(); updateBulkActionBar(); }
             if (tabName === 'data') { renderMasterTable(); updateCounters(); }
-            if (tabName === 'export') { updateServerInfo(); renderStandardCheck(); }
+            if (tabName === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
             if (tabName === 'input') renderMachineDropdownList();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -1580,12 +1653,6 @@
             }
         }
 
-        function clearStandardUph() {
-            document.getElementById('standardUph').value = '';
-            localStorage.removeItem(LS_KEY_STANDARD);
-            renderStandardCheck();
-        }
-
         function renderStandardCheck() {
             const standardInput = document.getElementById('standardUph');
             const headerEl = document.getElementById('standardResultHeader');
@@ -1611,10 +1678,9 @@
 
             const rawValue = standardInput.value;
             const standard = parseFloat(rawValue) || 0;
-            if (standard > 0) localStorage.setItem(LS_KEY_STANDARD, standard);
 
             if (!rawValue || rawValue === '' || standard <= 0) {
-                headerEl.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan Standard UPH di atas untuk mulai cek.</div>`;
+                headerEl.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan UPH di atas untuk mulai cek.</div>`;
                 listEl.innerHTML = '';
                 return;
             }
@@ -1650,7 +1716,7 @@
                     <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
                         <span class="text-2xl">✅</span>
                         <div>
-                            <div class="text-sm font-bold text-emerald-700">Semua Proses di ${escapeHtml(filterLabel)} Memenuhi Standard!</div>
+                            <div class="text-sm font-bold text-emerald-700">Semua Proses di ${escapeHtml(filterLabel)} Memenuhi UPH!</div>
                             <div class="text-[11px] text-emerald-600">${perProcess.length} proses, semua ≥ ${standard} UPH</div>
                         </div>
                     </div>
@@ -1663,8 +1729,8 @@
                 <div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
                     <span class="text-2xl">⚠️</span>
                     <div>
-                        <div class="text-sm font-bold text-red-700">${belowStandard.length} Proses di Bawah Standard</div>
-                        <div class="text-[11px] text-red-600">${escapeHtml(filterLabel)} · Standard: ${standard} UPH</div>
+                        <div class="text-sm font-bold text-red-700">${belowStandard.length} Proses di Bawah UPH</div>
+                        <div class="text-[11px] text-red-600">${escapeHtml(filterLabel)} · UPH: ${standard}</div>
                     </div>
                 </div>
             `;
@@ -1696,7 +1762,7 @@
                 `;
             });
             if (aboveStandard.length > 0) {
-                listHtml += `<div class="text-[11px] text-emerald-600 text-center pt-3 border-t border-gray-200 mt-2">✅ ${aboveStandard.length} proses sudah di atas standard</div>`;
+                listHtml += `<div class="text-[11px] text-emerald-600 text-center pt-3 border-t border-gray-200 mt-2">✅ ${aboveStandard.length} proses sudah di atas UPH</div>`;
             }
             listEl.innerHTML = listHtml;
         }
