@@ -377,9 +377,15 @@
                                 <option value="">-- Pilih No. SOP --</option>
                             </select>
                             <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master</p>
-                            <div id="elemenListPreview" class="hidden mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
-                                <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Elemen untuk No. SOP ini:</div>
-                                <div id="elemenListPreviewItems" class="space-y-1"></div>
+                        </div>
+
+                        <!-- INFO ELEMEN AKTIF (khusus mode elemen) -->
+                        <div id="elemenActiveInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Sedang Direkam</div>
+                            <div id="elemenActiveName" class="text-base font-bold text-blue-800">-</div>
+                            <div id="elemenProgressText" class="text-xs text-blue-600 mt-1">-</div>
+                            <div class="mt-2 bg-blue-200 rounded-full h-1.5 overflow-hidden">
+                                <div id="elemenProgressBar" class="bg-blue-600 h-full transition-all" style="width: 0%"></div>
                             </div>
                         </div>
 
@@ -430,11 +436,10 @@
                             </div>
                         </div>
 
-                        <!-- Field Elemen: Allowance saja -->
-                        <div id="elemenFieldGrid" class="grid grid-cols-1 gap-3 hidden">
-                            <div>
-                                <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">Allowance (desimal, mis. 0.1 = 10%)</label>
-                                <input type="number" id="inputAllowance" value="0.1" step="0.01" min="0" inputmode="decimal" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-bold text-purple-700">
+                        <!-- Field Elemen: Info Allowance statis -->
+                        <div id="elemenFieldGrid" class="hidden">
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-2.5 text-xs text-purple-800">
+                                <b>Allowance:</b> 10% (statis) — otomatis diterapkan di rumus SMH
                             </div>
                         </div>
                     </div>
@@ -472,7 +477,6 @@
                     </div>
                 </div>
 
-                <!-- Toolbar: Filter + Export + Reset -->
                 <div class="flex flex-wrap items-center gap-2 mb-3 bg-white border border-gray-200 rounded-lg p-2">
                     <div class="flex items-center gap-1.5">
                         <label class="text-[10px] text-gray-500 font-semibold whitespace-nowrap">Filter Line:</label>
@@ -849,6 +853,11 @@
         let elemenMasterList = []; // [{id, noSop, namaSop, elemen}]
         let currentElemenNo = '';
         let currentElemenNama = '';
+        let activeElemenList = [];        // daftar elemen untuk SOP aktif (urut)
+        let currentElemenIndex = 0;       // index elemen yang sedang direkam
+        let currentCycleNum = 1;          // putaran ke berapa
+
+        const ALLOWANCE_FIXED = 0.10;     // Allowance statis 10%
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v2';
@@ -957,6 +966,7 @@
             const tabElemen = document.getElementById('tabBtn-elemen');
             const mesinFieldGrid = document.getElementById('mesinFieldGrid');
             const elemenFieldGrid = document.getElementById('elemenFieldGrid');
+            const elemenActiveInfo = document.getElementById('elemenActiveInfo');
 
             if (currentMode === 'mesin') {
                 machineWrapper.classList.remove('hidden');
@@ -965,6 +975,7 @@
                 tabElemen.classList.add('hidden');
                 mesinFieldGrid.classList.remove('hidden');
                 elemenFieldGrid.classList.add('hidden');
+                elemenActiveInfo.classList.add('hidden');
             } else if (currentMode === 'elemen') {
                 machineWrapper.classList.add('hidden');
                 elemenWrapper.classList.remove('hidden');
@@ -972,6 +983,7 @@
                 tabElemen.classList.remove('hidden');
                 mesinFieldGrid.classList.add('hidden');
                 elemenFieldGrid.classList.remove('hidden');
+                elemenActiveInfo.classList.remove('hidden');
             } else if (currentMode === 'siklus') {
                 machineWrapper.classList.remove('hidden');
                 elemenWrapper.classList.add('hidden');
@@ -979,8 +991,10 @@
                 tabElemen.classList.add('hidden');
                 mesinFieldGrid.classList.remove('hidden');
                 elemenFieldGrid.classList.add('hidden');
+                elemenActiveInfo.classList.add('hidden');
             }
 
+            updateLapButtonLabel();
             renderMasterTable();
             renderStandardCheck();
             updateCounters();
@@ -1162,7 +1176,8 @@
             document.getElementById('uphSourceHint').innerText = 'Auto dari Line';
             renderStandardCheck();
         }
-                // ============================================================
+
+        // ============================================================
         // LINE MANAGEMENT
         // ============================================================
         function renderLineList() {
@@ -1577,7 +1592,7 @@
         }
 
         // ============================================================
-        // ELEMEN MASTER
+        // ELEMEN MASTER (Import & List)
         // ============================================================
         function openElemenImportModal() {
             document.getElementById('elemenFileInput').value = '';
@@ -1701,6 +1716,9 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
         }
+                // ============================================================
+        // POPULATE DROPDOWN SOP
+        // ============================================================
         function populateElemenNoDropdown() {
             const sel = document.getElementById('elemenNoSelect');
             if (!sel) return;
@@ -1712,29 +1730,69 @@
             }).join('');
             if (currentVal && nos.includes(currentVal)) sel.value = currentVal;
         }
+
         function onElemenNoChange(sel) {
             const no = sel.value;
             if (!no) {
                 currentElemenNo = '';
                 currentElemenNama = '';
+                activeElemenList = [];
+                currentElemenIndex = 0;
+                currentCycleNum = 1;
                 document.getElementById('inputNo').value = '';
                 document.getElementById('inputProcess').value = '';
-                document.getElementById('elemenListPreview').classList.add('hidden');
+                document.getElementById('elemenActiveInfo').classList.add('hidden');
+                updateLapButtonLabel();
                 return;
             }
             currentElemenNo = no;
-            const items = elemenMasterList.filter(e => e.noSop === no);
-            if (items.length > 0) currentElemenNama = items[0].namaSop;
+            activeElemenList = elemenMasterList.filter(e => e.noSop === no);
+            if (activeElemenList.length > 0) currentElemenNama = activeElemenList[0].namaSop;
+            currentElemenIndex = 0;
+            currentCycleNum = 1;
             document.getElementById('inputNo').value = no;
             document.getElementById('inputProcess').value = currentElemenNama;
-            const preview = document.getElementById('elemenListPreview');
-            const previewItems = document.getElementById('elemenListPreviewItems');
-            preview.classList.remove('hidden');
-            previewItems.innerHTML = items.map((e, i) => `
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="font-mono font-bold text-blue-700 bg-white px-1.5 py-0.5 rounded border">E${i + 1}</span>
-                    <span class="flex-1 font-medium">${escapeHtml(e.elemen)}</span>
-                </div>`).join('');
+            document.getElementById('elemenActiveInfo').classList.remove('hidden');
+            updateElemenActiveInfo();
+            updateLapButtonLabel();
+            // Reset siklus karena ganti SOP
+            if (currentLaps.length > 0) {
+                if (!confirm('⚠️ Ganti SOP akan reset siklus yang belum disimpan. Lanjutkan?')) {
+                    sel.value = currentElemenNo;
+                    return;
+                }
+                currentLaps = [];
+                updateLapsUI();
+            }
+        }
+
+        function updateElemenActiveInfo() {
+            const nameEl = document.getElementById('elemenActiveName');
+            const progressText = document.getElementById('elemenProgressText');
+            const progressBar = document.getElementById('elemenProgressBar');
+            if (!nameEl) return;
+            if (activeElemenList.length === 0) {
+                nameEl.innerText = '-';
+                progressText.innerText = '-';
+                progressBar.style.width = '0%';
+                return;
+            }
+            const current = activeElemenList[currentElemenIndex];
+            nameEl.innerText = current ? current.elemen : '-';
+            progressText.innerText = `Elemen ${currentElemenIndex + 1} / ${activeElemenList.length} · Putaran ke-${currentCycleNum}`;
+            progressBar.style.width = `${((currentElemenIndex + 1) / activeElemenList.length) * 100}%`;
+        }
+
+        function updateLapButtonLabel() {
+            const btn = document.getElementById('mobileLapBtn');
+            if (!btn) return;
+            if (currentMode === 'elemen' && activeElemenList.length > 0) {
+                const current = activeElemenList[currentElemenIndex];
+                const shortName = current ? current.elemen.substring(0, 14) : '';
+                btn.innerText = `✔️ SELESAI: ${shortName}${shortName.length >= 14 ? '…' : ''}`;
+            } else {
+                btn.innerText = '⏱️ LAP';
+            }
         }
 
         // ============================================================
@@ -1765,9 +1823,6 @@
             if (mid) { const mb = document.getElementById(mid); if (mb) mb.disabled = !enabled; }
         }
 
-        // ------------------------------------------------------------
-        // AUTO-LAP: simpan sisa waktu sebelum stop/pause/pindah tab
-        // ------------------------------------------------------------
         function autoLapBeforeStop() {
             if (!isRunning) return;
             const now = Date.now();
@@ -1804,8 +1859,9 @@
                 if (navigator.vibrate) navigator.vibrate(30);
             }
         }
+
         function stopTimer() {
-            autoLapBeforeStop();
+            // STOP tidak auto-LAP (sesuai permintaan)
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false;
             setStartButton('start');
@@ -1825,6 +1881,7 @@
             }
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
+
         function handleStopReset() {
             if (isRunning) { stopTimer(); return; }
             if (!isRunning) {
@@ -1846,20 +1903,69 @@
                 showToast('⏱️ Timer direset (siklus tetap tersimpan)', 'info');
             }
         }
+
+        // ============================================================
+        // RECORD LAP (mesin vs elemen)
+        // ============================================================
         function recordLap() {
             if (!isRunning) { showToast('⏱️ Timer tidak jalan', 'warning'); return; }
             const now = Date.now();
             const dur = (now - lastLapTimestamp) / 1000;
-            lastLapTimestamp = now;
             if (dur < 0.1) return;
-            currentLaps.push(parseFloat(dur.toFixed(2)));
-            updateLapsUI();
-            document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s`;
+            lastLapTimestamp = now;
+
+            if (currentMode === 'elemen' && activeElemenList.length > 0) {
+                // Mode elemen: LAP = selesai elemen → lanjut berikutnya
+                const currentEl = activeElemenList[currentElemenIndex];
+                currentLaps.push({
+                    dur: parseFloat(dur.toFixed(2)),
+                    noSop: currentElemenNo,
+                    namaSop: currentElemenNama,
+                    elemen: currentEl.elemen,
+                    cycleNum: currentCycleNum
+                });
+                updateLapsUI();
+                document.getElementById('lapSplitPreview').innerText = `✔️ ${currentEl.elemen}: ${dur.toFixed(2)}s`;
+                // Advance ke elemen berikutnya
+                currentElemenIndex++;
+                if (currentElemenIndex >= activeElemenList.length) {
+                    currentElemenIndex = 0;
+                    currentCycleNum++;
+                    showToast(`🔄 Putaran ${currentCycleNum} dimulai`, 'info');
+                }
+                updateElemenActiveInfo();
+                updateLapButtonLabel();
+            } else {
+                // Mode mesin / siklus: LAP biasa
+                currentLaps.push(parseFloat(dur.toFixed(2)));
+                updateLapsUI();
+                document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s`;
+            }
             setButtonEnabled('commitBtn', true);
             if (navigator.vibrate) navigator.vibrate(30);
         }
+
         function removeLap(index) {
+            const removed = currentLaps[index];
             currentLaps.splice(index, 1);
+            // Kalau mode elemen, reset index ke posisi siklus terakhir
+            if (currentMode === 'elemen' && activeElemenList.length > 0 && removed) {
+                const lastLap = currentLaps[currentLaps.length - 1];
+                if (lastLap) {
+                    currentCycleNum = lastLap.cycleNum;
+                    const lastIdx = activeElemenList.findIndex(e => e.elemen === lastLap.elemen);
+                    currentElemenIndex = (lastIdx + 1) % activeElemenList.length;
+                    if (lastIdx === activeElemenList.length - 1) {
+                        currentCycleNum = lastLap.cycleNum + 1;
+                        currentElemenIndex = 0;
+                    }
+                } else {
+                    currentElemenIndex = 0;
+                    currentCycleNum = 1;
+                }
+                updateElemenActiveInfo();
+                updateLapButtonLabel();
+            }
             updateLapsUI();
             lastLapTimestamp = Date.now();
             if (currentLaps.length === 0) {
@@ -1867,6 +1973,7 @@
                 document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
             }
         }
+
         function updateLapsUI() {
             const container = document.getElementById('currentLapsContainer');
             const badge = document.getElementById('lapCounterBadge');
@@ -1879,8 +1986,16 @@
             container.innerHTML = currentLaps.map((lap, i) => {
                 const isLatest = (i === currentLaps.length - 1);
                 const cls = isLatest ? 'bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-200';
-                return `<div class="flex items-center gap-1.5 ${cls} px-3 py-1.5 rounded-md font-mono text-base md:text-lg font-bold border">
-                    <span>C${i + 1}: ${lap.toFixed(2)}s</span>
+                // Mode elemen: object {dur, elemen, cycleNum}; mode lain: number
+                let durVal, elemenLabel = '';
+                if (typeof lap === 'object' && lap !== null) {
+                    durVal = lap.dur;
+                    elemenLabel = ` · ${escapeHtml(lap.elemen)} (P${lap.cycleNum})`;
+                } else {
+                    durVal = lap;
+                }
+                return `<div class="flex items-center gap-1.5 ${cls} px-3 py-1.5 rounded-md font-mono text-sm md:text-base font-bold border">
+                    <span>C${i + 1}: ${durVal.toFixed(2)}s${elemenLabel}</span>
                     <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-1 text-lg">×</button>
                 </div>`;
             }).join('');
@@ -1892,43 +2007,45 @@
         // ============================================================
         function commitStudyRow() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
-
-            if (currentMode === 'elemen') {
-                commitElemenRow();
-            } else {
-                commitMesinRow();
-            }
+            if (currentMode === 'elemen') commitElemenRow();
+            else commitMesinRow();
         }
 
         function commitElemenRow() {
-            const noSop = currentElemenNo || document.getElementById('inputNo').value.trim();
-            const namaSop = currentElemenNama || document.getElementById('inputProcess').value.trim();
-            const elemen = prompt('Nama elemen yang direkam?\n(Ketik nama elemen dari daftar di atas)');
-            if (!elemen) { showToast('⚠️ Nama elemen wajib diisi!', 'error'); return; }
-            const allowanceRaw = document.getElementById('inputAllowance').value.trim();
-            const allowance = parseFloat(allowanceRaw);
-            if (isNaN(allowance) || allowance < 0) { showToast('⚠️ Allowance harus angka ≥ 0!', 'error'); return; }
-            if (!noSop) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
+            if (!currentElemenNo || activeElemenList.length === 0) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
 
-            const existingIndex = masterData.findIndex(item =>
-                item.line === activeLine && item.noSop === noSop && item.namaSop === namaSop && item.elemen === elemen
-            );
-            if (existingIndex !== -1) {
-                const existing = masterData[existingIndex];
-                if (!confirm(`"${elemen}" (No. SOP ${noSop}) sudah ada.\n\nGabungkan sesi baru?`)) return;
-                existing.laps = existing.laps.concat(currentLaps);
-                existing.allowance = allowance;
-                existing.sessions = (existing.sessions || 1) + 1;
-                showToast('Sesi ditambahkan', 'success');
-            } else {
-                masterData.push({
-                    line: activeLine, noSop, namaSop, elemen,
-                    laps: [...currentLaps], allowance, sessions: 1
-                });
-                showToast(`✅ Data elemen disimpan`, 'success');
-            }
+            // Kelompokkan siklus per elemen
+            const grouped = {}; // { elemenName: [dur1, dur2, ...] }
+            currentLaps.forEach(lap => {
+                if (typeof lap !== 'object') return;
+                if (!grouped[lap.elemen]) grouped[lap.elemen] = [];
+                grouped[lap.elemen].push(lap.dur);
+            });
+
+            // Update masterData
+            Object.keys(grouped).forEach(elemenName => {
+                const existingIndex = masterData.findIndex(item =>
+                    item.line === activeLine && item.noSop === currentElemenNo && item.namaSop === currentElemenNama && item.elemen === elemenName
+                );
+                if (existingIndex !== -1) {
+                    const existing = masterData[existingIndex];
+                    existing.laps = existing.laps.concat(grouped[elemenName]);
+                    existing.sessions = (existing.sessions || 1) + 1;
+                } else {
+                    masterData.push({
+                        line: activeLine,
+                        noSop: currentElemenNo,
+                        namaSop: currentElemenNama,
+                        elemen: elemenName,
+                        laps: [...grouped[elemenName]],
+                        sessions: 1
+                    });
+                }
+            });
+
             saveMasterToLS();
+            showToast(`✅ ${Object.keys(grouped).length} elemen disimpan`, 'success');
             resetStopwatchAfterCommit();
         }
 
@@ -1995,9 +2112,13 @@
             document.getElementById('selectedMachineInfo').classList.add('hidden');
             if (currentMode === 'elemen') {
                 document.getElementById('elemenNoSelect').value = '';
-                document.getElementById('elemenListPreview').classList.add('hidden');
+                document.getElementById('elemenActiveInfo').classList.add('hidden');
                 currentElemenNo = '';
                 currentElemenNama = '';
+                activeElemenList = [];
+                currentElemenIndex = 0;
+                currentCycleNum = 1;
+                updateLapButtonLabel();
             }
             setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
@@ -2026,9 +2147,9 @@
         function getRowStats(item) {
             const laps = item.laps || [];
             const count = laps.length;
-            const avg = count > 0 ? laps.reduce((a, b) => a + b, 0) / count : 0;
+            const avg = count > 0 ? laps.reduce((a, b) => a + (typeof b === 'object' ? b.dur : b), 0) / count : 0;
             if (currentMode === 'elemen') {
-                const allowance = item.allowance !== undefined ? parseFloat(item.allowance) : 0;
+                const allowance = ALLOWANCE_FIXED; // 10% statis
                 const smh = avg * (1 + allowance);
                 return { count, avg, allowance, smh };
             } else {
@@ -2079,11 +2200,8 @@
                 tbody.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>`;
                 return;
             }
-            if (currentMode === 'elemen') {
-                renderMasterTableElemen(filteredData, tbody, theadRow);
-            } else {
-                renderMasterTableMesin(filteredData, tbody, theadRow);
-            }
+            if (currentMode === 'elemen') renderMasterTableElemen(filteredData, tbody, theadRow);
+            else renderMasterTableMesin(filteredData, tbody, theadRow);
         }
 
         function renderMasterTableMesin(filteredData, tbody, theadRow) {
@@ -2210,8 +2328,12 @@
                     htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">${escapeHtml(row.elemen)}${sessionBadge}</td>`;
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = row.laps[i];
-                        if (lapVal !== undefined) htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${lapVal.toFixed(2)}</td>`;
-                        else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                        if (lapVal !== undefined) {
+                            const val = typeof lapVal === 'object' ? lapVal.dur : lapVal;
+                            htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${val.toFixed(2)}</td>`;
+                        } else {
+                            htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                        }
                     }
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-purple-700 bg-purple-50 border-r border-b whitespace-nowrap">${stats.allowance.toFixed(2)}</td>`;
@@ -2259,7 +2381,7 @@
         }
 
         // ============================================================
-        // STANDARD CHECK
+        // STANDARD CHECK (Analisa)
         // ============================================================
         function renderStandardCheck() {
             const si = document.getElementById('standardUph');
@@ -2353,7 +2475,145 @@
         }
 
         // ============================================================
-        // EXPORT
+        // EXPORT — ELEMEN
+        // ============================================================
+        function buildElemenDataRows() {
+            const dataToExport = masterData;
+            const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
+            const header = ['No. SOP', 'Nama SOP', 'Elemen'];
+            for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
+            header.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'UPH');
+            const groups = {};
+            const groupOrder = [];
+            dataToExport.forEach(item => {
+                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
+                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
+                const stats = getRowStats(item);
+                groups[key].rows.push({ ...item, stats });
+                groups[key].totalSmh += stats.smh;
+            });
+            const dataRows = [header];
+            const merges = [];
+            let rowIndex = 1;
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const rowSpan = group.rows.length;
+                const groupStartRow = rowIndex;
+                const uph = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
+                group.rows.forEach((item, rIdx) => {
+                    const stats = item.stats;
+                    const rowData = [rIdx === 0 ? item.noSop : '', rIdx === 0 ? item.namaSop : '', item.elemen];
+                    for (let i = 0; i < maxLaps; i++) {
+                        const lapVal = item.laps[i];
+                        if (lapVal !== undefined) {
+                            const val = typeof lapVal === 'object' ? lapVal.dur : lapVal;
+                            rowData.push(parseFloat(val.toFixed(2)));
+                        } else {
+                            rowData.push('');
+                        }
+                    }
+                    rowData.push(
+                        parseFloat(stats.avg.toFixed(2)),
+                        ALLOWANCE_FIXED,
+                        parseFloat(stats.smh.toFixed(2)),
+                        rIdx === 0 ? parseFloat(group.totalSmh.toFixed(2)) : '',
+                        rIdx === 0 ? uph : ''
+                    );
+                    dataRows.push(rowData);
+                    rowIndex++;
+                });
+                if (rowSpan >= 1) {
+                    const totalCol = 3 + maxLaps + 3; // index kolom Total SMH
+                    merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
+                    merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
+                    merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
+                    merges.push({ s: { r: groupStartRow, c: totalCol + 1 }, e: { r: rowIndex - 1, c: totalCol + 1 } });
+                }
+            });
+            return { dataRows, merges, maxLaps };
+        }
+
+        function exportElemenXLSX() {
+            const { dataRows, merges, maxLaps } = buildElemenDataRows();
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(dataRows);
+            ws['!merges'] = merges;
+            const colWidths = [{ wch: 10 }, { wch: 22 }, { wch: 24 }];
+            for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 9 });
+            colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 });
+            ws['!cols'] = colWidths;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= range.e.c; c++) {
+                const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER };
+            }
+            let rowIdx = 1;
+            const groupOrder = [];
+            const groups = {};
+            masterData.forEach(item => {
+                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
+                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
+                const stats = getRowStats(item);
+                groups[key].rows.push({ ...item, stats });
+                groups[key].totalSmh += stats.smh;
+            });
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const rowSpan = group.rows.length;
+                const groupStartRow = rowIdx;
+                const totalColIdx = 3 + maxLaps + 3;
+                group.rows.forEach((item, rIdx) => {
+                    const stats = item.stats;
+                    for (let c = 0; c <= range.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
+                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                        let fill = 'FFFFFF', font = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === 0) fill = 'EDE9FE';
+                        if (c === 1) fill = 'F5F3FF';
+                        if (c === 2) fill = 'FFFFFF';
+                        if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
+                        if (c === 3 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        if (c === 3 + maxLaps + 1) fill = 'F3E8FF';
+                        if (c === 3 + maxLaps + 2) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        if (c === totalColIdx) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        if (c === totalColIdx + 1) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                        ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+                    }
+                    const avgCol = XLSX.utils.encode_col(3 + maxLaps);
+                    const allowCol = XLSX.utils.encode_col(3 + maxLaps + 1);
+                    const smhCol = XLSX.utils.encode_col(3 + maxLaps + 2);
+                    const totalColLetter = XLSX.utils.encode_col(totalColIdx);
+                    const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
+                    if (ws[avgAddr]) {
+                        const firstCT = XLSX.utils.encode_col(3);
+                        const lastCT = XLSX.utils.encode_col(2 + maxLaps);
+                        ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
+                        ws[avgAddr].v = stats.avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00';
+                    }
+                    const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps + 1 });
+                    if (ws[allowAddr]) { ws[allowAddr].v = ALLOWANCE_FIXED; ws[allowAddr].t = 'n'; ws[allowAddr].z = '0.00'; }
+                    const smhAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps + 2 });
+                    if (ws[smhAddr]) { ws[smhAddr].f = `${avgCol}${rowIdx + 1}*(1+${allowCol}${rowIdx + 1})`; ws[smhAddr].v = stats.smh; ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00'; }
+                    rowIdx++;
+                });
+                const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalColIdx });
+                const smhColLetter = XLSX.utils.encode_col(3 + maxLaps + 2);
+                if (ws[totalAddr]) { ws[totalAddr].f = `SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx})`; ws[totalAddr].v = group.totalSmh; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00'; }
+                const uphAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalColIdx + 1 });
+                if (ws[uphAddr]) { ws[uphAddr].f = `ROUND(3600/${totalColLetter}${groupStartRow + 1},0)`; ws[uphAddr].v = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0; ws[uphAddr].t = 'n'; }
+            });
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
+        }
+
+        // ============================================================
+        // EXPORT — MESIN
         // ============================================================
         function buildMesinDataRows() {
             const dataToExport = masterData;
@@ -2393,131 +2653,6 @@
                 }
             });
             return { dataRows, merges, maxLaps };
-        }
-
-        function buildElemenDataRows() {
-            const dataToExport = masterData;
-            const maxLaps = Math.max(...dataToExport.map(item => item.laps.length), 1);
-            const header = ['No. SOP', 'Nama SOP', 'Elemen'];
-            for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
-            header.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'UPH');
-            const groups = {};
-            const groupOrder = [];
-            dataToExport.forEach(item => {
-                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
-                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
-                const stats = getRowStats(item);
-                groups[key].rows.push({ ...item, stats });
-                groups[key].totalSmh += stats.smh;
-            });
-            const dataRows = [header];
-            const merges = [];
-            let rowIndex = 1;
-            groupOrder.forEach(key => {
-                const group = groups[key];
-                const rowSpan = group.rows.length;
-                const groupStartRow = rowIndex;
-                const uph = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
-                group.rows.forEach((item, rIdx) => {
-                    const stats = item.stats;
-                    const rowData = [rIdx === 0 ? item.noSop : '', rIdx === 0 ? item.namaSop : '', item.elemen];
-                    for (let i = 0; i < maxLaps; i++) rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
-                    rowData.push(parseFloat(stats.avg.toFixed(2)), stats.allowance, parseFloat(stats.smh.toFixed(2)), rIdx === 0 ? parseFloat(group.totalSmh.toFixed(2)) : '', rIdx === 0 ? uph : '');
-                    dataRows.push(rowData);
-                    rowIndex++;
-                });
-                if (rowSpan > 1) {
-                    merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
-                    merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
-                    const totalCol = 3 + maxLaps + 2 + 1;
-                    merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
-                    merges.push({ s: { r: groupStartRow, c: totalCol + 1 }, e: { r: rowIndex - 1, c: totalCol + 1 } });
-                }
-            });
-            return { dataRows, merges, maxLaps };
-        }
-
-        function exportToExcelXLSX() {
-            if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
-            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
-            try {
-                if (currentMode === 'elemen') exportElemenXLSX();
-                else exportMesinXLSX();
-            } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
-        }
-
-        function exportElemenXLSX() {
-            const { dataRows, merges, maxLaps } = buildElemenDataRows();
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataRows);
-            ws['!merges'] = merges;
-            const colWidths = [{ wch: 10 }, { wch: 22 }, { wch: 24 }];
-            for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 9 });
-            colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 });
-            ws['!cols'] = colWidths;
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= range.e.c; c++) {
-                const addr = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER };
-            }
-            let rowIdx = 1;
-            const groupOrder = [];
-            const groups = {};
-            masterData.forEach(item => {
-                const key = `${item.line}||${item.noSop}||${item.namaSop}`;
-                if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
-                const stats = getRowStats(item);
-                groups[key].rows.push({ ...item, stats });
-                groups[key].totalSmh += stats.smh;
-            });
-            groupOrder.forEach(key => {
-                const group = groups[key];
-                const rowSpan = group.rows.length;
-                const groupStartRow = rowIdx;
-                const totalCol = 3 + maxLaps + 2;
-                group.rows.forEach((item, rIdx) => {
-                    const stats = item.stats;
-                    for (let c = 0; c <= range.e.c; c++) {
-                        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
-                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                        let fill = 'FFFFFF', font = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 0) fill = 'EDE9FE';
-                        if (c === 1) fill = 'F5F3FF';
-                        if (c === 2) fill = 'FFFFFF';
-                        if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
-                        if (c === 3 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        if (c === 3 + maxLaps + 1) fill = 'F3E8FF';
-                        if (c === 3 + maxLaps + 2) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        if (c === totalCol) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        if (c === totalCol + 1) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
-                        ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
-                    }
-                    const avgCol = XLSX.utils.encode_col(3 + maxLaps);
-                    const smhCol = XLSX.utils.encode_col(3 + maxLaps + 2);
-                    const totalColLetter = XLSX.utils.encode_col(totalCol);
-                    const uphCol = XLSX.utils.encode_col(totalCol + 1);
-                    const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
-                    if (ws[avgAddr]) { ws[avgAddr].f = `AVERAGE(${XLSX.utils.encode_col(3)}${rowIdx + 1}:${XLSX.utils.encode_col(2 + maxLaps)}${rowIdx + 1})`; ws[avgAddr].v = stats.avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00'; }
-                    const smhAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps + 2 });
-                    if (ws[smhAddr]) { ws[smhAddr].f = `${avgCol}${rowIdx + 1}*(1+${XLSX.utils.encode_col(3 + maxLaps + 1)}${rowIdx + 1})`; ws[smhAddr].v = stats.smh; ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00'; }
-                    rowIdx++;
-                });
-                if (rowSpan >= 1) {
-                    const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
-                    const smhColLetter = XLSX.utils.encode_col(3 + maxLaps + 2);
-                    if (ws[totalAddr]) { ws[totalAddr].f = `SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx})`; ws[totalAddr].v = group.totalSmh; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00'; }
-                    const uphAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol + 1 });
-                    if (ws[uphAddr]) { ws[uphAddr].f = `ROUND(3600/${totalColLetter}${groupStartRow + 1},0)`; ws[uphAddr].v = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0; ws[uphAddr].t = 'n'; }
-                }
-            });
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
         }
 
         function exportMesinXLSX() {
@@ -2611,6 +2746,15 @@
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
             const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             if (downloadBlob(blob, `Time_Study_Mesin_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
+        }
+
+        function exportToExcelXLSX() {
+            if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+            try {
+                if (currentMode === 'elemen') exportElemenXLSX();
+                else exportMesinXLSX();
+            } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
         }
 
         function exportToCSV() {
