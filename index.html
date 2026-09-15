@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Mobile Control</title>
+    <title>Time Study - Mobile Export</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -15,7 +15,7 @@
         .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .table-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
 
-        /* ====== TOMBOL KONTROL BAWAH (KHUSUS HP) ====== */
+        /* TOMBOL KONTROL BAWAH (KHUSUS HP) */
         .bottom-controls {
             position: fixed;
             bottom: 0;
@@ -54,7 +54,6 @@
             cursor: not-allowed;
         }
 
-        /* Padding bawah di body supaya konten tidak ketutup tombol */
         body { padding-bottom: 110px; }
         @media (min-width: 768px) {
             body { padding-bottom: 0; }
@@ -74,11 +73,16 @@
                     <h1 class="text-lg md:text-2xl font-bold text-gray-800">⏱️ Time Study</h1>
                     <p class="text-gray-500 text-xs md:text-sm mt-0.5">Rekam siklus, hitung kapasitas, export Excel.</p>
                 </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <span id="currentDate" class="bg-blue-50 text-blue-700 px-2 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium border border-blue-200 flex-1 md:flex-initial text-center whitespace-nowrap"></span>
-                    <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm shadow-sm transition whitespace-nowrap">
-                        📥 <span class="hidden sm:inline">Export Excel</span><span class="sm:hidden">Export</span>
-                    </button>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+                    <span id="currentDate" class="bg-blue-50 text-blue-700 px-2 md:px-3 py-1.5 rounded-lg text-xs md:text-sm font-medium border border-blue-200 text-center whitespace-nowrap"></span>
+                    <div class="flex gap-2">
+                        <button onclick="exportToExcelXLSX()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm shadow-sm transition whitespace-nowrap">
+                            📥 Excel
+                        </button>
+                        <button onclick="exportToCSV()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm shadow-sm transition whitespace-nowrap">
+                            📄 CSV
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -93,7 +97,6 @@
                 <span id="timerStatus" class="text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">Idle</span>
             </div>
 
-            <!-- GRID: Form + Timer -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- FORM INPUT -->
                 <div class="space-y-3">
@@ -140,7 +143,7 @@
                 </div>
             </div>
 
-            <!-- CHIP SIKLUS — FULL WIDTH DI BAWAH GRID -->
+            <!-- CHIP SIKLUS -->
             <div class="mt-4">
                 <div class="flex justify-between items-center mb-1.5">
                     <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase">Rekaman Siklus (Detik):</label>
@@ -151,7 +154,6 @@
                 </div>
             </div>
 
-            <!-- TOMBOL SIMPAN — FULL WIDTH -->
             <button onclick="commitStudyRow()" id="commitBtn" disabled class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition shadow opacity-50 cursor-not-allowed text-sm">
                 💾 Simpan ke Master Data
             </button>
@@ -164,7 +166,7 @@
             <div class="flex justify-between items-start md:items-center mb-3 gap-2">
                 <div class="flex-1">
                     <h2 class="text-base md:text-lg font-semibold text-gray-800">📋 Master Data</h2>
-                    <p class="text-[10px] md:text-xs text-gray-500">Proses di-merge jika punya beberapa mesin. Total Gabungan UPH di kanan.</p>
+                    <p class="text-[10px] md:text-xs text-gray-500">Proses di-merge jika punya beberapa mesin.</p>
                 </div>
                 <button onclick="clearAllData()" class="text-[10px] md:text-xs text-red-600 hover:text-red-800 font-medium bg-red-50 hover:bg-red-100 px-2 md:px-3 py-1.5 rounded-lg border border-red-200 transition whitespace-nowrap">Reset Semua</button>
             </div>
@@ -204,23 +206,10 @@
     <!-- ============================================================ -->
     <div class="bottom-controls md:hidden">
         <div class="flex gap-2">
-            <!-- START / PAUSE / RESUME -->
-            <button id="mobileStartBtn" onclick="toggleTimer()" 
-                class="bottom-controls-btn bg-green-600">
-                ▶️ START
-            </button>
-            <!-- LAP -->
-            <button id="mobileLapBtn" onclick="recordLap()" disabled
-                class="bottom-controls-btn bg-blue-600">
-                ⏱️ LAP
-            </button>
-            <!-- STOP -->
-            <button id="mobileStopBtn" onclick="stopTimer()" disabled
-                class="bottom-controls-btn bg-red-600">
-                ⏹️ STOP
-            </button>
+            <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
+            <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
+            <button id="mobileStopBtn" onclick="stopTimer()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP</button>
         </div>
-        <!-- Status kecil di bawah tombol -->
         <div class="text-center text-[10px] text-gray-400 mt-1.5">
             <span id="mobileStatus">Idle</span>
         </div>
@@ -258,8 +247,6 @@
             const badge = document.getElementById('timerStatus');
             badge.innerText = text;
             badge.className = 'text-[10px] md:text-xs px-2 md:px-2.5 py-1 rounded-full font-semibold ' + colorClasses;
-
-            // Update status kecil di bawah tombol HP
             const mobileStatus = document.getElementById('mobileStatus');
             if (mobileStatus) mobileStatus.innerText = text;
         }
@@ -272,42 +259,26 @@
             if (mode === 'start') {
                 btn.innerText = 'Start';
                 btn.className = 'bg-green-600 hover:bg-green-700 ' + base;
-                if (mobileBtn) {
-                    mobileBtn.innerText = '▶️ START';
-                    mobileBtn.className = 'bottom-controls-btn bg-green-600';
-                }
+                if (mobileBtn) { mobileBtn.innerText = '▶️ START'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
             } else if (mode === 'pause') {
                 btn.innerText = 'Pause';
                 btn.className = 'bg-yellow-600 hover:bg-yellow-700 ' + base;
-                if (mobileBtn) {
-                    mobileBtn.innerText = '⏸️ PAUSE';
-                    mobileBtn.className = 'bottom-controls-btn bg-yellow-600';
-                }
+                if (mobileBtn) { mobileBtn.innerText = '⏸️ PAUSE'; mobileBtn.className = 'bottom-controls-btn bg-yellow-600'; }
             } else if (mode === 'resume') {
                 btn.innerText = 'Resume';
                 btn.className = 'bg-green-600 hover:bg-green-700 ' + base;
-                if (mobileBtn) {
-                    mobileBtn.innerText = '▶️ RESUME';
-                    mobileBtn.className = 'bottom-controls-btn bg-green-600';
-                }
+                if (mobileBtn) { mobileBtn.innerText = '▶️ RESUME'; mobileBtn.className = 'bottom-controls-btn bg-green-600'; }
             }
         }
 
         function setButtonEnabled(id, enabled) {
-            // Update tombol desktop
             const btn = document.getElementById(id);
             if (btn) {
                 btn.disabled = !enabled;
                 if (enabled) btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 else btn.classList.add('opacity-50', 'cursor-not-allowed');
             }
-
-            // Sinkronkan dengan tombol HP
-            const mapping = {
-                'stopBtn': 'mobileStopBtn',
-                'lapBtn': 'mobileLapBtn',
-                'startStopBtn': 'mobileStartBtn'
-            };
+            const mapping = { 'stopBtn': 'mobileStopBtn', 'lapBtn': 'mobileLapBtn', 'startStopBtn': 'mobileStartBtn' };
             const mobileId = mapping[id];
             if (mobileId) {
                 const mobileBtn = document.getElementById(mobileId);
@@ -548,7 +519,6 @@
             `;
             thead.innerHTML = headerHTML;
 
-            // Group by (No + Process)
             const groups = {};
             const groupOrder = [];
             masterData.forEach((item, idx) => {
@@ -632,22 +602,14 @@
         }
 
         // ============================================================
-        // EXPORT XLSX (DENGAN AUTO-MERGE)
+        // BUILD XLSX WORKBOOK (dipakai oleh XLSX & CSV export)
         // ============================================================
-        function exportToExcelXLSX() {
-            if (masterData.length === 0) {
-                showToast('Belum ada data untuk di-export!', 'error');
-                return;
-            }
-
+        function buildDataRows() {
             const maxLaps = Math.max(...masterData.map(item => item.laps.length));
-
-            // === 1. Header ===
             const header = ['No', 'Nama Proses', 'Mesin / Jalur'];
             for (let i = 1; i <= maxLaps; i++) header.push(`S${i}`);
             header.push('Rata-rata', 'NG%', 'CT + Gerakan', 'Kapasitas (U/H)', 'Total Gabungan UPH');
 
-            // === 2. Group by (No + Process) ===
             const groups = {};
             const groupOrder = [];
             masterData.forEach(item => {
@@ -660,7 +622,6 @@
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
 
-            // === 3. Data rows + merge ===
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
@@ -672,17 +633,14 @@
 
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
-
                     const rowData = [
                         rIdx === 0 ? item.no : '',
                         rIdx === 0 ? item.process : '',
                         item.subMachine
                     ];
-
                     for (let i = 0; i < maxLaps; i++) {
                         rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
                     }
-
                     rowData.push(
                         parseFloat(stats.avg.toFixed(2)),
                         item.ngRate,
@@ -690,7 +648,6 @@
                         stats.capacity,
                         rIdx === 0 ? group.totalCapacity : ''
                     );
-
                     dataRows.push(rowData);
                     rowIndex++;
                 });
@@ -703,37 +660,135 @@
                 }
             });
 
-            // === 4. Worksheet ===
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataRows);
-            ws['!merges'] = merges;
-
-            // === 5. Lebar kolom ===
-            const colWidths = [{ wch: 5 }, { wch: 18 }, { wch: 12 }];
-            for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
-            colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
-            ws['!cols'] = colWidths;
-
-            // === 6. Format 2 desimal ===
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            for (let r = 1; r <= range.e.r; r++) {
-                const avgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 3 });
-                if (ws[avgCell] && typeof ws[avgCell].v === 'number') ws[avgCell].z = '0.00';
-
-                const ctgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 5 });
-                if (ws[ctgCell] && typeof ws[ctgCell].v === 'number') ws[ctgCell].z = '0.00';
-            }
-
-            // === 7. Tulis file ===
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-            const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
-            XLSX.writeFile(wb, filename);
-
-            showToast('📥 File Excel berhasil diunduh', 'success');
+            return { dataRows, merges, maxLaps };
         }
 
         // ============================================================
-        // INIT — Sinkronkan tombol HP saat pertama load
+        // DOWNLOAD BLOB UNIVERSAL (untuk HP & PC)
+        // ============================================================
+        function downloadBlob(blob, filename) {
+            // Metode 1: Blob URL + anchor click (paling universal)
+            try {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 1500);
+                return true;
+            } catch (e) {
+                console.error('Download gagal:', e);
+                // Metode 2: Fallback buka di tab baru
+                try {
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                    return true;
+                } catch (e2) {
+                    console.error('Fallback download gagal:', e2);
+                    showToast('❌ Gagal download. Coba buka di Chrome desktop.', 'error');
+                    return false;
+                }
+            }
+        }
+
+        // ============================================================
+        // EXPORT XLSX (DENGAN BLOB METHOD)
+        // ============================================================
+        function exportToExcelXLSX() {
+            if (masterData.length === 0) {
+                showToast('Belum ada data untuk di-export!', 'error');
+                return;
+            }
+            if (typeof XLSX === 'undefined') {
+                showToast('❌ SheetJS belum ke-load. Coba pakai CSV.', 'error');
+                return;
+            }
+
+            try {
+                const { dataRows, merges, maxLaps } = buildDataRows();
+
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(dataRows);
+                ws['!merges'] = merges;
+
+                // Lebar kolom
+                const colWidths = [{ wch: 5 }, { wch: 18 }, { wch: 12 }];
+                for (let i = 0; i < maxLaps; i++) colWidths.push({ wch: 8 });
+                colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 20 });
+                ws['!cols'] = colWidths;
+
+                // Format 2 desimal
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let r = 1; r <= range.e.r; r++) {
+                    const avgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 3 });
+                    if (ws[avgCell] && typeof ws[avgCell].v === 'number') ws[avgCell].z = '0.00';
+                    const ctgCell = XLSX.utils.encode_cell({ r: r, c: maxLaps + 5 });
+                    if (ws[ctgCell] && typeof ws[ctgCell].v === 'number') ws[ctgCell].z = '0.00';
+                }
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
+
+                // ==== BLOB METHOD (bukan XLSX.writeFile) ====
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+                const success = downloadBlob(blob, filename);
+                if (success) {
+                    showToast('📥 File Excel berhasil diunduh', 'success');
+                }
+            } catch (err) {
+                console.error('Export XLSX gagal:', err);
+                showToast('❌ Gagal export Excel. Coba CSV.', 'error');
+            }
+        }
+
+        // ============================================================
+        // EXPORT CSV (FALLBACK - PALING UNIVERSAL)
+        // ============================================================
+        function exportToCSV() {
+            if (masterData.length === 0) {
+                showToast('Belum ada data untuk di-export!', 'error');
+                return;
+            }
+
+            try {
+                const { dataRows } = buildDataRows();
+
+                // Escape CSV: bungkus dengan kutip, escape kutip ganda
+                const escapeCSV = (v) => {
+                    const s = String(v == null ? '' : v);
+                    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                        return '"' + s.replace(/"/g, '""') + '"';
+                    }
+                    return s;
+                };
+
+                const csvContent = dataRows.map(row => row.map(escapeCSV).join(',')).join('\r\n');
+
+                // Pakai BOM UTF-8 supaya Excel baca karakter Indonesia dengan benar
+                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const filename = `Time_Study_${new Date().toISOString().slice(0, 10)}.csv`;
+
+                const success = downloadBlob(blob, filename);
+                if (success) {
+                    showToast('📄 File CSV berhasil diunduh', 'success');
+                }
+            } catch (err) {
+                console.error('Export CSV gagal:', err);
+                showToast('❌ Gagal export CSV.', 'error');
+            }
+        }
+
+        // ============================================================
+        // INIT
         // ============================================================
         (function initMobileButtons() {
             const mobileStopBtn = document.getElementById('mobileStopBtn');
