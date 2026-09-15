@@ -170,8 +170,7 @@
         <div class="text-sm text-gray-600 font-medium">Menghubungkan ke Firebase...</div>
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
-
-    <!-- MODAL PILIH MODE -->
+        <!-- MODAL PILIH MODE -->
     <div id="modeModal" class="modal-bg active">
         <div class="modal-content" style="max-width: 600px;">
             <div class="p-6 border-b border-gray-200 text-center">
@@ -292,10 +291,10 @@
             </div>
         </div>
     </div>
-        <!-- APP CONTAINER -->
-    <div id="appContainer" class="hidden">
 
-        <!-- HEADER -->
+    <!-- APP CONTAINER -->
+    <div id="appContainer" class="hidden">
+                <!-- HEADER -->
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
                 <div class="header-flex">
@@ -514,8 +513,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- TAB MESIN (khusus mode mesin) -->
+                <!-- TAB MESIN (khusus mode mesin) -->
         <div id="tab-mesin" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -693,7 +691,8 @@
             </div>
         </div>
     </div><!-- end appContainer -->
-        <!-- MODAL MESIN -->
+
+    <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -767,8 +766,7 @@
                     <div class="font-mono text-[10px] bg-white p-2 rounded border mb-2">
                         Nomor SOP | Nama SOP | Process Description<br>
                         1.0 | Pemasangan battery | Ambil battery<br>
-                        1.0 | Pemasangan battery | Positioning battery<br>
-                        1.0 | Pemasangan battery | Pasang connector
+                        1.0 | Pemasangan battery | Positioning battery
                     </div>
                     <div class="mt-1">💡 Baris judul di atas header otomatis di-skip.</div>
                 </div>
@@ -779,7 +777,7 @@
                 <div class="text-center text-xs text-gray-400 font-semibold">— ATAU —</div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 mb-1">Copy-Paste dari Excel</label>
-                    <textarea id="elemenPasteArea" rows="8" placeholder="1.0&#9;Pemasangan battery&#9;Ambil battery&#10;1.0&#9;Pemasangan battery&#9;Positioning battery" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
+                    <textarea id="elemenPasteArea" rows="8" placeholder="1.0&#9;Pemasangan battery&#9;Ambil battery" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
                 </div>
                 <div class="flex items-center gap-2 pt-1">
                     <input type="checkbox" id="elemenReplaceExisting" class="rounded">
@@ -792,8 +790,7 @@
             </div>
         </div>
     </div>
-
-    <!-- FIREBASE SDK -->
+        <!-- FIREBASE SDK -->
     <script type="module">
         const firebaseConfig = {
             apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
@@ -827,7 +824,7 @@
         // ============================================================
         // STATE
         // ============================================================
-        let currentMode = ''; // 'mesin' | 'elemen' | 'siklus'
+        let currentMode = '';
         let startTime = 0;
         let elapsedTime = 0;
         let timerInterval = null;
@@ -850,14 +847,14 @@
         let uphUserOverride = false;
 
         // Master Elemen
-        let elemenMasterList = []; // [{id, noSop, namaSop, elemen}]
+        let elemenMasterList = [];
         let currentElemenNo = '';
         let currentElemenNama = '';
-        let activeElemenList = [];        // daftar elemen untuk SOP aktif (urut)
-        let currentElemenIndex = 0;       // index elemen yang sedang direkam
-        let currentCycleNum = 1;          // putaran ke berapa
+        let activeElemenList = [];
+        let currentElemenIndex = 0;
+        let currentCycleNum = 1;
 
-        const ALLOWANCE_FIXED = 0.10;     // Allowance statis 10%
+        const ALLOWANCE_FIXED = 0.10;
 
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v2';
@@ -1745,6 +1742,15 @@
                 updateLapButtonLabel();
                 return;
             }
+            // Cek dulu kalau ada siklus yang belum disimpan
+            if (currentLaps.length > 0) {
+                if (!confirm('⚠️ Ganti SOP akan reset siklus yang belum disimpan. Lanjutkan?')) {
+                    sel.value = currentElemenNo;
+                    return;
+                }
+                currentLaps = [];
+                updateLapsUI();
+            }
             currentElemenNo = no;
             activeElemenList = elemenMasterList.filter(e => e.noSop === no);
             if (activeElemenList.length > 0) currentElemenNama = activeElemenList[0].namaSop;
@@ -1755,15 +1761,6 @@
             document.getElementById('elemenActiveInfo').classList.remove('hidden');
             updateElemenActiveInfo();
             updateLapButtonLabel();
-            // Reset siklus karena ganti SOP
-            if (currentLaps.length > 0) {
-                if (!confirm('⚠️ Ganti SOP akan reset siklus yang belum disimpan. Lanjutkan?')) {
-                    sel.value = currentElemenNo;
-                    return;
-                }
-                currentLaps = [];
-                updateLapsUI();
-            }
         }
 
         function updateElemenActiveInfo() {
@@ -1828,10 +1825,21 @@
             const now = Date.now();
             const dur = (now - lastLapTimestamp) / 1000;
             if (dur >= 0.1) {
-                currentLaps.push(parseFloat(dur.toFixed(2)));
+                if (currentMode === 'elemen' && activeElemenList.length > 0) {
+                    const currentEl = activeElemenList[currentElemenIndex];
+                    currentLaps.push({
+                        dur: parseFloat(dur.toFixed(2)),
+                        noSop: currentElemenNo,
+                        namaSop: currentElemenNama,
+                        elemen: currentEl ? currentEl.elemen : '-',
+                        cycleNum: currentCycleNum
+                    });
+                } else {
+                    currentLaps.push(parseFloat(dur.toFixed(2)));
+                }
                 updateLapsUI();
                 setButtonEnabled('commitBtn', true);
-                document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s (auto)`;
+                document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)`;
             }
         }
 
@@ -1915,7 +1923,6 @@
             lastLapTimestamp = now;
 
             if (currentMode === 'elemen' && activeElemenList.length > 0) {
-                // Mode elemen: LAP = selesai elemen → lanjut berikutnya
                 const currentEl = activeElemenList[currentElemenIndex];
                 currentLaps.push({
                     dur: parseFloat(dur.toFixed(2)),
@@ -1936,7 +1943,6 @@
                 updateElemenActiveInfo();
                 updateLapButtonLabel();
             } else {
-                // Mode mesin / siklus: LAP biasa
                 currentLaps.push(parseFloat(dur.toFixed(2)));
                 updateLapsUI();
                 document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s`;
@@ -1948,16 +1954,16 @@
         function removeLap(index) {
             const removed = currentLaps[index];
             currentLaps.splice(index, 1);
-            // Kalau mode elemen, reset index ke posisi siklus terakhir
             if (currentMode === 'elemen' && activeElemenList.length > 0 && removed) {
                 const lastLap = currentLaps[currentLaps.length - 1];
                 if (lastLap) {
                     currentCycleNum = lastLap.cycleNum;
                     const lastIdx = activeElemenList.findIndex(e => e.elemen === lastLap.elemen);
-                    currentElemenIndex = (lastIdx + 1) % activeElemenList.length;
                     if (lastIdx === activeElemenList.length - 1) {
                         currentCycleNum = lastLap.cycleNum + 1;
                         currentElemenIndex = 0;
+                    } else {
+                        currentElemenIndex = lastIdx + 1;
                     }
                 } else {
                     currentElemenIndex = 0;
@@ -1986,7 +1992,6 @@
             container.innerHTML = currentLaps.map((lap, i) => {
                 const isLatest = (i === currentLaps.length - 1);
                 const cls = isLatest ? 'bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-300' : 'bg-blue-50 text-blue-800 border-blue-200';
-                // Mode elemen: object {dur, elemen, cycleNum}; mode lain: number
                 let durVal, elemenLabel = '';
                 if (typeof lap === 'object' && lap !== null) {
                     durVal = lap.dur;
@@ -2015,21 +2020,25 @@
             if (!currentElemenNo || activeElemenList.length === 0) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
 
-            // Kelompokkan siklus per elemen
-            const grouped = {}; // { elemenName: [dur1, dur2, ...] }
+            const grouped = {};
             currentLaps.forEach(lap => {
-                if (typeof lap !== 'object') return;
+                if (typeof lap !== 'object' || !lap.elemen) return;
                 if (!grouped[lap.elemen]) grouped[lap.elemen] = [];
                 grouped[lap.elemen].push(lap.dur);
             });
 
-            // Update masterData
+            if (Object.keys(grouped).length === 0) { showToast('⚠️ Tidak ada data elemen valid!', 'error'); return; }
+
             Object.keys(grouped).forEach(elemenName => {
                 const existingIndex = masterData.findIndex(item =>
                     item.line === activeLine && item.noSop === currentElemenNo && item.namaSop === currentElemenNama && item.elemen === elemenName
                 );
                 if (existingIndex !== -1) {
                     const existing = masterData[existingIndex];
+                    if (!existing.noSop) existing.noSop = currentElemenNo;
+                    if (!existing.namaSop) existing.namaSop = currentElemenNama;
+                    if (!existing.elemen) existing.elemen = elemenName;
+                    if (!existing.line) existing.line = activeLine;
                     existing.laps = existing.laps.concat(grouped[elemenName]);
                     existing.sessions = (existing.sessions || 1) + 1;
                 } else {
@@ -2056,28 +2065,36 @@
                 no = document.getElementById('inputNo').value.trim() || '-';
                 process = document.getElementById('inputProcess').value.trim();
                 subMachine = document.getElementById('inputSubMachineCustom').value.trim() || '-';
+                if (!process) { showToast('⚠️ Nama proses wajib diisi!', 'error'); return; }
             } else {
                 const m = machineList.find(x => x.id === selectedMachineId);
-                if (!m) { showToast('Mesin tidak ditemukan!', 'error'); return; }
+                if (!m) { showToast('Mesin tidak ditemukan! Pilih ulang.', 'error'); return; }
                 no = document.getElementById('inputNo').value.trim() || '-';
                 process = m.proses || '';
                 subMachine = m.mesin || '-';
             }
+            if (!no) no = '-';
+            if (!process) { showToast('⚠️ Nama mesin wajib diisi!', 'error'); return; }
+            if (!subMachine) subMachine = '-';
+
             const ngRate = parseFloat(document.getElementById('inputNgRate').value) || 0;
             const gerakanRaw = document.getElementById('inputGerakan').value.trim();
-            if (!gerakanRaw) { showToast('⚠️ Mohon isi Gerakan (detik)!', 'error'); document.getElementById('inputGerakan').focus(); return; }
+            if (!gerakanRaw) { showToast('⚠️ Isi Gerakan (detik)!', 'error'); document.getElementById('inputGerakan').focus(); return; }
             const gerakan = parseFloat(gerakanRaw);
-            if (isNaN(gerakan) || gerakan < 0) { showToast('⚠️ Gerakan harus angka positif!', 'error'); return; }
+            if (isNaN(gerakan) || gerakan < 0) { showToast('⚠️ Gerakan harus angka ≥ 0!', 'error'); return; }
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
-            if (!process) { showToast('Mohon pilih/isi nama proses!', 'error'); return; }
-            if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
+            if (currentLaps.length === 0) { showToast('⚠️ Rekam minimal 1 siklus!', 'error'); return; }
 
             const existingIndex = masterData.findIndex(item =>
                 item.line === activeLine && item.no === no && item.process === process && item.subMachine === subMachine
             );
             if (existingIndex !== -1) {
                 const existing = masterData[existingIndex];
-                if (!confirm(`"${process}" (No ${no}) sudah ada.\n\nGabungkan sesi baru?`)) return;
+                if (!confirm(`"${process}" (No ${no}) sudah ada. Gabungkan sesi?`)) return;
+                if (!existing.no) existing.no = no;
+                if (!existing.process) existing.process = process;
+                if (!existing.subMachine) existing.subMachine = subMachine;
+                if (!existing.line) existing.line = activeLine;
                 existing.laps = existing.laps.concat(currentLaps);
                 existing.ngRate = ngRate;
                 existing.actualMachine = actualMachine;
@@ -2085,7 +2102,10 @@
                 existing.sessions = (existing.sessions || 1) + 1;
                 showToast('Sesi ditambahkan', 'success');
             } else {
-                masterData.push({ line: activeLine, no, process, subMachine, laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1 });
+                masterData.push({
+                    line: activeLine, no, process, subMachine,
+                    laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1
+                });
                 showToast(`✅ Data disimpan (${activeLine})`, 'success');
             }
             saveMasterToLS();
@@ -2147,16 +2167,19 @@
         function getRowStats(item) {
             const laps = item.laps || [];
             const count = laps.length;
-            const avg = count > 0 ? laps.reduce((a, b) => a + (typeof b === 'object' ? b.dur : b), 0) / count : 0;
+            const values = laps.map(b => typeof b === 'object' && b !== null ? parseFloat(b.dur) || 0 : parseFloat(b) || 0);
+            const avg = count > 0 ? values.reduce((a, b) => a + b, 0) / count : 0;
+
             if (currentMode === 'elemen') {
-                const allowance = ALLOWANCE_FIXED; // 10% statis
+                const allowance = ALLOWANCE_FIXED;
                 const smh = avg * (1 + allowance);
                 return { count, avg, allowance, smh };
             } else {
-                const gerakan = item.gerakan !== undefined ? parseFloat(item.gerakan) : 0;
+                const gerakan = (item.gerakan !== undefined && item.gerakan !== null) ? parseFloat(item.gerakan) || 0 : 0;
+                const actualMachine = (item.actualMachine !== undefined && item.actualMachine !== null) ? parseFloat(item.actualMachine) || 1 : 1;
                 const ctPlusG = avg + gerakan;
-                const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * item.actualMachine) : 0;
-                return { count, avg, ctPlusG, capacity, gerakan };
+                const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * actualMachine) : 0;
+                return { count, avg, ctPlusG, capacity, gerakan, actualMachine };
             }
         }
 
@@ -2248,25 +2271,29 @@
                     htmlOutput += `<tr class="hover:bg-yellow-50/50 transition">`;
                     if (rIdx === 0) {
                         htmlOutput += `
-                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(group.line)}</td>
-                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(group.no)}</td>
-                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process)}</td>
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(group.line || '-')}</td>
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(group.no || '-')}</td>
+                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process || '-')}</td>
                         `;
                     }
                     htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">
-                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine)}</span>${sessionBadge}
+                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine || '-')}</span>${sessionBadge}
                     </td>`;
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = row.laps[i];
-                        if (lapVal !== undefined) htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${lapVal.toFixed(2)}</td>`;
-                        else htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                        if (lapVal !== undefined && lapVal !== null) {
+                            const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
+                            htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
+                        } else {
+                            htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                        }
                     }
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
-                    htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${row.ngRate}%</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${row.ngRate !== undefined ? row.ngRate : 0}%</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-amber-700 bg-amber-50 border-r border-b whitespace-nowrap">${stats.gerakan.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
-                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${row.actualMachine}</td>`;
+                    htmlOutput += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${stats.actualMachine}</td>`;
                     if (rIdx === 0) {
                         htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span></td>`;
                     }
@@ -2321,16 +2348,16 @@
                     htmlOutput += `<tr class="hover:bg-purple-50/30 transition">`;
                     if (rIdx === 0) {
                         htmlOutput += `
-                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(group.noSop)}</td>
-                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(group.namaSop)}</td>
+                            <td rowspan="${rowSpan}" class="px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(group.noSop || '-')}</td>
+                            <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(group.namaSop || '-')}</td>
                         `;
                     }
-                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">${escapeHtml(row.elemen)}${sessionBadge}</td>`;
+                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">${escapeHtml(row.elemen || '-')}${sessionBadge}</td>`;
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = row.laps[i];
-                        if (lapVal !== undefined) {
-                            const val = typeof lapVal === 'object' ? lapVal.dur : lapVal;
-                            htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${val.toFixed(2)}</td>`;
+                        if (lapVal !== undefined && lapVal !== null) {
+                            const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
+                            htmlOutput += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
                         } else {
                             htmlOutput += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
                         }
@@ -2352,7 +2379,8 @@
 
         function deleteMasterRow(idx) {
             const item = masterData[idx];
-            const label = item.elemen || item.process;
+            if (!item) return;
+            const label = item.elemen || item.process || 'data';
             if (!confirm(`Hapus data "${label}"?`)) return;
             masterData.splice(idx, 1);
             saveMasterToLS();
@@ -2460,7 +2488,7 @@
                                 <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(String(p.no))}</span>
                                 <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>
                             </div>
-                            <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.join(', '))}</div>
+                            <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(p.machines.filter(Boolean).join(', '))}</div>
                         </div>
                         <div class="text-right">
                             <div class="text-lg font-extrabold text-red-700">${p.capacity} <span class="text-[10px] font-medium">UPH</span></div>
@@ -2483,6 +2511,7 @@
             const header = ['No. SOP', 'Nama SOP', 'Elemen'];
             for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
             header.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'UPH');
+
             const groups = {};
             const groupOrder = [];
             dataToExport.forEach(item => {
@@ -2492,9 +2521,13 @@
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
+
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
+            const colTotalSmh = 3 + maxLaps + 3;
+            const colUph = colTotalSmh + 1;
+
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
@@ -2505,12 +2538,10 @@
                     const rowData = [rIdx === 0 ? item.noSop : '', rIdx === 0 ? item.namaSop : '', item.elemen];
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = item.laps[i];
-                        if (lapVal !== undefined) {
-                            const val = typeof lapVal === 'object' ? lapVal.dur : lapVal;
-                            rowData.push(parseFloat(val.toFixed(2)));
-                        } else {
-                            rowData.push('');
-                        }
+                        if (lapVal !== undefined && lapVal !== null) {
+                            const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
+                            rowData.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
+                        } else rowData.push('');
                     }
                     rowData.push(
                         parseFloat(stats.avg.toFixed(2)),
@@ -2523,11 +2554,10 @@
                     rowIndex++;
                 });
                 if (rowSpan >= 1) {
-                    const totalCol = 3 + maxLaps + 3; // index kolom Total SMH
                     merges.push({ s: { r: groupStartRow, c: 0 }, e: { r: rowIndex - 1, c: 0 } });
                     merges.push({ s: { r: groupStartRow, c: 1 }, e: { r: rowIndex - 1, c: 1 } });
-                    merges.push({ s: { r: groupStartRow, c: totalCol }, e: { r: rowIndex - 1, c: totalCol } });
-                    merges.push({ s: { r: groupStartRow, c: totalCol + 1 }, e: { r: rowIndex - 1, c: totalCol + 1 } });
+                    merges.push({ s: { r: groupStartRow, c: colTotalSmh }, e: { r: rowIndex - 1, c: colTotalSmh } });
+                    merges.push({ s: { r: groupStartRow, c: colUph }, e: { r: rowIndex - 1, c: colUph } });
                 }
             });
             return { dataRows, merges, maxLaps };
@@ -2550,8 +2580,8 @@
                 ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BORDER };
             }
             let rowIdx = 1;
-            const groupOrder = [];
             const groups = {};
+            const groupOrder = [];
             masterData.forEach(item => {
                 const key = `${item.line}||${item.noSop}||${item.namaSop}`;
                 if (!groups[key]) { groups[key] = { noSop: item.noSop, namaSop: item.namaSop, rows: [], totalSmh: 0 }; groupOrder.push(key); }
@@ -2559,50 +2589,61 @@
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
+            const colAvg = 3 + maxLaps;
+            const colAllow = colAvg + 1;
+            const colSmh = colAllow + 1;
+            const colTotalSmh = colSmh + 1;
+            const colUph = colTotalSmh + 1;
             groupOrder.forEach(key => {
                 const group = groups[key];
-                const rowSpan = group.rows.length;
                 const groupStartRow = rowIdx;
-                const totalColIdx = 3 + maxLaps + 3;
                 group.rows.forEach((item, rIdx) => {
                     const stats = item.stats;
                     for (let c = 0; c <= range.e.c; c++) {
                         const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
                         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                        let fill = 'FFFFFF', font = { color: { rgb: '111827' }, sz: 11 };
+                        let fill = 'FFFFFF';
+                        let font = { color: { rgb: '111827' }, sz: 11 };
                         if (c === 0) fill = 'EDE9FE';
-                        if (c === 1) fill = 'F5F3FF';
-                        if (c === 2) fill = 'FFFFFF';
-                        if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
-                        if (c === 3 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        if (c === 3 + maxLaps + 1) fill = 'F3E8FF';
-                        if (c === 3 + maxLaps + 2) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        if (c === totalColIdx) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        if (c === totalColIdx + 1) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                        else if (c === 1) fill = 'F5F3FF';
+                        else if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
+                        else if (c === colAvg) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        else if (c === colAllow) fill = 'F3E8FF';
+                        else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        else if (c === colTotalSmh) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        else if (c === colUph) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
                         ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                     }
-                    const avgCol = XLSX.utils.encode_col(3 + maxLaps);
-                    const allowCol = XLSX.utils.encode_col(3 + maxLaps + 1);
-                    const smhCol = XLSX.utils.encode_col(3 + maxLaps + 2);
-                    const totalColLetter = XLSX.utils.encode_col(totalColIdx);
-                    const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps });
+                    const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAvg });
                     if (ws[avgAddr]) {
                         const firstCT = XLSX.utils.encode_col(3);
-                        const lastCT = XLSX.utils.encode_col(2 + maxLaps);
+                        const lastCT = XLSX.utils.encode_col(3 + maxLaps - 1);
                         ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
                         ws[avgAddr].v = stats.avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00';
                     }
-                    const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps + 1 });
+                    const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAllow });
                     if (ws[allowAddr]) { ws[allowAddr].v = ALLOWANCE_FIXED; ws[allowAddr].t = 'n'; ws[allowAddr].z = '0.00'; }
-                    const smhAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 3 + maxLaps + 2 });
-                    if (ws[smhAddr]) { ws[smhAddr].f = `${avgCol}${rowIdx + 1}*(1+${allowCol}${rowIdx + 1})`; ws[smhAddr].v = stats.smh; ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00'; }
+                    const smhAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colSmh });
+                    if (ws[smhAddr]) {
+                        const avgColLetter = XLSX.utils.encode_col(colAvg);
+                        const allowColLetter = XLSX.utils.encode_col(colAllow);
+                        ws[smhAddr].f = `${avgColLetter}${rowIdx + 1}*(1+${allowColLetter}${rowIdx + 1})`;
+                        ws[smhAddr].v = stats.smh; ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00';
+                    }
                     rowIdx++;
                 });
-                const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalColIdx });
-                const smhColLetter = XLSX.utils.encode_col(3 + maxLaps + 2);
-                if (ws[totalAddr]) { ws[totalAddr].f = `SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx})`; ws[totalAddr].v = group.totalSmh; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00'; }
-                const uphAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalColIdx + 1 });
-                if (ws[uphAddr]) { ws[uphAddr].f = `ROUND(3600/${totalColLetter}${groupStartRow + 1},0)`; ws[uphAddr].v = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0; ws[uphAddr].t = 'n'; }
+                const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: colTotalSmh });
+                const smhColLetter = XLSX.utils.encode_col(colSmh);
+                if (ws[totalAddr]) {
+                    ws[totalAddr].f = `SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx})`;
+                    ws[totalAddr].v = group.totalSmh; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00';
+                }
+                const uphAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: colUph });
+                const totalColLetter = XLSX.utils.encode_col(colTotalSmh);
+                if (ws[uphAddr]) {
+                    ws[uphAddr].f = `ROUND(3600/${totalColLetter}${groupStartRow + 1},0)`;
+                    ws[uphAddr].v = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0; ws[uphAddr].t = 'n';
+                }
             });
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
@@ -2639,8 +2680,14 @@
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
                     const rowData = [rIdx === 0 ? item.line : '', rIdx === 0 ? item.no : '', rIdx === 0 ? item.process : '', item.subMachine];
-                    for (let i = 0; i < maxLaps; i++) rowData.push(item.laps[i] !== undefined ? parseFloat(item.laps[i].toFixed(2)) : '');
-                    rowData.push(parseFloat(stats.avg.toFixed(2)), item.ngRate, parseFloat(stats.gerakan.toFixed(2)), parseFloat(stats.ctPlusG.toFixed(2)), stats.capacity, item.actualMachine, rIdx === 0 ? group.totalCapacity : '');
+                    for (let i = 0; i < maxLaps; i++) {
+                        const lapVal = item.laps[i];
+                        if (lapVal !== undefined && lapVal !== null) {
+                            const v = typeof lapVal === 'object' ? parseFloat(lapVal.dur) : parseFloat(lapVal);
+                            rowData.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
+                        } else rowData.push('');
+                    }
+                    rowData.push(parseFloat(stats.avg.toFixed(2)), item.ngRate || 0, parseFloat(stats.gerakan.toFixed(2)), parseFloat(stats.ctPlusG.toFixed(2)), stats.capacity, stats.actualMachine, rIdx === 0 ? group.totalCapacity : '');
                     dataRows.push(rowData);
                     rowIndex++;
                 });
@@ -2703,7 +2750,8 @@
                     for (let c = 0; c <= range.e.c; c++) {
                         const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
                         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                        let fill = rowBg, font = { color: { rgb: '111827' }, sz: 11 };
+                        let fill = rowBg;
+                        let font = { color: { rgb: '111827' }, sz: 11 };
                         if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
                         if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
                         if (c === 3) fill = 'DBEAFE';
