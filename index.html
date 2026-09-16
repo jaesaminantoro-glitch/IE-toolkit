@@ -1264,7 +1264,7 @@
             showToast('✅ Data tersinkron', 'success');
 
             setTimeout(() => {
-                if (!activeLine) openLineModal();
+                openLineModal();
             }, 300);
         }
         function openModeModal() {
@@ -3960,8 +3960,7 @@
                 } else {
                     selectMode(savedMode);
                 }
-                if (!activeLine && savedMode) setTimeout(() => openLineModal(), 700);
-                else if (activeLine) syncUphFromActiveLine();
+                if (activeLine) syncUphFromActiveLine();
             };
             if (window.firebaseDB) { await activateFirebase(); }
             else {
