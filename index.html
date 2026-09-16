@@ -3810,6 +3810,11 @@
             groupOrder.sort((a, b) => String(groups[a].no || '').localeCompare(String(groups[b].no || ''), undefined, { numeric: true }));
             let rowIdx = 1;
             const smhValues = [];
+            const colRata = 4 + maxLaps;
+            const colGerakan = 6 + maxLaps;
+            const colCtg = 7 + maxLaps;
+            const colKap = 8 + maxLaps;
+            const colJml = 9 + maxLaps;
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const groupStartRow = rowIdx;
@@ -3826,14 +3831,45 @@
                         if (c === 10 + maxLaps && rIdx === 0) { fill = uphFillColor; font = { bold: true, sz: 11, color: { rgb: uphFontColor } }; }
                         ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                     }
+                    // ✅ Rumus Excel hidup untuk Rata-rata, CT + Gerakan, dan Kapasitas —
+                    // supaya kalau S1/S2/S3/Gerakan/Jml Mesin diedit di Excel, hasilnya ikut update otomatis.
+                    const stats = getRowStats(item);
+                    const rataAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colRata });
+                    if (ws[rataAddr]) {
+                        const firstS = XLSX.utils.encode_col(4);
+                        const lastS = XLSX.utils.encode_col(4 + maxLaps - 1);
+                        ws[rataAddr].f = `ROUND(AVERAGE(${firstS}${rowIdx + 1}:${lastS}${rowIdx + 1}),2)`;
+                        ws[rataAddr].v = parseFloat(stats.avg.toFixed(2)); ws[rataAddr].t = 'n'; ws[rataAddr].z = '0.00';
+                    }
+                    const ctgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colCtg });
+                    if (ws[ctgAddr]) {
+                        const rataColLetter = XLSX.utils.encode_col(colRata);
+                        const gerakanColLetter = XLSX.utils.encode_col(colGerakan);
+                        ws[ctgAddr].f = `ROUND(${rataColLetter}${rowIdx + 1}+${gerakanColLetter}${rowIdx + 1},2)`;
+                        ws[ctgAddr].v = parseFloat(stats.ctPlusG.toFixed(2)); ws[ctgAddr].t = 'n'; ws[ctgAddr].z = '0.00';
+                    }
+                    const kapAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colKap });
+                    if (ws[kapAddr]) {
+                        const ctgColLetter = XLSX.utils.encode_col(colCtg);
+                        const jmlColLetter = XLSX.utils.encode_col(colJml);
+                        ws[kapAddr].f = `IF(${ctgColLetter}${rowIdx + 1}>0,ROUND(3600/${ctgColLetter}${rowIdx + 1}*${jmlColLetter}${rowIdx + 1},0),0)`;
+                        ws[kapAddr].v = stats.capacity; ws[kapAddr].t = 'n';
+                    }
                     rowIdx++;
                 });
+                const totalCol = 10 + maxLaps;
+                const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
                 if (group.rows.length > 1) {
-                    const totalCol = 10 + maxLaps;
-                    const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
                     if (ws[totalAddr]) {
-                        const colKap = XLSX.utils.encode_col(8 + maxLaps);
-                        ws[totalAddr].f = `SUM(${colKap}${groupStartRow + 1}:${colKap}${rowIdx})`;
+                        const colKapLetter = XLSX.utils.encode_col(colKap);
+                        ws[totalAddr].f = `SUM(${colKapLetter}${groupStartRow + 1}:${colKapLetter}${rowIdx})`;
+                        ws[totalAddr].v = totalUph; ws[totalAddr].t = 'n';
+                    }
+                } else {
+                    // Baris tunggal: Total Kapasitas cukup mengikuti nilai Kapasitas baris itu sendiri
+                    if (ws[totalAddr]) {
+                        const kapAddrRef = XLSX.utils.encode_cell({ r: groupStartRow, c: colKap });
+                        ws[totalAddr].f = kapAddrRef;
                         ws[totalAddr].v = totalUph; ws[totalAddr].t = 'n';
                     }
                 }
