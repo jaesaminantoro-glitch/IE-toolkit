@@ -324,7 +324,7 @@
     <div id="editElemenModal" class="modal-bg" onclick="if(event.target===this) closeEditElemenModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-base font-bold text-gray-800">✏️ Edit Elemen</h3>
+                <h3 id="editElemenModalTitle" class="text-base font-bold text-gray-800">✏️ Edit Elemen</h3>
                 <button onclick="closeEditElemenModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-4 space-y-3">
@@ -352,7 +352,7 @@
     <div id="editSiklusModal" class="modal-bg" onclick="if(event.target===this) closeEditSiklusModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-base font-bold text-gray-800">✏️ Edit SOP Siklus</h3>
+                <h3 id="editSiklusModalTitle" class="text-base font-bold text-gray-800">✏️ Edit SOP Siklus</h3>
                 <button onclick="closeEditSiklusModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-4 space-y-3">
@@ -752,6 +752,7 @@
                             <p class="text-[10px] md:text-xs text-gray-500">Upload Excel kolom: No. SOP | Nama SOP | Elemen (per Line aktif)</p>
                         </div>
                         <div class="flex gap-2 flex-wrap">
+                            <button onclick="openAddElemenModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
                             <button onclick="openElemenImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
                             <button onclick="exportElemenCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
                             <button onclick="clearAllElemen()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset Line Ini</button>
@@ -781,7 +782,7 @@
                                 </tr>
                             </thead>
                             <tbody id="elemenMasterTableBody" class="divide-y divide-gray-200 bg-white">
-                                <tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "📥 Import".</td></tr>
+                                <tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen. Klik "➕ Tambah" atau "📥 Import".</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -809,6 +810,7 @@
                             <p class="text-[10px] md:text-xs text-gray-500">Upload Excel kolom: No. SOP | Nama SOP (per Line aktif)</p>
                         </div>
                         <div class="flex gap-2 flex-wrap">
+                            <button onclick="openAddSiklusModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
                             <button onclick="openSiklusImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
                             <button onclick="exportSiklusCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
                             <button onclick="clearAllSiklus()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset Line Ini</button>
@@ -837,7 +839,7 @@
                                 </tr>
                             </thead>
                             <tbody id="siklusMasterTableBody" class="divide-y divide-gray-200 bg-white">
-                                <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada SOP siklus. Klik "📥 Import".</td></tr>
+                                <tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada SOP siklus. Klik "➕ Tambah" atau "📥 Import".</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1114,6 +1116,7 @@
         let currentElemenIndex = 0;
         let currentCycleNum = 1;
         let editingElemenId = null;
+        let isAddModeElemen = false;
 
         // Master Siklus (per line)
         let siklusMasterList = [];
@@ -1121,6 +1124,7 @@
         let currentSiklusNama = '';
         let activeSiklusList = [];
         let editingSiklusId = null;
+        let isAddModeSiklus = false;
 
         const ALLOWANCE_FIXED = 0.10;
 
@@ -2186,7 +2190,7 @@
                 else sel.value = '__active__';
             }
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "➕ Tambah" atau "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
             filtered = [...filtered].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
@@ -2231,30 +2235,55 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
         }
+        function openAddElemenModal() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
+            isAddModeElemen = true;
+            editingElemenId = null;
+            document.getElementById('editElemenModalTitle').innerText = `➕ Tambah Elemen (${activeLine})`;
+            document.getElementById('editElemenNoSop').value = '';
+            document.getElementById('editElemenNamaSop').value = '';
+            document.getElementById('editElemenName').value = '';
+            document.getElementById('editElemenModal').classList.add('active');
+        }
         function openEditElemenModal(id) {
             const e = elemenMasterList.find(x => x.id === id);
             if (!e) return;
+            isAddModeElemen = false;
             editingElemenId = id;
+            document.getElementById('editElemenModalTitle').innerText = '✏️ Edit Elemen';
             document.getElementById('editElemenNoSop').value = e.noSop || '';
             document.getElementById('editElemenNamaSop').value = e.namaSop || '';
             document.getElementById('editElemenName').value = e.elemen || '';
             document.getElementById('editElemenModal').classList.add('active');
         }
-        function closeEditElemenModal() { document.getElementById('editElemenModal').classList.remove('active'); editingElemenId = null; }
+        function closeEditElemenModal() { document.getElementById('editElemenModal').classList.remove('active'); editingElemenId = null; isAddModeElemen = false; }
         function saveEditedElemen() {
-            if (!editingElemenId) return;
             const noSop = document.getElementById('editElemenNoSop').value.trim();
             const namaSop = document.getElementById('editElemenNamaSop').value.trim();
             const elemen = document.getElementById('editElemenName').value.trim();
             if (!noSop || !namaSop || !elemen) { showToast('⚠️ Semua field wajib diisi!', 'error'); return; }
-            const e = elemenMasterList.find(x => x.id === editingElemenId);
-            if (e) { e.noSop = noSop; e.namaSop = namaSop; e.elemen = elemen; }
-            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
-            if (firebaseReady) saveElemenMasterToFirebase();
-            renderElemenMasterTable();
-            renderSopDropdownList();
-            closeEditElemenModal();
-            showToast('✅ Elemen diperbarui', 'success');
+            if (isAddModeElemen) {
+                // ✅ TAMBAH BARU
+                const dup = elemenMasterList.find(x => x.line === activeLine && x.noSop === noSop && x.namaSop === namaSop && x.elemen === elemen);
+                if (dup) { showToast('⚠️ Elemen ini sudah ada untuk Line ini!', 'warning'); return; }
+                elemenMasterList.push({ id: generateId('el_'), line: activeLine, noSop, namaSop, elemen });
+                lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                if (firebaseReady) saveElemenMasterToFirebase();
+                renderElemenMasterTable();
+                renderSopDropdownList();
+                closeEditElemenModal();
+                showToast('✅ Elemen ditambahkan', 'success');
+            } else {
+                if (!editingElemenId) return;
+                const e = elemenMasterList.find(x => x.id === editingElemenId);
+                if (e) { e.noSop = noSop; e.namaSop = namaSop; e.elemen = elemen; }
+                lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+                if (firebaseReady) saveElemenMasterToFirebase();
+                renderElemenMasterTable();
+                renderSopDropdownList();
+                closeEditElemenModal();
+                showToast('✅ Elemen diperbarui', 'success');
+            }
         }
 
         // ============================================================
@@ -2364,7 +2393,7 @@
                 else sel.value = '__active__';
             }
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus. Klik "➕ Tambah" atau "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
             filtered = [...filtered].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
@@ -2408,28 +2437,52 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Siklus_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master siklus di-export', 'success');
         }
+        function openAddSiklusModal() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
+            isAddModeSiklus = true;
+            editingSiklusId = null;
+            document.getElementById('editSiklusModalTitle').innerText = `➕ Tambah SOP Siklus (${activeLine})`;
+            document.getElementById('editSiklusNoSop').value = '';
+            document.getElementById('editSiklusNamaSop').value = '';
+            document.getElementById('editSiklusModal').classList.add('active');
+        }
         function openEditSiklusModal(id) {
             const s = siklusMasterList.find(x => x.id === id);
             if (!s) return;
+            isAddModeSiklus = false;
             editingSiklusId = id;
+            document.getElementById('editSiklusModalTitle').innerText = '✏️ Edit SOP Siklus';
             document.getElementById('editSiklusNoSop').value = s.noSop || '';
             document.getElementById('editSiklusNamaSop').value = s.namaSop || '';
             document.getElementById('editSiklusModal').classList.add('active');
         }
-        function closeEditSiklusModal() { document.getElementById('editSiklusModal').classList.remove('active'); editingSiklusId = null; }
+        function closeEditSiklusModal() { document.getElementById('editSiklusModal').classList.remove('active'); editingSiklusId = null; isAddModeSiklus = false; }
         function saveEditedSiklus() {
-            if (!editingSiklusId) return;
             const noSop = document.getElementById('editSiklusNoSop').value.trim();
             const namaSop = document.getElementById('editSiklusNamaSop').value.trim();
             if (!noSop || !namaSop) { showToast('⚠️ Semua field wajib diisi!', 'error'); return; }
-            const s = siklusMasterList.find(x => x.id === editingSiklusId);
-            if (s) { s.noSop = noSop; s.namaSop = namaSop; }
-            lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
-            if (firebaseReady) saveSiklusMasterToFirebase();
-            renderSiklusMasterTable();
-            renderSiklusDropdownList();
-            closeEditSiklusModal();
-            showToast('✅ SOP siklus diperbarui', 'success');
+            if (isAddModeSiklus) {
+                // ✅ TAMBAH BARU
+                const dup = siklusMasterList.find(x => x.line === activeLine && x.noSop === noSop && x.namaSop === namaSop);
+                if (dup) { showToast('⚠️ SOP siklus ini sudah ada untuk Line ini!', 'warning'); return; }
+                siklusMasterList.push({ id: generateId('sk_'), line: activeLine, noSop, namaSop });
+                lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+                if (firebaseReady) saveSiklusMasterToFirebase();
+                renderSiklusMasterTable();
+                renderSiklusDropdownList();
+                closeEditSiklusModal();
+                showToast('✅ SOP siklus ditambahkan', 'success');
+            } else {
+                if (!editingSiklusId) return;
+                const s = siklusMasterList.find(x => x.id === editingSiklusId);
+                if (s) { s.noSop = noSop; s.namaSop = namaSop; }
+                lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+                if (firebaseReady) saveSiklusMasterToFirebase();
+                renderSiklusMasterTable();
+                renderSiklusDropdownList();
+                closeEditSiklusModal();
+                showToast('✅ SOP siklus diperbarui', 'success');
+            }
         }
 
         // ============================================================
