@@ -1581,7 +1581,7 @@
                 </div>
             `).join('');
         }
-        function selectLineTemp(lineName) { tempSelectedLine = lineName; renderLineList(); }
+        function selectLineTemp(lineName) { tempSelectedLine = lineName; renderLineList(); saveLineSelection(); }
         function openLineModal() {
             tempSelectedLine = activeLine || '';
             renderLineList();
@@ -2733,6 +2733,7 @@
         }
         function removeLap(index) {
             const removed = currentLaps[index];
+            const wasLastLap = (index === currentLaps.length - 1);
             currentLaps.splice(index, 1);
             if (currentMode === 'elemen' && activeElemenList.length > 0 && removed) {
                 const lastLap = currentLaps[currentLaps.length - 1];
@@ -2746,7 +2747,19 @@
                 updateLapButtonLabel();
             }
             updateLapsUI();
-            lastLapTimestamp = Date.now();
+            // ✅ FIX: jangan selalu reset titik awal split ke "sekarang".
+            // Timer utama tetap jalan di background saat siklus dihapus, jadi:
+            // - Kalau yang dihapus siklus PALING AKHIR & timer masih jalan, durasinya
+            //   digabung balik ke segmen yang sedang berjalan (bukan dibuang begitu saja),
+            //   supaya waktu yang sudah lewat tidak hilang / dipotong.
+            // - Kalau yang dihapus siklus di tengah/awal, lastLapTimestamp TIDAK disentuh
+            //   sama sekali karena tidak berhubungan dengan segmen yang sedang berjalan.
+            if (isRunning && wasLastLap && removed !== undefined) {
+                const removedDur = (typeof removed === 'object') ? removed.dur : removed;
+                if (typeof removedDur === 'number' && !isNaN(removedDur)) {
+                    lastLapTimestamp -= removedDur * 1000;
+                }
+            }
             if (currentLaps.length === 0) {
                 setButtonEnabled('commitBtn', false);
                 document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--';
