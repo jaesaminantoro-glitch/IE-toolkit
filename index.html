@@ -75,9 +75,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ============================================================
-           HEADER — FIXED: header-right selalu di kanan
-           ============================================================ */
         .header-flex {
             display: flex;
             flex-wrap: nowrap;
@@ -1217,14 +1214,50 @@
         }
 
         // ============================================================
-        // MODE MANAGEMENT
+        // MODE MANAGEMENT — dengan AUTO-REFRESH saat pilih mode
         // ============================================================
-        function selectMode(mode) {
+        async function selectMode(mode) {
             currentMode = mode;
             lsSave(LS_KEY_MODE, mode);
-            document.getElementById('modeModal').classList.remove('active');
+
+            // Tampilkan loading di mode card
+            const modeModal = document.getElementById('modeModal');
+            const modeCard = modeModal ? modeModal.querySelector(`button[onclick="selectMode('${mode}')"]`) : null;
+            if (modeCard) {
+                modeCard.style.opacity = '0.5';
+                modeCard.style.pointerEvents = 'none';
+            }
+
+            // Sync data terbaru dari Firebase
+            if (firebaseReady) {
+                try {
+                    setSyncStatus('syncing');
+                    await loadAllFromFirebaseOnce();
+                    setSyncStatus('online');
+                } catch (e) {
+                    console.warn('⚠️ Gagal refresh dari Firebase, pakai data lokal', e);
+                    setSyncStatus('offline');
+                }
+            }
+
+            // Sembunyikan modal & tampilkan app
+            if (modeModal) modeModal.classList.remove('active');
             document.getElementById('appContainer').classList.remove('hidden');
+
+            // Render UI sesuai mode
             applyModeToUI();
+            renderMasterTable();
+            renderStandardCheck();
+            updateCounters();
+            renderMachineTable();
+            renderElemenMasterTable();
+            renderSiklusMasterTable();
+            updateLineDisplay();
+            syncUphFromActiveLine();
+
+            showToast('✅ Data tersinkron', 'success');
+
+            // Buka modal Line kalau belum pilih Line
             setTimeout(() => {
                 if (!activeLine) openLineModal();
             }, 300);
@@ -2063,7 +2096,6 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
-            // Sort by No. SOP
             filtered = [...filtered].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             tbody.innerHTML = filtered.map(e => `
                 <tr class="hover:bg-purple-50/30">
@@ -2242,7 +2274,6 @@
                 tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
-            // Sort by No. SOP
             filtered = [...filtered].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             tbody.innerHTML = filtered.map(s => `
                 <tr class="hover:bg-emerald-50/30">
@@ -2708,7 +2739,6 @@
                     <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-0.5 text-sm">×</button>
                 </div>`;
             }).join('');
-            // Auto-scroll ke chip terbaru biar chip hijau (terakhir) selalu kelihatan
             setTimeout(() => {
                 const lastChip = container.lastElementChild;
                 if (lastChip && lastChip.scrollIntoView) {
@@ -2980,11 +3010,7 @@
                 groups[key].rows.push({ ...item, originalIndex });
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
-            groupOrder.sort((a, b) => {
-                const noA = groups[a].no || '';
-                const noB = groups[b].no || '';
-                return String(noA).localeCompare(String(noB), undefined, { numeric: true });
-            });
+            groupOrder.sort((a, b) => String(groups[a].no || '').localeCompare(String(groups[b].no || ''), undefined, { numeric: true }));
             let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
@@ -3061,11 +3087,7 @@
                 groups[key].rows.push({ ...item, originalIndex, stats });
                 groups[key].totalSmh += stats.smh;
             });
-            groupOrder.sort((a, b) => {
-                const noA = groups[a].noSop || '';
-                const noB = groups[b].noSop || '';
-                return String(noA).localeCompare(String(noB), undefined, { numeric: true });
-            });
+            groupOrder.sort((a, b) => String(groups[a].noSop || '').localeCompare(String(groups[b].noSop || ''), undefined, { numeric: true }));
             let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
@@ -3283,7 +3305,7 @@
         }
 
         // ============================================================
-        // EXPORT — ELEMEN
+        // EXPORT — ELEMEN (rapi + LBR)
         // ============================================================
         function buildElemenDataRows() {
             const dataToExport = masterData;
@@ -3347,6 +3369,7 @@
             const range = XLSX.utils.decode_range(ws['!ref']);
             const standardUph = getLineStandardUph();
             const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            // Header kuning
             for (let c = 0; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                 if (!ws[addr]) ws[addr] = { t: 's', v: '' };
@@ -3381,14 +3404,7 @@
                         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                         let fill = 'FFFFFF';
                         let font = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 0) fill = 'E0E7FF';
-                        else if (c === 1) fill = 'EDE9FE';
-                        else if (c === 2) fill = 'F5F3FF';
-                        else if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
-                        else if (c === colAvg) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === colAllow) fill = 'F3E8FF';
-                        else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === colTotalSmh) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
                         else if (c === colUph) { fill = uphFillColor; font = { bold: true, sz: 11, color: { rgb: uphFontColor } }; }
                         ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                     }
@@ -3405,16 +3421,16 @@
                     if (ws[smhAddr]) {
                         const avgColLetter = XLSX.utils.encode_col(colAvg);
                         const allowColLetter = XLSX.utils.encode_col(colAllow);
-                        ws[smhAddr].f = `${avgColLetter}${rowIdx + 1}*(1+${allowColLetter}${rowIdx + 1})`;
-                        ws[smhAddr].v = stats.smh; ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00';
+                        ws[smhAddr].f = `ROUND(${avgColLetter}${rowIdx + 1}*(1+${allowColLetter}${rowIdx + 1}),2)`;
+                        ws[smhAddr].v = parseFloat(stats.smh.toFixed(2)); ws[smhAddr].t = 'n'; ws[smhAddr].z = '0.00';
                     }
                     rowIdx++;
                 });
                 const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: colTotalSmh });
                 const smhColLetter = XLSX.utils.encode_col(colSmh);
                 if (ws[totalAddr]) {
-                    ws[totalAddr].f = `SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx})`;
-                    ws[totalAddr].v = group.totalSmh; ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00';
+                    ws[totalAddr].f = `ROUND(SUM(${smhColLetter}${groupStartRow + 1}:${smhColLetter}${rowIdx}),2)`;
+                    ws[totalAddr].v = parseFloat(group.totalSmh.toFixed(2)); ws[totalAddr].t = 'n'; ws[totalAddr].z = '0.00';
                 }
                 const uphAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: colUph });
                 const totalColLetter = XLSX.utils.encode_col(colTotalSmh);
@@ -3423,6 +3439,33 @@
                     ws[uphAddr].v = uphGroup; ws[uphAddr].t = 'n';
                 }
             });
+
+            // LINE BALANCE RATE
+            const smhValues = [];
+            groupOrder.forEach(key => { const g = groups[key]; if (g.totalSmh > 0) smhValues.push(g.totalSmh); });
+            if (smhValues.length > 0) {
+                const totalSmhAll = smhValues.reduce((a, b) => a + b, 0);
+                const maxSmh = Math.max(...smhValues);
+                const jumlahProses = smhValues.length;
+                const lbr = maxSmh > 0 ? (totalSmhAll / (jumlahProses * maxSmh)) * 100 : 0;
+                // baris kosong
+                const emptyRow = rowIdx;
+                for (let c = 0; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: emptyRow, c: c });
+                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                }
+                rowIdx++;
+                const lbrRow = rowIdx;
+                const lbrColor = lbr >= 90 ? 'D1FAE5' : (lbr >= 75 ? 'FEF3C7' : 'FECACA');
+                const lbrFont = lbr >= 90 ? '065F46' : (lbr >= 75 ? '92400E' : '991B1B');
+                const labelAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 0 });
+                ws[labelAddr] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BORDER } };
+                const infoAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 1 });
+                ws[infoAddr] = { t: 's', v: `Total SMH: ${totalSmhAll.toFixed(2)}s · Proses: ${jumlahProses} · Max SMH: ${maxSmh.toFixed(2)}s`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BORDER } };
+                const lbrAddr = XLSX.utils.encode_cell({ r: lbrRow, c: colUph });
+                ws[lbrAddr] = { t: 'n', v: parseFloat(lbr.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lbrFont } }, fill: { patternType: 'solid', fgColor: { rgb: lbrColor } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER } };
+            }
+
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
@@ -3432,7 +3475,7 @@
         }
 
         // ============================================================
-        // EXPORT — SIKLUS
+        // EXPORT — SIKLUS (rapi + LBR)
         // ============================================================
         function buildSiklusDataRows() {
             const dataToExport = masterData;
@@ -3477,6 +3520,7 @@
             const colAllow = colAvg + 1;
             const colSmh = colAllow + 1;
             const colUph = colSmh + 1;
+            const smhValues = [];
             for (let rowIdx = 1; rowIdx < dataRows.length; rowIdx++) {
                 const uphVal = dataRows[rowIdx][colUph];
                 const uphFillColor = getUphHexColor(uphVal, standardUph);
@@ -3486,13 +3530,7 @@
                     if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                     let fill = 'FFFFFF';
                     let font = { color: { rgb: '111827' }, sz: 11 };
-                    if (c === 0) fill = 'E0E7FF';
-                    else if (c === 1) fill = 'EDE9FE';
-                    else if (c === 2) fill = 'F5F3FF';
-                    else if (c >= 3 && c < 3 + maxLaps) fill = 'EFF6FF';
-                    else if (c === colAvg) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                    else if (c === colAllow) fill = 'F3E8FF';
-                    else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                    if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
                     else if (c === colUph) { fill = uphFillColor; font = { bold: true, sz: 11, color: { rgb: uphFontColor } }; }
                     ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                 }
@@ -3501,6 +3539,7 @@
                     const firstCT = XLSX.utils.encode_col(3);
                     const lastCT = XLSX.utils.encode_col(3 + maxLaps - 1);
                     ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
+                    ws[avgAddr].z = '0.00';
                 }
                 const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAllow });
                 if (ws[allowAddr]) { ws[allowAddr].v = ALLOWANCE_FIXED; ws[allowAddr].t = 'n'; ws[allowAddr].z = '0.00'; }
@@ -3508,7 +3547,10 @@
                 if (ws[smhAddr]) {
                     const avgColLetter = XLSX.utils.encode_col(colAvg);
                     const allowColLetter = XLSX.utils.encode_col(colAllow);
-                    ws[smhAddr].f = `${avgColLetter}${rowIdx + 1}*(1+${allowColLetter}${rowIdx + 1})`;
+                    ws[smhAddr].f = `ROUND(${avgColLetter}${rowIdx + 1}*(1+${allowColLetter}${rowIdx + 1}),2)`;
+                    ws[smhAddr].z = '0.00';
+                    const smhVal = dataRows[rowIdx][colSmh];
+                    if (smhVal !== undefined && !isNaN(smhVal)) smhValues.push(parseFloat(smhVal));
                 }
                 const uphAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colUph });
                 if (ws[uphAddr]) {
@@ -3516,6 +3558,29 @@
                     ws[uphAddr].f = `ROUND(3600/${smhColLetter}${rowIdx + 1},0)`;
                 }
             }
+
+            // LINE BALANCE RATE
+            if (smhValues.length > 0) {
+                const totalSmhAll = smhValues.reduce((a, b) => a + b, 0);
+                const maxSmh = Math.max(...smhValues);
+                const jumlahProses = smhValues.length;
+                const lbr = maxSmh > 0 ? (totalSmhAll / (jumlahProses * maxSmh)) * 100 : 0;
+                let lbrRow = dataRows.length;
+                for (let c = 0; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: lbrRow, c: c });
+                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                }
+                lbrRow++;
+                const lbrColor = lbr >= 90 ? 'D1FAE5' : (lbr >= 75 ? 'FEF3C7' : 'FECACA');
+                const lbrFont = lbr >= 90 ? '065F46' : (lbr >= 75 ? '92400E' : '991B1B');
+                const labelAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 0 });
+                ws[labelAddr] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BORDER } };
+                const infoAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 1 });
+                ws[infoAddr] = { t: 's', v: `Total SMH: ${totalSmhAll.toFixed(2)}s · Proses: ${jumlahProses} · Max SMH: ${maxSmh.toFixed(2)}s`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BORDER } };
+                const lbrAddr = XLSX.utils.encode_cell({ r: lbrRow, c: colUph });
+                ws[lbrAddr] = { t: 'n', v: parseFloat(lbr.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lbrFont } }, fill: { patternType: 'solid', fgColor: { rgb: lbrColor } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER } };
+            }
+
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
@@ -3525,7 +3590,7 @@
         }
 
         // ============================================================
-        // EXPORT — MESIN
+        // EXPORT — MESIN (rapi + LBR)
         // ============================================================
         function buildMesinDataRows() {
             const dataToExport = masterData;
@@ -3600,29 +3665,20 @@
             });
             groupOrder.sort((a, b) => String(groups[a].no || '').localeCompare(String(groups[b].no || ''), undefined, { numeric: true }));
             let rowIdx = 1;
+            const smhValues = [];
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const groupStartRow = rowIdx;
                 const totalUph = group.capacity;
+                if (totalUph > 0) smhValues.push(3600 / totalUph);
                 const uphFillColor = getUphHexColor(totalUph, standardUph);
                 const uphFontColor = getUphFontColor(totalUph, standardUph);
                 group.rows.forEach((item, rIdx) => {
-                    const stats = getRowStats(item);
                     for (let c = 0; c <= range.e.c; c++) {
                         const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
                         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                         let fill = 'FFFFFF';
                         let font = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
-                        if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
-                        if (c === 3) fill = 'DBEAFE';
-                        if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
-                        if (c === 4 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        if (c === 5 + maxLaps) fill = 'FFFFFF';
-                        if (c === 6 + maxLaps) fill = 'FED7AA';
-                        if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        if (c === 9 + maxLaps) fill = 'FCE7F3';
                         if (c === 10 + maxLaps && rIdx === 0) {
                             fill = uphFillColor;
                             font = { bold: true, sz: 11, color: { rgb: uphFontColor } };
@@ -3651,6 +3707,29 @@
                     }
                 }
             });
+
+            // LINE BALANCE RATE
+            if (smhValues.length > 0) {
+                const totalSmhAll = smhValues.reduce((a, b) => a + b, 0);
+                const maxSmh = Math.max(...smhValues);
+                const jumlahProses = smhValues.length;
+                const lbr = maxSmh > 0 ? (totalSmhAll / (jumlahProses * maxSmh)) * 100 : 0;
+                let lbrRow = rowIdx;
+                for (let c = 0; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: lbrRow, c: c });
+                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                }
+                lbrRow++;
+                const lbrColor = lbr >= 90 ? 'D1FAE5' : (lbr >= 75 ? 'FEF3C7' : 'FECACA');
+                const lbrFont = lbr >= 90 ? '065F46' : (lbr >= 75 ? '92400E' : '991B1B');
+                const labelAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 0 });
+                ws[labelAddr] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BORDER } };
+                const infoAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 1 });
+                ws[infoAddr] = { t: 's', v: `Total: ${totalSmhAll.toFixed(2)}s · Proses: ${jumlahProses} · Max: ${maxSmh.toFixed(2)}s`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BORDER } };
+                const lbrAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 10 + maxLaps });
+                ws[lbrAddr] = { t: 'n', v: parseFloat(lbr.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lbrFont } }, fill: { patternType: 'solid', fgColor: { rgb: lbrColor } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER } };
+            }
+
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
@@ -3694,15 +3773,7 @@
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
         function downloadBackup() {
-            const backup = {
-                version: '1.0',
-                timestamp: new Date().toISOString(),
-                lineList,
-                machineList,
-                elemenMasterList,
-                siklusMasterList,
-                masterData
-            };
+            const backup = { version: '1.0', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, masterData };
             const json = JSON.stringify(backup, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const fname = `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`;
