@@ -75,15 +75,33 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* ============================================================
+           HEADER — FIXED: header-right selalu di kanan
+           ============================================================ */
         .header-flex {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 6px 8px;
             align-items: center;
             justify-content: space-between;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        .header-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
-        .header-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .header-flex::-webkit-scrollbar { display: none; }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
 
         .header-btn {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -235,10 +253,12 @@
                 <div id="lineListContainer" class="space-y-2"></div>
                 <div class="border-t border-gray-200 pt-3">
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tambah Line Baru</label>
-                    <div class="flex gap-2 items-center">
-                        <input type="text" id="newLineInput" placeholder="Nama Line" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <input type="number" id="newLineUph" placeholder="UPH" min="0" step="10" value="500" class="w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm font-bold text-indigo-700 text-center">
-                        <button onclick="addNewLineFromModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg whitespace-nowrap">➕</button>
+                    <div class="space-y-2">
+                        <div class="flex gap-2 items-center">
+                            <input type="text" id="newLineInput" placeholder="Nama Line" class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <input type="number" id="newLineUph" placeholder="UPH" min="0" step="10" value="500" class="w-20 shrink-0 px-2 py-2 border border-gray-300 rounded-lg text-sm font-bold text-indigo-700 text-center">
+                        </div>
+                        <button onclick="addNewLineFromModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-lg">➕ Tambah Line</button>
                     </div>
                 </div>
             </div>
@@ -852,11 +872,11 @@
                         </div>
                         <div>
                             <label class="block text-[10px] md:text-xs font-semibold text-gray-600 uppercase mb-1">UPH</label>
-                            <div class="flex gap-2 items-center">
+                            <div class="flex gap-2 items-center min-w-0">
                                 <input type="number" id="standardUph" value="500" min="0" step="10" inputmode="numeric"
                                     oninput="onUphInputChange()"
-                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
-                                <button onclick="clearStandardUph()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap" title="Kosongkan">✖️</button>
+                                    class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-lg font-bold text-blue-700 focus:ring-2 focus:ring-blue-500">
+                                <button onclick="clearStandardUph()" class="shrink-0 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg" title="Kosongkan">✖️</button>
                             </div>
                             <p class="text-[10px] text-gray-400 mt-1" id="uphSourceHint">Auto dari Line</p>
                         </div>
@@ -1089,7 +1109,7 @@
         let uphUserOverride = false;
 
         // Master Elemen (per line)
-        let elemenMasterList = []; // [{id, line, noSop, namaSop, elemen}]
+        let elemenMasterList = [];
         let currentElemenNo = '';
         let currentElemenNama = '';
         let activeElemenList = [];
@@ -1098,7 +1118,7 @@
         let editingElemenId = null;
 
         // Master Siklus (per line)
-        let siklusMasterList = []; // [{id, line, noSop, namaSop}]
+        let siklusMasterList = [];
         let currentSiklusNo = '';
         let currentSiklusNama = '';
         let activeSiklusList = [];
@@ -1161,7 +1181,7 @@
             const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
             const toast = document.createElement('div');
             toast.innerText = message;
-            toast.className = `fixed bottom-24 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[200] toast-animate`;
+            toast.className = `fixed top-20 left-1/2 -translate-x-1/2 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg text-xs md:text-sm z-[200] toast-animate`;
             toast.style.maxWidth = '90vw';
             toast.style.textAlign = 'center';
             document.body.appendChild(toast);
@@ -2026,7 +2046,6 @@
             else if (filterLine !== '__all__') filtered = elemenMasterList.filter(e => e.line === filterLine);
             const search = (document.getElementById('elemenSearch')?.value || '').toLowerCase().trim();
             if (search) filtered = filtered.filter(e => String(e.noSop).toLowerCase().includes(search) || String(e.namaSop).toLowerCase().includes(search) || String(e.elemen).toLowerCase().includes(search) || String(e.line).toLowerCase().includes(search));
-            // Update filter dropdown options
             const sel = document.getElementById('elemenFilterLine');
             if (sel) {
                 const linesInData = [...new Set(elemenMasterList.map(e => e.line).filter(Boolean))].sort();
@@ -2044,6 +2063,8 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
+            // Sort by No. SOP
+            filtered = [...filtered].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             tbody.innerHTML = filtered.map(e => `
                 <tr class="hover:bg-purple-50/30">
                     <td class="px-2 py-2 text-center border-r border-b"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(e.line || '-')}</span></td>
@@ -2221,6 +2242,8 @@
                 tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus. Klik "📥 Import".' : 'Tidak ada hasil.'}</td></tr>`;
                 return;
             }
+            // Sort by No. SOP
+            filtered = [...filtered].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             tbody.innerHTML = filtered.map(s => `
                 <tr class="hover:bg-emerald-50/30">
                     <td class="px-2 py-2 text-center border-r border-b"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(s.line || '-')}</span></td>
@@ -2685,7 +2708,16 @@
                     <button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-0.5 text-sm">×</button>
                 </div>`;
             }).join('');
-            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+            // Auto-scroll ke chip terbaru biar chip hijau (terakhir) selalu kelihatan
+            setTimeout(() => {
+                const lastChip = container.lastElementChild;
+                if (lastChip && lastChip.scrollIntoView) {
+                    lastChip.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    setTimeout(() => { container.scrollTop += 8; }, 200);
+                } else {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }, 100);
         }
 
         // ============================================================
@@ -2948,7 +2980,6 @@
                 groups[key].rows.push({ ...item, originalIndex });
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
-            // ✅ SORT by No
             groupOrder.sort((a, b) => {
                 const noA = groups[a].no || '';
                 const noB = groups[b].no || '';
@@ -3030,7 +3061,6 @@
                 groups[key].rows.push({ ...item, originalIndex, stats });
                 groups[key].totalSmh += stats.smh;
             });
-            // ✅ SORT by No. SOP
             groupOrder.sort((a, b) => {
                 const noA = groups[a].noSop || '';
                 const noB = groups[b].noSop || '';
@@ -3094,7 +3124,6 @@
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
             theadRow.innerHTML = headerHTML;
-            // ✅ SORT by No. SOP
             const sorted = [...filteredData].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             let htmlOutput = '';
             sorted.forEach((item) => {
@@ -3271,12 +3300,7 @@
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
-            // Sort
-            groupOrder.sort((a, b) => {
-                const noA = groups[a].noSop || '';
-                const noB = groups[b].noSop || '';
-                return String(noA).localeCompare(String(noB), undefined, { numeric: true });
-            });
+            groupOrder.sort((a, b) => String(groups[a].noSop || '').localeCompare(String(groups[b].noSop || ''), undefined, { numeric: true }));
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
@@ -3416,7 +3440,6 @@
             const header = ['Line', 'No. SOP', 'Nama SOP'];
             for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
             header.push('Average (s)', 'Allowance', 'SMH (s)', 'UPH');
-            // Sort by No. SOP
             const sorted = [...dataToExport].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             const dataRows = [header];
             sorted.forEach(item => {
@@ -3518,7 +3541,6 @@
                 groups[key].rows.push(item);
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
-            // Sort by No
             groupOrder.sort((a, b) => String(groups[a].no || '').localeCompare(String(groups[b].no || ''), undefined, { numeric: true }));
             const dataRows = [header];
             const merges = [];
@@ -3563,13 +3585,11 @@
             const range = XLSX.utils.decode_range(ws['!ref']);
             const standardUph = getLineStandardUph();
             const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            // Header style
             for (let c = 0; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                 if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                 ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
             }
-            // Data style + warna dinamis
             const groups = {};
             const groupOrder = [];
             masterData.forEach(item => {
@@ -3611,7 +3631,6 @@
                     }
                     rowIdx++;
                 });
-                // Total Kapasitas formula & value
                 if (group.rows.length > 1) {
                     const totalCol = 10 + maxLaps;
                     const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
@@ -3838,7 +3857,6 @@
                 }, 5000);
             }
 
-            // Tutup dropdown ketika klik di luar
             document.addEventListener('click', (e) => {
                 const mBtn = document.getElementById('machineDropdownBtn');
                 const mPanel = document.getElementById('machineDropdownPanel');
