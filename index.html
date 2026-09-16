@@ -3878,13 +3878,18 @@
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
             const originalData = masterData;
+            // ✅ Ikuti filter Line yang lagi aktif di dropdown Data (Line Aktif / Semua Line / Line tertentu),
+            // bukan selalu semua line.
+            let dataToExport = getFilteredData();
             if (currentMode === 'mesin') {
-                masterData = masterData.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
+                dataToExport = dataToExport.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
             } else if (currentMode === 'elemen') {
-                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen !== undefined);
+                dataToExport = dataToExport.filter(d => d.noSop !== undefined && d.elemen !== undefined);
             } else if (currentMode === 'siklus') {
-                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen === undefined);
+                dataToExport = dataToExport.filter(d => d.noSop !== undefined && d.elemen === undefined);
             }
+            if (dataToExport.length === 0) { showToast('Tidak ada data untuk line ini!', 'error'); return; }
+            masterData = dataToExport;
             try {
                 if (currentMode === 'elemen') exportElemenXLSX();
                 else if (currentMode === 'siklus') exportSiklusXLSX();
@@ -3895,13 +3900,18 @@
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             const originalData = masterData;
+            // ✅ Ikuti filter Line yang lagi aktif di dropdown Data (Line Aktif / Semua Line / Line tertentu),
+            // bukan selalu semua line.
+            let dataToExport = getFilteredData();
             if (currentMode === 'mesin') {
-                masterData = masterData.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
+                dataToExport = dataToExport.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
             } else if (currentMode === 'elemen') {
-                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen !== undefined);
+                dataToExport = dataToExport.filter(d => d.noSop !== undefined && d.elemen !== undefined);
             } else if (currentMode === 'siklus') {
-                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen === undefined);
+                dataToExport = dataToExport.filter(d => d.noSop !== undefined && d.elemen === undefined);
             }
+            if (dataToExport.length === 0) { showToast('Tidak ada data untuk line ini!', 'error'); return; }
+            masterData = dataToExport;
             try {
                 let dataRows;
                 if (currentMode === 'elemen') dataRows = buildElemenDataRows().dataRows;
