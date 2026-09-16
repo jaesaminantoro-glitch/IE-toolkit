@@ -1214,13 +1214,16 @@
         }
 
         // ============================================================
-        // MODE MANAGEMENT — dengan AUTO-REFRESH saat pilih mode
+        // MODE MANAGEMENT — AUTO-REFRESH saat pilih mode
         // ============================================================
         async function selectMode(mode) {
             currentMode = mode;
             lsSave(LS_KEY_MODE, mode);
 
-            // Tampilkan loading di mode card
+            // ✅ RESET masterData dulu biar tidak tercampur mode lama
+            masterData = [];
+
+            // Loading indicator di mode card
             const modeModal = document.getElementById('modeModal');
             const modeCard = modeModal ? modeModal.querySelector(`button[onclick="selectMode('${mode}')"]`) : null;
             if (modeCard) {
@@ -1240,11 +1243,9 @@
                 }
             }
 
-            // Sembunyikan modal & tampilkan app
             if (modeModal) modeModal.classList.remove('active');
             document.getElementById('appContainer').classList.remove('hidden');
 
-            // Render UI sesuai mode
             applyModeToUI();
             renderMasterTable();
             renderStandardCheck();
@@ -1257,7 +1258,6 @@
 
             showToast('✅ Data tersinkron', 'success');
 
-            // Buka modal Line kalau belum pilih Line
             setTimeout(() => {
                 if (!activeLine) openLineModal();
             }, 300);
@@ -1506,6 +1506,10 @@
                 if (snapM.exists()) {
                     masterData = snapM.val().data || [];
                     lastServerUpdate = snapM.val().lastUpdate;
+                } else {
+                    // ✅ Kosongkan kalau node belum ada — jangan fallback ke node lain
+                    masterData = [];
+                    lastServerUpdate = null;
                 }
 
                 lsSave(LS_KEY_MACHINES, machineList);
@@ -1597,7 +1601,8 @@
             uphInp.value = '500';
             showToast('✅ Line ditambahkan', 'success');
         }
-        function saveLineSelection() {
+        // ✅ Ganti Line — dengan auto-refresh data
+        async function saveLineSelection() {
             if (!tempSelectedLine) { showToast('Pilih Line dulu!', 'error'); return; }
             activeLine = tempSelectedLine;
             localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
@@ -1605,9 +1610,49 @@
             uphUserOverride = false;
             syncUphFromActiveLine();
             closeLineModal();
+
+            // Reset state per Line
+            currentElemenNo = ''; currentElemenNama = ''; activeElemenList = [];
+            currentElemenIndex = 0; currentCycleNum = 1;
+            currentSiklusNo = ''; currentSiklusNama = ''; activeSiklusList = [];
+            selectedMachineId = '';
+            currentLaps = [];
+            elapsedTime = 0;
+            isRunning = false;
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            updateLapsUI();
+            document.getElementById('timerDisplay').innerText = '00:00.00';
+
+            const sopLabel = document.getElementById('sopDropdownLabel');
+            if (sopLabel) { sopLabel.innerText = '-- Pilih No. SOP --'; sopLabel.className = 'text-gray-500'; }
+            const siklusLabel = document.getElementById('siklusDropdownLabel');
+            if (siklusLabel) { siklusLabel.innerText = '-- Pilih No. SOP --'; siklusLabel.className = 'text-gray-500'; }
+            const machineLabel = document.getElementById('machineDropdownLabel');
+            if (machineLabel) { machineLabel.innerText = '-- Pilih Mesin --'; machineLabel.className = 'text-gray-500'; }
+            document.getElementById('elemenActiveInfo').classList.add('hidden');
+            document.getElementById('siklusActiveInfo').classList.add('hidden');
+            document.getElementById('inputNo').value = '';
+            document.getElementById('inputProcess').value = '';
+
+            // Soft refresh data dari Firebase untuk Line baru
+            if (firebaseReady) {
+                setSyncStatus('syncing');
+                try {
+                    await loadAllFromFirebaseOnce();
+                } catch (e) {
+                    console.warn('⚠️ Gagal refresh data Line baru', e);
+                }
+                setSyncStatus('online');
+            }
+
             renderMasterTable();
+            renderStandardCheck();
+            updateCounters();
             if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
             if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
+            if (currentMode === 'mesin') { renderMachineDropdownList(); }
+            updateLapButtonLabel();
+
             showToast(`✅ Line: ${activeLine}`, 'success');
         }
         function updateLineDisplay() {
@@ -2564,20 +2609,13 @@
             if (dur >= 0.1) {
                 if (currentMode === 'elemen' && activeElemenList.length > 0) {
                     const currentEl = activeElemenList[currentElemenIndex];
-                    currentLaps.push({
-                        dur: parseFloat(dur.toFixed(2)),
-                        noSop: currentElemenNo, namaSop: currentElemenNama,
-                        elemen: currentEl ? currentEl.elemen : '-', cycleNum: currentCycleNum
-                    });
+                    currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentElemenNo, namaSop: currentElemenNama, elemen: currentEl ? currentEl.elemen : '-', cycleNum: currentCycleNum });
                     currentElemenIndex++;
                     if (currentElemenIndex >= activeElemenList.length) { currentElemenIndex = 0; currentCycleNum++; }
                     updateElemenActiveInfo();
                     updateLapButtonLabel();
                 } else if (currentMode === 'siklus' && currentSiklusNo) {
-                    currentLaps.push({
-                        dur: parseFloat(dur.toFixed(2)),
-                        noSop: currentSiklusNo, namaSop: currentSiklusNama
-                    });
+                    currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentSiklusNo, namaSop: currentSiklusNama });
                 } else {
                     currentLaps.push(parseFloat(dur.toFixed(2)));
                 }
@@ -2665,11 +2703,7 @@
 
             if (currentMode === 'elemen' && activeElemenList.length > 0) {
                 const currentEl = activeElemenList[currentElemenIndex];
-                currentLaps.push({
-                    dur: parseFloat(dur.toFixed(2)),
-                    noSop: currentElemenNo, namaSop: currentElemenNama,
-                    elemen: currentEl.elemen, cycleNum: currentCycleNum
-                });
+                currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentElemenNo, namaSop: currentElemenNama, elemen: currentEl.elemen, cycleNum: currentCycleNum });
                 updateLapsUI();
                 document.getElementById('lapSplitPreview').innerText = `✔️ ${currentEl.elemen}: ${dur.toFixed(2)}s`;
                 currentElemenIndex++;
@@ -2681,10 +2715,7 @@
                 updateElemenActiveInfo();
                 updateLapButtonLabel();
             } else if (currentMode === 'siklus' && currentSiklusNo) {
-                currentLaps.push({
-                    dur: parseFloat(dur.toFixed(2)),
-                    noSop: currentSiklusNo, namaSop: currentSiklusNama
-                });
+                currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentSiklusNo, namaSop: currentSiklusNama });
                 updateLapsUI();
                 document.getElementById('lapSplitPreview').innerText = `✔️ ${currentSiklusNo}: ${dur.toFixed(2)}s`;
             } else {
@@ -2751,7 +2782,7 @@
         }
 
         // ============================================================
-        // COMMIT
+        // COMMIT — dengan validasi mode
         // ============================================================
         function commitStudyRow() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
@@ -2760,6 +2791,7 @@
             else commitMesinRow();
         }
         function commitElemenRow() {
+            if (currentMode !== 'elemen') { showToast('⚠️ Mode tidak sesuai!', 'error'); return; }
             if (!currentElemenNo || activeElemenList.length === 0) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
             const grouped = {};
@@ -2782,10 +2814,7 @@
                     existing.laps = existing.laps.concat(grouped[elemenName]);
                     existing.sessions = (existing.sessions || 1) + 1;
                 } else {
-                    masterData.push({
-                        line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama,
-                        elemen: elemenName, laps: [...grouped[elemenName]], sessions: 1
-                    });
+                    masterData.push({ line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: elemenName, laps: [...grouped[elemenName]], sessions: 1 });
                 }
             });
             saveMasterToLS();
@@ -2793,6 +2822,7 @@
             resetStopwatchAfterCommit();
         }
         function commitSiklusRow() {
+            if (currentMode !== 'siklus') { showToast('⚠️ Mode tidak sesuai!', 'error'); return; }
             if (!currentSiklusNo) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
             const durs = currentLaps.filter(l => typeof l === 'object' && l.dur).map(l => l.dur);
@@ -2808,16 +2838,14 @@
                 existing.laps = existing.laps.concat(durs);
                 existing.sessions = (existing.sessions || 1) + 1;
             } else {
-                masterData.push({
-                    line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama,
-                    laps: [...durs], sessions: 1
-                });
+                masterData.push({ line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
             }
             saveMasterToLS();
             showToast(`✅ Data siklus disimpan`, 'success');
             resetStopwatchAfterCommit();
         }
         function commitMesinRow() {
+            if (currentMode !== 'mesin') { showToast('⚠️ Mode tidak sesuai!', 'error'); return; }
             let no, process, subMachine;
             const isCustom = selectedMachineId === '__custom__' || !selectedMachineId;
             if (isCustom) {
@@ -2858,10 +2886,7 @@
                 existing.gerakan = gerakan;
                 existing.sessions = (existing.sessions || 1) + 1;
             } else {
-                masterData.push({
-                    line: activeLine, no, process, subMachine,
-                    laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1
-                });
+                masterData.push({ line: activeLine, no, process, subMachine, laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1 });
             }
             saveMasterToLS();
             showToast(`✅ Data disimpan (${activeLine})`, 'success');
@@ -2977,9 +3002,6 @@
             else renderMasterTableMesin(filteredData, tbody, theadRow);
         }
 
-        // ------------------------------------------------------------
-        // MESIN
-        // ------------------------------------------------------------
         function renderMasterTableMesin(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             const standardUph = getLineStandardUph();
@@ -3055,9 +3077,6 @@
             tbody.innerHTML = htmlOutput;
         }
 
-        // ------------------------------------------------------------
-        // ELEMEN
-        // ------------------------------------------------------------
         function renderMasterTableElemen(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             const standardUph = getLineStandardUph();
@@ -3126,9 +3145,6 @@
             tbody.innerHTML = htmlOutput;
         }
 
-        // ------------------------------------------------------------
-        // SIKLUS
-        // ------------------------------------------------------------
         function renderMasterTableSiklus(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
             const standardUph = getLineStandardUph();
@@ -3254,8 +3270,7 @@
             } else if (currentMode === 'siklus') {
                 perProcess = fd.map(item => ({
                     line: item.line, no: item.noSop, process: item.namaSop,
-                    capacity: getRowStats(item).uph,
-                    machines: []
+                    capacity: getRowStats(item).uph, machines: []
                 })).sort((a, b) => a.capacity - b.capacity);
             } else {
                 const groups = {};
@@ -3369,7 +3384,6 @@
             const range = XLSX.utils.decode_range(ws['!ref']);
             const standardUph = getLineStandardUph();
             const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            // Header kuning
             for (let c = 0; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                 if (!ws[addr]) ws[addr] = { t: 's', v: '' };
@@ -3412,8 +3426,8 @@
                     if (ws[avgAddr]) {
                         const firstCT = XLSX.utils.encode_col(4);
                         const lastCT = XLSX.utils.encode_col(4 + maxLaps - 1);
-                        ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
-                        ws[avgAddr].v = stats.avg; ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00';
+                        ws[avgAddr].f = `ROUND(AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1}),2)`;
+                        ws[avgAddr].v = parseFloat(stats.avg.toFixed(2)); ws[avgAddr].t = 'n'; ws[avgAddr].z = '0.00';
                     }
                     const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAllow });
                     if (ws[allowAddr]) { ws[allowAddr].v = ALLOWANCE_FIXED; ws[allowAddr].t = 'n'; ws[allowAddr].z = '0.00'; }
@@ -3448,12 +3462,8 @@
                 const maxSmh = Math.max(...smhValues);
                 const jumlahProses = smhValues.length;
                 const lbr = maxSmh > 0 ? (totalSmhAll / (jumlahProses * maxSmh)) * 100 : 0;
-                // baris kosong
                 const emptyRow = rowIdx;
-                for (let c = 0; c <= range.e.c; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: emptyRow, c: c });
-                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                }
+                for (let c = 0; c <= range.e.c; c++) { const addr = XLSX.utils.encode_cell({ r: emptyRow, c: c }); if (!ws[addr]) ws[addr] = { t: 's', v: '' }; }
                 rowIdx++;
                 const lbrRow = rowIdx;
                 const lbrColor = lbr >= 90 ? 'D1FAE5' : (lbr >= 75 ? 'FEF3C7' : 'FECACA');
@@ -3538,7 +3548,7 @@
                 if (ws[avgAddr]) {
                     const firstCT = XLSX.utils.encode_col(3);
                     const lastCT = XLSX.utils.encode_col(3 + maxLaps - 1);
-                    ws[avgAddr].f = `AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1})`;
+                    ws[avgAddr].f = `ROUND(AVERAGE(${firstCT}${rowIdx + 1}:${lastCT}${rowIdx + 1}),2)`;
                     ws[avgAddr].z = '0.00';
                 }
                 const allowAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAllow });
@@ -3566,10 +3576,7 @@
                 const jumlahProses = smhValues.length;
                 const lbr = maxSmh > 0 ? (totalSmhAll / (jumlahProses * maxSmh)) * 100 : 0;
                 let lbrRow = dataRows.length;
-                for (let c = 0; c <= range.e.c; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: lbrRow, c: c });
-                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                }
+                for (let c = 0; c <= range.e.c; c++) { const addr = XLSX.utils.encode_cell({ r: lbrRow, c: c }); if (!ws[addr]) ws[addr] = { t: 's', v: '' }; }
                 lbrRow++;
                 const lbrColor = lbr >= 90 ? 'D1FAE5' : (lbr >= 75 ? 'FEF3C7' : 'FECACA');
                 const lbrFont = lbr >= 90 ? '065F46' : (lbr >= 75 ? '92400E' : '991B1B');
@@ -3616,7 +3623,12 @@
                 const groupStartRow = rowIndex;
                 group.rows.forEach((item, rIdx) => {
                     const stats = getRowStats(item);
-                    const rowData = [rIdx === 0 ? item.line : '', rIdx === 0 ? item.no : '', rIdx === 0 ? item.process : '', item.subMachine];
+                    const rowData = [
+                        rIdx === 0 ? item.line : '',
+                        rIdx === 0 ? item.no : '',
+                        rIdx === 0 ? item.process : '',
+                        item.subMachine || ''
+                    ];
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = item.laps[i];
                         if (lapVal !== undefined && lapVal !== null) {
@@ -3624,7 +3636,15 @@
                             rowData.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
                         } else rowData.push('');
                     }
-                    rowData.push(parseFloat(stats.avg.toFixed(2)), item.ngRate || 0, parseFloat(stats.gerakan.toFixed(2)), parseFloat(stats.ctPlusG.toFixed(2)), stats.capacity, stats.actualMachine, rIdx === 0 ? group.totalCapacity : '');
+                    rowData.push(
+                        parseFloat(stats.avg.toFixed(2)),
+                        item.ngRate || 0,
+                        parseFloat(stats.gerakan.toFixed(2)),
+                        parseFloat(stats.ctPlusG.toFixed(2)),
+                        stats.capacity,
+                        stats.actualMachine,
+                        rIdx === 0 ? group.totalCapacity : ''
+                    );
                     dataRows.push(rowData);
                     rowIndex++;
                 });
@@ -3679,10 +3699,7 @@
                         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                         let fill = 'FFFFFF';
                         let font = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 10 + maxLaps && rIdx === 0) {
-                            fill = uphFillColor;
-                            font = { bold: true, sz: 11, color: { rgb: uphFontColor } };
-                        }
+                        if (c === 10 + maxLaps && rIdx === 0) { fill = uphFillColor; font = { bold: true, sz: 11, color: { rgb: uphFontColor } }; }
                         ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                     }
                     rowIdx++;
@@ -3707,18 +3724,13 @@
                     }
                 }
             });
-
-            // LINE BALANCE RATE
             if (smhValues.length > 0) {
                 const totalSmhAll = smhValues.reduce((a, b) => a + b, 0);
                 const maxSmh = Math.max(...smhValues);
                 const jumlahProses = smhValues.length;
                 const lbr = maxSmh > 0 ? (totalSmhAll / (jumlahProses * maxSmh)) * 100 : 0;
                 let lbrRow = rowIdx;
-                for (let c = 0; c <= range.e.c; c++) {
-                    const addr = XLSX.utils.encode_cell({ r: lbrRow, c: c });
-                    if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-                }
+                for (let c = 0; c <= range.e.c; c++) { const addr = XLSX.utils.encode_cell({ r: lbrRow, c: c }); if (!ws[addr]) ws[addr] = { t: 's', v: '' }; }
                 lbrRow++;
                 const lbrColor = lbr >= 90 ? 'D1FAE5' : (lbr >= 75 ? 'FEF3C7' : 'FECACA');
                 const lbrFont = lbr >= 90 ? '065F46' : (lbr >= 75 ? '92400E' : '991B1B');
@@ -3729,7 +3741,6 @@
                 const lbrAddr = XLSX.utils.encode_cell({ r: lbrRow, c: 10 + maxLaps });
                 ws[lbrAddr] = { t: 'n', v: parseFloat(lbr.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lbrFont } }, fill: { patternType: 'solid', fgColor: { rgb: lbrColor } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER } };
             }
-
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
@@ -3738,17 +3749,35 @@
             if (downloadBlob(blob, `Time_Study_Mesin_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 File Excel diunduh', 'success');
         }
 
+        // ✅ Export dengan safety filter per mode
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+            const originalData = masterData;
+            if (currentMode === 'mesin') {
+                masterData = masterData.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
+            } else if (currentMode === 'elemen') {
+                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen !== undefined);
+            } else if (currentMode === 'siklus') {
+                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen === undefined);
+            }
             try {
                 if (currentMode === 'elemen') exportElemenXLSX();
                 else if (currentMode === 'siklus') exportSiklusXLSX();
                 else exportMesinXLSX();
             } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
+            masterData = originalData;
         }
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
+            const originalData = masterData;
+            if (currentMode === 'mesin') {
+                masterData = masterData.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
+            } else if (currentMode === 'elemen') {
+                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen !== undefined);
+            } else if (currentMode === 'siklus') {
+                masterData = masterData.filter(d => d.noSop !== undefined && d.elemen === undefined);
+            }
             try {
                 let dataRows;
                 if (currentMode === 'elemen') dataRows = buildElemenDataRows().dataRows;
@@ -3759,6 +3788,7 @@
                 const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
                 if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 File CSV diunduh', 'success');
             } catch (err) { console.error(err); showToast('❌ Gagal export CSV.', 'error'); }
+            masterData = originalData;
         }
 
         // ============================================================
