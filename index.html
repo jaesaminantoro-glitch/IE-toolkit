@@ -122,15 +122,6 @@
         .custom-dropdown-btn:active { background: #f9fafb; }
         .custom-dropdown-btn.open { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 
-        .custom-dropdown-panel {
-            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-            background: white; border: 1px solid #e5e7eb; border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            z-index: 50; display: none; max-height: 300px; overflow: hidden;
-            flex-direction: column;
-        }
-        .custom-dropdown-panel.open { display: flex; }
-
         .custom-dropup-panel {
             position: absolute; bottom: calc(100% + 4px); top: auto; left: 0; right: 0;
             background: white; border: 1px solid #e5e7eb; border-radius: 8px;
@@ -1182,6 +1173,30 @@
         }
 
         // ============================================================
+        // HELPER — Standard UPH & Warna Dinamis
+        // ============================================================
+        function getLineStandardUph() {
+            if (!activeLine) return 0;
+            const line = lineList.find(l => l.name === activeLine);
+            return line ? parseFloat(line.uph) || 0 : 0;
+        }
+        function getUphColorClass(uph, standardUph) {
+            if (!standardUph || standardUph <= 0) return 'bg-purple-50 text-purple-700 border border-purple-200';
+            if (uph >= standardUph) return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+            return 'bg-red-100 text-red-800 border border-red-300';
+        }
+        function getUphHexColor(uph, standardUph) {
+            if (!standardUph || standardUph <= 0) return 'EDE9FE';
+            if (uph >= standardUph) return 'D1FAE5';
+            return 'FECACA';
+        }
+        function getUphFontColor(uph, standardUph) {
+            if (!standardUph || standardUph <= 0) return '5B21B6';
+            if (uph >= standardUph) return '065F46';
+            return '991B1B';
+        }
+
+        // ============================================================
         // MODE MANAGEMENT
         // ============================================================
         function selectMode(mode) {
@@ -2070,8 +2085,6 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 Master elemen di-export', 'success');
         }
-
-        // Edit Elemen
         function openEditElemenModal(id) {
             const e = elemenMasterList.find(x => x.id === id);
             if (!e) return;
@@ -2300,7 +2313,6 @@
             const list = document.getElementById('sopDropdownList');
             if (!list) return;
             const search = (document.getElementById('sopSearchInput')?.value || '').toLowerCase().trim();
-            // Filter per Line aktif
             const filteredByLine = elemenMasterList.filter(e => e.line === activeLine);
             const nos = [...new Set(filteredByLine.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
             let filtered = nos;
@@ -2902,8 +2914,13 @@
             else if (currentMode === 'siklus') renderMasterTableSiklus(filteredData, tbody, theadRow);
             else renderMasterTableMesin(filteredData, tbody, theadRow);
         }
+
+        // ------------------------------------------------------------
+        // MESIN
+        // ------------------------------------------------------------
         function renderMasterTableMesin(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
+            const standardUph = getLineStandardUph();
             let headerHTML = `
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
@@ -2931,10 +2948,18 @@
                 groups[key].rows.push({ ...item, originalIndex });
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
+            // ✅ SORT by No
+            groupOrder.sort((a, b) => {
+                const noA = groups[a].no || '';
+                const noB = groups[b].no || '';
+                return String(noA).localeCompare(String(noB), undefined, { numeric: true });
+            });
             let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
+                const totalUph = group.totalCapacity;
+                const totalColorClass = getUphColorClass(totalUph, standardUph);
                 group.rows.forEach((row, rIdx) => {
                     const stats = getRowStats(row);
                     const sessionBadge = row.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions} sesi</span>` : '';
@@ -2946,7 +2971,9 @@
                             <td rowspan="${rowSpan}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(group.process || '-')}</td>
                         `;
                     }
-                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine || '-')}</span>${sessionBadge}</td>`;
+                    htmlOutput += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">
+                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(row.subMachine || '-')}</span>${sessionBadge}
+                    </td>`;
                     for (let i = 0; i < maxLaps; i++) {
                         const lapVal = row.laps[i];
                         if (lapVal !== undefined && lapVal !== null) {
@@ -2960,14 +2987,23 @@
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.ctPlusG.toFixed(2)}</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${stats.capacity} U/H</td>`;
                     htmlOutput += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${stats.actualMachine}</td>`;
-                    if (rIdx === 0) htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold text-purple-700 bg-purple-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalCapacity} <span class="text-[10px] font-medium">UPH</span></td>`;
-                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
+                    if (rIdx === 0) {
+                        htmlOutput += `<td rowspan="${rowSpan}" class="px-3 py-2 text-center font-extrabold border-r border-b align-middle whitespace-nowrap text-sm ${totalColorClass}">${totalUph} <span class="text-[10px] font-medium">UPH</span></td>`;
+                    }
+                    htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
+                        <button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
+                    </td></tr>`;
                 });
             });
             tbody.innerHTML = htmlOutput;
         }
+
+        // ------------------------------------------------------------
+        // ELEMEN
+        // ------------------------------------------------------------
         function renderMasterTableElemen(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
+            const standardUph = getLineStandardUph();
             let headerHTML = `
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
@@ -2994,11 +3030,18 @@
                 groups[key].rows.push({ ...item, originalIndex, stats });
                 groups[key].totalSmh += stats.smh;
             });
+            // ✅ SORT by No. SOP
+            groupOrder.sort((a, b) => {
+                const noA = groups[a].noSop || '';
+                const noB = groups[b].noSop || '';
+                return String(noA).localeCompare(String(noB), undefined, { numeric: true });
+            });
             let htmlOutput = '';
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const rowSpan = group.rows.length;
                 const uph = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
+                const uphColorClass = getUphColorClass(uph, standardUph);
                 group.rows.forEach((row, rIdx) => {
                     const stats = row.stats;
                     const sessionBadge = row.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${row.sessions} sesi</span>` : '';
@@ -3023,15 +3066,20 @@
                     htmlOutput += `<td class="px-2 py-2 text-center font-mono font-bold text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.smh.toFixed(2)}</td>`;
                     if (rIdx === 0) {
                         htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold text-emerald-700 bg-emerald-50 border-r border-b align-middle whitespace-nowrap text-sm">${group.totalSmh.toFixed(2)} <span class="text-[10px] font-medium">s</span></td>`;
-                        htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold text-pink-700 bg-pink-50 border-r border-b align-middle whitespace-nowrap text-sm">${uph} <span class="text-[10px] font-medium">UPH</span></td>`;
+                        htmlOutput += `<td rowspan="${rowSpan}" class="px-2 py-2 text-center font-extrabold border-r border-b align-middle whitespace-nowrap text-sm ${uphColorClass}">${uph} <span class="text-[10px] font-medium">UPH</span></td>`;
                     }
                     htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${row.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
                 });
             });
             tbody.innerHTML = htmlOutput;
         }
+
+        // ------------------------------------------------------------
+        // SIKLUS
+        // ------------------------------------------------------------
         function renderMasterTableSiklus(filteredData, tbody, theadRow) {
             const maxLaps = Math.max(...filteredData.map(item => item.laps.length));
+            const standardUph = getLineStandardUph();
             let headerHTML = `
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
@@ -3046,11 +3094,14 @@
                 <th class="px-2 py-3 text-center font-bold whitespace-nowrap">Aksi</th>
             `;
             theadRow.innerHTML = headerHTML;
+            // ✅ SORT by No. SOP
+            const sorted = [...filteredData].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             let htmlOutput = '';
-            filteredData.forEach((item) => {
+            sorted.forEach((item) => {
                 const stats = getRowStats(item);
                 const originalIndex = masterData.findIndex(m => m.line === item.line && m.noSop === item.noSop && m.namaSop === item.namaSop);
                 const sessionBadge = item.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${item.sessions} sesi</span>` : '';
+                const uphColorClass = getUphColorClass(stats.uph, standardUph);
                 htmlOutput += `<tr class="hover:bg-emerald-50/30 transition">`;
                 htmlOutput += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(item.line || '-')}</span></td>`;
                 htmlOutput += `<td class="px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 whitespace-nowrap text-emerald-700">${escapeHtml(item.noSop || '-')}</td>`;
@@ -3065,11 +3116,12 @@
                 htmlOutput += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${stats.avg.toFixed(2)}</td>`;
                 htmlOutput += `<td class="px-2 py-2 text-center font-mono text-purple-700 bg-purple-50 border-r border-b whitespace-nowrap">${stats.allowance.toFixed(2)}</td>`;
                 htmlOutput += `<td class="px-2 py-2 text-center font-mono font-bold text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${stats.smh.toFixed(2)}</td>`;
-                htmlOutput += `<td class="px-2 py-2 text-center font-extrabold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap text-sm">${stats.uph} <span class="text-[10px] font-medium">UPH</span></td>`;
+                htmlOutput += `<td class="px-2 py-2 text-center font-extrabold border-r border-b whitespace-nowrap text-sm ${uphColorClass}">${stats.uph} <span class="text-[10px] font-medium">UPH</span></td>`;
                 htmlOutput += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
             });
             tbody.innerHTML = htmlOutput;
         }
+
         function deleteMasterRow(idx) {
             const item = masterData[idx];
             if (!item) return;
@@ -3219,6 +3271,12 @@
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
+            // Sort
+            groupOrder.sort((a, b) => {
+                const noA = groups[a].noSop || '';
+                const noB = groups[b].noSop || '';
+                return String(noA).localeCompare(String(noB), undefined, { numeric: true });
+            });
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
@@ -3263,6 +3321,7 @@
             colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 });
             ws['!cols'] = colWidths;
             const range = XLSX.utils.decode_range(ws['!ref']);
+            const standardUph = getLineStandardUph();
             const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
             for (let c = 0; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r: 0, c: c });
@@ -3279,6 +3338,7 @@
                 groups[key].rows.push({ ...item, stats });
                 groups[key].totalSmh += stats.smh;
             });
+            groupOrder.sort((a, b) => String(groups[a].noSop || '').localeCompare(String(groups[b].noSop || ''), undefined, { numeric: true }));
             const colAvg = 4 + maxLaps;
             const colAllow = colAvg + 1;
             const colSmh = colAllow + 1;
@@ -3287,6 +3347,9 @@
             groupOrder.forEach(key => {
                 const group = groups[key];
                 const groupStartRow = rowIdx;
+                const uphGroup = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0;
+                const uphFillColor = getUphHexColor(uphGroup, standardUph);
+                const uphFontColor = getUphFontColor(uphGroup, standardUph);
                 group.rows.forEach((item, rIdx) => {
                     const stats = item.stats;
                     for (let c = 0; c <= range.e.c; c++) {
@@ -3302,7 +3365,7 @@
                         else if (c === colAllow) fill = 'F3E8FF';
                         else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
                         else if (c === colTotalSmh) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        else if (c === colUph) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                        else if (c === colUph) { fill = uphFillColor; font = { bold: true, sz: 11, color: { rgb: uphFontColor } }; }
                         ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                     }
                     const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAvg });
@@ -3333,7 +3396,7 @@
                 const totalColLetter = XLSX.utils.encode_col(colTotalSmh);
                 if (ws[uphAddr]) {
                     ws[uphAddr].f = `ROUND(3600/${totalColLetter}${groupStartRow + 1},0)`;
-                    ws[uphAddr].v = group.totalSmh > 0 ? Math.round(3600 / group.totalSmh) : 0; ws[uphAddr].t = 'n';
+                    ws[uphAddr].v = uphGroup; ws[uphAddr].t = 'n';
                 }
             });
             ws['!rows'] = [{ hpt: 25 }];
@@ -3353,8 +3416,10 @@
             const header = ['Line', 'No. SOP', 'Nama SOP'];
             for (let i = 1; i <= maxLaps; i++) header.push(`CT${i} (s)`);
             header.push('Average (s)', 'Allowance', 'SMH (s)', 'UPH');
+            // Sort by No. SOP
+            const sorted = [...dataToExport].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             const dataRows = [header];
-            dataToExport.forEach(item => {
+            sorted.forEach(item => {
                 const stats = getRowStats(item);
                 const rowData = [item.line, item.noSop, item.namaSop];
                 for (let i = 0; i < maxLaps; i++) {
@@ -3378,6 +3443,7 @@
             colWidths.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 });
             ws['!cols'] = colWidths;
             const range = XLSX.utils.decode_range(ws['!ref']);
+            const standardUph = getLineStandardUph();
             const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
             for (let c = 0; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r: 0, c: c });
@@ -3389,6 +3455,9 @@
             const colSmh = colAllow + 1;
             const colUph = colSmh + 1;
             for (let rowIdx = 1; rowIdx < dataRows.length; rowIdx++) {
+                const uphVal = dataRows[rowIdx][colUph];
+                const uphFillColor = getUphHexColor(uphVal, standardUph);
+                const uphFontColor = getUphFontColor(uphVal, standardUph);
                 for (let c = 0; c <= range.e.c; c++) {
                     const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
                     if (!ws[addr]) ws[addr] = { t: 's', v: '' };
@@ -3401,7 +3470,7 @@
                     else if (c === colAvg) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
                     else if (c === colAllow) fill = 'F3E8FF';
                     else if (c === colSmh) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                    else if (c === colUph) { fill = 'FCE7F3'; font = { bold: true, sz: 11, color: { rgb: '831843' } }; }
+                    else if (c === colUph) { fill = uphFillColor; font = { bold: true, sz: 11, color: { rgb: uphFontColor } }; }
                     ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
                 }
                 const avgAddr = XLSX.utils.encode_cell({ r: rowIdx, c: colAvg });
@@ -3449,6 +3518,8 @@
                 groups[key].rows.push(item);
                 groups[key].totalCapacity += getRowStats(item).capacity;
             });
+            // Sort by No
+            groupOrder.sort((a, b) => String(groups[a].no || '').localeCompare(String(groups[b].no || ''), undefined, { numeric: true }));
             const dataRows = [header];
             const merges = [];
             let rowIndex = 1;
@@ -3490,12 +3561,77 @@
             colWidths.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
             ws['!cols'] = colWidths;
             const range = XLSX.utils.decode_range(ws['!ref']);
+            const standardUph = getLineStandardUph();
             const BORDER = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            // Header style
             for (let c = 0; c <= range.e.c; c++) {
                 const addr = XLSX.utils.encode_cell({ r: 0, c: c });
                 if (!ws[addr]) ws[addr] = { t: 's', v: '' };
                 ws[addr].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
             }
+            // Data style + warna dinamis
+            const groups = {};
+            const groupOrder = [];
+            masterData.forEach(item => {
+                const key = `${item.line}||${item.no}||${item.process}`;
+                if (!groups[key]) { groups[key] = { line: item.line, no: item.no, process: item.process, capacity: 0, rows: [] }; groupOrder.push(key); }
+                groups[key].rows.push(item);
+                groups[key].capacity += getRowStats(item).capacity;
+            });
+            groupOrder.sort((a, b) => String(groups[a].no || '').localeCompare(String(groups[b].no || ''), undefined, { numeric: true }));
+            let rowIdx = 1;
+            groupOrder.forEach(key => {
+                const group = groups[key];
+                const groupStartRow = rowIdx;
+                const totalUph = group.capacity;
+                const uphFillColor = getUphHexColor(totalUph, standardUph);
+                const uphFontColor = getUphFontColor(totalUph, standardUph);
+                group.rows.forEach((item, rIdx) => {
+                    const stats = getRowStats(item);
+                    for (let c = 0; c <= range.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r: rowIdx, c: c });
+                        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+                        let fill = 'FFFFFF';
+                        let font = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === 0) { fill = 'E0E7FF'; font = { bold: true, sz: 11, color: { rgb: '3730A3' } }; }
+                        if (rIdx === 0 && (c === 1 || c === 2)) { fill = 'FEF9E7'; font = { bold: true, sz: 11, color: { rgb: '78350F' } }; }
+                        if (c === 3) fill = 'DBEAFE';
+                        if (c >= 4 && c < 4 + maxLaps) fill = 'EFF6FF';
+                        if (c === 4 + maxLaps) { fill = 'FEF3C7'; font = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        if (c === 5 + maxLaps) fill = 'FFFFFF';
+                        if (c === 6 + maxLaps) fill = 'FED7AA';
+                        if (c === 7 + maxLaps) { fill = 'FFEDD5'; font = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        if (c === 8 + maxLaps) { fill = 'D1FAE5'; font = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        if (c === 9 + maxLaps) fill = 'FCE7F3';
+                        if (c === 10 + maxLaps && rIdx === 0) {
+                            fill = uphFillColor;
+                            font = { bold: true, sz: 11, color: { rgb: uphFontColor } };
+                        }
+                        ws[addr].s = { font, fill: { patternType: 'solid', fgColor: { rgb: fill } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BORDER };
+                    }
+                    rowIdx++;
+                });
+                // Total Kapasitas formula & value
+                if (group.rows.length > 1) {
+                    const totalCol = 10 + maxLaps;
+                    const totalAddr = XLSX.utils.encode_cell({ r: groupStartRow, c: totalCol });
+                    if (ws[totalAddr]) {
+                        const colKap = XLSX.utils.encode_col(8 + maxLaps);
+                        ws[totalAddr].f = `SUM(${colKap}${groupStartRow + 1}:${colKap}${rowIdx})`;
+                        ws[totalAddr].v = totalUph; ws[totalAddr].t = 'n';
+                    }
+                }
+            });
+            merges.forEach(merge => {
+                const startAddr = XLSX.utils.encode_cell({ r: merge.s.r, c: merge.s.c });
+                if (ws[startAddr] && ws[startAddr].s) {
+                    const style = ws[startAddr].s;
+                    for (let r = merge.s.r; r <= merge.e.r; r++) for (let c = merge.s.c; c <= merge.e.c; c++) {
+                        const addr = XLSX.utils.encode_cell({ r, c });
+                        if (addr !== startAddr) { if (!ws[addr]) ws[addr] = { t: 's', v: '' }; ws[addr].s = style; }
+                    }
+                }
+            });
             ws['!rows'] = [{ hpt: 25 }];
             for (let r = 1; r <= range.e.r; r++) ws['!rows'][r] = { hpt: 20 };
             XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
