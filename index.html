@@ -1063,7 +1063,7 @@
         };
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -1073,6 +1073,7 @@
         window.firebaseSet = set;
         window.firebaseOnValue = onValue;
         window.firebaseGet = get;
+        window.firebaseRunTransaction = runTransaction;
 
         console.log('✅ Firebase initialized');
         window.dispatchEvent(new Event('firebaseReady'));
@@ -1356,11 +1357,53 @@
         // ============================================================
         // FIREBASE SYNC
         // ============================================================
-        async function saveMasterToFirebase() {
-            if (!firebaseReady || isSyncingFromRemote) return;
+        // ✅ MULTI-USER SAFE WRITE
+        // Dipakai untuk operasi yang sering terjadi BERSAMAAN dari banyak HP/line
+        // (simpan siklus, hapus data). Bukan "timpa seluruh array" seperti biasa,
+        // tapi pakai Firebase Transaction: mutatorFn menerima data TERSEGAR dari
+        // server saat commit terjadi, lalu mengembalikan array baru. Kalau ada HP
+        // lain yang barusan menulis, Firebase otomatis jalankan ulang mutatorFn
+        // dengan data terbaru — jadi tidak ada perubahan device lain yang tertimpa.
+        // mutatorFn return null/undefined = tidak perlu ada perubahan (dibatalkan).
+        async function fbTransactionMergeArray(node, mutatorFn) {
+            if (!firebaseReady) return false;
             try {
                 setSyncStatus('syncing');
-                const node = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                const nodeRef = window.firebaseRef(window.firebaseDB, node);
+                await window.firebaseRunTransaction(nodeRef, (current) => {
+                    const freshArr = (current && Array.isArray(current.data)) ? current.data : [];
+                    const newArr = mutatorFn(freshArr);
+                    if (!newArr) return current; // tidak ada perubahan → batalkan, jangan sentuh data
+                    return { data: newArr, lastUpdate: new Date().toISOString() };
+                });
+                setSyncStatus('online');
+                return true;
+            } catch (e) {
+                console.warn('⚠️ Transaction gagal, tetap aman di HP ini (localStorage)', e);
+                setSyncStatus('offline');
+                return false;
+            }
+        }
+        // Kunci identitas 1 baris data sesuai mode — dipakai untuk mencocokkan
+        // record yang benar di data server yang paling baru, bukan berdasar index.
+        function recordIdentityMatch(item, ref, mode) {
+            if (!item || item.line !== ref.line) return false;
+            if (mode === 'elemen') return item.noSop === ref.noSop && item.namaSop === ref.namaSop && item.elemen === ref.elemen;
+            if (mode === 'siklus') return item.noSop === ref.noSop && item.namaSop === ref.namaSop;
+            return item.no === ref.no && item.process === ref.process && item.subMachine === ref.subMachine;
+        }
+        // mutatorFn (opsional): kalau diisi, tulis ke Firebase pakai transaction-safe
+        // merge (aman multi-user). Kalau tidak diisi, pakai cara lama (overwrite
+        // seluruh array) — dipakai untuk operasi jarang/manual (import, reset, dll).
+        async function saveMasterToFirebase(mutatorFn) {
+            if (!firebaseReady || isSyncingFromRemote) return;
+            const node = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+            if (typeof mutatorFn === 'function') {
+                await fbTransactionMergeArray(node, mutatorFn);
+                return;
+            }
+            try {
+                setSyncStatus('syncing');
                 await window.firebaseSet(window.firebaseRef(window.firebaseDB, node), { data: masterData, lastUpdate: new Date().toISOString() });
                 setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
@@ -1535,7 +1578,7 @@
         }
 
         function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
-        function saveMasterToLS() { lsSave(LS_KEY_MASTER, masterData); if (firebaseReady) saveMasterToFirebase(); }
+        function saveMasterToLS(mutatorFn) { lsSave(LS_KEY_MASTER, masterData); if (firebaseReady) saveMasterToFirebase(mutatorFn); }
 
         function syncUphFromActiveLine() {
             if (uphUserOverride) return;
@@ -2835,7 +2878,26 @@
                     masterData.push({ line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: elemenName, laps: [...grouped[elemenName]], sessions: 1 });
                 }
             });
-            saveMasterToLS();
+            saveMasterToLS((serverArr) => {
+                // Jalankan ulang operasi merge yang sama di atas data TERSEGAR dari server,
+                // supaya siklus dari HP/line lain yang barusan masuk tidak ikut tertimpa.
+                const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
+                Object.keys(grouped).forEach(elemenName => {
+                    const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: elemenName }, 'elemen'));
+                    if (idx !== -1) {
+                        const existing = arr[idx];
+                        if (!existing.noSop) existing.noSop = currentElemenNo;
+                        if (!existing.namaSop) existing.namaSop = currentElemenNama;
+                        if (!existing.elemen) existing.elemen = elemenName;
+                        if (!existing.line) existing.line = activeLine;
+                        existing.laps = existing.laps.concat(grouped[elemenName]);
+                        existing.sessions = (existing.sessions || 1) + 1;
+                    } else {
+                        arr.push({ line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: elemenName, laps: [...grouped[elemenName]], sessions: 1 });
+                    }
+                });
+                return arr;
+            });
             showToast(`✅ ${Object.keys(grouped).length} elemen disimpan`, 'success');
             resetStopwatchAfterCommit();
         }
@@ -2858,7 +2920,21 @@
             } else {
                 masterData.push({ line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
             }
-            saveMasterToLS();
+            saveMasterToLS((serverArr) => {
+                const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
+                const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama }, 'siklus'));
+                if (idx !== -1) {
+                    const existing = arr[idx];
+                    if (!existing.noSop) existing.noSop = currentSiklusNo;
+                    if (!existing.namaSop) existing.namaSop = currentSiklusNama;
+                    if (!existing.line) existing.line = activeLine;
+                    existing.laps = existing.laps.concat(durs);
+                    existing.sessions = (existing.sessions || 1) + 1;
+                } else {
+                    arr.push({ line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
+                }
+                return arr;
+            });
             showToast(`✅ Data siklus disimpan`, 'success');
             resetStopwatchAfterCommit();
         }
@@ -2888,6 +2964,9 @@
             if (isNaN(gerakan) || gerakan < 0) { showToast('⚠️ Gerakan harus angka ≥ 0!', 'error'); return; }
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
             if (currentLaps.length === 0) { showToast('⚠️ Rekam minimal 1 siklus!', 'error'); return; }
+            // ✅ Snapshot dulu sebelum currentLaps direset oleh resetStopwatchAfterCommit(),
+            // supaya proses simpan ke server (yang berjalan async) tetap pakai data yang benar.
+            const lapsSnapshot = [...currentLaps];
             const existingIndex = masterData.findIndex(item =>
                 item.line === activeLine && item.no === no && item.process === process && item.subMachine === subMachine
             );
@@ -2898,15 +2977,33 @@
                 if (!existing.process) existing.process = process;
                 if (!existing.subMachine) existing.subMachine = subMachine;
                 if (!existing.line) existing.line = activeLine;
-                existing.laps = existing.laps.concat(currentLaps);
+                existing.laps = existing.laps.concat(lapsSnapshot);
                 existing.ngRate = ngRate;
                 existing.actualMachine = actualMachine;
                 existing.gerakan = gerakan;
                 existing.sessions = (existing.sessions || 1) + 1;
             } else {
-                masterData.push({ line: activeLine, no, process, subMachine, laps: [...currentLaps], ngRate, actualMachine, gerakan, sessions: 1 });
+                masterData.push({ line: activeLine, no, process, subMachine, laps: [...lapsSnapshot], ngRate, actualMachine, gerakan, sessions: 1 });
             }
-            saveMasterToLS();
+            saveMasterToLS((serverArr) => {
+                const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
+                const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, no, process, subMachine }, 'mesin'));
+                if (idx !== -1) {
+                    const existing = arr[idx];
+                    if (!existing.no) existing.no = no;
+                    if (!existing.process) existing.process = process;
+                    if (!existing.subMachine) existing.subMachine = subMachine;
+                    if (!existing.line) existing.line = activeLine;
+                    existing.laps = existing.laps.concat(lapsSnapshot);
+                    existing.ngRate = ngRate;
+                    existing.actualMachine = actualMachine;
+                    existing.gerakan = gerakan;
+                    existing.sessions = (existing.sessions || 1) + 1;
+                } else {
+                    arr.push({ line: activeLine, no, process, subMachine, laps: [...lapsSnapshot], ngRate, actualMachine, gerakan, sessions: 1 });
+                }
+                return arr;
+            });
             showToast(`✅ Data disimpan (${activeLine})`, 'success');
             resetStopwatchAfterCommit();
         }
@@ -3212,8 +3309,17 @@
             if (!item) return;
             const label = item.elemen || item.namaSop || item.process || 'data';
             if (!confirm(`Hapus data "${label}"?`)) return;
+            // Simpan kunci identitas record SEBELUM dihapus dari state lokal,
+            // supaya penghapusan di server mencocokkan record yang benar
+            // (bukan berdasar posisi index yang bisa berbeda antar device).
+            const ref = { line: item.line, no: item.no, process: item.process, subMachine: item.subMachine, noSop: item.noSop, namaSop: item.namaSop, elemen: item.elemen };
+            const mode = currentMode;
             masterData.splice(idx, 1);
-            saveMasterToLS();
+            saveMasterToLS((serverArr) => {
+                const filtered = serverArr.filter(x => !recordIdentityMatch(x, ref, mode));
+                if (filtered.length === serverArr.length) return null; // sudah terhapus/tidak ditemukan di server, tidak perlu commit
+                return filtered;
+            });
             renderMasterTable();
             renderStandardCheck();
             updateCounters();
