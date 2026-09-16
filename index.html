@@ -3068,9 +3068,12 @@
             } else {
                 const gerakan = (item.gerakan !== undefined && item.gerakan !== null) ? parseFloat(item.gerakan) || 0 : 0;
                 const actualMachine = (item.actualMachine !== undefined && item.actualMachine !== null) ? parseFloat(item.actualMachine) || 1 : 1;
+                const ngRate = (item.ngRate !== undefined && item.ngRate !== null) ? parseFloat(item.ngRate) || 0 : 0;
                 const ctPlusG = avg + gerakan;
-                const capacity = ctPlusG > 0 ? Math.round((3600 / ctPlusG) * actualMachine) : 0;
-                return { count, avg, ctPlusG, capacity, gerakan, actualMachine };
+                const grossCapacity = ctPlusG > 0 ? (3600 / ctPlusG) * actualMachine : 0;
+                // ✅ NG% mengurangi kapasitas efektif: unit reject/NG tidak dihitung sebagai output bagus.
+                const capacity = Math.round(grossCapacity * (1 - Math.max(0, Math.min(100, ngRate)) / 100));
+                return { count, avg, ctPlusG, capacity, grossCapacity: Math.round(grossCapacity), gerakan, actualMachine, ngRate };
             }
         }
         function getFilteredData() {
@@ -3811,6 +3814,7 @@
             let rowIdx = 1;
             const smhValues = [];
             const colRata = 4 + maxLaps;
+            const colNg = 5 + maxLaps;
             const colGerakan = 6 + maxLaps;
             const colCtg = 7 + maxLaps;
             const colKap = 8 + maxLaps;
@@ -3852,7 +3856,9 @@
                     if (ws[kapAddr]) {
                         const ctgColLetter = XLSX.utils.encode_col(colCtg);
                         const jmlColLetter = XLSX.utils.encode_col(colJml);
-                        ws[kapAddr].f = `IF(${ctgColLetter}${rowIdx + 1}>0,ROUND(3600/${ctgColLetter}${rowIdx + 1}*${jmlColLetter}${rowIdx + 1},0),0)`;
+                        const ngColLetter = XLSX.utils.encode_col(colNg);
+                        // ✅ NG% mengurangi kapasitas efektif (unit reject tidak dihitung sebagai output bagus)
+                        ws[kapAddr].f = `IF(${ctgColLetter}${rowIdx + 1}>0,ROUND(3600/${ctgColLetter}${rowIdx + 1}*${jmlColLetter}${rowIdx + 1}*(1-${ngColLetter}${rowIdx + 1}/100),0),0)`;
                         ws[kapAddr].v = stats.capacity; ws[kapAddr].t = 'n';
                     }
                     rowIdx++;
