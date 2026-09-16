@@ -1243,6 +1243,11 @@
                 }
             }
 
+            if (modeCard) {
+                modeCard.style.opacity = '';
+                modeCard.style.pointerEvents = '';
+            }
+
             if (modeModal) modeModal.classList.remove('active');
             document.getElementById('appContainer').classList.remove('hidden');
 
