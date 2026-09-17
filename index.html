@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Mode (Preinstallasi)</title>
+    <title>Time Study - Multi Mode (Preinstallasi + Batching)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -345,6 +345,26 @@
                                 </div>
                             </div>
                             <p class="text-[10px] text-gray-400 mt-1">Nama SOP otomatis tampil (per Line aktif)</p>
+                        </div>
+
+                        <!-- ✅ BATCHING MODE (muncul di Elemen & Siklus) -->
+                        <div id="batchingWrapper" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-[10px] md:text-xs font-semibold text-blue-700 uppercase">⚙️ Unit per LAP (Batching)</label>
+                                <button onclick="resetBatching()" class="text-[10px] bg-white border border-blue-300 text-blue-700 px-2 py-0.5 rounded font-bold">Reset</button>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <input type="number" id="inputBatchUnit" value="1" min="1" step="1" inputmode="numeric"
+                                    onchange="onBatchUnitChange()"
+                                    class="w-24 px-3 py-2 border-2 border-blue-400 rounded-lg text-base font-bold text-blue-700 text-center">
+                                <span class="text-xs text-blue-700 font-medium">unit per 1 LAP</span>
+                            </div>
+                            <p id="batchingHint" class="text-[10px] text-blue-600 mt-1.5">
+                                💡 Isi <b>3</b> kalau 1 LAP = 3 unit. Waktu otomatis dibagi → hasil per unit.
+                            </p>
+                            <div id="batchingActiveInfo" class="hidden mt-2 bg-blue-100 border border-blue-300 rounded-lg px-2.5 py-1.5 text-[11px] text-blue-800">
+                                <b>✅ Batching AKTIF:</b> <span id="batchingActiveText">1 LAP = 3 unit → waktu dibagi 3</span>
+                            </div>
                         </div>
 
                         <div id="preinstallToggleWrapper" class="hidden mt-2">
@@ -738,10 +758,11 @@
         let preinstallActiveSops = [];
         let preinstallTempSelected = new Set();
         let preinstallTempOperators = 1;
-        // ✅ BARU: tracking urutan elemen & cycle preinstallasi (mode Elemen)
         let preinstallActiveElemenList = [];
         let preinstallElemenIndex = 0;
         let preinstallCycleNum = 1;
+        // ===== BATCHING =====
+        let batchUnitCount = 1;   // 1 = normal, >1 = batching (bagi durasi)
 
         const ALLOWANCE_FIXED = 0.10;
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
@@ -750,6 +771,7 @@
         const LS_KEY_MODE = 'timeStudy_mode_v1';
         const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v3';
         const LS_KEY_SIKLUS_MASTER = 'timeStudy_siklusMaster_v1';
+        const LS_KEY_BATCH = 'timeStudy_batchUnit_v1';
 
         // ===== UTILS =====
         function lsSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
@@ -775,6 +797,68 @@
         function getUphColorClass(uph, std) { if (!std || std <= 0) return 'bg-purple-50 text-purple-700 border border-purple-200'; if (uph >= std) return 'bg-emerald-100 text-emerald-800 border border-emerald-300'; return 'bg-red-100 text-red-800 border border-red-300'; }
         function getUphHexColor(uph, std) { if (!std || std <= 0) return 'EDE9FE'; if (uph >= std) return 'D1FAE5'; return 'FECACA'; }
         function getUphFontColor(uph, std) { if (!std || std <= 0) return '5B21B6'; if (uph >= std) return '065F46'; return '991B1B'; }
+
+        // ===== BATCHING =====
+        function onBatchUnitChange() {
+            const el = document.getElementById('inputBatchUnit');
+            if (!el) return;
+            let v = parseInt(el.value);
+            if (isNaN(v) || v < 1) v = 1;
+            if (v > 999) v = 999;
+            el.value = v;
+            batchUnitCount = v;
+            lsSave(LS_KEY_BATCH, v);
+            updateBatchingUI();
+        }
+        function resetBatching() {
+            batchUnitCount = 1;
+            const el = document.getElementById('inputBatchUnit');
+            if (el) el.value = 1;
+            lsSave(LS_KEY_BATCH, 1);
+            updateBatchingUI();
+            showToast('⚙️ Batching direset ke 1 unit/LAP', 'info');
+        }
+        function updateBatchingUI() {
+            const w = document.getElementById('batchingWrapper');
+            const activeInfo = document.getElementById('batchingActiveInfo');
+            const activeText = document.getElementById('batchingActiveText');
+            const hint = document.getElementById('batchingHint');
+            if (!w) return;
+            // Tampilkan batching hanya di mode Elemen & Siklus
+            if (currentMode === 'elemen' || currentMode === 'siklus') {
+                w.classList.remove('hidden');
+            } else {
+                w.classList.add('hidden');
+                return;
+            }
+            if (batchUnitCount > 1) {
+                if (activeInfo) activeInfo.classList.remove('hidden');
+                if (activeText) activeText.innerText = `1 LAP = ${batchUnitCount} unit → waktu dibagi ${batchUnitCount}`;
+                if (hint) hint.innerHTML = `⚡ <b>Batching aktif:</b> setiap LAP akan dibagi ${batchUnitCount}. Pastikan durasi LAP memang waktu untuk ${batchUnitCount} unit sekaligus.`;
+            } else {
+                if (activeInfo) activeInfo.classList.add('hidden');
+                if (hint) hint.innerHTML = `💡 Isi <b>3</b> kalau 1 LAP = 3 unit. Waktu otomatis dibagi → hasil per unit.`;
+            }
+            // Update split preview
+            updateBatchingSplitPreview();
+            // Update label tombol LAP kalau batch > 1
+            updateLapButtonLabel();
+        }
+        function updateBatchingSplitPreview() {
+            const sp = document.getElementById('lapSplitPreview');
+            if (!sp) return;
+            if (batchUnitCount > 1 && currentLaps.length > 0) {
+                const last = currentLaps[currentLaps.length - 1];
+                const lastDur = (typeof last === 'object' && last !== null) ? last.dur : last;
+                if (typeof lastDur === 'number') {
+                    sp.innerText = `Batch ${batchUnitCount} unit: ${(lastDur * batchUnitCount).toFixed(2)}s ÷ ${batchUnitCount} = ${lastDur.toFixed(2)}s/unit`;
+                }
+            }
+        }
+        function applyBatchToDur(rawDur) {
+            if (batchUnitCount <= 1) return rawDur;
+            return rawDur / batchUnitCount;
+        }
 
         // ===== MODE =====
         async function selectMode(mode) {
@@ -840,8 +924,13 @@
             }
             preinstallActive = false; preinstallSelectedKeys.clear(); preinstallActiveSops = []; preinstallOperatorCount = 1;
             preinstallActiveElemenList = []; preinstallElemenIndex = 0; preinstallCycleNum = 1;
+            // Reset batching saat ganti mode
+            batchUnitCount = 1;
+            const bEl = document.getElementById('inputBatchUnit');
+            if (bEl) bEl.value = 1;
             updateLapButtonLabel();
             updatePreinstallUI();
+            updateBatchingUI();
             renderMasterTable(); renderStandardCheck(); updateCounters();
             if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
             else if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
@@ -983,6 +1072,10 @@
             document.getElementById('timerDisplay').innerText = '00:00.00';
             preinstallActive = false; preinstallSelectedKeys.clear(); preinstallActiveSops = []; preinstallOperatorCount = 1;
             preinstallActiveElemenList = []; preinstallElemenIndex = 0; preinstallCycleNum = 1;
+            // Reset batching saat ganti Line
+            batchUnitCount = 1;
+            const bEl = document.getElementById('inputBatchUnit');
+            if (bEl) bEl.value = 1;
             const sl = document.getElementById('sopDropdownLabel'); if (sl) { sl.innerText = '-- Pilih No. SOP --'; sl.className = 'text-gray-500'; }
             const skl = document.getElementById('siklusDropdownLabel'); if (skl) { skl.innerText = '-- Pilih No. SOP --'; skl.className = 'text-gray-500'; }
             const ml = document.getElementById('machineDropdownLabel'); if (ml) { ml.innerText = '-- Pilih Mesin --'; ml.className = 'text-gray-500'; }
@@ -995,7 +1088,7 @@
             if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
             if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
             if (currentMode === 'mesin') { renderMachineDropdownList(); }
-            updateLapButtonLabel(); updatePreinstallUI();
+            updateLapButtonLabel(); updatePreinstallUI(); updateBatchingUI();
             showToast(`✅ Line: ${activeLine}`, 'success');
         }
         function updateLineDisplay() {
@@ -1502,7 +1595,6 @@
             const p = document.getElementById('elemenProgressText');
             const b = document.getElementById('elemenProgressBar');
             if (!n) return;
-            // ✅ MODE ELEMEN + Preinstall: tampilkan elemen berurutan
             if (preinstallActive && currentMode === 'elemen') {
                 if (preinstallActiveElemenList.length === 0) {
                     n.innerText = `🎯 Preinstallasi (belum pilih elemen)`;
@@ -1576,7 +1668,6 @@
             document.getElementById('preinstallSearch').value = '';
             const lb = document.getElementById('preinstallPickerLabel');
             if (lb) lb.innerText = currentMode === 'elemen' ? '📋 Pilih Elemen' : '📋 Pilih SOP';
-            // Update help text sesuai mode
             const ht = document.getElementById('preinstallHelpText');
             if (ht) {
                 if (currentMode === 'elemen') {
@@ -1654,8 +1745,6 @@
             const ss = new Set();
             preinstallSelectedKeys.forEach(k => { const [noSop] = k.split('||'); ss.add(noSop); });
             preinstallActiveSops = [...ss].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
-
-            // ✅ Bangun urutan elemen untuk mode Elemen
             preinstallActiveElemenList = [];
             preinstallElemenIndex = 0;
             preinstallCycleNum = 1;
@@ -1669,7 +1758,6 @@
                 items.sort((a, b) => String(a.noSop).localeCompare(String(b.noSop), undefined, { numeric: true }) || String(a.elemen).localeCompare(String(b.elemen), undefined, { numeric: true }));
                 preinstallActiveElemenList = items;
             }
-
             closePreinstallModal();
             updatePreinstallUI(); updateLapButtonLabel(); updateElemenActiveInfo();
             showToast(`✅ Preinstallasi aktif (${preinstallSelectedKeys.size} item, ${preinstallOperatorCount} orang)`, 'success');
@@ -1718,11 +1806,9 @@
             if (preinstallActive && (currentMode === 'elemen' || currentMode === 'siklus')) {
                 noSopField.classList.add('hidden');
                 sopInfoWrapper.classList.remove('hidden');
-                // ✅ Ubah label sesuai mode
                 if (sopInfoLabel) sopInfoLabel.innerText = currentMode === 'elemen' ? '📋 Elemen yang direkam (berurutan)' : '📋 SOP yang direkam bersamaan';
                 if (sopInfoHint) sopInfoHint.innerText = currentMode === 'elemen' ? '💡 1 LAP = 1 elemen selesai, urut dari atas ke bawah, lalu ulang dari awal' : '💡 Setiap tekan LAP, waktu dibagi rata ke semua SOP ini';
                 if (sopInfoList) {
-                    // ✅ Untuk mode elemen: tampilkan URUTAN (bukan Set random)
                     if (currentMode === 'elemen' && preinstallActiveElemenList.length > 0) {
                         sopInfoList.innerHTML = preinstallActiveElemenList.map((it, idx) => {
                             const isCurrent = idx === preinstallElemenIndex;
@@ -1748,20 +1834,21 @@
         // ===== LAP BUTTON =====
         function updateLapButtonLabel() {
             const b = document.getElementById('mobileLapBtn'); if (!b) return;
-            // ✅ MODE ELEMEN + Preinstall: tampilkan nama elemen yang sedang aktif
+            // ✅ Batching info di label (opsional)
+            const batchSuffix = (batchUnitCount > 1 && currentMode !== 'mesin' && !preinstallActive) ? ` [×${batchUnitCount}u]` : '';
             if (preinstallActive && currentMode === 'elemen') {
                 if (preinstallActiveElemenList.length === 0) { b.innerText = '🎯 SELESAI ELEMEN'; return; }
                 const cur = preinstallActiveElemenList[preinstallElemenIndex];
-                const sn = cur ? `${cur.noSop}·${cur.elemen}`.substring(0, 16) : '';
-                b.innerText = `✔️ SELESAI: ${sn}${sn.length >= 16 ? '…' : ''}`;
+                const sn = cur ? `${cur.noSop}·${cur.elemen}`.substring(0, 14) : '';
+                b.innerText = `✔️ SELESAI: ${sn}${sn.length >= 14 ? '…' : ''}`;
                 return;
             }
             if (preinstallActive && currentMode === 'siklus') { b.innerText = `🎯 SELESAI (${preinstallSelectedKeys.size} item)`; return; }
             if (currentMode === 'elemen' && activeElemenList.length > 0) {
                 const c = activeElemenList[currentElemenIndex];
-                const sn = c ? c.elemen.substring(0, 14) : '';
-                b.innerText = `✔️ SELESAI: ${sn}${sn.length >= 14 ? '…' : ''}`;
-            } else if (currentMode === 'siklus' && currentSiklusNo) { b.innerText = `✔️ SELESAI SOP`; }
+                const sn = c ? c.elemen.substring(0, 12) : '';
+                b.innerText = `✔️ SELESAI: ${sn}${sn.length >= 12 ? '…' : ''}${batchSuffix}`;
+            } else if (currentMode === 'siklus' && currentSiklusNo) { b.innerText = `✔️ SELESAI SOP${batchSuffix}`; }
             else b.innerText = '⏱️ LAP';
         }
 
@@ -1787,20 +1874,22 @@
             const now = Date.now();
             const dur = (now - lastLapTimestamp) / 1000;
             if (dur >= 0.1) {
+                const durPerUnit = applyBatchToDur(dur);
                 if (preinstallActive) {
                     if (currentMode === 'elemen') {
-                        // ✅ Sama seperti recordLap: 1 auto-lap = 1 elemen selesai
                         if (preinstallActiveElemenList.length === 0) return;
                         const cur = preinstallActiveElemenList[preinstallElemenIndex];
                         if (!cur) return;
                         currentLaps.push({
-                            dur: parseFloat(dur.toFixed(2)),
+                            dur: parseFloat(durPerUnit.toFixed(2)),
+                            rawDur: parseFloat(dur.toFixed(2)),
                             noSop: cur.noSop,
                             namaSop: cur.namaSop,
                             elemen: cur.elemen,
                             preinstall: true,
                             operators: preinstallOperatorCount,
-                            cycleNum: preinstallCycleNum
+                            cycleNum: preinstallCycleNum,
+                            batch: batchUnitCount
                         });
                         preinstallElemenIndex++;
                         if (preinstallElemenIndex >= preinstallActiveElemenList.length) {
@@ -1809,31 +1898,31 @@
                         }
                         updateLapsUI();
                         setButtonEnabled('commitBtn', true);
-                        document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto) → ${cur.noSop}·${cur.elemen}`;
+                        document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''} → ${cur.noSop}·${cur.elemen}`;
                         updateElemenActiveInfo();
                         updateLapButtonLabel();
                     } else if (currentMode === 'siklus') {
-                        const dp = preinstallOperatorCount === 1 ? dur : dur / preinstallOperatorCount;
+                        const dp = preinstallOperatorCount === 1 ? durPerUnit : durPerUnit / preinstallOperatorCount;
                         preinstallSelectedKeys.forEach(k => {
                             const [noSop, namaSop] = k.split('||');
-                            currentLaps.push({ dur: parseFloat(dp.toFixed(2)), noSop, namaSop: namaSop || '-', preinstall: true, operators: preinstallOperatorCount });
+                            currentLaps.push({ dur: parseFloat(dp.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)), noSop, namaSop: namaSop || '-', preinstall: true, operators: preinstallOperatorCount, batch: batchUnitCount });
                         });
                         updateLapsUI(); setButtonEnabled('commitBtn', true);
-                        document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto) → ${preinstallSelectedKeys.size} item`;
+                        document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''} → ${preinstallSelectedKeys.size} item`;
                     }
                 } else if (currentMode === 'elemen' && activeElemenList.length > 0) {
                     const c = activeElemenList[currentElemenIndex];
-                    currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentElemenNo, namaSop: currentElemenNama, elemen: c ? c.elemen : '-', cycleNum: currentCycleNum });
+                    currentLaps.push({ dur: parseFloat(durPerUnit.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)), noSop: currentElemenNo, namaSop: currentElemenNama, elemen: c ? c.elemen : '-', cycleNum: currentCycleNum, batch: batchUnitCount });
                     currentElemenIndex++;
                     if (currentElemenIndex >= activeElemenList.length) { currentElemenIndex = 0; currentCycleNum++; }
                     updateElemenActiveInfo(); updateLapButtonLabel(); updateLapsUI(); setButtonEnabled('commitBtn', true);
-                    document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)`;
+                    document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
                 } else if (currentMode === 'siklus' && currentSiklusNo) {
-                    currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentSiklusNo, namaSop: currentSiklusNama });
+                    currentLaps.push({ dur: parseFloat(durPerUnit.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)), noSop: currentSiklusNo, namaSop: currentSiklusNama, batch: batchUnitCount });
                     updateLapsUI(); setButtonEnabled('commitBtn', true);
-                    document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)`;
+                    document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
                 } else {
-                    currentLaps.push(parseFloat(dur.toFixed(2)));
+                    currentLaps.push(parseFloat(durPerUnit.toFixed(2)));
                     updateLapsUI(); setButtonEnabled('commitBtn', true);
                     document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)`;
                 }
@@ -1896,24 +1985,27 @@
             const dur = (now - lastLapTimestamp) / 1000;
             if (dur < 0.1) return;
             lastLapTimestamp = now;
+            // ✅ Batching: bagi durasi dulu
+            const durPerUnit = applyBatchToDur(dur);
 
             if (preinstallActive && (currentMode === 'elemen' || currentMode === 'siklus')) {
                 if (currentMode === 'elemen') {
-                    // ✅ MODE ELEMEN: 1 LAP = 1 elemen selesai, urut
                     if (preinstallActiveElemenList.length === 0) { showToast('⚠️ Belum ada elemen dipilih', 'error'); return; }
                     const cur = preinstallActiveElemenList[preinstallElemenIndex];
                     if (!cur) return;
                     currentLaps.push({
-                        dur: parseFloat(dur.toFixed(2)),
+                        dur: parseFloat(durPerUnit.toFixed(2)),
+                        rawDur: parseFloat(dur.toFixed(2)),
                         noSop: cur.noSop,
                         namaSop: cur.namaSop,
                         elemen: cur.elemen,
                         preinstall: true,
                         operators: preinstallOperatorCount,
-                        cycleNum: preinstallCycleNum
+                        cycleNum: preinstallCycleNum,
+                        batch: batchUnitCount
                     });
                     updateLapsUI();
-                    document.getElementById('lapSplitPreview').innerText = `✔️ ${cur.noSop}·${cur.elemen}: ${dur.toFixed(2)}s`;
+                    document.getElementById('lapSplitPreview').innerText = `✔️ ${cur.noSop}·${cur.elemen}: ${dur.toFixed(2)}s${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
                     preinstallElemenIndex++;
                     if (preinstallElemenIndex >= preinstallActiveElemenList.length) {
                         preinstallElemenIndex = 0;
@@ -1926,14 +2018,13 @@
                     if (navigator.vibrate) navigator.vibrate(30);
                     return;
                 } else {
-                    // MODE SIKLUS: 1 LAP = semua SOP dapat waktu (bagi rata)
-                    const dp = preinstallOperatorCount === 1 ? dur : dur / preinstallOperatorCount;
+                    const dp = preinstallOperatorCount === 1 ? durPerUnit : durPerUnit / preinstallOperatorCount;
                     preinstallSelectedKeys.forEach(k => {
                         const [noSop, namaSop] = k.split('||');
-                        currentLaps.push({ dur: parseFloat(dp.toFixed(2)), noSop, namaSop: namaSop || '-', preinstall: true, operators: preinstallOperatorCount });
+                        currentLaps.push({ dur: parseFloat(dp.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)), noSop, namaSop: namaSop || '-', preinstall: true, operators: preinstallOperatorCount, batch: batchUnitCount });
                     });
                     updateLapsUI();
-                    document.getElementById('lapSplitPreview').innerText = `🎯 ${dur.toFixed(2)}s ÷ ${preinstallOperatorCount} = ${dp.toFixed(2)}s × ${preinstallSelectedKeys.size} item`;
+                    document.getElementById('lapSplitPreview').innerText = `🎯 ${dur.toFixed(2)}s${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}${preinstallOperatorCount > 1 ? ` ÷ ${preinstallOperatorCount} = ${dp.toFixed(2)}s` : ''} × ${preinstallSelectedKeys.size} item`;
                     setButtonEnabled('commitBtn', true);
                     if (navigator.vibrate) navigator.vibrate(30);
                     return;
@@ -1942,20 +2033,20 @@
 
             if (currentMode === 'elemen' && activeElemenList.length > 0) {
                 const c = activeElemenList[currentElemenIndex];
-                currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentElemenNo, namaSop: currentElemenNama, elemen: c.elemen, cycleNum: currentCycleNum });
+                currentLaps.push({ dur: parseFloat(durPerUnit.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)), noSop: currentElemenNo, namaSop: currentElemenNama, elemen: c.elemen, cycleNum: currentCycleNum, batch: batchUnitCount });
                 updateLapsUI();
-                document.getElementById('lapSplitPreview').innerText = `✔️ ${c.elemen}: ${dur.toFixed(2)}s`;
+                document.getElementById('lapSplitPreview').innerText = `✔️ ${c.elemen}: ${dur.toFixed(2)}s${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
                 currentElemenIndex++;
                 if (currentElemenIndex >= activeElemenList.length) { currentElemenIndex = 0; currentCycleNum++; showToast(`🔄 Putaran ${currentCycleNum} dimulai`, 'info'); }
                 updateElemenActiveInfo(); updateLapButtonLabel();
             } else if (currentMode === 'siklus' && currentSiklusNo) {
-                currentLaps.push({ dur: parseFloat(dur.toFixed(2)), noSop: currentSiklusNo, namaSop: currentSiklusNama });
+                currentLaps.push({ dur: parseFloat(durPerUnit.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)), noSop: currentSiklusNo, namaSop: currentSiklusNama, batch: batchUnitCount });
                 updateLapsUI();
-                document.getElementById('lapSplitPreview').innerText = `✔️ ${currentSiklusNo}: ${dur.toFixed(2)}s`;
+                document.getElementById('lapSplitPreview').innerText = `✔️ ${currentSiklusNo}: ${dur.toFixed(2)}s${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
             } else {
-                currentLaps.push(parseFloat(dur.toFixed(2)));
+                currentLaps.push(parseFloat(durPerUnit.toFixed(2)));
                 updateLapsUI();
-                document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s`;
+                document.getElementById('lapSplitPreview').innerText = `C${currentLaps.length}: +${dur.toFixed(2)}s${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
             }
             setButtonEnabled('commitBtn', true);
             if (navigator.vibrate) navigator.vibrate(30);
@@ -1974,7 +2065,6 @@
                 } else { currentElemenIndex = 0; currentCycleNum = 1; }
                 updateElemenActiveInfo(); updateLapButtonLabel();
             }
-            // ✅ Untuk preinstall elemen, recalc index dari lap terakhir
             if (preinstallActive && currentMode === 'elemen' && preinstallActiveElemenList.length > 0 && removed) {
                 if (currentLaps.length === 0) {
                     preinstallElemenIndex = 0;
@@ -1999,7 +2089,8 @@
             }
             updateLapsUI();
             if (isRunning && wasLast && removed !== undefined) {
-                const rd = (typeof removed === 'object') ? removed.dur : removed;
+                // ✅ Kembalikan ke rawDur (durasi asli sebelum dibagi)
+                const rd = (typeof removed === 'object') ? (removed.rawDur !== undefined ? removed.rawDur : removed.dur) : removed;
                 if (typeof rd === 'number' && !isNaN(rd)) lastLapTimestamp -= rd * 1000;
             }
             if (currentLaps.length === 0) { setButtonEnabled('commitBtn', false); document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--'; }
@@ -2015,7 +2106,8 @@
                 let dv, lb = '';
                 if (typeof lap === 'object' && lap !== null) {
                     dv = lap.dur;
-                    if (lap.preinstall) lb = ` 🎯${lap.operators}op`;
+                    if (lap.batch && lap.batch > 1) lb += ` [×${lap.batch}u]`;
+                    if (lap.preinstall) lb += ` 🎯${lap.operators}op`;
                     if (lap.elemen) lb += ` · ${escapeHtml(lap.elemen)} (P${lap.cycleNum})`;
                     else if (lap.noSop) lb += ` · SOP ${escapeHtml(lap.noSop)}`;
                 } else { dv = lap; }
@@ -2040,7 +2132,6 @@
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
 
             if (preinstallActive) {
-                // ✅ Sama seperti mode normal — currentLaps sudah per-elemen (dari recordLap)
                 const grouped = {};
                 currentLaps.forEach(lap => {
                     if (typeof lap !== 'object' || !lap.elemen) return;
@@ -2260,7 +2351,6 @@
             document.getElementById('inputProcess').value = '';
             document.getElementById('customMachineWrapper').classList.add('hidden');
             document.getElementById('selectedMachineInfo').classList.add('hidden');
-            // ✅ Reset indeks preinstall elemen, tapi preinstall tetap aktif
             if (preinstallActive && currentMode === 'elemen') {
                 preinstallElemenIndex = 0;
                 preinstallCycleNum = 1;
@@ -2281,7 +2371,7 @@
             updateLapButtonLabel(); setStartButton('start');
             setTimerStatus('Idle', 'bg-gray-100 text-gray-600 font-medium');
             setButtonEnabled('stopBtn', false); setButtonEnabled('lapBtn', false); setButtonEnabled('commitBtn', false);
-            updateLapsUI(); renderMasterTable(); renderStandardCheck(); updateCounters(); updatePreinstallUI();
+            updateLapsUI(); renderMasterTable(); renderStandardCheck(); updateCounters(); updatePreinstallUI(); updateBatchingUI();
             switchTab('data');
             setTimeout(() => { if (currentTab === 'data') switchTab('input'); }, 1500);
         }
@@ -3190,7 +3280,7 @@
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
         function downloadBackup() {
-            const b = { version: '1.5', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, masterData };
+            const b = { version: '1.6', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, masterData };
             const j = JSON.stringify(b, null, 2);
             const bl = new Blob([j], { type: 'application/json' });
             if (downloadBlob(bl, `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`)) {
@@ -3251,6 +3341,7 @@
                 else if (currentMode === 'siklus') renderSiklusDropdownList();
                 else renderMachineDropdownList();
                 updatePreinstallUI();
+                updateBatchingUI();
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -3272,10 +3363,18 @@
             masterData = lsLoad(LS_KEY_MASTER, []);
             elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
             siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
+            // Load batching dari localStorage
+            const savedBatch = lsLoad(LS_KEY_BATCH, 1);
+            if (savedBatch && parseInt(savedBatch) > 1) {
+                batchUnitCount = parseInt(savedBatch);
+                const bEl = document.getElementById('inputBatchUnit');
+                if (bEl) bEl.value = batchUnitCount;
+            }
             updateLineDisplay(); renderMachineDropdownList(); renderMachineTable();
             renderMasterTable(); updateCounters();
             renderSopDropdownList(); renderElemenMasterTable();
             renderSiklusDropdownList(); renderSiklusMasterTable();
+            updateBatchingUI();
             setLoadingDetail('Menunggu Firebase SDK...');
             const af = async () => {
                 firebaseReady = true;
