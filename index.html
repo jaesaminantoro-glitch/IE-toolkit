@@ -32,6 +32,18 @@
         .modal-content .modal-body-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         .modal-content .modal-footer-sticky { position: sticky; bottom: 0; background: white; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
         .modal-content .modal-header-fixed { flex-shrink: 0; }
+
+        /* ===== Pilih Line & Model: kompak + line & model sama-sama terlihat ===== */
+        .line-model-body #lineListContainer,
+        .line-model-body #modelListContainer { max-height: 168px; overflow-y: auto; padding-right: 2px; }
+        .line-model-body .lm-row { padding: 6px 10px; font-size: 13px; }
+        .line-model-body .lm-uph { font-size: 11px; padding: 1px 6px; }
+        @media (min-width: 640px) {
+            .line-model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+            .line-model-grid > .lm-divider { border-top: 0; border-left: 2px dashed #d1d5db; padding-top: 0; padding-left: 16px; margin-top: 0; }
+            .line-model-body #lineListContainer,
+            .line-model-body #modelListContainer { max-height: 260px; }
+        }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .sync-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
@@ -139,12 +151,13 @@
     </div>
 
     <div id="lineModal" class="modal-bg">
-        <div class="modal-content sticky-layout" style="max-width: 560px;">
+        <div class="modal-content sticky-layout" style="max-width: 720px;">
             <div class="modal-header-fixed p-4 border-b border-gray-200">
                 <h3 class="text-base font-bold text-gray-800">🏭 Pilih Line & Model</h3>
                 <p class="text-xs text-gray-500 mt-1">Line punya UPH. Model menentukan data dipisah per tipe.</p>
             </div>
-            <div class="modal-body-scroll p-4 space-y-4">
+            <div class="modal-body-scroll p-4 space-y-4 line-model-body">
+                <div class="line-model-grid">
                 <div>
                     <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
                         <span>1️⃣ Nama Line</span><span>UPH</span>
@@ -160,7 +173,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="border-t-2 border-dashed border-gray-300 pt-4">
+                <div class="lm-divider border-t-2 border-dashed border-gray-300 pt-4">
                     <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
                         <span>2️⃣ Pilih Model / Type</span><span>Aksi</span>
                     </div>
@@ -171,6 +184,7 @@
                             <button onclick="addNewModelFromModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">➕</button>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
             <div class="modal-footer-sticky p-4 flex gap-2">
@@ -1291,9 +1305,9 @@
             const c = document.getElementById('lineListContainer'); if (!c) return;
             if (lineList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.</div>'; return; }
             c.innerHTML = lineList.map(l => `
-                <div class="flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
+                <div class="lm-row flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
                     <button onclick="selectLineTemp('${escapeHtml(l.name)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}</button>
-                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${l.uph} UPH</span>
+                    <span class="lm-uph text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${l.uph} UPH</span>
                     <button onclick="openEditLineModal('${escapeHtml(l.name)}')" class="text-blue-500 hover:text-blue-700 px-1 py-1 text-sm">✏️</button>
                     <button onclick="deleteLineFromModal('${escapeHtml(l.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
                 </div>`).join('');
@@ -1415,7 +1429,7 @@
             const c = document.getElementById('modelListContainer'); if (!c) return;
             if (modelList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada model.</div>'; return; }
             c.innerHTML = modelList.map(m => `
-                <div class="flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedModel === m.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
+                <div class="lm-row flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedModel === m.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
                     <button onclick="selectModelTemp('${escapeHtml(m.name)}')" class="flex-1 text-left font-semibold ${tempSelectedModel === m.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedModel === m.name ? '✅ ' : ''}${escapeHtml(m.name)}</button>
                     <button onclick="openEditModelModal('${escapeHtml(m.name)}')" class="text-blue-500 hover:text-blue-700 px-1 py-1 text-sm">✏️</button>
                     <button onclick="deleteModelFromModal('${escapeHtml(m.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
