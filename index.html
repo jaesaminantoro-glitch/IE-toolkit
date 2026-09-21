@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Mode (Preinstallasi + Batching)</title>
+    <title>Time Study - Multi Mode (Preinstallasi + Batching + Model + Arsip)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -32,8 +32,6 @@
         .modal-content .modal-body-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
         .modal-content .modal-footer-sticky { position: sticky; bottom: 0; background: white; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
         .modal-content .modal-header-fixed { flex-shrink: 0; }
-
-        /* ===== Pilih Line & Model: kompak + line & model sama-sama terlihat ===== */
         .line-model-body #lineListContainer,
         .line-model-body #modelListContainer { max-height: 168px; overflow-y: auto; padding-right: 2px; }
         .line-model-body .lm-row { padding: 6px 10px; font-size: 13px; }
@@ -102,12 +100,6 @@
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
     <script>
-        // FAILSAFE MUTLAK: apapun yang error di kode lain (localStorage diblokir,
-        // Firebase gagal, dll), overlay loading ini WAJIB hilang paling lama 6 detik
-        // supaya aplikasi tidak pernah macet selamanya di layar ini.
-        // Hanya bertindak kalau overlay MASIH ADA (berarti proses init memang belum
-        // selesai) — kalau overlay sudah dihapus normal, berarti app sudah jalan
-        // dan modal mode yang tertutup adalah hal yang wajar (user sudah pilih mode).
         setTimeout(function () {
             try {
                 const o = document.getElementById('loadingOverlay');
@@ -318,7 +310,7 @@
             </div>
         </div>
     </div>
-        <!-- APP CONTAINER -->
+
     <div id="appContainer" class="hidden">
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
@@ -352,7 +344,6 @@
             </div>
         </nav>
 
-        <!-- TAB INPUT -->
         <div id="tab-input" class="tab-content">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
@@ -528,7 +519,6 @@
             </div>
         </div>
 
-        <!-- TAB DATA -->
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
@@ -558,7 +548,6 @@
             </div>
         </div>
 
-        <!-- TAB MESIN -->
         <div id="tab-mesin" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -581,7 +570,6 @@
             </div>
         </div>
 
-        <!-- TAB ELEMEN -->
         <div id="tab-elemen" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -612,7 +600,6 @@
             </div>
         </div>
 
-        <!-- TAB SIKLUS -->
         <div id="tab-siklus" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -642,7 +629,6 @@
             </div>
         </div>
 
-        <!-- TAB ANALISA -->
         <div id="tab-export" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
@@ -679,7 +665,6 @@
             </div>
         </div>
 
-        <!-- TAB ARSIP -->
         <div id="tab-arsip" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -742,7 +727,6 @@
         </div>
     </div>
 
-    <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -760,7 +744,6 @@
         </div>
     </div>
 
-    <!-- MODAL BULK IMPORT -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -781,7 +764,6 @@
         </div>
     </div>
 
-    <!-- MODAL IMPORT ELEMEN -->
     <div id="elemenImportModal" class="modal-bg" onclick="if(event.target===this) closeElemenImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -805,7 +787,6 @@
         </div>
     </div>
 
-    <!-- MODAL IMPORT SIKLUS -->
     <div id="siklusImportModal" class="modal-bg" onclick="if(event.target===this) closeSiklusImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -829,7 +810,6 @@
         </div>
     </div>
 
-    <!-- SETUP DATABASE -->
     <script>
         try {
             window.IE_DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
@@ -899,7 +879,8 @@
             setTimeout(() => window.dispatchEvent(new Event('firebaseReady')), 100);
         }
     </script>
-        <script>
+
+    <script>
         // ===== STATE =====
         let currentMode = '';
         let startTime = 0;
@@ -987,6 +968,8 @@
         function getUphColorClass(uph, std) { if (!std || std <= 0) return 'bg-purple-50 text-purple-700 border border-purple-200'; if (uph >= std) return 'bg-emerald-100 text-emerald-800 border border-emerald-300'; return 'bg-red-100 text-red-800 border border-red-300'; }
         function getUphHexColor(uph, std) { if (!std || std <= 0) return 'EDE9FE'; if (uph >= std) return 'D1FAE5'; return 'FECACA'; }
         function getUphFontColor(uph, std) { if (!std || std <= 0) return '5B21B6'; if (uph >= std) return '065F46'; return '991B1B'; }
+        function getLbrHexColor(lbr) { if (lbr >= 90) return 'D1FAE5'; if (lbr >= 75) return 'FEF3C7'; return 'FECACA'; }
+        function getLbrFontColor(lbr) { if (lbr >= 90) return '065F46'; if (lbr >= 75) return '92400E'; return '991B1B'; }
         function downloadBlob(blob, filename) {
             try {
                 const u = URL.createObjectURL(blob); const l = document.createElement('a');
@@ -1187,8 +1170,6 @@
 
         function setupFirebaseListeners() {
             if (!firebaseReady) return;
-            // Kalau Firebase SDK gagal dimuat (network diblokir dll), window.firebaseOnValue
-            // tidak akan ada. Berhenti di sini supaya tidak crash dan bikin loading macet.
             if (!window.apiKV && (window.DATABASE_TYPE !== 'firebase' || typeof window.firebaseOnValue !== 'function')) {
                 console.warn('⚠️ setupFirebaseListeners dilewati — Firebase belum/gagal siap, pakai mode lokal.');
                 return;
@@ -1493,7 +1474,8 @@
             saveModelListToFirebase(); renderModelList();
             showToast('Model dihapus', 'warning');
         }
-            // ===== MACHINE =====
+
+        // ===== MACHINE =====
         function toggleMachineDropdown() {
             const p = document.getElementById('machineDropdownPanel'); const b = document.getElementById('machineDropdownBtn');
             if (!p || !b) return;
@@ -1665,8 +1647,6 @@
             lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (firebaseReady) saveElemenMasterToFirebase();
             renderElemenMasterTable(); renderSopDropdownList(); updateCounters();
         }
-
-        // ✅ FIXED: Reset hanya menghapus Line + Model yang aktif
         function clearAllElemen() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); return; }
@@ -1821,8 +1801,6 @@
             lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (firebaseReady) saveSiklusMasterToFirebase();
             renderSiklusMasterTable(); renderSiklusDropdownList(); updateCounters();
         }
-
-        // ✅ FIXED: Reset hanya menghapus Line + Model yang aktif
         function clearAllSiklus() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); return; }
@@ -2983,8 +2961,6 @@
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast('Data dihapus', 'warning');
         }
-
-        // ✅ FIXED: clearAllData dengan scope Line + Model
         function clearAllData() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
 
@@ -3337,9 +3313,29 @@
             downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.csv`);
             showToast('📄 CSV diunduh', 'success');
         }
-        // Export arsip ke Excel (.xlsx) dengan RUMUS asli (Average/SMH/UPH atau CT+Gerakan/Kapasitas
-        // dihitung oleh Excel dari kolom Lap, bukan angka mati hasil hitungan JS), mengikuti
-        // struktur kolom yang sama dengan export Master Data sesuai mode arsip (elemen/siklus/mesin).
+
+        // ===== HELPER: getRowStats untuk data arsip (mode dari argumen) =====
+        function getRowStatsArchive(item, mode) {
+            const laps = item.laps || [];
+            const count = laps.length;
+            const values = laps.map(b => typeof b === 'object' && b !== null ? parseFloat(b.dur) || 0 : parseFloat(b) || 0);
+            const avg = count > 0 ? values.reduce((a, b) => a + b, 0) / count : 0;
+            if (mode === 'elemen' || mode === 'siklus') {
+                const smh = avg * (1 + ALLOWANCE_FIXED);
+                const uph = smh > 0 ? Math.round(3600 / smh) : 0;
+                return { count, avg, allowance: ALLOWANCE_FIXED, smh, uph };
+            } else {
+                const gerakan = parseFloat(item.gerakan) || 0;
+                const actualMachine = parseFloat(item.actualMachine) || 1;
+                const ngRate = parseFloat(item.ngRate) || 0;
+                const ctPlusG = avg + gerakan;
+                const grossCapacity = ctPlusG > 0 ? (3600 / ctPlusG) * actualMachine : 0;
+                const capacity = Math.round(grossCapacity * (1 - Math.max(0, Math.min(100, ngRate)) / 100));
+                return { count, avg, ctPlusG, capacity, gerakan, actualMachine, ngRate };
+            }
+        }
+
+        // ===== EXPORT EXCEL ARSIP (dengan rumus hidup) =====
         function exportArchiveExcel(id) {
             const a = archiveList.find(x => x.id === id);
             if (!a || !a.data) { showToast('❌ Arsip tidak ditemukan', 'error'); return; }
@@ -3348,127 +3344,842 @@
                 const mode = a.mode || 'elemen';
                 const items = a.data || [];
                 if (items.length === 0) { showToast('⚠️ Arsip kosong', 'warning'); return; }
-
-                const lapsArr = items.map(d => (d.laps || []).map(l => (typeof l === 'object' && l !== null) ? (parseFloat(l.dur) || 0) : (parseFloat(l) || 0)));
-                const maxLaps = Math.max(1, ...lapsArr.map(l => l.length));
-
-                let hdFixed = [];
-                if (mode === 'elemen') hdFixed = ['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen'];
-                else if (mode === 'siklus') hdFixed = ['Line', 'Model', 'No. SOP', 'Nama SOP'];
-                else hdFixed = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
-
-                const lapHeaders = Array.from({ length: maxLaps }, (_, i) => `Lap ${i + 1}`);
-
-                let hdTail = [];
-                if (mode === 'elemen' || mode === 'siklus') hdTail = ['Jml Siklus', 'Average (dtk)', 'Allowance', 'SMH (dtk)', 'UPH'];
-                else hdTail = ['Jml Siklus', 'Average (dtk)', 'NG%', 'Gerakan (dtk)', 'CT+Gerakan (dtk)', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas'];
-
-                const header = [...hdFixed, ...lapHeaders, ...hdTail];
-                const rows = [header];
-
-                items.forEach((d, idx) => {
-                    const laps = lapsArr[idx];
-                    let rowFixed = [];
-                    if (mode === 'elemen') rowFixed = [a.line, a.model || '-', d.noSop || d.no || '-', d.namaSop || d.process || '-', d.elemen || '-'];
-                    else if (mode === 'siklus') rowFixed = [a.line, a.model || '-', d.noSop || d.no || '-', d.namaSop || d.process || '-'];
-                    else rowFixed = [a.line, a.model || '-', d.no || '-', d.process || '-', d.subMachine || '-'];
-
-                    const lapCells = Array.from({ length: maxLaps }, (_, i) => laps[i] !== undefined ? laps[i] : '');
-
-                    let rowTail = [];
-                    if (mode === 'elemen' || mode === 'siklus') rowTail = ['', '', ALLOWANCE_FIXED, '', ''];
-                    else rowTail = ['', '', (d.ngRate !== undefined ? parseFloat(d.ngRate) || 0 : 0), (d.gerakan !== undefined ? parseFloat(d.gerakan) || 0 : 0), '', '', (d.actualMachine !== undefined ? parseFloat(d.actualMachine) || 1 : 1), ''];
-
-                    rows.push([...rowFixed, ...lapCells, ...rowTail]);
-                });
-
-                const ws = XLSX.utils.aoa_to_sheet(rows);
-                const fixedCols = hdFixed.length;
-                const lapStartCol = fixedCols;
-                const lapEndCol = fixedCols + maxLaps - 1;
-                const lapColStartLetter = XLSX.utils.encode_col(lapStartCol);
-                const lapColEndLetter = XLSX.utils.encode_col(lapEndCol);
-
-                for (let r = 1; r <= items.length; r++) {
-                    const rowNum = r + 1;
-                    const lapRange = `${lapColStartLetter}${rowNum}:${lapColEndLetter}${rowNum}`;
-
-                    if (mode === 'elemen' || mode === 'siklus') {
-                        const cJml = fixedCols + maxLaps, cAvg = cJml + 1, cAllow = cAvg + 1, cSmh = cAllow + 1, cUph = cSmh + 1;
-                        const addrJml = XLSX.utils.encode_cell({ r, c: cJml });
-                        const addrAvg = XLSX.utils.encode_cell({ r, c: cAvg });
-                        const addrAllow = XLSX.utils.encode_cell({ r, c: cAllow });
-                        const addrSmh = XLSX.utils.encode_cell({ r, c: cSmh });
-                        const addrUph = XLSX.utils.encode_cell({ r, c: cUph });
-                        ws[addrJml] = { t: 'n', f: `COUNT(${lapRange})` };
-                        ws[addrAvg] = { t: 'n', f: `IFERROR(AVERAGE(${lapRange}),0)` };
-                        ws[addrSmh] = { t: 'n', f: `${addrAvg}*(1+${addrAllow})` };
-                        ws[addrUph] = { t: 'n', f: `IF(${addrSmh}>0,ROUND(3600/${addrSmh},0),0)` };
-                        if (ws[addrAllow]) ws[addrAllow].z = '0%';
-                    } else {
-                        const cJml = fixedCols + maxLaps, cAvg = cJml + 1, cNg = cAvg + 1, cGerakan = cNg + 1, cCtg = cGerakan + 1, cKap = cCtg + 1, cJmlMesin = cKap + 1;
-                        const addrJml = XLSX.utils.encode_cell({ r, c: cJml });
-                        const addrAvg = XLSX.utils.encode_cell({ r, c: cAvg });
-                        const addrNg = XLSX.utils.encode_cell({ r, c: cNg });
-                        const addrGerakan = XLSX.utils.encode_cell({ r, c: cGerakan });
-                        const addrCtg = XLSX.utils.encode_cell({ r, c: cCtg });
-                        const addrKap = XLSX.utils.encode_cell({ r, c: cKap });
-                        const addrJmlMesin = XLSX.utils.encode_cell({ r, c: cJmlMesin });
-                        ws[addrJml] = { t: 'n', f: `COUNT(${lapRange})` };
-                        ws[addrAvg] = { t: 'n', f: `IFERROR(AVERAGE(${lapRange}),0)` };
-                        ws[addrCtg] = { t: 'n', f: `${addrAvg}+${addrGerakan}` };
-                        ws[addrKap] = { t: 'n', f: `IF(${addrCtg}>0,ROUND((3600/${addrCtg})*${addrJmlMesin}*(1-MIN(100,MAX(0,${addrNg}))/100),0),0)` };
-                    }
-                }
-
-                ws['!cols'] = header.map(() => ({ wch: 12 }));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Arsip');
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                let wbout;
+                if (mode === 'elemen') wbout = buildArchiveElemenXLSX(items, a);
+                else if (mode === 'siklus') wbout = buildArchiveSiklusXLSX(items, a);
+                else wbout = buildArchiveMesinXLSX(items, a);
+                if (!wbout) { showToast('❌ Gagal export', 'error'); return; }
                 const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                if (downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2, '0')}.xlsx`)) showToast('📊 Excel diunduh (dengan rumus)', 'success');
+                const filename = `Arsip_${mode}_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.xlsx`;
+                if (downloadBlob(blob, filename)) showToast('📊 Excel arsip diunduh (dengan rumus)', 'success');
             } catch (err) {
                 console.error(err);
                 showToast('❌ Gagal export Excel.', 'error');
             }
         }
-        function resetArsipFilter() {
-            document.getElementById('arsipFilterLine').value = '';
-            document.getElementById('arsipFilterModel').value = '';
-            document.getElementById('arsipFilterBulan').value = '';
-            document.getElementById('arsipFilterTahun').value = '';
-            renderArsipList();
-        }
-        function updateArsipCount() {
-            const b = document.getElementById('arsipCountBadge');
-            if (b) { b.innerText = archiveList.length; b.className = archiveList.length > 0 ? 'ml-1 text-[10px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+
+        function buildArchiveElemenXLSX(items, a) {
+            const wb = XLSX.utils.book_new();
+            const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
+            const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen'];
+            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
+            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'Operator', 'UPH', 'Saran SMH (LBR 90%)');
+            const gr = {}; const go = [];
+            items.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
+                const st = getRowStatsArchive(i, 'elemen');
+                gr[k].rows.push({ ...i, stats: st });
+                gr[k].totalSmh += st.smh;
+                if (i.operators) gr[k].operators = i.operators;
+            });
+            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
+            const allSmh = go.map(k => gr[k].totalSmh);
+            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
+            const countSop = allSmh.length;
+            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
+            const dR = [hd]; const mg = [];
+            let ri = 1;
+            const cTS = 5 + mL + 3;
+            const cOp = cTS + 1;
+            const cU = cOp + 1;
+            const cSaran = cU + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const rs = g.rows.length;
+                const gsr = ri;
+                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', x === 0 ? it.namaSop : '', it.elemen];
+                    for (let i = 0; i < mL; i++) {
+                        const lv = it.laps[i];
+                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                        else rd.push('');
+                    }
+                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', it.operators || g.operators || 1, x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
+                    dR.push(rd); ri++;
+                });
+                if (rs >= 1) {
+                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
+                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
+                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
+                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
+                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
+                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
+                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
+                }
+            });
+            const ws = XLSX.utils.aoa_to_sheet(dR);
+            ws['!merges'] = mg;
+            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
+            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
+            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 }, { wch: 10 }, { wch: 16 });
+            ws['!cols'] = cw;
+            const rng = XLSX.utils.decode_range(ws['!ref']);
+            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= rng.e.c; c++) {
+                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                let hFill = 'FEF3C7';
+                if (c === cSaran) hFill = 'FCE7F3';
+                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
+            }
+            let ri2 = 1;
+            const cAvg = 5 + mL;
+            const cAl = cAvg + 1;
+            const cSmh = cAl + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const gsr = ri2;
+                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                const ufC = getUphHexColor(upG, 0);
+                const ufF = getUphFontColor(upG, 0);
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    for (let c = 0; c <= rng.e.c; c++) {
+                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
+                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                        let f = 'FFFFFF';
+                        let fn = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
+                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
+                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+                    }
+                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
+                    if (ws[aAvg]) {
+                        const f1 = XLSX.utils.encode_col(5);
+                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
+                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
+                        ws[aAvg].v = parseFloat(st.avg.toFixed(2)); ws[aAvg].t = 'n'; ws[aAvg].z = '0.00';
+                    }
+                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
+                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
+                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
+                    if (ws[aSmh]) {
+                        const aC = XLSX.utils.encode_col(cAvg);
+                        const aL = XLSX.utils.encode_col(cAl);
+                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`;
+                        ws[aSmh].v = parseFloat(st.smh.toFixed(2)); ws[aSmh].t = 'n'; ws[aSmh].z = '0.00';
+                    }
+                    ri2++;
+                });
+                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
+                const sC = XLSX.utils.encode_col(cSmh);
+                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
+                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
+                const tC = XLSX.utils.encode_col(cTS);
+                if (ws[aUp]) { ws[aUp].f = `ROUND(3600/${tC}${gsr + 1},0)`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
+            });
+            if (ri2 > 1) {
+                const eR = ri2;
+                for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: eR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
+                ri2++;
+                const lR = ri2;
+                const sC = XLSX.utils.encode_col(cTS);
+                const oC = XLSX.utils.encode_col(cOp);
+                const sR = `${sC}2:${sC}${ri2}`;
+                const oR = `${oC}2:${oC}${ri2}`;
+                const sV = [];
+                go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
+                const pT = sV.reduce((s, v) => s + v, 0);
+                const pM = Math.max(...sV, 0);
+                const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
+                const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
+                const lc = getLbrHexColor(pL);
+                const lf = getLbrFontColor(pL);
+                const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
+                ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+                const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
+                ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+                const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
+                ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
+                ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
+            }
+            ws['!rows'] = [{ hpt: 25 }];
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
         }
 
-        // ===== EXPORT =====
+        function buildArchiveSiklusXLSX(items, a) {
+            const wb = XLSX.utils.book_new();
+            const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
+            const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP'];
+            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
+            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Operator', 'Total SMH (s)', 'UPH', 'Saran SMH (LBR 90%)');
+            const gr = {}; const go = [];
+            items.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaList: [] }; go.push(k); }
+                const st = getRowStatsArchive(i, 'siklus');
+                gr[k].rows.push({ ...i, stats: st });
+                gr[k].totalSmh += st.smh;
+                if (i.operators) gr[k].operators = i.operators;
+                if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
+            });
+            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
+            const allSmh = go.map(k => gr[k].totalSmh);
+            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
+            const countSop = allSmh.length;
+            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
+            const dR = [hd]; const mg = [];
+            let ri = 1;
+            const cAvg = 4 + mL;
+            const cAl = cAvg + 1;
+            const cSmh = cAl + 1;
+            const cOp = cSmh + 1;
+            const cTS = cOp + 1;
+            const cU = cTS + 1;
+            const cSaran = cU + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const rs = g.rows.length;
+                const gsr = ri;
+                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', it.namaSop];
+                    for (let i = 0; i < mL; i++) {
+                        const lv = it.laps[i];
+                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                        else rd.push('');
+                    }
+                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), it.operators || g.operators || 1, x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
+                    dR.push(rd); ri++;
+                });
+                if (rs >= 1) {
+                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
+                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
+                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
+                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
+                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
+                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
+                }
+            });
+            const ws = XLSX.utils.aoa_to_sheet(dR);
+            ws['!merges'] = mg;
+            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }];
+            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
+            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 }, { wch: 13 }, { wch: 10 }, { wch: 16 });
+            ws['!cols'] = cw;
+            const rng = XLSX.utils.decode_range(ws['!ref']);
+            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= rng.e.c; c++) {
+                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                let hFill = 'D1FAE5';
+                if (c === cSaran) hFill = 'FCE7F3';
+                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
+            }
+            let ri2 = 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const gsr = ri2;
+                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                const ufC = getUphHexColor(upG, 0);
+                const ufF = getUphFontColor(upG, 0);
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    for (let c = 0; c <= rng.e.c; c++) {
+                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
+                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                        let f = 'FFFFFF';
+                        let fn = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
+                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        else if (c === cTS) { f = 'D1FAE5'; fn = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
+                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+                    }
+                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
+                    if (ws[aAvg]) {
+                        const f1 = XLSX.utils.encode_col(4);
+                        const f2 = XLSX.utils.encode_col(4 + mL - 1);
+                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`; ws[aAvg].z = '0.00';
+                    }
+                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
+                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
+                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
+                    if (ws[aSmh]) {
+                        const aC = XLSX.utils.encode_col(cAvg);
+                        const aL = XLSX.utils.encode_col(cAl);
+                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`; ws[aSmh].z = '0.00';
+                    }
+                    ri2++;
+                });
+                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
+                const sC = XLSX.utils.encode_col(cSmh);
+                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
+                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
+                const tC = XLSX.utils.encode_col(cTS);
+                if (ws[aUp]) { ws[aUp].f = `IF(${tC}${gsr + 1}=0,0,ROUND(3600/${tC}${gsr + 1},0))`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
+            });
+            const sC = XLSX.utils.encode_col(cTS);
+            const oC = XLSX.utils.encode_col(cOp);
+            const sR = `${sC}2:${sC}${ri2}`;
+            const oR = `${oC}2:${oC}${ri2}`;
+            let lR = ri2;
+            for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: lR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
+            lR++;
+            const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
+            ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+            const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
+            ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+            const sV = [];
+            go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
+            const pT = sV.reduce((s, v) => s + v, 0);
+            const pM = Math.max(...sV, 0);
+            const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
+            const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
+            const lc = getLbrHexColor(pL);
+            const lf = getLbrFontColor(pL);
+            const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
+            ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
+            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
+            ws['!rows'] = [{ hpt: 25 }];
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+        }
+
+        function buildArchiveMesinXLSX(items, a) {
+            const wb = XLSX.utils.book_new();
+            const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
+            const hd = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
+            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+            hd.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas');
+            const gr = {}; const go = [];
+            items.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
+                gr[k].rows.push(i);
+                gr[k].totalCapacity += getRowStatsArchive(i, 'mesin').capacity;
+            });
+            go.sort((x, y) => String(gr[x].no || '').localeCompare(String(gr[y].no || ''), undefined, { numeric: true }));
+            const dR = [hd]; const mg = [];
+            let ri = 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const rs = g.rows.length;
+                const gsr = ri;
+                g.rows.forEach((it, x) => {
+                    const st = getRowStatsArchive(it, 'mesin');
+                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.no : '', x === 0 ? it.process : '', it.subMachine || ''];
+                    for (let i = 0; i < mL; i++) {
+                        const lv = it.laps[i];
+                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                        else rd.push('');
+                    }
+                    rd.push(parseFloat(st.avg.toFixed(2)), it.ngRate || 0, parseFloat(st.gerakan.toFixed(2)), parseFloat(st.ctPlusG.toFixed(2)), st.capacity, st.actualMachine, x === 0 ? g.totalCapacity : '');
+                    dR.push(rd); ri++;
+                });
+                if (rs > 1) {
+                    const tc = 11 + mL;
+                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
+                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
+                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
+                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
+                    mg.push({ s: { r: gsr, c: tc }, e: { r: ri - 1, c: tc } });
+                }
+            });
+            const ws = XLSX.utils.aoa_to_sheet(dR);
+            ws['!merges'] = mg;
+            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
+            for (let i = 0; i < mL; i++) cw.push({ wch: 8 });
+            cw.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
+            ws['!cols'] = cw;
+            const rng = XLSX.utils.decode_range(ws['!ref']);
+            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= rng.e.c; c++) {
+                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+            }
+            let ri2 = 1;
+            const cRata = 5 + mL;
+            const cNg = cRata + 1;
+            const cGer = cNg + 1;
+            const cCtg = cGer + 1;
+            const cKap = cCtg + 1;
+            const cJml = cKap + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const gsr = ri2;
+                g.rows.forEach((it, x) => {
+                    const st = getRowStatsArchive(it, 'mesin');
+                    for (let c = 0; c <= rng.e.c; c++) {
+                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
+                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                        ws[a1].s = { font: { color: { rgb: '111827' }, sz: 11 }, fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+                    }
+                    const aRata = XLSX.utils.encode_cell({ r: ri2, c: cRata });
+                    if (ws[aRata]) {
+                        const f1 = XLSX.utils.encode_col(5);
+                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
+                        ws[aRata].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
+                        ws[aRata].v = parseFloat(st.avg.toFixed(2)); ws[aRata].t = 'n'; ws[aRata].z = '0.00';
+                    }
+                    const aCtg = XLSX.utils.encode_cell({ r: ri2, c: cCtg });
+                    if (ws[aCtg]) {
+                        const a1 = XLSX.utils.encode_col(cRata);
+                        const a2 = XLSX.utils.encode_col(cGer);
+                        ws[aCtg].f = `ROUND(${a1}${ri2 + 1}+${a2}${ri2 + 1},2)`;
+                        ws[aCtg].v = parseFloat(st.ctPlusG.toFixed(2)); ws[aCtg].t = 'n'; ws[aCtg].z = '0.00';
+                    }
+                    const aKap = XLSX.utils.encode_cell({ r: ri2, c: cKap });
+                    if (ws[aKap]) {
+                        const c1 = XLSX.utils.encode_col(cCtg);
+                        const c2 = XLSX.utils.encode_col(cJml);
+                        const c3 = XLSX.utils.encode_col(cNg);
+                        ws[aKap].f = `IF(${c1}${ri2 + 1}>0,ROUND(3600/${c1}${ri2 + 1}*${c2}${ri2 + 1}*(1-${c3}${ri2 + 1}/100),0),0)`;
+                        ws[aKap].v = st.capacity; ws[aKap].t = 'n';
+                    }
+                    ri2++;
+                });
+                const tc = 11 + mL;
+                const aTC = XLSX.utils.encode_cell({ r: gsr, c: tc });
+                if (g.rows.length > 1) {
+                    if (ws[aTC]) { const kC = XLSX.utils.encode_col(cKap); ws[aTC].f = `SUM(${kC}${gsr + 1}:${kC}${ri2})`; ws[aTC].v = g.totalCapacity; ws[aTC].t = 'n'; }
+                } else {
+                    if (ws[aTC]) { const kR = XLSX.utils.encode_cell({ r: gsr, c: cKap }); ws[aTC].f = kR; ws[aTC].v = g.totalCapacity; ws[aTC].t = 'n'; }
+                }
+            });
+            ws['!rows'] = [{ hpt: 25 }];
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+        }
+
+        // ===== EXPORT EXCEL MASTER (dengan rumus hidup) =====
+        function exportElemenXLSX() {
+            const dE = getFilteredData();
+            const wb = XLSX.utils.book_new();
+            const mL = Math.max(...dE.map(i => i.laps.length), 1);
+            const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen'];
+            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
+            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'Operator', 'UPH', 'Saran SMH (LBR 90%)');
+            const gr = {}; const go = [];
+            dE.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
+                const st = getRowStats(i);
+                gr[k].rows.push({ ...i, stats: st });
+                gr[k].totalSmh += st.smh;
+                if (i.operators) gr[k].operators = i.operators;
+            });
+            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
+            const allSmh = go.map(k => gr[k].totalSmh);
+            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
+            const countSop = allSmh.length;
+            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
+            const dR = [hd]; const mg = [];
+            let ri = 1;
+            const cTS = 5 + mL + 3;
+            const cOp = cTS + 1;
+            const cU = cOp + 1;
+            const cSaran = cU + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const rs = g.rows.length;
+                const gsr = ri;
+                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', x === 0 ? it.namaSop : '', it.elemen];
+                    for (let i = 0; i < mL; i++) {
+                        const lv = it.laps[i];
+                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                        else rd.push('');
+                    }
+                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', it.operators || g.operators || 1, x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
+                    dR.push(rd); ri++;
+                });
+                if (rs >= 1) {
+                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
+                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
+                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
+                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
+                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
+                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
+                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
+                }
+            });
+            const ws = XLSX.utils.aoa_to_sheet(dR);
+            ws['!merges'] = mg;
+            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
+            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
+            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 }, { wch: 10 }, { wch: 16 });
+            ws['!cols'] = cw;
+            const rng = XLSX.utils.decode_range(ws['!ref']);
+            const std = getLineStandardUph();
+            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= rng.e.c; c++) {
+                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                let hFill = 'FEF3C7';
+                if (c === cSaran) hFill = 'FCE7F3';
+                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
+            }
+            let ri2 = 1;
+            const cAvg = 5 + mL;
+            const cAl = cAvg + 1;
+            const cSmh = cAl + 1;
+            const allSmhCheck = go.map(k => gr[k].totalSmh);
+            const avgSmh = allSmhCheck.length > 0 ? allSmhCheck.reduce((s, v) => s + v, 0) / allSmhCheck.length : 0;
+            const heavyThreshold = avgSmh * 1.05;
+            go.forEach(k => {
+                const g = gr[k];
+                const gsr = ri2;
+                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                const ufC = getUphHexColor(upG, std);
+                const ufF = getUphFontColor(upG, std);
+                const isHeavy = g.totalSmh > heavyThreshold && heavyThreshold > 0;
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    for (let c = 0; c <= rng.e.c; c++) {
+                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
+                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                        let f = 'FFFFFF';
+                        let fn = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
+                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
+                        if (c === cTS && x === 0 && isHeavy) { f = 'FECACA'; fn = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
+                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+                    }
+                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
+                    if (ws[aAvg]) {
+                        const f1 = XLSX.utils.encode_col(5);
+                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
+                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
+                        ws[aAvg].v = parseFloat(st.avg.toFixed(2)); ws[aAvg].t = 'n'; ws[aAvg].z = '0.00';
+                    }
+                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
+                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
+                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
+                    if (ws[aSmh]) {
+                        const aC = XLSX.utils.encode_col(cAvg);
+                        const aL = XLSX.utils.encode_col(cAl);
+                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`;
+                        ws[aSmh].v = parseFloat(st.smh.toFixed(2)); ws[aSmh].t = 'n'; ws[aSmh].z = '0.00';
+                    }
+                    ri2++;
+                });
+                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
+                const sC = XLSX.utils.encode_col(cSmh);
+                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
+                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
+                const tC = XLSX.utils.encode_col(cTS);
+                if (ws[aUp]) { ws[aUp].f = `ROUND(3600/${tC}${gsr + 1},0)`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
+            });
+            if (ri2 > 1) {
+                const eR = ri2;
+                for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: eR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
+                ri2++;
+                const lR = ri2;
+                const sC = XLSX.utils.encode_col(cTS);
+                const oC = XLSX.utils.encode_col(cOp);
+                const sR = `${sC}2:${sC}${ri2}`;
+                const oR = `${oC}2:${oC}${ri2}`;
+                const sV = [];
+                go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
+                const pT = sV.reduce((s, v) => s + v, 0);
+                const pM = Math.max(...sV, 0);
+                const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
+                const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
+                const lc = getLbrHexColor(pL);
+                const lf = getLbrFontColor(pL);
+                const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
+                ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+                const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
+                ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+                const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
+                ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
+                ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
+            }
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh (dengan rumus)', 'success');
+        }
+
+        function exportSiklusXLSX() {
+            const dE = getFilteredData();
+            const wb = XLSX.utils.book_new();
+            const mL = Math.max(...dE.map(i => i.laps.length), 1);
+            const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP'];
+            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
+            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Operator', 'Total SMH (s)', 'UPH', 'Saran SMH (LBR 90%)');
+            const gr = {}; const go = [];
+            dE.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaList: [] }; go.push(k); }
+                const st = getRowStats(i);
+                gr[k].rows.push({ ...i, stats: st });
+                gr[k].totalSmh += st.smh;
+                if (i.operators) gr[k].operators = i.operators;
+                if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
+            });
+            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
+            const allSmh = go.map(k => gr[k].totalSmh);
+            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
+            const countSop = allSmh.length;
+            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
+            const dR = [hd]; const mg = [];
+            let ri = 1;
+            const cAvg = 4 + mL;
+            const cAl = cAvg + 1;
+            const cSmh = cAl + 1;
+            const cOp = cSmh + 1;
+            const cTS = cOp + 1;
+            const cU = cTS + 1;
+            const cSaran = cU + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const rs = g.rows.length;
+                const gsr = ri;
+                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', it.namaSop];
+                    for (let i = 0; i < mL; i++) {
+                        const lv = it.laps[i];
+                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                        else rd.push('');
+                    }
+                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), it.operators || g.operators || 1, x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
+                    dR.push(rd); ri++;
+                });
+                if (rs >= 1) {
+                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
+                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
+                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
+                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
+                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
+                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
+                }
+            });
+            const ws = XLSX.utils.aoa_to_sheet(dR);
+            ws['!merges'] = mg;
+            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }];
+            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
+            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 }, { wch: 13 }, { wch: 10 }, { wch: 16 });
+            ws['!cols'] = cw;
+            const rng = XLSX.utils.decode_range(ws['!ref']);
+            const std = getLineStandardUph();
+            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= rng.e.c; c++) {
+                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                let hFill = 'D1FAE5';
+                if (c === cSaran) hFill = 'FCE7F3';
+                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
+            }
+            let ri2 = 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const gsr = ri2;
+                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
+                const ufC = getUphHexColor(upG, std);
+                const ufF = getUphFontColor(upG, std);
+                g.rows.forEach((it, x) => {
+                    const st = it.stats;
+                    for (let c = 0; c <= rng.e.c; c++) {
+                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
+                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                        let f = 'FFFFFF';
+                        let fn = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
+                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
+                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
+                        else if (c === cTS) { f = 'D1FAE5'; fn = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
+                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
+                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+                    }
+                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
+                    if (ws[aAvg]) {
+                        const f1 = XLSX.utils.encode_col(4);
+                        const f2 = XLSX.utils.encode_col(4 + mL - 1);
+                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`; ws[aAvg].z = '0.00';
+                    }
+                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
+                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
+                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
+                    if (ws[aSmh]) {
+                        const aC = XLSX.utils.encode_col(cAvg);
+                        const aL = XLSX.utils.encode_col(cAl);
+                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`; ws[aSmh].z = '0.00';
+                    }
+                    ri2++;
+                });
+                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
+                const sC = XLSX.utils.encode_col(cSmh);
+                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
+                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
+                const tC = XLSX.utils.encode_col(cTS);
+                if (ws[aUp]) { ws[aUp].f = `IF(${tC}${gsr + 1}=0,0,ROUND(3600/${tC}${gsr + 1},0))`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
+            });
+            const sC = XLSX.utils.encode_col(cTS);
+            const oC = XLSX.utils.encode_col(cOp);
+            const sR = `${sC}2:${sC}${ri2}`;
+            const oR = `${oC}2:${oC}${ri2}`;
+            let lR = ri2;
+            for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: lR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
+            lR++;
+            const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
+            ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+            const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
+            ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
+            const sV = [];
+            go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
+            const pT = sV.reduce((s, v) => s + v, 0);
+            const pM = Math.max(...sV, 0);
+            const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
+            const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
+            const lc = getLbrHexColor(pL);
+            const lf = getLbrFontColor(pL);
+            const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
+            ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
+            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Siklus_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh (dengan rumus)', 'success');
+        }
+
+        function exportMesinXLSX() {
+            const dE = getFilteredData();
+            const wb = XLSX.utils.book_new();
+            const mL = Math.max(...dE.map(i => i.laps.length), 1);
+            const hd = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
+            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+            hd.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas');
+            const gr = {}; const go = [];
+            dE.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
+                gr[k].rows.push(i);
+                gr[k].totalCapacity += getRowStats(i).capacity;
+            });
+            go.sort((x, y) => String(gr[x].no || '').localeCompare(String(gr[y].no || ''), undefined, { numeric: true }));
+            const dR = [hd]; const mg = [];
+            let ri = 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const rs = g.rows.length;
+                const gsr = ri;
+                g.rows.forEach((it, x) => {
+                    const st = getRowStats(it);
+                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.no : '', x === 0 ? it.process : '', it.subMachine || ''];
+                    for (let i = 0; i < mL; i++) {
+                        const lv = it.laps[i];
+                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                        else rd.push('');
+                    }
+                    rd.push(parseFloat(st.avg.toFixed(2)), it.ngRate || 0, parseFloat(st.gerakan.toFixed(2)), parseFloat(st.ctPlusG.toFixed(2)), st.capacity, st.actualMachine, x === 0 ? g.totalCapacity : '');
+                    dR.push(rd); ri++;
+                });
+                if (rs > 1) {
+                    const tc = 11 + mL;
+                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
+                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
+                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
+                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
+                    mg.push({ s: { r: gsr, c: tc }, e: { r: ri - 1, c: tc } });
+                }
+            });
+            const ws = XLSX.utils.aoa_to_sheet(dR);
+            ws['!merges'] = mg;
+            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
+            for (let i = 0; i < mL; i++) cw.push({ wch: 8 });
+            cw.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
+            ws['!cols'] = cw;
+            const rng = XLSX.utils.decode_range(ws['!ref']);
+            const std = getLineStandardUph();
+            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
+            for (let c = 0; c <= rng.e.c; c++) {
+                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
+                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+            }
+            let ri2 = 1;
+            const cRata = 5 + mL;
+            const cNg = cRata + 1;
+            const cGer = cNg + 1;
+            const cCtg = cGer + 1;
+            const cKap = cCtg + 1;
+            const cJml = cKap + 1;
+            go.forEach(k => {
+                const g = gr[k];
+                const gsr = ri2;
+                const tU = g.totalCapacity;
+                const ufC = getUphHexColor(tU, std);
+                const ufF = getUphFontColor(tU, std);
+                g.rows.forEach((it, x) => {
+                    const st = getRowStats(it);
+                    for (let c = 0; c <= rng.e.c; c++) {
+                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
+                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
+                        let f = 'FFFFFF';
+                        let fn = { color: { rgb: '111827' }, sz: 11 };
+                        if (c === 11 + mL && x === 0) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
+                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+                    }
+                    const aRata = XLSX.utils.encode_cell({ r: ri2, c: cRata });
+                    if (ws[aRata]) {
+                        const f1 = XLSX.utils.encode_col(5);
+                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
+                        ws[aRata].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
+                        ws[aRata].v = parseFloat(st.avg.toFixed(2)); ws[aRata].t = 'n'; ws[aRata].z = '0.00';
+                    }
+                    const aCtg = XLSX.utils.encode_cell({ r: ri2, c: cCtg });
+                    if (ws[aCtg]) {
+                        const a1 = XLSX.utils.encode_col(cRata);
+                        const a2 = XLSX.utils.encode_col(cGer);
+                        ws[aCtg].f = `ROUND(${a1}${ri2 + 1}+${a2}${ri2 + 1},2)`;
+                        ws[aCtg].v = parseFloat(st.ctPlusG.toFixed(2)); ws[aCtg].t = 'n'; ws[aCtg].z = '0.00';
+                    }
+                    const aKap = XLSX.utils.encode_cell({ r: ri2, c: cKap });
+                    if (ws[aKap]) {
+                        const c1 = XLSX.utils.encode_col(cCtg);
+                        const c2 = XLSX.utils.encode_col(cJml);
+                        const c3 = XLSX.utils.encode_col(cNg);
+                        ws[aKap].f = `IF(${c1}${ri2 + 1}>0,ROUND(3600/${c1}${ri2 + 1}*${c2}${ri2 + 1}*(1-${c3}${ri2 + 1}/100),0),0)`;
+                        ws[aKap].v = st.capacity; ws[aKap].t = 'n';
+                    }
+                    ri2++;
+                });
+                const tc = 11 + mL;
+                const aTC = XLSX.utils.encode_cell({ r: gsr, c: tc });
+                if (g.rows.length > 1) {
+                    if (ws[aTC]) { const kC = XLSX.utils.encode_col(cKap); ws[aTC].f = `SUM(${kC}${gsr + 1}:${kC}${ri2})`; ws[aTC].v = tU; ws[aTC].t = 'n'; }
+                } else {
+                    if (ws[aTC]) { const kR = XLSX.utils.encode_cell({ r: gsr, c: cKap }); ws[aTC].f = kR; ws[aTC].v = tU; ws[aTC].t = 'n'; }
+                }
+            });
+            ws['!rows'] = [{ hpt: 25 }];
+            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
+            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `Time_Study_Mesin_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh (dengan rumus)', 'success');
+        }
+
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
             try {
                 const dE = getFilteredData();
-                if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
-                const wb = XLSX.utils.book_new();
-                let hd = [];
-                if (currentMode === 'elemen') hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus','Laps','Average','SMH','UPH'];
-                else if (currentMode === 'siklus') hd = ['Line','Model','No. SOP','Nama SOP','Siklus','Laps','Average','SMH','UPH'];
-                else hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus','Laps','Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas'];
-                const rows = [hd];
-                dE.forEach(i => {
-                    const st = getRowStats(i);
-                    const laps = (i.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | ');
-                    if (currentMode === 'elemen') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, i.elemen, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
-                    else if (currentMode === 'siklus') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
-                    else rows.push([i.line, i.model||'-', i.no, i.process, i.subMachine, (i.laps||[]).length, laps, st.avg.toFixed(2), i.ngRate||0, st.gerakan.toFixed(2), st.ctPlusG.toFixed(2), st.capacity, st.actualMachine, '']);
-                });
-                const ws = XLSX.utils.aoa_to_sheet(rows);
-                XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
+                if (dE.length === 0) { showToast('Tidak ada data untuk filter ini!', 'error'); return; }
+                if (currentMode === 'elemen') exportElemenXLSX();
+                else if (currentMode === 'siklus') exportSiklusXLSX();
+                else exportMesinXLSX();
             } catch (err) { console.error(err); showToast('❌ Gagal export.', 'error'); }
         }
         function exportToCSV() {
@@ -3503,7 +4214,7 @@
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
         function downloadBackup() {
-            const b = { version: '2.0', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData };
+            const b = { version: '2.1', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData };
             const j = JSON.stringify(b, null, 2);
             const bl = new Blob([j], { type: 'application/json' });
             if (downloadBlob(bl, `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`)) {
@@ -3613,7 +4324,6 @@
             updateBatchingUI();
             setLoadingDetail('Menunggu database SDK...');
 
-            // Timeout fallback 5 detik — kalau Firebase lambat, lanjut pakai data lokal
             const firebaseTimeout = setTimeout(() => {
                 if (!firebaseReady) {
                     console.warn('⚠️ Firebase timeout — lanjut mode lokal');
@@ -3645,8 +4355,6 @@
                     setupFirebaseListeners();
                     setSyncStatus('online');
                 } catch (e) {
-                    // Apapun yang gagal di atas (Firebase tidak benar-benar siap, dsb),
-                    // jangan biarkan layar loading macet — lanjut pakai data lokal.
                     console.error('⚠️ Gagal setup database, lanjut mode lokal:', e);
                     setSyncStatus('offline');
                 } finally {
