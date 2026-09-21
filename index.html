@@ -82,7 +82,7 @@
 
     <div id="loadingOverlay">
         <div class="spinner mb-4"></div>
-        <div class="text-sm text-gray-600 font-medium">Menghubungkan ke Firebase...</div>
+        <div class="text-sm text-gray-600 font-medium">Menghubungkan ke database...</div>
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
@@ -115,34 +115,50 @@
         </div>
     </div>
 
+    <!-- ===== MODAL LINE + MODEL (GABUNG) ===== -->
     <div id="lineModal" class="modal-bg">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 560px;">
             <div class="p-4 border-b border-gray-200">
-                <h3 class="text-base font-bold text-gray-800">🏭 Pilih Line Anda</h3>
-                <p class="text-xs text-gray-500 mt-1">Setiap line punya UPH sendiri. Setting Line hanya untuk HP ini.</p>
+                <h3 class="text-base font-bold text-gray-800">🏭 Pilih Line & Model</h3>
+                <p class="text-xs text-gray-500 mt-1">Line punya UPH. Model menentukan data dipisah per tipe.</p>
             </div>
-            <div class="p-4 space-y-3">
-                <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1">
-                    <span>Nama Line</span><span>UPH</span>
-                </div>
-                <div id="lineListContainer" class="space-y-2"></div>
-                <div class="border-t border-gray-200 pt-3">
-                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Tambah Line Baru</label>
-                    <div class="space-y-2">
-                        <div class="flex gap-2 items-center">
-                            <input type="text" id="newLineInput" placeholder="Nama Line" class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                            <input type="number" id="newLineUph" placeholder="UPH" min="0" step="10" value="500" class="w-20 shrink-0 px-2 py-2 border border-gray-300 rounded-lg text-sm font-bold text-indigo-700 text-center">
+            <div class="p-4 space-y-4">
+                <div>
+                    <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
+                        <span>1️⃣ Nama Line</span><span>UPH</span>
+                    </div>
+                    <div id="lineListContainer" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                    <div class="border-t border-gray-200 pt-3 mt-3">
+                        <div class="space-y-2">
+                            <div class="flex gap-2 items-center">
+                                <input type="text" id="newLineInput" placeholder="Nama Line" class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                <input type="number" id="newLineUph" placeholder="UPH" min="0" step="10" value="500" class="w-20 shrink-0 px-2 py-2 border border-gray-300 rounded-lg text-sm font-bold text-indigo-700 text-center">
+                            </div>
+                            <button onclick="addNewLineFromModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-lg">➕ Tambah Line</button>
                         </div>
-                        <button onclick="addNewLineFromModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-lg">➕ Tambah Line</button>
+                    </div>
+                </div>
+                <div class="border-t-2 border-dashed border-gray-300 pt-4">
+                    <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
+                        <span>2️⃣ Pilih Model / Type</span><span>Aksi</span>
+                    </div>
+                    <div id="modelListContainer" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                    <div class="border-t border-gray-200 pt-3 mt-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="newModelInput" placeholder="Contoh: SM-A546" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <button onclick="addNewModelFromModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">➕</button>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="p-4 border-t border-gray-200">
-                <button onclick="saveLineSelection()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-sm">✅ Set Line Ini</button>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeLineModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-lg text-sm">Batal</button>
+                <button onclick="saveLineSelection()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-sm">✅ Set Line & Model</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal Edit Line -->
     <div id="editLineModal" class="modal-bg" onclick="if(event.target===this) closeEditLineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -160,6 +176,24 @@
         </div>
     </div>
 
+    <!-- Modal Edit Model -->
+    <div id="editModelModal" class="modal-bg" onclick="if(event.target===this) closeEditModelModal()">
+        <div class="modal-content">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800">✏️ Edit Model</h3>
+                <button onclick="closeEditModelModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div><label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Nama Model</label><input type="text" id="editModelInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></div>
+            </div>
+            <div class="p-4 border-t border-gray-200 flex gap-2">
+                <button onclick="closeEditModelModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
+                <button onclick="saveEditedModel()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm">💾 Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Elemen -->
     <div id="editElemenModal" class="modal-bg" onclick="if(event.target===this) closeEditElemenModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -178,6 +212,7 @@
         </div>
     </div>
 
+    <!-- Modal Edit Siklus -->
     <div id="editSiklusModal" class="modal-bg" onclick="if(event.target===this) closeEditSiklusModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -195,6 +230,7 @@
         </div>
     </div>
 
+    <!-- Modal Backup -->
     <div id="backupModal" class="modal-bg" onclick="if(event.target===this) closeBackupModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -212,6 +248,7 @@
         </div>
     </div>
 
+    <!-- Modal Preinstall -->
     <div id="preinstallModal" class="modal-bg" onclick="if(event.target===this) closePreinstallModal()">
         <div class="modal-content" style="max-width: 550px;">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -251,7 +288,7 @@
             </div>
         </div>
     </div>
-
+    <!-- ===== APP CONTAINER ===== -->
     <div id="appContainer" class="hidden">
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
@@ -262,7 +299,11 @@
                         <span id="syncDot" class="sync-dot sync-syncing"></span>
                     </div>
                     <div class="header-right">
-                        <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white"><span>🏷️</span><span id="currentLineText">Pilih Line</span></button>
+                        <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white">
+                            <span>🏷️</span>
+                            <span id="currentLineText">Pilih Line</span>
+                            <span id="currentModelText" class="ml-1 bg-emerald-500 px-1.5 py-0.5 rounded text-[10px]">-</span>
+                        </button>
                         <button onclick="manualSync()" class="header-btn bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200"><span class="btn-icon">🔄</span><span class="btn-label">SYNC</span></button>
                         <button onclick="openBackupModal()" class="header-btn bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300"><span class="btn-icon">💾</span><span class="btn-label">BACKUP</span></button>
                     </div>
@@ -277,9 +318,11 @@
                 <button onclick="switchTab('elemen')" id="tabBtn-elemen" class="tab-btn hidden">📋 Elemen <span id="elemenCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
                 <button onclick="switchTab('siklus')" id="tabBtn-siklus" class="tab-btn hidden">🔄 Siklus <span id="siklusCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
                 <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📈 Analisa</button>
+                <button onclick="switchTab('arsip')" id="tabBtn-arsip" class="tab-btn">📁 Arsip <span id="arsipCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
             </div>
         </nav>
 
+        <!-- ===== TAB INPUT ===== -->
         <div id="tab-input" class="tab-content">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
@@ -290,10 +333,10 @@
                     <div class="space-y-3">
                         <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex items-center justify-between">
                             <div>
-                                <div class="text-[10px] text-indigo-600 uppercase font-semibold">Line Aktif</div>
+                                <div class="text-[10px] text-indigo-600 uppercase font-semibold">Line · Model Aktif</div>
                                 <div id="inputLineDisplay" class="text-sm font-bold text-indigo-800">-</div>
                             </div>
-                            <button onclick="openLineModal()" class="text-[10px] bg-white border border-indigo-300 text-indigo-700 px-2 py-1 rounded font-semibold">Ganti Line</button>
+                            <button onclick="openLineModal()" class="text-[10px] bg-white border border-indigo-300 text-indigo-700 px-2 py-1 rounded font-semibold">Ganti</button>
                         </div>
 
                         <div id="machineInputWrapper">
@@ -327,7 +370,7 @@
                                     <div id="sopDropdownList" class="custom-dropdown-list"></div>
                                 </div>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master (per Line aktif)</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Elemen otomatis muncul dari master (per Line + Model aktif)</p>
                         </div>
 
                         <div id="siklusInputWrapper" class="hidden">
@@ -344,10 +387,9 @@
                                     <div id="siklusDropdownList" class="custom-dropdown-list"></div>
                                 </div>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-1">Nama SOP otomatis tampil (per Line aktif)</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Nama SOP otomatis tampil (per Line + Model aktif)</p>
                         </div>
 
-                        <!-- ✅ BATCHING MODE (muncul di Elemen & Siklus) -->
                         <div id="batchingWrapper" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3">
                             <div class="flex justify-between items-center mb-2">
                                 <label class="text-[10px] md:text-xs font-semibold text-blue-700 uppercase">⚙️ Unit per LAP (Batching)</label>
@@ -460,10 +502,11 @@
             </div>
         </div>
 
+        <!-- ===== TAB DATA ===== -->
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                    <div><h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2><p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time via Firebase</p></div>
+                    <div><h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2><p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time</p></div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 mb-3 bg-white border border-gray-200 rounded-lg p-2">
                     <div class="flex items-center gap-1.5">
@@ -475,6 +518,7 @@
                     <div class="flex items-center gap-1.5 ml-auto flex-wrap">
                         <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📥 EXCEL</button>
                         <button onclick="exportToCSV()" class="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📄 CSV</button>
+                        <button onclick="archiveFilteredData()" class="bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📦 ARSIP</button>
                         <button onclick="clearAllData()" class="text-[11px] text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg border border-red-200 transition font-semibold">🗑️ Reset</button>
                     </div>
                 </div>
@@ -488,6 +532,7 @@
             </div>
         </div>
 
+        <!-- ===== TAB MESIN ===== -->
         <div id="tab-mesin" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -510,6 +555,7 @@
             </div>
         </div>
 
+        <!-- ===== TAB ELEMEN ===== -->
         <div id="tab-elemen" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -526,17 +572,21 @@
                     <div class="table-scroll border border-gray-200 rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200 text-xs">
                             <thead class="bg-purple-100 text-gray-800"><tr>
-                                <th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No. SOP</th>
-                                <th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th><th class="px-3 py-3 text-left font-bold border-r">Elemen</th>
+                                <th class="px-2 py-3 text-center font-bold border-r">Line</th>
+                                <th class="px-2 py-3 text-center font-bold border-r bg-emerald-50">Model</th>
+                                <th class="px-2 py-3 text-center font-bold border-r">No. SOP</th>
+                                <th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th>
+                                <th class="px-3 py-3 text-left font-bold border-r">Elemen</th>
                                 <th class="px-2 py-3 text-center font-bold w-28">Aksi</th>
                             </tr></thead>
-                            <tbody id="elemenMasterTableBody" class="divide-y divide-gray-200 bg-white"><tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen.</td></tr></tbody>
+                            <tbody id="elemenMasterTableBody" class="divide-y divide-gray-200 bg-white"><tr><td colspan="6" class="px-4 py-12 text-center text-gray-400 italic">Belum ada elemen.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- ===== TAB SIKLUS ===== -->
         <div id="tab-siklus" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -553,16 +603,20 @@
                     <div class="table-scroll border border-gray-200 rounded-lg">
                         <table class="min-w-full divide-y divide-gray-200 text-xs">
                             <thead class="bg-emerald-100 text-gray-800"><tr>
-                                <th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No. SOP</th>
-                                <th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th><th class="px-2 py-3 text-center font-bold w-28">Aksi</th>
+                                <th class="px-2 py-3 text-center font-bold border-r">Line</th>
+                                <th class="px-2 py-3 text-center font-bold border-r bg-emerald-50">Model</th>
+                                <th class="px-2 py-3 text-center font-bold border-r">No. SOP</th>
+                                <th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th>
+                                <th class="px-2 py-3 text-center font-bold w-28">Aksi</th>
                             </tr></thead>
-                            <tbody id="siklusMasterTableBody" class="divide-y divide-gray-200 bg-white"><tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">Belum ada SOP siklus.</td></tr></tbody>
+                            <tbody id="siklusMasterTableBody" class="divide-y divide-gray-200 bg-white"><tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">Belum ada SOP siklus.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- ===== TAB ANALISA ===== -->
         <div id="tab-export" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
@@ -591,9 +645,60 @@
                 <div class="bg-blue-50 rounded-xl border border-blue-200 p-4">
                     <div class="text-xs font-bold text-blue-800 mb-2">💡 Info</div>
                     <div class="text-[11px] text-blue-700 space-y-1">
-                        <div>Firebase: <span id="serverStatusInfo" class="font-bold">-</span></div>
+                        <div>Database: <span id="serverStatusInfo" class="font-bold">-</span></div>
                         <div>Data Master: <span id="serverMasterCount" class="font-bold">0</span></div>
                         <div>Last Update: <span id="serverLastUpdate" class="font-bold">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB ARSIP ===== -->
+        <div id="tab-arsip" class="tab-content hidden">
+            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                        <div>
+                            <h2 class="text-sm md:text-base font-semibold text-gray-800">📁 Arsip Time Study</h2>
+                            <p class="text-[10px] text-gray-500">Data lama tersimpan per Line + Model + Bulan</p>
+                        </div>
+                        <button onclick="openArchiveCurrentBtn()" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">
+                            📦 Arsipkan Data Sekarang
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Line</label>
+                            <select id="arsipFilterLine" onchange="renderArsipList()" class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Model</label>
+                            <select id="arsipFilterModel" onchange="renderArsipList()" class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Bulan</label>
+                            <select id="arsipFilterBulan" onchange="renderArsipList()" class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white">
+                                <option value="">Semua</option>
+                                <option value="1">Januari</option><option value="2">Februari</option>
+                                <option value="3">Maret</option><option value="4">April</option>
+                                <option value="5">Mei</option><option value="6">Juni</option>
+                                <option value="7">Juli</option><option value="8">Agustus</option>
+                                <option value="9">September</option><option value="10">Oktober</option>
+                                <option value="11">November</option><option value="12">Desember</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 uppercase mb-1">Tahun</label>
+                            <input type="number" id="arsipFilterTahun" oninput="renderArsipList()" placeholder="2026" class="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="resetArsipFilter()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-2 py-1.5 rounded-lg border border-gray-300">✖️ Reset</button>
+                        </div>
+                    </div>
+
+                    <div id="arsipListContainer" class="space-y-2 max-h-[500px] overflow-y-auto">
+                        <div class="text-center text-gray-400 italic text-xs py-8">Belum ada arsip.</div>
                     </div>
                 </div>
             </div>
@@ -611,6 +716,7 @@
         </div>
     </div>
 
+    <!-- ===== MODAL MESIN ===== -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -628,6 +734,7 @@
         </div>
     </div>
 
+    <!-- ===== MODAL BULK IMPORT MESIN ===== -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -648,6 +755,7 @@
         </div>
     </div>
 
+    <!-- ===== MODAL IMPORT ELEMEN ===== -->
     <div id="elemenImportModal" class="modal-bg" onclick="if(event.target===this) closeElemenImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -657,12 +765,12 @@
             <div class="p-4 space-y-3">
                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-800">
                     <div class="font-bold mb-1">Format (3 kolom): Nomor SOP | Nama SOP | Process Description</div>
-                    <div class="mt-1">💡 Line: <b id="elemenImportLine">-</b></div>
+                    <div class="mt-1">💡 Line: <b id="elemenImportLine">-</b> · Model: <b id="elemenImportModel">-</b></div>
                 </div>
                 <input type="file" id="elemenFileInput" accept=".csv,.txt,.xlsx,.xls" class="w-full text-sm border border-gray-300 rounded-lg p-2">
                 <div class="text-center text-xs text-gray-400">— ATAU —</div>
                 <textarea id="elemenPasteArea" rows="8" placeholder="1.0&#9;Pemasangan battery&#9;Ambil battery" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
-                <div class="flex items-center gap-2"><input type="checkbox" id="elemenReplaceExisting" class="rounded"><label for="elemenReplaceExisting" class="text-xs text-gray-700">Ganti semua elemen Line ini</label></div>
+                <div class="flex items-center gap-2"><input type="checkbox" id="elemenReplaceExisting" class="rounded"><label for="elemenReplaceExisting" class="text-xs text-gray-700">Ganti semua elemen Line+Model ini</label></div>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
                 <button onclick="closeElemenImportModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
@@ -671,6 +779,7 @@
         </div>
     </div>
 
+    <!-- ===== MODAL IMPORT SIKLUS ===== -->
     <div id="siklusImportModal" class="modal-bg" onclick="if(event.target===this) closeSiklusImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -680,12 +789,12 @@
             <div class="p-4 space-y-3">
                 <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-800">
                     <div class="font-bold mb-1">Format (2 kolom): Nomor SOP | Nama SOP</div>
-                    <div class="mt-1">💡 Line: <b id="siklusImportLine">-</b></div>
+                    <div class="mt-1">💡 Line: <b id="siklusImportLine">-</b> · Model: <b id="siklusImportModel">-</b></div>
                 </div>
                 <input type="file" id="siklusFileInput" accept=".csv,.txt,.xlsx,.xls" class="w-full text-sm border border-gray-300 rounded-lg p-2">
                 <div class="text-center text-xs text-gray-400">— ATAU —</div>
                 <textarea id="siklusPasteArea" rows="6" placeholder="1.0&#9;Pemasangan battery" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
-                <div class="flex items-center gap-2"><input type="checkbox" id="siklusReplaceExisting" class="rounded"><label for="siklusReplaceExisting" class="text-xs text-gray-700">Ganti semua SOP Line ini</label></div>
+                <div class="flex items-center gap-2"><input type="checkbox" id="siklusReplaceExisting" class="rounded"><label for="siklusReplaceExisting" class="text-xs text-gray-700">Ganti semua SOP Line+Model ini</label></div>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
                 <button onclick="closeSiklusImportModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 rounded-lg text-sm">Batal</button>
@@ -694,27 +803,66 @@
         </div>
     </div>
 
-    <script type="module">
-        const firebaseConfig = {
-            apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
-            authDomain: "time-study-6f689.firebaseapp.com",
-            databaseURL: "https://time-study-6f689-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "time-study-6f689",
-            storageBucket: "time-study-6f689.firebasestorage.app",
-            messagingSenderId: "448993822556",
-            appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
-            measurementId: "G-3EHX8Z3Y62"
-        };
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        window.firebaseDB = db; window.firebaseRef = ref; window.firebaseSet = set;
-        window.firebaseOnValue = onValue; window.firebaseGet = get; window.firebaseRunTransaction = runTransaction;
-        console.log('✅ Firebase initialized');
-        window.dispatchEvent(new Event('firebaseReady'));
+    <!-- ===== KONFIGURASI DATABASE ===== -->
+    <script>
+        const DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
+        const SERVER_PC_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
+        window.IE_DB_MODE = DB_MODE;
+        window.IE_SERVER_URL = SERVER_PC_URL;
     </script>
 
+    <script>
+        if (DB_MODE === 'firebase') {
+            document.write(`
+                <script type="module">
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
+                        authDomain: "time-study-6f689.firebaseapp.com",
+                        databaseURL: "https://time-study-6f689-default-rtdb.asia-southeast1.firebasedatabase.app",
+                        projectId: "time-study-6f689",
+                        storageBucket: "time-study-6f689.firebasestorage.app",
+                        messagingSenderId: "448993822556",
+                        appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
+                        measurementId: "G-3EHX8Z3Y62"
+                    };
+                    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+                    import { getDatabase, ref, set, onValue, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+                    const app = initializeApp(firebaseConfig);
+                    const db = getDatabase(app);
+                    window.firebaseDB = db;
+                    window.firebaseRef = ref;
+                    window.firebaseSet = set;
+                    window.firebaseOnValue = onValue;
+                    window.firebaseGet = get;
+                    window.firebaseRunTransaction = runTransaction;
+                    window.DATABASE_TYPE = 'firebase';
+                    console.log('✅ Firebase initialized');
+                    window.dispatchEvent(new Event('firebaseReady'));
+                <\/script>
+            `);
+        } else {
+            window.apiKV = {
+                async get(node) {
+                    const r = await fetch(`${SERVER_PC_URL}/api/kv/${encodeURIComponent(node)}`);
+                    if (!r.ok) throw new Error('GET failed');
+                    return r.json();
+                },
+                async set(node, data) {
+                    const r = await fetch(`${SERVER_PC_URL}/api/kv/${encodeURIComponent(node)}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data })
+                    });
+                    if (!r.ok) throw new Error('PUT failed');
+                    return r.json();
+                }
+            };
+            window.firebaseDB = true;
+            window.DATABASE_TYPE = 'serverpc';
+            console.log('✅ Server PC mode:', SERVER_PC_URL);
+            setTimeout(() => window.dispatchEvent(new Event('firebaseReady')), 100);
+        }
+    </script>
     <script>
         // ===== STATE =====
         let currentMode = '';
@@ -751,7 +899,7 @@
         let activeSiklusList = [];
         let editingSiklusId = null;
         let isAddModeSiklus = false;
-        // ===== PREINSTALL =====
+        // PREINSTALL
         let preinstallActive = false;
         let preinstallOperatorCount = 1;
         let preinstallSelectedKeys = new Set();
@@ -761,8 +909,15 @@
         let preinstallActiveElemenList = [];
         let preinstallElemenIndex = 0;
         let preinstallCycleNum = 1;
-        // ===== BATCHING =====
-        let batchUnitCount = 1;   // 1 = normal, >1 = batching (bagi durasi)
+        // BATCHING
+        let batchUnitCount = 1;
+        // MODEL
+        let modelList = [];
+        let activeModel = '';
+        let tempSelectedModel = '';
+        let editingModelOldName = '';
+        // ARSIP
+        let archiveList = [];
 
         const ALLOWANCE_FIXED = 0.10;
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
@@ -772,6 +927,9 @@
         const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v3';
         const LS_KEY_SIKLUS_MASTER = 'timeStudy_siklusMaster_v1';
         const LS_KEY_BATCH = 'timeStudy_batchUnit_v1';
+        const LS_KEY_MODEL_LIST = 'timeStudy_modelList_v1';
+        const LS_KEY_ACTIVE_MODEL = 'timeStudy_activeModel_v1';
+        const LS_KEY_ARCHIVE = 'timeStudy_archive_v1';
 
         // ===== UTILS =====
         function lsSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
@@ -797,6 +955,15 @@
         function getUphColorClass(uph, std) { if (!std || std <= 0) return 'bg-purple-50 text-purple-700 border border-purple-200'; if (uph >= std) return 'bg-emerald-100 text-emerald-800 border border-emerald-300'; return 'bg-red-100 text-red-800 border border-red-300'; }
         function getUphHexColor(uph, std) { if (!std || std <= 0) return 'EDE9FE'; if (uph >= std) return 'D1FAE5'; return 'FECACA'; }
         function getUphFontColor(uph, std) { if (!std || std <= 0) return '5B21B6'; if (uph >= std) return '065F46'; return '991B1B'; }
+        function downloadBlob(blob, filename) {
+            try {
+                const u = URL.createObjectURL(blob); const l = document.createElement('a');
+                l.href = u; l.download = filename; l.style.display = 'none';
+                document.body.appendChild(l); l.click();
+                setTimeout(() => { document.body.removeChild(l); URL.revokeObjectURL(u); }, 1500);
+                return true;
+            } catch (e) { showToast('❌ Gagal download.', 'error'); return false; }
+        }
 
         // ===== BATCHING =====
         function onBatchUnitChange() {
@@ -824,24 +991,17 @@
             const activeText = document.getElementById('batchingActiveText');
             const hint = document.getElementById('batchingHint');
             if (!w) return;
-            // Tampilkan batching hanya di mode Elemen & Siklus
-            if (currentMode === 'elemen' || currentMode === 'siklus') {
-                w.classList.remove('hidden');
-            } else {
-                w.classList.add('hidden');
-                return;
-            }
+            if (currentMode === 'elemen' || currentMode === 'siklus') { w.classList.remove('hidden'); }
+            else { w.classList.add('hidden'); return; }
             if (batchUnitCount > 1) {
                 if (activeInfo) activeInfo.classList.remove('hidden');
                 if (activeText) activeText.innerText = `1 LAP = ${batchUnitCount} unit → waktu dibagi ${batchUnitCount}`;
-                if (hint) hint.innerHTML = `⚡ <b>Batching aktif:</b> setiap LAP akan dibagi ${batchUnitCount}. Pastikan durasi LAP memang waktu untuk ${batchUnitCount} unit sekaligus.`;
+                if (hint) hint.innerHTML = `⚡ <b>Batching aktif:</b> setiap LAP akan dibagi ${batchUnitCount}.`;
             } else {
                 if (activeInfo) activeInfo.classList.add('hidden');
                 if (hint) hint.innerHTML = `💡 Isi <b>3</b> kalau 1 LAP = 3 unit. Waktu otomatis dibagi → hasil per unit.`;
             }
-            // Update split preview
             updateBatchingSplitPreview();
-            // Update label tombol LAP kalau batch > 1
             updateLapButtonLabel();
         }
         function updateBatchingSplitPreview() {
@@ -855,10 +1015,7 @@
                 }
             }
         }
-        function applyBatchToDur(rawDur) {
-            if (batchUnitCount <= 1) return rawDur;
-            return rawDur / batchUnitCount;
-        }
+        function applyBatchToDur(rawDur) { if (batchUnitCount <= 1) return rawDur; return rawDur / batchUnitCount; }
 
         // ===== MODE =====
         async function selectMode(mode) {
@@ -878,7 +1035,7 @@
             applyModeToUI();
             renderMasterTable(); renderStandardCheck(); updateCounters();
             renderMachineTable(); renderElemenMasterTable(); renderSiklusMasterTable();
-            updateLineDisplay(); syncUphFromActiveLine();
+            updateLineDisplay(); updateModelDisplay(); syncUphFromActiveLine();
             showToast('✅ Data tersinkron', 'success');
             setTimeout(() => { openLineModal(); }, 300);
         }
@@ -924,7 +1081,6 @@
             }
             preinstallActive = false; preinstallSelectedKeys.clear(); preinstallActiveSops = []; preinstallOperatorCount = 1;
             preinstallActiveElemenList = []; preinstallElemenIndex = 0; preinstallCycleNum = 1;
-            // Reset batching saat ganti mode
             batchUnitCount = 1;
             const bEl = document.getElementById('inputBatchUnit');
             if (bEl) bEl.value = 1;
@@ -936,23 +1092,40 @@
             else if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
         }
 
-        // ===== FIREBASE =====
+        // ===== DATABASE ABSTRACTION =====
+        async function dbGet(node) {
+            if (window.apiKV) return await window.apiKV.get(node);
+            const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, node));
+            return snap.exists() ? snap.val() : { data: [], lastUpdate: null };
+        }
+        async function dbSet(node, data) {
+            if (window.apiKV) return await window.apiKV.set(node, data);
+            return await window.firebaseSet(window.firebaseRef(window.firebaseDB, node), { data, lastUpdate: new Date().toISOString() });
+        }
         async function fbTransactionMergeArray(node, mutatorFn) {
             if (!firebaseReady) return false;
             try {
                 setSyncStatus('syncing');
-                const nodeRef = window.firebaseRef(window.firebaseDB, node);
-                await window.firebaseRunTransaction(nodeRef, (current) => {
-                    const freshArr = (current && Array.isArray(current.data)) ? current.data : [];
+                if (window.apiKV) {
+                    const cur = await window.apiKV.get(node);
+                    const freshArr = cur.data || [];
                     const newArr = mutatorFn(freshArr);
-                    if (!newArr) return current;
-                    return { data: newArr, lastUpdate: new Date().toISOString() };
-                });
+                    if (newArr) await window.apiKV.set(node, newArr);
+                } else {
+                    const nodeRef = window.firebaseRef(window.firebaseDB, node);
+                    await window.firebaseRunTransaction(nodeRef, (current) => {
+                        const freshArr = (current && Array.isArray(current.data)) ? current.data : [];
+                        const newArr = mutatorFn(freshArr);
+                        if (!newArr) return current;
+                        return { data: newArr, lastUpdate: new Date().toISOString() };
+                    });
+                }
                 setSyncStatus('online'); return true;
             } catch (e) { setSyncStatus('offline'); return false; }
         }
         function recordIdentityMatch(item, ref, mode) {
             if (!item || item.line !== ref.line) return false;
+            if (ref.model && item.model !== ref.model) return false;
             if (mode === 'elemen') return item.noSop === ref.noSop && item.namaSop === ref.namaSop && item.elemen === ref.elemen;
             if (mode === 'siklus') return item.noSop === ref.noSop && item.namaSop === ref.namaSop;
             return item.no === ref.no && item.process === ref.process && item.subMachine === ref.subMachine;
@@ -961,70 +1134,117 @@
             if (!firebaseReady || isSyncingFromRemote) return;
             const node = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
             if (typeof mutatorFn === 'function') { await fbTransactionMergeArray(node, mutatorFn); return; }
-            try { setSyncStatus('syncing'); await window.firebaseSet(window.firebaseRef(window.firebaseDB, node), { data: masterData, lastUpdate: new Date().toISOString() }); setSyncStatus('online'); }
+            try { setSyncStatus('syncing'); await dbSet(node, masterData); setSyncStatus('online'); }
             catch (e) { setSyncStatus('offline'); }
         }
-        async function saveMachinesToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'machineList'), { data: machineList, lastUpdate: new Date().toISOString() }); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
-        async function saveLineListToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'lineList'), { data: lineList, lastUpdate: new Date().toISOString() }); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
-        async function saveElemenMasterToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'elemenMaster'), { data: elemenMasterList, lastUpdate: new Date().toISOString() }); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
-        async function saveSiklusMasterToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'siklusMaster'), { data: siklusMasterList, lastUpdate: new Date().toISOString() }); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveMachinesToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('machineList', machineList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveLineListToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('lineList', lineList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveElemenMasterToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('elemenMaster', elemenMasterList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveSiklusMasterToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('siklusMaster', siklusMasterList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveModelListToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('modelList', modelList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveArchiveToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('archive', archiveList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+
         function setupFirebaseListeners() {
             if (!firebaseReady) return;
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
-                const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                const rd = normalizeLineList(val.data || []);
-                if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rd; syncUphFromActiveLine(); if (document.getElementById('lineModal').classList.contains('active')) renderLineList(); isSyncingFromRemote = false; }
-            }, () => {});
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
-                const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                const rd = val.data || [];
-                if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); updateCounters(); isSyncingFromRemote = false; }
-            }, () => {});
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'elemenMaster'), (snap) => {
-                const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                const rd = val.data || [];
-                if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
-            }, () => {});
-            window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'siklusMaster'), (snap) => {
-                const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                const rd = val.data || [];
-                if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
-            }, () => {});
-            ['masterDataMesin', 'masterDataElemen', 'masterDataSiklus'].forEach(node => {
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, node), (snap) => {
+            const nodes = ['lineList', 'machineList', 'elemenMaster', 'siklusMaster', 'masterDataMesin', 'masterDataElemen', 'masterDataSiklus', 'modelList', 'archive'];
+            if (!window.apiKV) {
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
+                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                    const rd = normalizeLineList(val.data || []);
+                    if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rd; syncUphFromActiveLine(); if (document.getElementById('lineModal').classList.contains('active')) renderLineList(); isSyncingFromRemote = false; }
+                }, () => {});
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
                     const val = snap.val(); if (!val || isSyncingFromRemote) return;
                     const rd = val.data || [];
-                    const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
-                    if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) { isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); updateCounters(); isSyncingFromRemote = false; }
-                    if (node === activeNode) {
-                        lastServerUpdate = val.lastUpdate; setSyncStatus('online');
-                        const mc = document.getElementById('serverMasterCount'); if (mc) mc.innerText = rd.length;
-                        const lu = document.getElementById('serverLastUpdate'); if (lu && val.lastUpdate) lu.innerText = new Date(val.lastUpdate).toLocaleString('id-ID');
-                    }
+                    if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); updateCounters(); isSyncingFromRemote = false; }
                 }, () => {});
-            });
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'elemenMaster'), (snap) => {
+                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                    const rd = val.data || [];
+                    if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
+                }, () => {});
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'siklusMaster'), (snap) => {
+                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                    const rd = val.data || [];
+                    if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
+                }, () => {});
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'modelList'), (snap) => {
+                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                    const rd = val.data || [];
+                    if (JSON.stringify(rd) !== JSON.stringify(modelList)) { isSyncingFromRemote = true; modelList = rd; lsSave(LS_KEY_MODEL_LIST, modelList); updateModelDisplay(); isSyncingFromRemote = false; }
+                }, () => {});
+                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'archive'), (snap) => {
+                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                    const rd = val.data || [];
+                    if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; }
+                }, () => {});
+                ['masterDataMesin', 'masterDataElemen', 'masterDataSiklus'].forEach(node => {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, node), (snap) => {
+                        const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                        const rd = val.data || [];
+                        const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                        if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) { isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); updateCounters(); isSyncingFromRemote = false; }
+                        if (node === activeNode) {
+                            lastServerUpdate = val.lastUpdate; setSyncStatus('online');
+                            const mc = document.getElementById('serverMasterCount'); if (mc) mc.innerText = rd.length;
+                            const lu = document.getElementById('serverLastUpdate'); if (lu && val.lastUpdate) lu.innerText = new Date(val.lastUpdate).toLocaleString('id-ID');
+                        }
+                    }, () => {});
+                });
+            } else {
+                setInterval(async () => {
+                    if (isSyncingFromRemote || isRunning) return;
+                    try {
+                        for (const node of nodes) {
+                            const val = await dbGet(node);
+                            const rd = val.data || [];
+                            if (node === 'lineList') { if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = normalizeLineList(rd); syncUphFromActiveLine(); isSyncingFromRemote = false; } }
+                            else if (node === 'machineList') { if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); isSyncingFromRemote = false; } }
+                            else if (node === 'elemenMaster') { if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } isSyncingFromRemote = false; } }
+                            else if (node === 'siklusMaster') { if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } isSyncingFromRemote = false; } }
+                            else if (node === 'modelList') { if (JSON.stringify(rd) !== JSON.stringify(modelList)) { isSyncingFromRemote = true; modelList = rd; lsSave(LS_KEY_MODEL_LIST, modelList); updateModelDisplay(); isSyncingFromRemote = false; } }
+                            else if (node === 'archive') { if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; } }
+                            else {
+                                const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin';
+                                if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) {
+                                    isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); isSyncingFromRemote = false;
+                                }
+                            }
+                        }
+                        setSyncStatus('online');
+                    } catch (e) { setSyncStatus('offline'); }
+                }, 15000);
+            }
         }
+
         async function manualSync() { showToast('🔄 Sync...', 'info'); await loadAllFromFirebaseOnce(); showToast('✅ Tersinkron', 'success'); }
+
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
             try {
-                const s1 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'lineList')); if (s1.exists()) lineList = normalizeLineList(s1.val().data || []);
-                const s2 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'machineList')); if (s2.exists()) machineList = s2.val().data || [];
-                const s3 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'elemenMaster')); if (s3.exists()) elemenMasterList = s3.val().data || [];
-                const s4 = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'siklusMaster')); if (s4.exists()) siklusMasterList = s4.val().data || [];
+                const s1 = await dbGet('lineList'); lineList = normalizeLineList(s1.data || []);
+                const s2 = await dbGet('machineList'); machineList = s2.data || [];
+                const s3 = await dbGet('elemenMaster'); elemenMasterList = s3.data || [];
+                const s4 = await dbGet('siklusMaster'); siklusMasterList = s4.data || [];
+                const s5 = await dbGet('modelList'); modelList = s5.data || [];
+                const s6 = await dbGet('archive'); archiveList = s6.data || [];
                 const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
-                const sM = await window.firebaseGet(window.firebaseRef(window.firebaseDB, activeNode));
-                if (sM.exists()) { masterData = sM.val().data || []; lastServerUpdate = sM.val().lastUpdate; } else { masterData = []; lastServerUpdate = null; }
+                const sM = await dbGet(activeNode);
+                masterData = sM.data || []; lastServerUpdate = sM.lastUpdate;
                 lsSave(LS_KEY_MACHINES, machineList); lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                 lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(LS_KEY_MASTER, masterData);
+                lsSave(LS_KEY_MODEL_LIST, modelList); lsSave(LS_KEY_ARCHIVE, archiveList);
                 renderMachineDropdownList(); renderMachineTable(); renderMasterTable(); renderStandardCheck(); updateCounters();
+                updateModelDisplay(); renderArsipList(); updateArsipCount();
                 if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
                 if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
                 syncUphFromActiveLine(); setSyncStatus('online');
             } catch (e) { setSyncStatus('offline'); }
         }
+
         function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
         function saveMasterToLS(mutatorFn) { lsSave(LS_KEY_MASTER, masterData); if (firebaseReady) saveMasterToFirebase(mutatorFn); }
+
         function syncUphFromActiveLine() {
             if (uphUserOverride || !activeLine) return;
             const uph = getLineUph(activeLine);
@@ -1032,7 +1252,6 @@
         }
         function onUphInputChange() { uphUserOverride = true; document.getElementById('uphSourceHint').innerText = 'Manual override'; renderStandardCheck(); }
         function clearStandardUph() { document.getElementById('standardUph').value = ''; uphUserOverride = false; document.getElementById('uphSourceHint').innerText = 'Auto dari Line'; renderStandardCheck(); }
-
         // ===== LINE =====
         function renderLineList() {
             const c = document.getElementById('lineListContainer'); if (!c) return;
@@ -1045,8 +1264,17 @@
                     <button onclick="deleteLineFromModal('${escapeHtml(l.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
                 </div>`).join('');
         }
-        function selectLineTemp(n) { tempSelectedLine = n; renderLineList(); saveLineSelection(); }
-        function openLineModal() { tempSelectedLine = activeLine || ''; renderLineList(); document.getElementById('lineModal').classList.add('active'); document.getElementById('newLineInput').value = ''; document.getElementById('newLineUph').value = '500'; }
+        function selectLineTemp(n) { tempSelectedLine = n; renderLineList(); }
+        function openLineModal() {
+            tempSelectedLine = activeLine || '';
+            tempSelectedModel = activeModel || '';
+            renderLineList();
+            renderModelList();
+            document.getElementById('newLineInput').value = '';
+            document.getElementById('newLineUph').value = '500';
+            document.getElementById('newModelInput').value = '';
+            document.getElementById('lineModal').classList.add('active');
+        }
         function closeLineModal() { document.getElementById('lineModal').classList.remove('active'); }
         function addNewLineFromModal() {
             const inp = document.getElementById('newLineInput'); const ui = document.getElementById('newLineUph');
@@ -1060,9 +1288,16 @@
         }
         async function saveLineSelection() {
             if (!tempSelectedLine) { showToast('Pilih Line dulu!', 'error'); return; }
+            if (!tempSelectedModel) { showToast('Pilih Model dulu!', 'error'); return; }
+
             activeLine = tempSelectedLine;
             localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
-            updateLineDisplay(); uphUserOverride = false; syncUphFromActiveLine(); closeLineModal();
+            activeModel = tempSelectedModel;
+            localStorage.setItem(LS_KEY_ACTIVE_MODEL, activeModel);
+
+            updateLineDisplay(); updateModelDisplay();
+            uphUserOverride = false; syncUphFromActiveLine(); closeLineModal();
+
             currentElemenNo = ''; currentElemenNama = ''; activeElemenList = [];
             currentElemenIndex = 0; currentCycleNum = 1;
             currentSiklusNo = ''; currentSiklusNama = ''; activeSiklusList = [];
@@ -1072,7 +1307,6 @@
             document.getElementById('timerDisplay').innerText = '00:00.00';
             preinstallActive = false; preinstallSelectedKeys.clear(); preinstallActiveSops = []; preinstallOperatorCount = 1;
             preinstallActiveElemenList = []; preinstallElemenIndex = 0; preinstallCycleNum = 1;
-            // Reset batching saat ganti Line
             batchUnitCount = 1;
             const bEl = document.getElementById('inputBatchUnit');
             if (bEl) bEl.value = 1;
@@ -1083,18 +1317,19 @@
             document.getElementById('siklusActiveInfo').classList.add('hidden');
             document.getElementById('inputNo').value = '';
             document.getElementById('inputProcess').value = '';
+
             if (firebaseReady) { setSyncStatus('syncing'); try { await loadAllFromFirebaseOnce(); } catch (e) {} setSyncStatus('online'); }
             renderMasterTable(); renderStandardCheck(); updateCounters();
             if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
             if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
             if (currentMode === 'mesin') { renderMachineDropdownList(); }
             updateLapButtonLabel(); updatePreinstallUI(); updateBatchingUI();
-            showToast(`✅ Line: ${activeLine}`, 'success');
+            showToast(`✅ ${activeLine} · ${activeModel}`, 'success');
         }
         function updateLineDisplay() {
             const b = document.getElementById('currentLineText'); const d = document.getElementById('inputLineDisplay');
             if (b) b.innerText = activeLine || 'Pilih Line';
-            if (d) d.innerText = activeLine || '-';
+            if (d) d.innerText = activeLine ? `${activeLine}${activeModel ? ' · ' + activeModel : ''}` : '-';
         }
         function openEditLineModal(n) {
             editingLineOldName = n; const l = lineList.find(x => x.name === n);
@@ -1121,7 +1356,7 @@
                 if (tempSelectedLine === on) tempSelectedLine = nn;
             }
             saveLineListToFirebase();
-            if (uc > 0) { saveMasterToLS(); if (firebaseReady) { saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); } lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); }
+            if (uc > 0) { saveMasterToLS(); saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); }
             if (activeLine === nn) { uphUserOverride = false; syncUphFromActiveLine(); }
             renderLineList(); closeEditLineModal();
             renderMasterTable(); renderStandardCheck(); renderElemenMasterTable(); renderSiklusMasterTable();
@@ -1139,6 +1374,76 @@
             if (tempSelectedLine === n) tempSelectedLine = '';
             saveLineListToFirebase(); renderLineList();
             showToast('Line dihapus', 'warning');
+        }
+
+        // ===== MODEL =====
+        function renderModelList() {
+            const c = document.getElementById('modelListContainer'); if (!c) return;
+            if (modelList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada model.</div>'; return; }
+            c.innerHTML = modelList.map(m => `
+                <div class="flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedModel === m.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
+                    <button onclick="selectModelTemp('${escapeHtml(m.name)}')" class="flex-1 text-left font-semibold ${tempSelectedModel === m.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedModel === m.name ? '✅ ' : ''}${escapeHtml(m.name)}</button>
+                    <button onclick="openEditModelModal('${escapeHtml(m.name)}')" class="text-blue-500 hover:text-blue-700 px-1 py-1 text-sm">✏️</button>
+                    <button onclick="deleteModelFromModal('${escapeHtml(m.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
+                </div>`).join('');
+        }
+        function selectModelTemp(n) { tempSelectedModel = n; renderModelList(); }
+        function addNewModelFromModal() {
+            const inp = document.getElementById('newModelInput');
+            const v = inp.value.trim();
+            if (!v) { showToast('Ketik nama model!', 'error'); return; }
+            if (modelList.find(m => m.name === v)) { showToast('Model sudah ada!', 'warning'); return; }
+            modelList.push({ name: v });
+            modelList.sort((a, b) => a.name.localeCompare(b.name));
+            saveModelListToFirebase();
+            tempSelectedModel = v;
+            renderModelList();
+            inp.value = '';
+            showToast('✅ Model ditambahkan', 'success');
+        }
+        function updateModelDisplay() {
+            const t = document.getElementById('currentModelText');
+            if (t) t.innerText = activeModel || '-';
+        }
+        function openEditModelModal(n) {
+            editingModelOldName = n;
+            document.getElementById('editModelInput').value = n;
+            document.getElementById('editModelModal').classList.add('active');
+        }
+        function closeEditModelModal() { document.getElementById('editModelModal').classList.remove('active'); }
+        function saveEditedModel() {
+            const nn = document.getElementById('editModelInput').value.trim();
+            if (!nn) { showToast('Nama model wajib!', 'error'); return; }
+            if (nn !== editingModelOldName && modelList.find(m => m.name === nn)) { showToast('Nama sudah ada!', 'warning'); return; }
+            const on = editingModelOldName;
+            const idx = modelList.findIndex(m => m.name === on);
+            if (idx !== -1) modelList[idx] = { name: nn };
+            modelList.sort((a, b) => a.name.localeCompare(b.name));
+            masterData.forEach(i => { if (i.model === on) i.model = nn; });
+            elemenMasterList.forEach(i => { if (i.model === on) i.model = nn; });
+            siklusMasterList.forEach(i => { if (i.model === on) i.model = nn; });
+            if (activeModel === on) {
+                activeModel = nn;
+                localStorage.setItem(LS_KEY_ACTIVE_MODEL, activeModel);
+                updateModelDisplay(); updateLineDisplay();
+            }
+            if (tempSelectedModel === on) tempSelectedModel = nn;
+            saveModelListToFirebase();
+            saveMasterToLS(); saveElemenMasterToFirebase(); saveSiklusMasterToFirebase();
+            renderModelList(); closeEditModelModal();
+            renderMasterTable();
+            showToast('✅ Model diupdate', 'success');
+        }
+        function deleteModelFromModal(n) {
+            const dc = masterData.filter(d => d.model === n).length;
+            let m = `Hapus Model "${n}"?`;
+            if (dc > 0) m += `\n\n⚠️ Ada ${dc} data terkait. Data tetap tersimpan tapi model jadi kosong.`;
+            if (!confirm(m)) return;
+            modelList = modelList.filter(x => x.name !== n);
+            if (activeModel === n) { activeModel = ''; localStorage.removeItem(LS_KEY_ACTIVE_MODEL); updateModelDisplay(); updateLineDisplay(); }
+            if (tempSelectedModel === n) tempSelectedModel = '';
+            saveModelListToFirebase(); renderModelList();
+            showToast('Model dihapus', 'warning');
         }
 
         // ===== MACHINE =====
@@ -1284,27 +1589,20 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 di-export', 'success');
         }
-        function downloadBlob(blob, filename) {
-            try {
-                const u = URL.createObjectURL(blob); const l = document.createElement('a');
-                l.href = u; l.download = filename; l.style.display = 'none';
-                document.body.appendChild(l); l.click();
-                setTimeout(() => { document.body.removeChild(l); URL.revokeObjectURL(u); }, 1500);
-                return true;
-            } catch (e) { showToast('❌ Gagal download.', 'error'); return false; }
-        }
 
         // ===== ELEMEN MASTER =====
         function renderElemenMasterTable() {
             const tb = document.getElementById('elemenMasterTableBody'); if (!tb) return;
             let f = elemenMasterList.filter(e => e.line === activeLine);
+            if (activeModel) f = f.filter(e => (e.model || '-') === activeModel);
             const s = (document.getElementById('elemenSearch')?.value || '').toLowerCase().trim();
             if (s) f = f.filter(e => String(e.noSop).toLowerCase().includes(s) || String(e.namaSop).toLowerCase().includes(s) || String(e.elemen).toLowerCase().includes(s));
-            if (f.length === 0) { tb.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen.' : 'Tidak ada hasil.'}</td></tr>`; return; }
+            if (f.length === 0) { tb.innerHTML = `<tr><td colspan="6" class="px-4 py-12 text-center text-gray-400 italic">${elemenMasterList.length === 0 ? 'Belum ada elemen.' : 'Tidak ada hasil.'}</td></tr>`; return; }
             f = [...f].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             tb.innerHTML = f.map(e => `
                 <tr class="hover:bg-purple-50/30">
                     <td class="px-2 py-2 text-center border-r border-b"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(e.line || '-')}</span></td>
+                    <td class="px-2 py-2 text-center border-r border-b bg-emerald-50"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(e.model || '-')}</span></td>
                     <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(e.noSop)}</td>
                     <td class="px-3 py-2 border-r border-b">${escapeHtml(e.namaSop)}</td>
                     <td class="px-3 py-2 border-r border-b font-medium">${escapeHtml(e.elemen)}</td>
@@ -1331,8 +1629,8 @@
         function exportElemenCSV() {
             if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-            const rows = [['Line', 'No. SOP', 'Nama SOP', 'Elemen']];
-            elemenMasterList.forEach(e => rows.push([e.line, e.noSop, e.namaSop, e.elemen]));
+            const rows = [['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen']];
+            elemenMasterList.forEach(e => rows.push([e.line, e.model || '-', e.noSop, e.namaSop, e.elemen]));
             const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 di-export', 'success');
@@ -1340,7 +1638,7 @@
         function openAddElemenModal() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
             isAddModeElemen = true; editingElemenId = null;
-            document.getElementById('editElemenModalTitle').innerText = `➕ Tambah Elemen (${activeLine})`;
+            document.getElementById('editElemenModalTitle').innerText = `➕ Tambah Elemen (${activeLine}${activeModel ? ' · ' + activeModel : ''})`;
             document.getElementById('editElemenNoSop').value = '';
             document.getElementById('editElemenNamaSop').value = '';
             document.getElementById('editElemenName').value = '';
@@ -1362,9 +1660,9 @@
             const el = document.getElementById('editElemenName').value.trim();
             if (!ns || !nS || !el) { showToast('⚠️ Semua field wajib!', 'error'); return; }
             if (isAddModeElemen) {
-                const d = elemenMasterList.find(x => x.line === activeLine && x.noSop === ns && x.namaSop === nS && x.elemen === el);
+                const d = elemenMasterList.find(x => x.line === activeLine && (x.model || '-') === (activeModel || '-') && x.noSop === ns && x.namaSop === nS && x.elemen === el);
                 if (d) { showToast('⚠️ Sudah ada!', 'warning'); return; }
-                elemenMasterList.push({ id: generateId('el_'), line: activeLine, noSop: ns, namaSop: nS, elemen: el });
+                elemenMasterList.push({ id: generateId('el_'), line: activeLine, model: activeModel || '-', noSop: ns, namaSop: nS, elemen: el });
                 showToast('✅ Ditambahkan', 'success');
             } else {
                 if (!editingElemenId) return;
@@ -1381,13 +1679,14 @@
             document.getElementById('elemenPasteArea').value = '';
             document.getElementById('elemenReplaceExisting').checked = false;
             const el = document.getElementById('elemenImportLine'); if (el) el.innerText = activeLine;
+            const em = document.getElementById('elemenImportModel'); if (em) em.innerText = activeModel || '-';
             document.getElementById('elemenImportModal').classList.add('active');
         }
         function closeElemenImportModal() { document.getElementById('elemenImportModal').classList.remove('active'); }
         function processElemenImport() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             const fi = document.getElementById('elemenFileInput'); const pa = document.getElementById('elemenPasteArea'); const re = document.getElementById('elemenReplaceExisting').checked;
-            const cl = activeLine;
+            const cl = activeLine; const cm = activeModel || '-';
             const pr = (rows) => {
                 try {
                     if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
@@ -1397,10 +1696,10 @@
                     for (let i = si; i < rows.length; i++) {
                         const cs = rows[i].map(c => String(c == null ? '' : c).trim());
                         if (cs.length < 3 || !cs[2]) continue;
-                        ni.push({ id: generateId('e_'), line: cl, noSop: cs[0] || '-', namaSop: cs[1] || '-', elemen: cs[2] });
+                        ni.push({ id: generateId('e_'), line: cl, model: cm, noSop: cs[0] || '-', namaSop: cs[1] || '-', elemen: cs[2] });
                     }
                     if (ni.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
-                    if (re) elemenMasterList = elemenMasterList.filter(e => e.line !== cl).concat(ni);
+                    if (re) elemenMasterList = elemenMasterList.filter(e => !(e.line === cl && (e.model || '-') === cm)).concat(ni);
                     else elemenMasterList = elemenMasterList.concat(ni);
                     lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (firebaseReady) saveElemenMasterToFirebase();
                     renderSopDropdownList(); renderElemenMasterTable(); updateCounters();
@@ -1429,13 +1728,15 @@
         function renderSiklusMasterTable() {
             const tb = document.getElementById('siklusMasterTableBody'); if (!tb) return;
             let f = siklusMasterList.filter(s => s.line === activeLine);
+            if (activeModel) f = f.filter(s => (s.model || '-') === activeModel);
             const s = (document.getElementById('siklusSearch')?.value || '').toLowerCase().trim();
             if (s) f = f.filter(x => String(x.noSop).toLowerCase().includes(s) || String(x.namaSop).toLowerCase().includes(s));
-            if (f.length === 0) { tb.innerHTML = `<tr><td colspan="4" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus.' : 'Tidak ada hasil.'}</td></tr>`; return; }
+            if (f.length === 0) { tb.innerHTML = `<tr><td colspan="5" class="px-4 py-12 text-center text-gray-400 italic">${siklusMasterList.length === 0 ? 'Belum ada SOP siklus.' : 'Tidak ada hasil.'}</td></tr>`; return; }
             f = [...f].sort((a, b) => String(a.noSop || '').localeCompare(String(b.noSop || ''), undefined, { numeric: true }));
             tb.innerHTML = f.map(s => `
                 <tr class="hover:bg-emerald-50/30">
                     <td class="px-2 py-2 text-center border-r border-b"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(s.line || '-')}</span></td>
+                    <td class="px-2 py-2 text-center border-r border-b bg-emerald-50"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(s.model || '-')}</span></td>
                     <td class="px-2 py-2 text-center border-r border-b font-bold">${escapeHtml(s.noSop)}</td>
                     <td class="px-3 py-2 border-r border-b">${escapeHtml(s.namaSop)}</td>
                     <td class="px-2 py-2 text-center border-b whitespace-nowrap">
@@ -1461,8 +1762,8 @@
         function exportSiklusCSV() {
             if (siklusMasterList.length === 0) { showToast('Belum ada SOP!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-            const rows = [['Line', 'No. SOP', 'Nama SOP']];
-            siklusMasterList.forEach(s => rows.push([s.line, s.noSop, s.namaSop]));
+            const rows = [['Line', 'Model', 'No. SOP', 'Nama SOP']];
+            siklusMasterList.forEach(s => rows.push([s.line, s.model || '-', s.noSop, s.namaSop]));
             const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Master_Siklus_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 di-export', 'success');
@@ -1470,7 +1771,7 @@
         function openAddSiklusModal() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
             isAddModeSiklus = true; editingSiklusId = null;
-            document.getElementById('editSiklusModalTitle').innerText = `➕ Tambah SOP Siklus (${activeLine})`;
+            document.getElementById('editSiklusModalTitle').innerText = `➕ Tambah SOP Siklus (${activeLine}${activeModel ? ' · ' + activeModel : ''})`;
             document.getElementById('editSiklusNoSop').value = '';
             document.getElementById('editSiklusNamaSop').value = '';
             document.getElementById('editSiklusModal').classList.add('active');
@@ -1489,9 +1790,9 @@
             const nS = document.getElementById('editSiklusNamaSop').value.trim();
             if (!ns || !nS) { showToast('⚠️ Semua field wajib!', 'error'); return; }
             if (isAddModeSiklus) {
-                const d = siklusMasterList.find(x => x.line === activeLine && x.noSop === ns && x.namaSop === nS);
+                const d = siklusMasterList.find(x => x.line === activeLine && (x.model || '-') === (activeModel || '-') && x.noSop === ns && x.namaSop === nS);
                 if (d) { showToast('⚠️ Sudah ada!', 'warning'); return; }
-                siklusMasterList.push({ id: generateId('sk_'), line: activeLine, noSop: ns, namaSop: nS });
+                siklusMasterList.push({ id: generateId('sk_'), line: activeLine, model: activeModel || '-', noSop: ns, namaSop: nS });
                 showToast('✅ Ditambahkan', 'success');
             } else {
                 if (!editingSiklusId) return;
@@ -1508,13 +1809,14 @@
             document.getElementById('siklusPasteArea').value = '';
             document.getElementById('siklusReplaceExisting').checked = false;
             const el = document.getElementById('siklusImportLine'); if (el) el.innerText = activeLine;
+            const em = document.getElementById('siklusImportModel'); if (em) em.innerText = activeModel || '-';
             document.getElementById('siklusImportModal').classList.add('active');
         }
         function closeSiklusImportModal() { document.getElementById('siklusImportModal').classList.remove('active'); }
         function processSiklusImport() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             const fi = document.getElementById('siklusFileInput'); const pa = document.getElementById('siklusPasteArea'); const re = document.getElementById('siklusReplaceExisting').checked;
-            const cl = activeLine;
+            const cl = activeLine; const cm = activeModel || '-';
             const pr = (rows) => {
                 try {
                     if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
@@ -1524,10 +1826,10 @@
                     for (let i = si; i < rows.length; i++) {
                         const cs = rows[i].map(c => String(c == null ? '' : c).trim());
                         if (cs.length < 2 || !cs[1]) continue;
-                        ni.push({ id: generateId('s_'), line: cl, noSop: cs[0] || '-', namaSop: cs[1] });
+                        ni.push({ id: generateId('s_'), line: cl, model: cm, noSop: cs[0] || '-', namaSop: cs[1] });
                     }
                     if (ni.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
-                    if (re) siklusMasterList = siklusMasterList.filter(s => s.line !== cl).concat(ni);
+                    if (re) siklusMasterList = siklusMasterList.filter(s => !(s.line === cl && (s.model || '-') === cm)).concat(ni);
                     else siklusMasterList = siklusMasterList.concat(ni);
                     lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (firebaseReady) saveSiklusMasterToFirebase();
                     renderSiklusDropdownList(); renderSiklusMasterTable(); updateCounters();
@@ -1563,7 +1865,8 @@
         function renderSopDropdownList() {
             const l = document.getElementById('sopDropdownList'); if (!l) return;
             const s = (document.getElementById('sopSearchInput')?.value || '').toLowerCase().trim();
-            const fl = elemenMasterList.filter(e => e.line === activeLine);
+            let fl = elemenMasterList.filter(e => e.line === activeLine);
+            if (activeModel) fl = fl.filter(e => (e.model || '-') === activeModel);
             const nos = [...new Set(fl.map(e => e.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
             let f = nos;
             if (s) f = nos.filter(no => { const fi = fl.find(e => e.noSop === no); return String(no).toLowerCase().includes(s) || (fi?.namaSop || '').toLowerCase().includes(s); });
@@ -1581,7 +1884,9 @@
             if (currentElemenNo === no) return;
             if (currentLaps.length > 0) { if (!confirm('⚠️ Ganti SOP reset siklus. Lanjut?')) return; currentLaps = []; updateLapsUI(); }
             currentElemenNo = no;
-            activeElemenList = elemenMasterList.filter(e => e.line === activeLine && e.noSop === no);
+            let fl = elemenMasterList.filter(e => e.line === activeLine && e.noSop === no);
+            if (activeModel) fl = fl.filter(e => (e.model || '-') === activeModel);
+            activeElemenList = fl;
             if (activeElemenList.length > 0) currentElemenNama = activeElemenList[0].namaSop;
             currentElemenIndex = 0; currentCycleNum = 1;
             const lb = document.getElementById('sopDropdownLabel'); if (lb) { lb.innerText = `${no} · ${currentElemenNama}`; lb.className = 'text-gray-800 font-semibold'; }
@@ -1598,9 +1903,7 @@
             if (preinstallActive && currentMode === 'elemen') {
                 if (preinstallActiveElemenList.length === 0) {
                     n.innerText = `🎯 Preinstallasi (belum pilih elemen)`;
-                    p.innerText = '-';
-                    b.style.width = '0%';
-                    return;
+                    p.innerText = '-'; b.style.width = '0%'; return;
                 }
                 const cur = preinstallActiveElemenList[preinstallElemenIndex];
                 n.innerText = cur ? `${cur.noSop} · ${cur.elemen}` : '-';
@@ -1611,8 +1914,7 @@
             if (preinstallActive && currentMode === 'siklus') {
                 n.innerText = `🎯 Preinstallasi (${preinstallSelectedKeys.size} SOP)`;
                 p.innerText = `Dikerjakan oleh ${preinstallOperatorCount} orang · LAP setiap siklus penuh`;
-                b.style.width = '100%';
-                return;
+                b.style.width = '100%'; return;
             }
             if (activeElemenList.length === 0) { n.innerText = '-'; p.innerText = '-'; b.style.width = '0%'; return; }
             const c = activeElemenList[currentElemenIndex];
@@ -1632,7 +1934,8 @@
         function renderSiklusDropdownList() {
             const l = document.getElementById('siklusDropdownList'); if (!l) return;
             const s = (document.getElementById('siklusSearchInput')?.value || '').toLowerCase().trim();
-            const fl = siklusMasterList.filter(x => x.line === activeLine);
+            let fl = siklusMasterList.filter(x => x.line === activeLine);
+            if (activeModel) fl = fl.filter(x => (x.model || '-') === activeModel);
             const nos = [...new Set(fl.map(x => x.noSop))].sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
             let f = nos;
             if (s) f = nos.filter(no => { const fi = fl.find(x => x.noSop === no); return String(no).toLowerCase().includes(s) || (fi?.namaSop || '').toLowerCase().includes(s); });
@@ -1650,7 +1953,9 @@
             if (currentSiklusNo === no) return;
             if (currentLaps.length > 0) { if (!confirm('⚠️ Ganti SOP reset siklus. Lanjut?')) return; currentLaps = []; updateLapsUI(); }
             currentSiklusNo = no;
-            activeSiklusList = siklusMasterList.filter(x => x.line === activeLine && x.noSop === no);
+            let fl = siklusMasterList.filter(x => x.line === activeLine && x.noSop === no);
+            if (activeModel) fl = fl.filter(x => (x.model || '-') === activeModel);
+            activeSiklusList = fl;
             if (activeSiklusList.length > 0) currentSiklusNama = activeSiklusList[0].namaSop;
             const lb = document.getElementById('siklusDropdownLabel'); if (lb) { lb.innerText = `${no} · ${currentSiklusNama}`; lb.className = 'text-gray-800 font-semibold'; }
             document.getElementById('inputNo').value = no;
@@ -1659,7 +1964,6 @@
             const ne = document.getElementById('siklusActiveName'); if (ne) ne.innerText = `${no} · ${currentSiklusNama}`;
             updateLapButtonLabel(); renderSiklusDropdownList();
         }
-
         // ===== PREINSTALLASI =====
         function openPreinstallModal() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
@@ -1698,13 +2002,13 @@
             const s = (document.getElementById('preinstallSearch')?.value || '').toLowerCase().trim();
             let items = [];
             if (currentMode === 'elemen') {
-                elemenMasterList.filter(e => e.line === activeLine).forEach(e => {
-                    items.push({ key: `${e.noSop}||${e.elemen}`, label: `${e.noSop} · ${e.elemen}`, sub: e.namaSop, noSop: e.noSop });
-                });
+                let fl = elemenMasterList.filter(e => e.line === activeLine);
+                if (activeModel) fl = fl.filter(e => (e.model || '-') === activeModel);
+                fl.forEach(e => { items.push({ key: `${e.noSop}||${e.elemen}`, label: `${e.noSop} · ${e.elemen}`, sub: e.namaSop, noSop: e.noSop }); });
             } else if (currentMode === 'siklus') {
-                siklusMasterList.filter(x => x.line === activeLine).forEach(x => {
-                    items.push({ key: `${x.noSop}||${x.namaSop}`, label: `${x.noSop} · ${x.namaSop}`, sub: '', noSop: x.noSop, namaSop: x.namaSop });
-                });
+                let fl = siklusMasterList.filter(x => x.line === activeLine);
+                if (activeModel) fl = fl.filter(x => (x.model || '-') === activeModel);
+                fl.forEach(x => { items.push({ key: `${x.noSop}||${x.namaSop}`, label: `${x.noSop} · ${x.namaSop}`, sub: '', noSop: x.noSop, namaSop: x.namaSop }); });
             }
             items.sort((a, b) => String(a.noSop).localeCompare(String(b.noSop), undefined, { numeric: true }));
             if (s) items = items.filter(i => i.label.toLowerCase().includes(s) || (i.sub || '').toLowerCase().includes(s));
@@ -1729,9 +2033,13 @@
         }
         function preinstallSelectAll() {
             if (currentMode === 'elemen') {
-                elemenMasterList.filter(e => e.line === activeLine).forEach(e => preinstallTempSelected.add(`${e.noSop}||${e.elemen}`));
+                let fl = elemenMasterList.filter(e => e.line === activeLine);
+                if (activeModel) fl = fl.filter(e => (e.model || '-') === activeModel);
+                fl.forEach(e => preinstallTempSelected.add(`${e.noSop}||${e.elemen}`));
             } else if (currentMode === 'siklus') {
-                siklusMasterList.filter(x => x.line === activeLine).forEach(x => preinstallTempSelected.add(`${x.noSop}||${x.namaSop}`));
+                let fl = siklusMasterList.filter(x => x.line === activeLine);
+                if (activeModel) fl = fl.filter(x => (x.model || '-') === activeModel);
+                fl.forEach(x => preinstallTempSelected.add(`${x.noSop}||${x.namaSop}`));
             }
             renderPreinstallList();
         }
@@ -1752,7 +2060,8 @@
                 const items = [];
                 preinstallSelectedKeys.forEach(k => {
                     const [noSop, elemen] = k.split('||');
-                    const fi = elemenMasterList.find(e => e.line === activeLine && e.noSop === noSop && e.elemen === elemen);
+                    let fi = elemenMasterList.find(e => e.line === activeLine && e.noSop === noSop && e.elemen === elemen);
+                    if (activeModel && fi) fi = (fi.model || '-') === activeModel ? fi : null;
                     if (fi) items.push({ noSop, namaSop: fi.namaSop, elemen, key: k });
                 });
                 items.sort((a, b) => String(a.noSop).localeCompare(String(b.noSop), undefined, { numeric: true }) || String(a.elemen).localeCompare(String(b.elemen), undefined, { numeric: true }));
@@ -1834,7 +2143,6 @@
         // ===== LAP BUTTON =====
         function updateLapButtonLabel() {
             const b = document.getElementById('mobileLapBtn'); if (!b) return;
-            // ✅ Batching info di label (opsional)
             const batchSuffix = (batchUnitCount > 1 && currentMode !== 'mesin' && !preinstallActive) ? ` [×${batchUnitCount}u]` : '';
             if (preinstallActive && currentMode === 'elemen') {
                 if (preinstallActiveElemenList.length === 0) { b.innerText = '🎯 SELESAI ELEMEN'; return; }
@@ -1881,26 +2189,16 @@
                         const cur = preinstallActiveElemenList[preinstallElemenIndex];
                         if (!cur) return;
                         currentLaps.push({
-                            dur: parseFloat(durPerUnit.toFixed(2)),
-                            rawDur: parseFloat(dur.toFixed(2)),
-                            noSop: cur.noSop,
-                            namaSop: cur.namaSop,
-                            elemen: cur.elemen,
-                            preinstall: true,
-                            operators: preinstallOperatorCount,
-                            cycleNum: preinstallCycleNum,
-                            batch: batchUnitCount
+                            dur: parseFloat(durPerUnit.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)),
+                            noSop: cur.noSop, namaSop: cur.namaSop, elemen: cur.elemen,
+                            preinstall: true, operators: preinstallOperatorCount,
+                            cycleNum: preinstallCycleNum, batch: batchUnitCount
                         });
                         preinstallElemenIndex++;
-                        if (preinstallElemenIndex >= preinstallActiveElemenList.length) {
-                            preinstallElemenIndex = 0;
-                            preinstallCycleNum++;
-                        }
-                        updateLapsUI();
-                        setButtonEnabled('commitBtn', true);
+                        if (preinstallElemenIndex >= preinstallActiveElemenList.length) { preinstallElemenIndex = 0; preinstallCycleNum++; }
+                        updateLapsUI(); setButtonEnabled('commitBtn', true);
                         document.getElementById('lapSplitPreview').innerText = `+${dur.toFixed(2)}s (auto)${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''} → ${cur.noSop}·${cur.elemen}`;
-                        updateElemenActiveInfo();
-                        updateLapButtonLabel();
+                        updateElemenActiveInfo(); updateLapButtonLabel();
                     } else if (currentMode === 'siklus') {
                         const dp = preinstallOperatorCount === 1 ? durPerUnit : durPerUnit / preinstallOperatorCount;
                         preinstallSelectedKeys.forEach(k => {
@@ -1985,7 +2283,6 @@
             const dur = (now - lastLapTimestamp) / 1000;
             if (dur < 0.1) return;
             lastLapTimestamp = now;
-            // ✅ Batching: bagi durasi dulu
             const durPerUnit = applyBatchToDur(dur);
 
             if (preinstallActive && (currentMode === 'elemen' || currentMode === 'siklus')) {
@@ -1994,27 +2291,15 @@
                     const cur = preinstallActiveElemenList[preinstallElemenIndex];
                     if (!cur) return;
                     currentLaps.push({
-                        dur: parseFloat(durPerUnit.toFixed(2)),
-                        rawDur: parseFloat(dur.toFixed(2)),
-                        noSop: cur.noSop,
-                        namaSop: cur.namaSop,
-                        elemen: cur.elemen,
-                        preinstall: true,
-                        operators: preinstallOperatorCount,
-                        cycleNum: preinstallCycleNum,
-                        batch: batchUnitCount
+                        dur: parseFloat(durPerUnit.toFixed(2)), rawDur: parseFloat(dur.toFixed(2)),
+                        noSop: cur.noSop, namaSop: cur.namaSop, elemen: cur.elemen,
+                        preinstall: true, operators: preinstallOperatorCount, cycleNum: preinstallCycleNum, batch: batchUnitCount
                     });
                     updateLapsUI();
                     document.getElementById('lapSplitPreview').innerText = `✔️ ${cur.noSop}·${cur.elemen}: ${dur.toFixed(2)}s${batchUnitCount > 1 ? ` ÷ ${batchUnitCount} = ${durPerUnit.toFixed(2)}s` : ''}`;
                     preinstallElemenIndex++;
-                    if (preinstallElemenIndex >= preinstallActiveElemenList.length) {
-                        preinstallElemenIndex = 0;
-                        preinstallCycleNum++;
-                        showToast(`🔄 Preinstallasi putaran ${preinstallCycleNum} dimulai`, 'info');
-                    }
-                    updateElemenActiveInfo();
-                    updateLapButtonLabel();
-                    setButtonEnabled('commitBtn', true);
+                    if (preinstallElemenIndex >= preinstallActiveElemenList.length) { preinstallElemenIndex = 0; preinstallCycleNum++; showToast(`🔄 Preinstallasi putaran ${preinstallCycleNum} dimulai`, 'info'); }
+                    updateElemenActiveInfo(); updateLapButtonLabel(); setButtonEnabled('commitBtn', true);
                     if (navigator.vibrate) navigator.vibrate(30);
                     return;
                 } else {
@@ -2066,30 +2351,21 @@
                 updateElemenActiveInfo(); updateLapButtonLabel();
             }
             if (preinstallActive && currentMode === 'elemen' && preinstallActiveElemenList.length > 0 && removed) {
-                if (currentLaps.length === 0) {
-                    preinstallElemenIndex = 0;
-                    preinstallCycleNum = 1;
-                } else {
+                if (currentLaps.length === 0) { preinstallElemenIndex = 0; preinstallCycleNum = 1; }
+                else {
                     const last = currentLaps[currentLaps.length - 1];
                     if (last && last.preinstall) {
                         const li = preinstallActiveElemenList.findIndex(e => e.elemen === last.elemen && e.noSop === last.noSop);
                         if (li >= 0) {
-                            if (li === preinstallActiveElemenList.length - 1) {
-                                preinstallElemenIndex = 0;
-                                preinstallCycleNum = (last.cycleNum || 1) + 1;
-                            } else {
-                                preinstallElemenIndex = li + 1;
-                                preinstallCycleNum = last.cycleNum || 1;
-                            }
+                            if (li === preinstallActiveElemenList.length - 1) { preinstallElemenIndex = 0; preinstallCycleNum = (last.cycleNum || 1) + 1; }
+                            else { preinstallElemenIndex = li + 1; preinstallCycleNum = last.cycleNum || 1; }
                         }
                     }
                 }
-                updateElemenActiveInfo();
-                updateLapButtonLabel();
+                updateElemenActiveInfo(); updateLapButtonLabel();
             }
             updateLapsUI();
             if (isRunning && wasLast && removed !== undefined) {
-                // ✅ Kembalikan ke rawDur (durasi asli sebelum dibagi)
                 const rd = (typeof removed === 'object') ? (removed.rawDur !== undefined ? removed.rawDur : removed.dur) : removed;
                 if (typeof rd === 'number' && !isNaN(rd)) lastLapTimestamp -= rd * 1000;
             }
@@ -2123,6 +2399,7 @@
         // ===== COMMIT =====
         function commitStudyRow() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
+            if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); openLineModal(); return; }
             if (currentMode === 'elemen') commitElemenRow();
             else if (currentMode === 'siklus') commitSiklusRow();
             else commitMesinRow();
@@ -2142,30 +2419,28 @@
                 if (Object.keys(grouped).length === 0) { showToast('⚠️ Tidak ada data!', 'error'); return; }
                 Object.keys(grouped).forEach(key => {
                     const g = grouped[key];
-                    const idx = masterData.findIndex(item => item.line === activeLine && item.noSop === g.noSop && item.namaSop === g.namaSop && item.elemen === g.elemen);
+                    const idx = masterData.findIndex(item => item.line === activeLine && (item.model || '-') === (activeModel || '-') && item.noSop === g.noSop && item.namaSop === g.namaSop && item.elemen === g.elemen);
                     if (idx !== -1) {
                         const ex = masterData[idx];
                         ex.laps = ex.laps.concat(g.durations);
                         ex.sessions = (ex.sessions || 1) + 1;
-                        ex.operators = g.operators;
-                        ex.preinstall = true;
+                        ex.operators = g.operators; ex.preinstall = true;
                     } else {
-                        masterData.push({ line: activeLine, noSop: g.noSop, namaSop: g.namaSop, elemen: g.elemen, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
+                        masterData.push({ line: activeLine, model: activeModel || '-', noSop: g.noSop, namaSop: g.namaSop, elemen: g.elemen, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
                     }
                 });
                 saveMasterToLS((serverArr) => {
                     const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
                     Object.keys(grouped).forEach(key => {
                         const g = grouped[key];
-                        const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, noSop: g.noSop, namaSop: g.namaSop, elemen: g.elemen }, 'elemen'));
+                        const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, model: activeModel || '-', noSop: g.noSop, namaSop: g.namaSop, elemen: g.elemen }, 'elemen'));
                         if (idx !== -1) {
                             const ex = arr[idx];
                             ex.laps = ex.laps.concat(g.durations);
                             ex.sessions = (ex.sessions || 1) + 1;
-                            ex.operators = g.operators;
-                            ex.preinstall = true;
+                            ex.operators = g.operators; ex.preinstall = true;
                         } else {
-                            arr.push({ line: activeLine, noSop: g.noSop, namaSop: g.namaSop, elemen: g.elemen, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
+                            arr.push({ line: activeLine, model: activeModel || '-', noSop: g.noSop, namaSop: g.namaSop, elemen: g.elemen, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
                         }
                     });
                     return arr;
@@ -2184,25 +2459,25 @@
             });
             if (Object.keys(grouped).length === 0) { showToast('⚠️ Tidak ada data valid!', 'error'); return; }
             Object.keys(grouped).forEach(en => {
-                const idx = masterData.findIndex(item => item.line === activeLine && item.noSop === currentElemenNo && item.namaSop === currentElemenNama && item.elemen === en);
+                const idx = masterData.findIndex(item => item.line === activeLine && (item.model || '-') === (activeModel || '-') && item.noSop === currentElemenNo && item.namaSop === currentElemenNama && item.elemen === en);
                 if (idx !== -1) {
                     const ex = masterData[idx];
                     ex.laps = ex.laps.concat(grouped[en]);
                     ex.sessions = (ex.sessions || 1) + 1;
                 } else {
-                    masterData.push({ line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: en, laps: [...grouped[en]], sessions: 1 });
+                    masterData.push({ line: activeLine, model: activeModel || '-', noSop: currentElemenNo, namaSop: currentElemenNama, elemen: en, laps: [...grouped[en]], sessions: 1 });
                 }
             });
             saveMasterToLS((serverArr) => {
                 const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
                 Object.keys(grouped).forEach(en => {
-                    const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: en }, 'elemen'));
+                    const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, model: activeModel || '-', noSop: currentElemenNo, namaSop: currentElemenNama, elemen: en }, 'elemen'));
                     if (idx !== -1) {
                         const ex = arr[idx];
                         ex.laps = ex.laps.concat(grouped[en]);
                         ex.sessions = (ex.sessions || 1) + 1;
                     } else {
-                        arr.push({ line: activeLine, noSop: currentElemenNo, namaSop: currentElemenNama, elemen: en, laps: [...grouped[en]], sessions: 1 });
+                        arr.push({ line: activeLine, model: activeModel || '-', noSop: currentElemenNo, namaSop: currentElemenNama, elemen: en, laps: [...grouped[en]], sessions: 1 });
                     }
                 });
                 return arr;
@@ -2225,30 +2500,28 @@
                 if (Object.keys(grouped).length === 0) { showToast('⚠️ Tidak ada data!', 'error'); return; }
                 Object.keys(grouped).forEach(key => {
                     const g = grouped[key];
-                    const idx = masterData.findIndex(item => item.line === activeLine && item.noSop === g.noSop && item.namaSop === g.namaSop);
+                    const idx = masterData.findIndex(item => item.line === activeLine && (item.model || '-') === (activeModel || '-') && item.noSop === g.noSop && item.namaSop === g.namaSop);
                     if (idx !== -1) {
                         const ex = masterData[idx];
                         ex.laps = ex.laps.concat(g.durations);
                         ex.sessions = (ex.sessions || 1) + 1;
-                        ex.operators = g.operators;
-                        ex.preinstall = true;
+                        ex.operators = g.operators; ex.preinstall = true;
                     } else {
-                        masterData.push({ line: activeLine, noSop: g.noSop, namaSop: g.namaSop, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
+                        masterData.push({ line: activeLine, model: activeModel || '-', noSop: g.noSop, namaSop: g.namaSop, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
                     }
                 });
                 saveMasterToLS((serverArr) => {
                     const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
                     Object.keys(grouped).forEach(key => {
                         const g = grouped[key];
-                        const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, noSop: g.noSop, namaSop: g.namaSop }, 'siklus'));
+                        const idx = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, model: activeModel || '-', noSop: g.noSop, namaSop: g.namaSop }, 'siklus'));
                         if (idx !== -1) {
                             const ex = arr[idx];
                             ex.laps = ex.laps.concat(g.durations);
                             ex.sessions = (ex.sessions || 1) + 1;
-                            ex.operators = g.operators;
-                            ex.preinstall = true;
+                            ex.operators = g.operators; ex.preinstall = true;
                         } else {
-                            arr.push({ line: activeLine, noSop: g.noSop, namaSop: g.namaSop, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
+                            arr.push({ line: activeLine, model: activeModel || '-', noSop: g.noSop, namaSop: g.namaSop, laps: [...g.durations], sessions: 1, operators: g.operators, preinstall: true });
                         }
                     });
                     return arr;
@@ -2261,23 +2534,23 @@
             if (!currentSiklusNo) { showToast('⚠️ Pilih No. SOP dulu!', 'error'); return; }
             const durs = currentLaps.filter(l => typeof l === 'object' && l.dur).map(l => l.dur);
             if (durs.length === 0) { showToast('⚠️ Tidak ada data valid!', 'error'); return; }
-            const idx = masterData.findIndex(item => item.line === activeLine && item.noSop === currentSiklusNo && item.namaSop === currentSiklusNama);
+            const idx = masterData.findIndex(item => item.line === activeLine && (item.model || '-') === (activeModel || '-') && item.noSop === currentSiklusNo && item.namaSop === currentSiklusNama);
             if (idx !== -1) {
                 const ex = masterData[idx];
                 ex.laps = ex.laps.concat(durs);
                 ex.sessions = (ex.sessions || 1) + 1;
             } else {
-                masterData.push({ line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
+                masterData.push({ line: activeLine, model: activeModel || '-', noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
             }
             saveMasterToLS((serverArr) => {
                 const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
-                const i2 = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama }, 'siklus'));
+                const i2 = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, model: activeModel || '-', noSop: currentSiklusNo, namaSop: currentSiklusNama }, 'siklus'));
                 if (i2 !== -1) {
                     const ex = arr[i2];
                     ex.laps = ex.laps.concat(durs);
                     ex.sessions = (ex.sessions || 1) + 1;
                 } else {
-                    arr.push({ line: activeLine, noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
+                    arr.push({ line: activeLine, model: activeModel || '-', noSop: currentSiklusNo, namaSop: currentSiklusNama, laps: [...durs], sessions: 1 });
                 }
                 return arr;
             });
@@ -2310,7 +2583,7 @@
             const actualMachine = parseInt(document.getElementById('inputActualMachine').value) || 1;
             if (currentLaps.length === 0) { showToast('⚠️ Rekam minimal 1 siklus!', 'error'); return; }
             const lapSnap = [...currentLaps];
-            const idx = masterData.findIndex(item => item.line === activeLine && item.no === no && item.process === process && item.subMachine === subMachine);
+            const idx = masterData.findIndex(item => item.line === activeLine && (item.model || '-') === (activeModel || '-') && item.no === no && item.process === process && item.subMachine === subMachine);
             if (idx !== -1) {
                 const ex = masterData[idx];
                 if (!confirm(`"${process}" sudah ada. Gabungkan?`)) return;
@@ -2318,18 +2591,18 @@
                 ex.ngRate = ngRate; ex.actualMachine = actualMachine; ex.gerakan = gerakan;
                 ex.sessions = (ex.sessions || 1) + 1;
             } else {
-                masterData.push({ line: activeLine, no, process, subMachine, laps: [...lapSnap], ngRate, actualMachine, gerakan, sessions: 1 });
+                masterData.push({ line: activeLine, model: activeModel || '-', no, process, subMachine, laps: [...lapSnap], ngRate, actualMachine, gerakan, sessions: 1 });
             }
             saveMasterToLS((serverArr) => {
                 const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
-                const i2 = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, no, process, subMachine }, 'mesin'));
+                const i2 = arr.findIndex(item => recordIdentityMatch(item, { line: activeLine, model: activeModel || '-', no, process, subMachine }, 'mesin'));
                 if (i2 !== -1) {
                     const ex = arr[i2];
                     ex.laps = ex.laps.concat(lapSnap);
                     ex.ngRate = ngRate; ex.actualMachine = actualMachine; ex.gerakan = gerakan;
                     ex.sessions = (ex.sessions || 1) + 1;
                 } else {
-                    arr.push({ line: activeLine, no, process, subMachine, laps: [...lapSnap], ngRate, actualMachine, gerakan, sessions: 1 });
+                    arr.push({ line: activeLine, model: activeModel || '-', no, process, subMachine, laps: [...lapSnap], ngRate, actualMachine, gerakan, sessions: 1 });
                 }
                 return arr;
             });
@@ -2351,10 +2624,7 @@
             document.getElementById('inputProcess').value = '';
             document.getElementById('customMachineWrapper').classList.add('hidden');
             document.getElementById('selectedMachineInfo').classList.add('hidden');
-            if (preinstallActive && currentMode === 'elemen') {
-                preinstallElemenIndex = 0;
-                preinstallCycleNum = 1;
-            }
+            if (preinstallActive && currentMode === 'elemen') { preinstallElemenIndex = 0; preinstallCycleNum = 1; }
             if (currentMode === 'elemen' && !preinstallActive) {
                 const sl = document.getElementById('sopDropdownLabel');
                 if (sl) { sl.innerText = '-- Pilih No. SOP --'; sl.className = 'text-gray-500'; }
@@ -2400,11 +2670,13 @@
         function getFilteredData() {
             const f = document.getElementById('dataFilterLine');
             const fv = f ? f.value : '__active__';
-            if (fv === '__all__') return masterData;
-            if (fv === '__active__') return masterData.filter(d => d.line === activeLine);
-            return masterData.filter(d => d.line === fv);
+            let data = masterData;
+            if (fv === '__all__') data = masterData;
+            else if (fv === '__active__') data = masterData.filter(d => d.line === activeLine);
+            else data = masterData.filter(d => d.line === fv);
+            if (activeModel) data = data.filter(d => (d.model || '-') === activeModel);
+            return data;
         }
-
         // ===== RENDER MASTER TABLE =====
         function renderMasterTable() {
             const tb = document.getElementById('masterTableBody');
@@ -2413,8 +2685,8 @@
             const fd = getFilteredData();
             if (fd.length === 0) {
                 const cols = currentMode === 'mesin'
-                    ? `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">Nama Mesin</th><th class="px-3 py-3 text-left font-bold border-r">Sub Mesin</th>`
-                    : `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r">No. SOP</th><th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th>${currentMode === 'elemen' ? '<th class="px-3 py-3 text-left font-bold border-r">Elemen</th>' : ''}`;
+                    ? `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r bg-emerald-50">Model</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">Nama Mesin</th><th class="px-3 py-3 text-left font-bold border-r">Sub Mesin</th>`
+                    : `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r bg-emerald-50">Model</th><th class="px-2 py-3 text-center font-bold border-r">No. SOP</th><th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th>${currentMode === 'elemen' ? '<th class="px-3 py-3 text-left font-bold border-r">Elemen</th>' : ''}`;
                 th.innerHTML = cols;
                 tb.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>`;
                 return;
@@ -2427,6 +2699,7 @@
             const mL = Math.max(...fd.map(i => i.laps.length));
             const std = getLineStandardUph();
             let h = `<th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Elemen</th>
@@ -2442,9 +2715,9 @@
             const gr = {};
             const go = [];
             fd.forEach(i => {
-                const k = `${i.line}||${i.noSop}||${i.namaSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
-                const oi = masterData.findIndex(m => m.line === i.line && m.noSop === i.noSop && m.namaSop === i.namaSop && m.elemen === i.elemen);
+                const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
+                const oi = masterData.findIndex(m => m.line === i.line && (m.model || '-') === (i.model || '-') && m.noSop === i.noSop && m.namaSop === i.namaSop && m.elemen === i.elemen);
                 const st = getRowStats(i);
                 gr[k].rows.push({ ...i, originalIndex: oi, stats: st });
                 gr[k].totalSmh += st.smh;
@@ -2468,6 +2741,7 @@
                     out += `<tr class="hover:bg-purple-50/30 transition">`;
                     if (ri === 0) {
                         out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.line || '-')}</span></td>`;
+                        out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
                         out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(g.noSop || '-')}</td>`;
                         out += `<td rowspan="${rs}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(g.namaSop || '-')}</td>`;
                     }
@@ -2497,6 +2771,7 @@
             const mL = Math.max(...fd.map(i => i.laps.length));
             const std = getLineStandardUph();
             let h = `<th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Op</th>`;
@@ -2511,9 +2786,9 @@
             const gr = {};
             const go = [];
             fd.forEach(i => {
-                const k = `${i.line}||${i.noSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaSopList: [] }; go.push(k); }
-                const oi = masterData.findIndex(m => m.line === i.line && m.noSop === i.noSop && m.namaSop === i.namaSop);
+                const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaSopList: [] }; go.push(k); }
+                const oi = masterData.findIndex(m => m.line === i.line && (m.model || '-') === (i.model || '-') && m.noSop === i.noSop && m.namaSop === i.namaSop);
                 const st = getRowStats(i);
                 gr[k].rows.push({ ...i, originalIndex: oi, stats: st });
                 gr[k].totalSmh += st.smh;
@@ -2538,6 +2813,7 @@
                     out += `<tr class="hover:bg-emerald-50/30 transition">`;
                     if (ri === 0) {
                         out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.line || '-')}</span></td>`;
+                        out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
                         out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 align-middle whitespace-nowrap text-emerald-700">${escapeHtml(g.noSop || '-')}</td>`;
                     }
                     out += `<td class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40 whitespace-nowrap">${escapeHtml(r.namaSop || '-')}${sb}${pb}</td>`;
@@ -2566,6 +2842,7 @@
             const mL = Math.max(...fd.map(i => i.laps.length));
             const std = getLineStandardUph();
             let h = `<th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+                <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
                 <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
                 <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>`;
@@ -2582,9 +2859,9 @@
             const gr = {};
             const go = [];
             fd.forEach(i => {
-                const k = `${i.line}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
-                const oi = masterData.findIndex(m => m.line === i.line && m.no === i.no && m.process === i.process && m.subMachine === i.subMachine);
+                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
+                const oi = masterData.findIndex(m => m.line === i.line && (m.model || '-') === (i.model || '-') && m.no === i.no && m.process === i.process && m.subMachine === i.subMachine);
                 gr[k].rows.push({ ...i, originalIndex: oi });
                 gr[k].totalCapacity += getRowStats(i).capacity;
             });
@@ -2599,6 +2876,7 @@
                     out += `<tr class="hover:bg-yellow-50/50">`;
                     if (ri === 0) {
                         out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(g.line || '-')}</td>`;
+                        out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
                         out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(g.no || '-')}</td>`;
                         out += `<td rowspan="${rs}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(g.process || '-')}</td>`;
                     }
@@ -2626,7 +2904,7 @@
             const it = masterData[idx]; if (!it) return;
             const lb = it.elemen || it.namaSop || it.process || 'data';
             if (!confirm(`Hapus data "${lb}"?`)) return;
-            const ref = { line: it.line, no: it.no, process: it.process, subMachine: it.subMachine, noSop: it.noSop, namaSop: it.namaSop, elemen: it.elemen };
+            const ref = { line: it.line, model: it.model || '-', no: it.no, process: it.process, subMachine: it.subMachine, noSop: it.noSop, namaSop: it.namaSop, elemen: it.elemen };
             const md = currentMode;
             masterData.splice(idx, 1);
             saveMasterToLS((serverArr) => {
@@ -2676,6 +2954,7 @@
             if (fv === '__all__') { fd = masterData; fl = 'Semua Line'; }
             else if (fv === '__active__') { fd = masterData.filter(d => d.line === activeLine); fl = activeLine; }
             else { fd = masterData.filter(d => d.line === fv); fl = fv; }
+            if (activeModel) fd = fd.filter(d => (d.model || '-') === activeModel);
             const rv = si.value;
             const std = parseFloat(rv) || 0;
             if (!rv || std <= 0) { hE.innerHTML = `<div class="text-sm text-gray-600 text-center py-4">Masukkan UPH.</div>`; lE.innerHTML = ''; return; }
@@ -2683,28 +2962,27 @@
             if (currentMode === 'elemen') {
                 const gr = {};
                 fd.forEach(i => {
-                    const k = `${i.line}||${i.noSop}||${i.namaSop}`;
-                    if (!gr[k]) gr[k] = { no: i.noSop, process: i.namaSop, totalSmh: 0, operators: i.operators || 1 };
+                    const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
+                    if (!gr[k]) gr[k] = { line: i.line, model: i.model || '-', no: i.noSop, process: i.namaSop, totalSmh: 0, operators: i.operators || 1 };
                     gr[k].totalSmh += getRowStats(i).smh;
                 });
-                pp = Object.values(gr).map(g => ({ line: '-', no: g.no, process: g.process, capacity: g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0, machines: [], operators: g.operators })).sort((a, b) => a.capacity - b.capacity);
+                pp = Object.values(gr).map(g => ({ line: g.line, model: g.model, no: g.no, process: g.process, capacity: g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0, operators: g.operators })).sort((a, b) => a.capacity - b.capacity);
             } else if (currentMode === 'siklus') {
                 const gr = {};
                 fd.forEach(i => {
-                    const k = `${i.line}||${i.noSop}`;
-                    if (!gr[k]) gr[k] = { line: i.line, no: i.noSop, totalSmh: 0, namaList: [], operators: 1 };
+                    const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
+                    if (!gr[k]) gr[k] = { line: i.line, model: i.model || '-', no: i.noSop, totalSmh: 0, namaList: [], operators: 1 };
                     gr[k].totalSmh += getRowStats(i).smh;
                     if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
                     if (i.operators) gr[k].operators = i.operators;
                 });
-                pp = Object.values(gr).map(g => ({ line: g.line, no: g.no, process: g.namaList.join(' + '), capacity: g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0, machines: [], operators: g.operators })).sort((a, b) => a.capacity - b.capacity);
+                pp = Object.values(gr).map(g => ({ line: g.line, model: g.model, no: g.no, process: g.namaList.join(' + '), capacity: g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0, operators: g.operators })).sort((a, b) => a.capacity - b.capacity);
             } else {
                 const gr = {};
                 fd.forEach(i => {
-                    const k = `${i.line}||${i.no}||${i.process}`;
-                    if (!gr[k]) gr[k] = { line: i.line, no: i.no, process: i.process, capacity: 0, machines: [] };
+                    const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
+                    if (!gr[k]) gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, capacity: 0 };
                     gr[k].capacity += getRowStats(i).capacity;
-                    gr[k].machines.push(i.subMachine);
                 });
                 pp = Object.values(gr).sort((a, b) => a.capacity - b.capacity);
             }
@@ -2715,7 +2993,7 @@
                 hE.innerHTML = `<div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3"><span class="text-2xl">✅</span><div><div class="text-sm font-bold text-emerald-700">Semua Proses Memenuhi UPH!</div><div class="text-[11px] text-emerald-600">${pp.length} proses ≥ ${std} UPH</div></div></div>`;
                 lE.innerHTML = ''; return;
             }
-            hE.innerHTML = `<div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3"><span class="text-2xl">⚠️</span><div><div class="text-sm font-bold text-red-700">${bl.length} Proses di Bawah UPH</div><div class="text-[11px] text-red-600">${escapeHtml(fl)} · UPH: ${std}</div></div></div>`;
+            hE.innerHTML = `<div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-4 py-3"><span class="text-2xl">⚠️</span><div><div class="text-sm font-bold text-red-700">${bl.length} Proses di Bawah UPH</div><div class="text-[11px] text-red-600">${escapeHtml(fl)}${activeModel ? ' · ' + escapeHtml(activeModel) : ''} · UPH: ${std}</div></div></div>`;
             let lh = '';
             bl.forEach(p => {
                 const kr = std - p.capacity;
@@ -2726,6 +3004,7 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(p.line)}</span>
+                                ${p.model ? `<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">📦 ${escapeHtml(p.model)}</span>` : ''}
                                 <span class="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded">No ${escapeHtml(String(p.no))}</span>
                                 <span class="font-bold text-gray-800 text-sm">${escapeHtml(p.process)}</span>${ob}
                             </div>
@@ -2739,535 +3018,312 @@
             lE.innerHTML = lh;
         }
 
-        // ===== EXPORT ELEMEN =====
-        function buildElemenDataRows() {
-            const dE = masterData;
-            const mL = Math.max(...dE.map(i => i.laps.length), 1);
-            const hd = ['Line', 'No. SOP', 'Nama SOP', 'Elemen'];
-            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
-            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'Operator', 'UPH', 'Saran SMH (LBR 90%)');
-            const gr = {}; const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.noSop}||${i.namaSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
-                const st = getRowStats(i);
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-            });
-            go.sort((a, b) => String(gr[a].noSop || '').localeCompare(String(gr[b].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const totalSmhAll = allSmh.reduce((a, b) => a + b, 0);
-            const countSop = allSmh.length;
-            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            const cTS = 4 + mL + 3;
-            const cOp = cTS + 1;
-            const cU = cOp + 1;
-            const cSaran = cU + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    const rd = [x === 0 ? it.line : '', x === 0 ? it.noSop : '', x === 0 ? it.namaSop : '', it.elemen];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', it.operators || g.operators || 1, x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs >= 1) {
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
-                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
-                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
-                }
-            });
-            return { dataRows: dR, merges: mg, maxLaps: mL, colTotalSmh: cTS, colOperator: cOp, colUph: cU, colSaran: cSaran, saranSmh };
-        }
-        function exportElemenXLSX() {
-            const { dataRows, merges, maxLaps, colTotalSmh, colOperator, colUph, colSaran, saranSmh } = buildElemenDataRows();
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataRows);
-            ws['!merges'] = merges;
-            const cw = [{ wch: 10 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
-            for (let i = 0; i < maxLaps; i++) cw.push({ wch: 9 });
-            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 }, { wch: 10 }, { wch: 16 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const std = getLineStandardUph();
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a]) ws[a] = { t: 's', v: '' };
-                let hFill = 'FEF3C7';
-                if (c === colSaran) hFill = 'FCE7F3';
-                ws[a].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
-            }
-            let ri = 1;
-            const gr = {}; const go = [];
-            masterData.forEach(i => {
-                const k = `${i.line}||${i.noSop}||${i.namaSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
-                const st = getRowStats(i);
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-            });
-            go.sort((a, b) => String(gr[a].noSop || '').localeCompare(String(gr[b].noSop || ''), undefined, { numeric: true }));
-            const cAvg = 4 + maxLaps;
-            const cAl = cAvg + 1;
-            const cSmh = cAl + 1;
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const avgSmh = allSmh.length > 0 ? allSmh.reduce((a, b) => a + b, 0) / allSmh.length : 0;
-            const heavyThreshold = avgSmh * 1.05;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri;
-                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                const ufC = getUphHexColor(upG, std);
-                const ufF = getUphFontColor(upG, std);
-                const isHeavy = g.totalSmh > heavyThreshold && heavyThreshold > 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a = XLSX.utils.encode_cell({ r: ri, c: c });
-                        if (!ws[a]) ws[a] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === colUph) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        else if (c === colOperator) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === colSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
-                        if (c === colTotalSmh && x === 0 && isHeavy) { f = 'FECACA'; fn = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
-                        ws[a].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aAvg = XLSX.utils.encode_cell({ r: ri, c: cAvg });
-                    if (ws[aAvg]) {
-                        const f1 = XLSX.utils.encode_col(4);
-                        const f2 = XLSX.utils.encode_col(4 + maxLaps - 1);
-                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri + 1}:${f2}${ri + 1}),2)`;
-                        ws[aAvg].v = parseFloat(st.avg.toFixed(2)); ws[aAvg].t = 'n'; ws[aAvg].z = '0.00';
-                    }
-                    const aAl = XLSX.utils.encode_cell({ r: ri, c: cAl });
-                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
-                    const aSmh = XLSX.utils.encode_cell({ r: ri, c: cSmh });
-                    if (ws[aSmh]) {
-                        const aC = XLSX.utils.encode_col(cAvg);
-                        const aL = XLSX.utils.encode_col(cAl);
-                        ws[aSmh].f = `ROUND(${aC}${ri + 1}*(1+${aL}${ri + 1}),2)`;
-                        ws[aSmh].v = parseFloat(st.smh.toFixed(2)); ws[aSmh].t = 'n'; ws[aSmh].z = '0.00';
-                    }
-                    ri++;
-                });
-                const aTS = XLSX.utils.encode_cell({ r: gsr, c: colTotalSmh });
-                const sC = XLSX.utils.encode_col(cSmh);
-                if (ws[aTS]) {
-                    ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri}),2)`;
-                    ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00';
-                }
-                const aUp = XLSX.utils.encode_cell({ r: gsr, c: colUph });
-                const tC = XLSX.utils.encode_col(colTotalSmh);
-                if (ws[aUp]) {
-                    ws[aUp].f = `ROUND(3600/${tC}${gsr + 1},0)`;
-                    ws[aUp].v = upG; ws[aUp].t = 'n';
-                }
-            });
-            if (ri > 1) {
-                const eR = ri;
-                for (let c = 0; c <= rng.e.c; c++) { const a = XLSX.utils.encode_cell({ r: eR, c: c }); if (!ws[a]) ws[a] = { t: 's', v: '' }; }
-                ri++;
-                const lR = ri;
-                const sC = XLSX.utils.encode_col(colTotalSmh);
-                const oC = XLSX.utils.encode_col(colOperator);
-                const sR = `${sC}2:${sC}${ri}`;
-                const oR = `${oC}2:${oC}${ri}`;
-                const sV = [];
-                go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
-                const pT = sV.reduce((a, b) => a + b, 0);
-                const pM = Math.max(...sV, 0);
-                const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
-                const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
-                const lc = pL >= 90 ? 'D1FAE5' : (pL >= 75 ? 'FEF3C7' : 'FECACA');
-                const lf = pL >= 90 ? '065F46' : (pL >= 75 ? '92400E' : '991B1B');
-                const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
-                ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-                const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
-                ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH). Target: ≥90% hijau, 75-89% kuning, <75% merah.`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-                const aLbr = XLSX.utils.encode_cell({ r: lR, c: colUph });
-                ws[aLbr] = {
-                    t: 'n',
-                    f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`,
-                    v: parseFloat(pL.toFixed(2)),
-                    z: '0.00"%"',
-                    s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD }
-                };
-                ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
-            }
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
-        }
-
-        // ===== EXPORT SIKLUS =====
-        function buildSiklusDataRows() {
-            const dE = masterData;
-            const mL = Math.max(...dE.map(i => i.laps.length), 1);
-            const hd = ['Line', 'No. SOP', 'Nama SOP'];
-            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
-            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Operator', 'Total SMH (s)', 'UPH', 'Saran SMH (LBR 90%)');
-            const gr = {}; const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.noSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaList: [] }; go.push(k); }
-                const st = getRowStats(i);
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-                if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
-            });
-            go.sort((a, b) => String(gr[a].noSop || '').localeCompare(String(gr[b].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const totalSmhAll = allSmh.reduce((a, b) => a + b, 0);
-            const countSop = allSmh.length;
-            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            const cAvg = 3 + mL;
-            const cAl = cAvg + 1;
-            const cSmh = cAl + 1;
-            const cOp = cSmh + 1;
-            const cTS = cOp + 1;
-            const cU = cTS + 1;
-            const cSaran = cU + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    const rd = [x === 0 ? it.line : '', x === 0 ? it.noSop : '', it.namaSop];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), it.operators || g.operators || 1, x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs >= 1) {
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
-                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
-                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
-                }
-            });
-            return { dataRows: dR, merges: mg, maxLaps: mL, colAvg: cAvg, colAllow: cAl, colSmh: cSmh, colOp: cOp, colTotalSmh: cTS, colUph: cU, colSaran: cSaran };
-        }
-        function exportSiklusXLSX() {
-            const { dataRows, merges, maxLaps, colAvg, colAllow, colSmh, colOp, colTotalSmh, colUph, colSaran } = buildSiklusDataRows();
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataRows);
-            ws['!merges'] = merges;
-            const cw = [{ wch: 10 }, { wch: 10 }, { wch: 22 }];
-            for (let i = 0; i < maxLaps; i++) cw.push({ wch: 9 });
-            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 }, { wch: 13 }, { wch: 10 }, { wch: 16 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const std = getLineStandardUph();
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a]) ws[a] = { t: 's', v: '' };
-                let hFill = 'D1FAE5';
-                if (c === colSaran) hFill = 'FCE7F3';
-                ws[a].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
-            }
-            let ri = 1;
-            const gr = {}; const go = [];
-            masterData.forEach(i => {
-                const k = `${i.line}||${i.noSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaList: [] }; go.push(k); }
-                const st = getRowStats(i);
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-                if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
-            });
-            go.sort((a, b) => String(gr[a].noSop || '').localeCompare(String(gr[b].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const avgSmh = allSmh.length > 0 ? allSmh.reduce((a, b) => a + b, 0) / allSmh.length : 0;
-            const heavyThreshold = avgSmh * 1.05;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri;
-                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                const ufC = getUphHexColor(upG, std);
-                const ufF = getUphFontColor(upG, std);
-                const isHeavy = g.totalSmh > heavyThreshold && heavyThreshold > 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a = XLSX.utils.encode_cell({ r: ri, c: c });
-                        if (!ws[a]) ws[a] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === colSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === colUph) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        else if (c === colOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === colTotalSmh) { f = 'D1FAE5'; fn = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        else if (c === colSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
-                        if (c === colTotalSmh && x === 0 && isHeavy) { f = 'FECACA'; fn = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
-                        ws[a].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aAvg = XLSX.utils.encode_cell({ r: ri, c: colAvg });
-                    if (ws[aAvg]) {
-                        const f1 = XLSX.utils.encode_col(3);
-                        const f2 = XLSX.utils.encode_col(3 + maxLaps - 1);
-                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri + 1}:${f2}${ri + 1}),2)`; ws[aAvg].z = '0.00';
-                    }
-                    const aAl = XLSX.utils.encode_cell({ r: ri, c: colAllow });
-                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
-                    const aSmh = XLSX.utils.encode_cell({ r: ri, c: colSmh });
-                    if (ws[aSmh]) {
-                        const aC = XLSX.utils.encode_col(colAvg);
-                        const aL = XLSX.utils.encode_col(colAllow);
-                        ws[aSmh].f = `ROUND(${aC}${ri + 1}*(1+${aL}${ri + 1}),2)`; ws[aSmh].z = '0.00';
-                    }
-                    ri++;
-                });
-                const aTS = XLSX.utils.encode_cell({ r: gsr, c: colTotalSmh });
-                const sC = XLSX.utils.encode_col(colSmh);
-                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
-                const aUp = XLSX.utils.encode_cell({ r: gsr, c: colUph });
-                const tC = XLSX.utils.encode_col(colTotalSmh);
-                if (ws[aUp]) { ws[aUp].f = `IF(${tC}${gsr + 1}=0,0,ROUND(3600/${tC}${gsr + 1},0))`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
-            });
-            const sC = XLSX.utils.encode_col(colTotalSmh);
-            const oC = XLSX.utils.encode_col(colOp);
-            const sR = `${sC}2:${sC}${ri}`;
-            const oR = `${oC}2:${oC}${ri}`;
-            let lR = ri;
-            for (let c = 0; c <= rng.e.c; c++) { const a = XLSX.utils.encode_cell({ r: lR, c: c }); if (!ws[a]) ws[a] = { t: 's', v: '' }; }
-            lR++;
-            const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
-            ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-            const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
-            ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH). Target: ≥90% hijau, 75-89% kuning, <75% merah.`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-            const sV = [];
-            go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
-            const pT = sV.reduce((a, b) => a + b, 0);
-            const pM = Math.max(...sV, 0);
-            const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
-            const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
-            const lc = pL >= 90 ? 'D1FAE5' : (pL >= 75 ? 'FEF3C7' : 'FECACA');
-            const lf = pL >= 90 ? '065F46' : (pL >= 75 ? '92400E' : '991B1B');
-            const aLbr = XLSX.utils.encode_cell({ r: lR, c: colUph });
-            ws[aLbr] = {
-                t: 'n',
-                f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`,
-                v: parseFloat(pL.toFixed(2)),
-                z: '0.00"%"',
-                s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD }
+        // ===== ARSIP =====
+        function openArchiveCurrentBtn() {
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
+            const dataToArchive = masterData.filter(d =>
+                d.line === activeLine && (activeModel ? (d.model || '-') === activeModel : true)
+            );
+            if (dataToArchive.length === 0) { showToast('⚠️ Tidak ada data untuk diarsipkan', 'warning'); return; }
+            const modelLabel = activeModel || 'Semua Model';
+            if (!confirm(`📦 Arsipkan ${dataToArchive.length} data?\n\nLine: ${activeLine}\nModel: ${modelLabel}\n\nData akan DIPINDAH ke arsip (dihapus dari master).`)) return;
+            const now = new Date();
+            const entry = {
+                id: generateId('ar_'),
+                tahun: now.getFullYear(),
+                bulan: now.getMonth() + 1,
+                line: activeLine,
+                model: activeModel || '-',
+                mode: currentMode,
+                data: dataToArchive,
+                created_at: now.toISOString(),
+                count: dataToArchive.length,
+                restoredCount: 0,
+                lastRestoredAt: null
             };
-            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Siklus_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
-        }
-
-        // ===== EXPORT MESIN =====
-        function buildMesinDataRows() {
-            const dE = masterData;
-            const mL = Math.max(...dE.map(i => i.laps.length), 1);
-            const hd = ['Line', 'No', 'Nama Mesin', 'Sub Mesin'];
-            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas');
-            const gr = {}; const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
-                gr[k].rows.push(i);
-                gr[k].totalCapacity += getRowStats(i).capacity;
+            archiveList.unshift(entry);
+            const idsToRemove = new Set(dataToArchive.map(d => {
+                if (currentMode === 'elemen') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
+                if (currentMode === 'siklus') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
+                return `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
+            }));
+            masterData = masterData.filter(d => {
+                let key;
+                if (currentMode === 'elemen') key = `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
+                else if (currentMode === 'siklus') key = `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
+                else key = `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
+                return !idsToRemove.has(key);
             });
-            go.sort((a, b) => String(gr[a].no || '').localeCompare(String(gr[b].no || ''), undefined, { numeric: true }));
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                g.rows.forEach((it, x) => {
-                    const st = getRowStats(it);
-                    const rd = [x === 0 ? it.line : '', x === 0 ? it.no : '', x === 0 ? it.process : '', it.subMachine || ''];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), it.ngRate || 0, parseFloat(st.gerakan.toFixed(2)), parseFloat(st.ctPlusG.toFixed(2)), st.capacity, st.actualMachine, x === 0 ? g.totalCapacity : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs > 1) {
-                    const tc = 10 + mL;
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: tc }, e: { r: ri - 1, c: tc } });
-                }
-            });
-            return { dataRows: dR, merges: mg, maxLaps: mL };
+            saveArchiveToFirebase();
+            saveMasterToLS();
+            renderArsipList(); updateArsipCount();
+            renderMasterTable(); renderStandardCheck(); updateCounters();
+            showToast(`✅ ${entry.count} data diarsipkan`, 'success');
         }
-        function exportMesinXLSX() {
-            const { dataRows, merges, maxLaps } = buildMesinDataRows();
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(dataRows);
-            ws['!merges'] = merges;
-            const cw = [{ wch: 10 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
-            for (let i = 0; i < maxLaps; i++) cw.push({ wch: 8 });
-            cw.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const std = getLineStandardUph();
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a]) ws[a] = { t: 's', v: '' };
-                ws[a].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
+        async function archiveFilteredData() {
+            const dataToArchive = getFilteredData();
+            if (dataToArchive.length === 0) { showToast('⚠️ Tidak ada data untuk diarsipkan', 'warning'); return; }
+            const fLine = document.getElementById('dataFilterLine');
+            const fv = fLine ? fLine.value : '__active__';
+            let lineLabel, modelLabel;
+            if (fv === '__all__') { lineLabel = 'Semua Line'; modelLabel = activeModel || 'Semua Model'; }
+            else if (fv === '__active__') { lineLabel = activeLine || '-'; modelLabel = activeModel || '-'; }
+            else { lineLabel = fv; modelLabel = activeModel || 'Semua Model'; }
+            if (!confirm(`📦 Arsipkan ${dataToArchive.length} data?\n\nLine: ${lineLabel}\nModel: ${modelLabel}\nMode: ${currentMode}\n\nData akan DIPINDAH ke Arsip (dihapus dari Master).`)) return;
+            const now = new Date();
+            const entry = {
+                id: generateId('ar_'),
+                tahun: now.getFullYear(),
+                bulan: now.getMonth() + 1,
+                line: fv === '__all__' ? 'ALL' : (fv === '__active__' ? (activeLine || '-') : fv),
+                model: modelLabel,
+                mode: currentMode,
+                data: dataToArchive,
+                created_at: now.toISOString(),
+                count: dataToArchive.length,
+                restoredCount: 0,
+                lastRestoredAt: null
+            };
+            archiveList.unshift(entry);
+            const makeKey = (d) => {
+                if (currentMode === 'elemen') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
+                if (currentMode === 'siklus') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
+                return `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
+            };
+            const idsToRemove = new Set(dataToArchive.map(makeKey));
+            masterData = masterData.filter(d => !idsToRemove.has(makeKey(d)));
+            saveArchiveToFirebase();
+            saveMasterToLS();
+            renderArsipList(); updateArsipCount();
+            renderMasterTable(); renderStandardCheck(); updateCounters();
+            showToast(`✅ ${entry.count} data diarsipkan (${entry.line} · ${entry.model})`, 'success');
+        }
+        function renderArsipList() {
+            const c = document.getElementById('arsipListContainer'); if (!c) return;
+            const fl = document.getElementById('arsipFilterLine');
+            const fm = document.getElementById('arsipFilterModel');
+            if (fl) {
+                const lines = [...new Set(archiveList.map(a => a.line).filter(Boolean))].sort();
+                const cur = fl.value;
+                fl.innerHTML = '<option value="">Semua Line</option>' + lines.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+                if (cur) fl.value = cur;
             }
-            const gr = {}; const go = [];
-            masterData.forEach(i => {
-                const k = `${i.line}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, no: i.no, process: i.process, capacity: 0, rows: [] }; go.push(k); }
-                gr[k].rows.push(i); gr[k].capacity += getRowStats(i).capacity;
-            });
-            go.sort((a, b) => String(gr[a].no || '').localeCompare(String(gr[b].no || ''), undefined, { numeric: true }));
-            let ri = 1;
-            const cRata = 4 + maxLaps;
-            const cNg = cRata + 1;
-            const cGer = cNg + 1;
-            const cCtg = cGer + 1;
-            const cKap = cCtg + 1;
-            const cJml = cKap + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri;
-                const tU = g.capacity;
-                const ufC = getUphHexColor(tU, std);
-                const ufF = getUphFontColor(tU, std);
-                g.rows.forEach((it, x) => {
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a = XLSX.utils.encode_cell({ r: ri, c: c });
-                        if (!ws[a]) ws[a] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 10 + maxLaps && x === 0) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        ws[a].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const st = getRowStats(it);
-                    const aRata = XLSX.utils.encode_cell({ r: ri, c: cRata });
-                    if (ws[aRata]) {
-                        const f1 = XLSX.utils.encode_col(4);
-                        const f2 = XLSX.utils.encode_col(4 + maxLaps - 1);
-                        ws[aRata].f = `ROUND(AVERAGE(${f1}${ri + 1}:${f2}${ri + 1}),2)`;
-                        ws[aRata].v = parseFloat(st.avg.toFixed(2)); ws[aRata].t = 'n'; ws[aRata].z = '0.00';
-                    }
-                    const aCtg = XLSX.utils.encode_cell({ r: ri, c: cCtg });
-                    if (ws[aCtg]) {
-                        const a1 = XLSX.utils.encode_col(cRata);
-                        const a2 = XLSX.utils.encode_col(cGer);
-                        ws[aCtg].f = `ROUND(${a1}${ri + 1}+${a2}${ri + 1},2)`;
-                        ws[aCtg].v = parseFloat(st.ctPlusG.toFixed(2)); ws[aCtg].t = 'n'; ws[aCtg].z = '0.00';
-                    }
-                    const aKap = XLSX.utils.encode_cell({ r: ri, c: cKap });
-                    if (ws[aKap]) {
-                        const c1 = XLSX.utils.encode_col(cCtg);
-                        const c2 = XLSX.utils.encode_col(cJml);
-                        const c3 = XLSX.utils.encode_col(cNg);
-                        ws[aKap].f = `IF(${c1}${ri + 1}>0,ROUND(3600/${c1}${ri + 1}*${c2}${ri + 1}*(1-${c3}${ri + 1}/100),0),0)`;
-                        ws[aKap].v = st.capacity; ws[aKap].t = 'n';
-                    }
-                    ri++;
-                });
-                const tc = 10 + maxLaps;
-                const aTC = XLSX.utils.encode_cell({ r: gsr, c: tc });
-                if (g.rows.length > 1) {
-                    if (ws[aTC]) { const kC = XLSX.utils.encode_col(cKap); ws[aTC].f = `SUM(${kC}${gsr + 1}:${kC}${ri})`; ws[aTC].v = tU; ws[aTC].t = 'n'; }
+            if (fm) {
+                const models = [...new Set(archiveList.map(a => a.model).filter(Boolean))].sort();
+                const cur = fm.value;
+                fm.innerHTML = '<option value="">Semua Model</option>' + models.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+                if (cur) fm.value = cur;
+            }
+            const filterLine = fl ? fl.value : '';
+            const filterModel = fm ? fm.value : '';
+            const filterBulan = document.getElementById('arsipFilterBulan')?.value || '';
+            const filterTahun = document.getElementById('arsipFilterTahun')?.value || '';
+            let filtered = archiveList;
+            if (filterLine) filtered = filtered.filter(a => a.line === filterLine);
+            if (filterModel) filtered = filtered.filter(a => a.model === filterModel);
+            if (filterBulan) filtered = filtered.filter(a => String(a.bulan) === String(filterBulan));
+            if (filterTahun) filtered = filtered.filter(a => String(a.tahun) === String(filterTahun));
+            if (filtered.length === 0) {
+                c.innerHTML = '<div class="text-center text-gray-400 italic text-xs py-8">Belum ada arsip.</div>';
+                return;
+            }
+            const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            c.innerHTML = filtered.map(a => {
+                const restoreBadge = a.restoredCount
+                    ? `<span class="ml-1 bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>`
+                    : '';
+                const lastRestore = a.lastRestoredAt
+                    ? `<div class="text-[10px] text-blue-500 mt-0.5">Terakhir di-restore: ${new Date(a.lastRestoredAt).toLocaleString('id-ID')}</div>`
+                    : '';
+                return `
+                <div class="border border-gray-200 rounded-lg p-3 hover:bg-amber-50/40 transition">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(a.line || '-')}</span>
+                                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">📦 ${escapeHtml(a.model || '-')}</span>
+                                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
+                                <span class="bg-gray-100 text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${escapeHtml(a.mode || '-')}</span>
+                                ${restoreBadge}
+                            </div>
+                            <div class="text-xs text-gray-600 mt-1.5">
+                                <b>${a.count || a.data?.length || 0}</b> item ·
+                                <span class="text-gray-400">${new Date(a.created_at).toLocaleString('id-ID')}</span>
+                            </div>
+                            ${lastRestore}
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2 py-1 bg-blue-50 rounded">♻️</button>
+                            <button onclick="exportArchiveCSV('${a.id}')" title="Export CSV" class="text-emerald-600 hover:text-emerald-800 text-xs font-semibold px-2 py-1 bg-emerald-50 rounded">📥</button>
+                            <button onclick="deleteArchive('${a.id}')" title="Hapus permanen" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 bg-red-50 rounded">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+        async function restoreArchive(id) {
+            const a = archiveList.find(x => x.id === id);
+            if (!a) { showToast('❌ Arsip tidak ditemukan', 'error'); return; }
+            const data = a.data || [];
+            if (data.length === 0) { showToast('⚠️ Arsip kosong', 'warning'); return; }
+            const makeKey = (d) => {
+                if (a.mode === 'elemen') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
+                if (a.mode === 'siklus') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
+                return `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
+            };
+            const existingKeys = new Set(masterData.map(makeKey));
+            const duplicateCount = data.filter(d => existingKeys.has(makeKey(d))).length;
+            const newCount = data.length - duplicateCount;
+            const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            if (a.restoredCount && a.restoredCount > 0) {
+                const last = a.lastRestoredAt ? new Date(a.lastRestoredAt).toLocaleString('id-ID') : '-';
+                if (!confirm(`⚠️ PERHATIAN!\n\nArsip ini sudah pernah di-restore ${a.restoredCount}x.\nTerakhir: ${last}\n\nRestore ulang akan MENGGABUNG lagi laps-nya ke Master.\nData bisa berlipat ganda!\n\nYakin lanjut?`)) return;
+            }
+            let msg = `♻️ Kembalikan arsip ke Master Data?\n\n`;
+            msg += `Line: ${a.line}\nModel: ${a.model}\nMode: ${a.mode}\n`;
+            msg += `Periode: ${bulanNama[a.bulan] || '?'} ${a.tahun}\nTotal: ${data.length} item\n\n`;
+            if (duplicateCount > 0) { msg += `⚠️ ${duplicateCount} item sudah ada di Master (akan digabung)\n✅ ${newCount} item baru akan ditambahkan\n\n`; }
+            msg += `📦 Arsip TETAP disimpan sebagai backup.\n\nLanjut?`;
+            if (!confirm(msg)) return;
+            if (a.mode !== currentMode) {
+                if (!confirm(`⚠️ PERHATIAN!\n\nMode arsip (${a.mode}) BEDA dengan mode aktif (${currentMode}).\nData tetap akan dikembalikan ke mode ${a.mode}.\n\nLanjut?`)) return;
+            }
+            let added = 0, merged = 0;
+            data.forEach(item => {
+                const key = makeKey(item);
+                const idx = masterData.findIndex(d => makeKey(d) === key);
+                if (idx !== -1) {
+                    const ex = masterData[idx];
+                    ex.laps = (ex.laps || []).concat(item.laps || []);
+                    ex.sessions = (ex.sessions || 1) + (item.sessions || 1);
+                    if (item.operators !== undefined) ex.operators = item.operators;
+                    if (item.preinstall !== undefined) ex.preinstall = item.preinstall;
+                    if (item.gerakan !== undefined) ex.gerakan = item.gerakan;
+                    if (item.actualMachine !== undefined) ex.actualMachine = item.actualMachine;
+                    if (item.ngRate !== undefined) ex.ngRate = item.ngRate;
+                    merged++;
                 } else {
-                    if (ws[aTC]) { const kR = XLSX.utils.encode_cell({ r: gsr, c: cKap }); ws[aTC].f = kR; ws[aTC].v = tU; ws[aTC].t = 'n'; }
+                    masterData.push({ ...item, laps: [...(item.laps || [])] });
+                    added++;
                 }
             });
-            merges.forEach(m => {
-                const sa = XLSX.utils.encode_cell({ r: m.s.r, c: m.s.c });
-                if (ws[sa] && ws[sa].s) {
-                    const stl = ws[sa].s;
-                    for (let r = m.s.r; r <= m.e.r; r++) for (let c = m.s.c; c <= m.e.c; c++) {
-                        const a = XLSX.utils.encode_cell({ r, c });
-                        if (a !== sa) { if (!ws[a]) ws[a] = { t: 's', v: '' }; ws[a].s = stl; }
+            a.restoredCount = (a.restoredCount || 0) + 1;
+            a.lastRestoredAt = new Date().toISOString();
+            saveArchiveToFirebase();
+            saveMasterToLS((serverArr) => {
+                const arr = serverArr.map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
+                data.forEach(item => {
+                    const key = makeKey(item);
+                    const i2 = arr.findIndex(d => makeKey(d) === key);
+                    if (i2 !== -1) {
+                        const ex = arr[i2];
+                        ex.laps = (ex.laps || []).concat(item.laps || []);
+                        ex.sessions = (ex.sessions || 1) + (item.sessions || 1);
+                        if (item.operators !== undefined) ex.operators = item.operators;
+                        if (item.preinstall !== undefined) ex.preinstall = item.preinstall;
+                        if (item.gerakan !== undefined) ex.gerakan = item.gerakan;
+                        if (item.actualMachine !== undefined) ex.actualMachine = item.actualMachine;
+                        if (item.ngRate !== undefined) ex.ngRate = item.ngRate;
+                    } else {
+                        arr.push({ ...item, laps: [...(item.laps || [])] });
                     }
-                }
+                });
+                return arr;
             });
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Mesin_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
+            renderArsipList(); updateArsipCount();
+            renderMasterTable(); renderStandardCheck(); updateCounters();
+            let toast = `♻️ ${data.length} data dikembalikan`;
+            if (merged > 0 && added > 0) toast += ` (${added} baru, ${merged} digabung)`;
+            else if (merged > 0) toast += ` (${merged} digabung)`;
+            else if (added > 0) toast += ` (${added} baru)`;
+            showToast(toast, 'success');
+        }
+        function deleteArchive(id) {
+            const a = archiveList.find(x => x.id === id); if (!a) return;
+            if (!confirm(`Hapus arsip ${a.line} · ${a.model} · ${a.count} item?\n\n⚠️ Data akan HILANG PERMANEN.`)) return;
+            archiveList = archiveList.filter(x => x.id !== id);
+            saveArchiveToFirebase();
+            renderArsipList(); updateArsipCount();
+            showToast('Arsip dihapus', 'warning');
+        }
+        function exportArchiveCSV(id) {
+            const a = archiveList.find(x => x.id === id); if (!a || !a.data) return;
+            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            const rows = [['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen', 'Siklus', 'Laps']];
+            (a.data || []).forEach(d => {
+                const laps = (d.laps || []).map(l => typeof l === 'object' ? l.dur : l).join(' | ');
+                rows.push([a.line, a.model, d.noSop || d.no || '-', d.namaSop || d.process || '-', d.elemen || '-', (d.laps || []).length, laps]);
+            });
+            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.csv`);
+            showToast('📄 CSV diunduh', 'success');
+        }
+        function resetArsipFilter() {
+            document.getElementById('arsipFilterLine').value = '';
+            document.getElementById('arsipFilterModel').value = '';
+            document.getElementById('arsipFilterBulan').value = '';
+            document.getElementById('arsipFilterTahun').value = '';
+            renderArsipList();
+        }
+        function updateArsipCount() {
+            const b = document.getElementById('arsipCountBadge');
+            if (b) {
+                b.innerText = archiveList.length;
+                b.className = archiveList.length > 0
+                    ? 'ml-1 text-[10px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full'
+                    : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full';
+            }
         }
 
+        // ===== EXPORT (sederhana — CSV basic) =====
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
-            const od = masterData;
-            let dE = getFilteredData();
-            if (currentMode === 'mesin') dE = dE.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
-            else if (currentMode === 'elemen') dE = dE.filter(d => d.noSop !== undefined && d.elemen !== undefined);
-            else if (currentMode === 'siklus') dE = dE.filter(d => d.noSop !== undefined && d.elemen === undefined);
-            if (dE.length === 0) { showToast('Tidak ada data untuk line ini!', 'error'); return; }
-            masterData = dE;
             try {
-                if (currentMode === 'elemen') exportElemenXLSX();
-                else if (currentMode === 'siklus') exportSiklusXLSX();
-                else exportMesinXLSX();
+                const dE = getFilteredData();
+                if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
+                const wb = XLSX.utils.book_new();
+                let hd = [];
+                if (currentMode === 'elemen') hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus','Laps','Average','SMH','UPH'];
+                else if (currentMode === 'siklus') hd = ['Line','Model','No. SOP','Nama SOP','Siklus','Laps','Average','SMH','UPH'];
+                else hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus','Laps','Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas'];
+                const rows = [hd];
+                dE.forEach(i => {
+                    const st = getRowStats(i);
+                    const laps = (i.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | ');
+                    if (currentMode === 'elemen') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, i.elemen, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                    else if (currentMode === 'siklus') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                    else rows.push([i.line, i.model||'-', i.no, i.process, i.subMachine, (i.laps||[]).length, laps, st.avg.toFixed(2), i.ngRate||0, st.gerakan.toFixed(2), st.ctPlusG.toFixed(2), st.capacity, st.actualMachine, '']);
+                });
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
             } catch (err) { console.error(err); showToast('❌ Gagal export.', 'error'); }
-            masterData = od;
         }
         function exportToCSV() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
-            const od = masterData;
-            let dE = getFilteredData();
-            if (currentMode === 'mesin') dE = dE.filter(d => d.no !== undefined && d.process !== undefined && d.noSop === undefined);
-            else if (currentMode === 'elemen') dE = dE.filter(d => d.noSop !== undefined && d.elemen !== undefined);
-            else if (currentMode === 'siklus') dE = dE.filter(d => d.noSop !== undefined && d.elemen === undefined);
+            const dE = getFilteredData();
             if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
-            masterData = dE;
-            try {
-                let dR;
-                if (currentMode === 'elemen') dR = buildElemenDataRows().dataRows;
-                else if (currentMode === 'siklus') dR = buildSiklusDataRows().dataRows;
-                else dR = buildMesinDataRows().dataRows;
-                const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-                const csv = dR.map(row => row.map(esc).join(',')).join('\r\n');
-                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-                if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 CSV diunduh', 'success');
-            } catch (err) { console.error(err); showToast('❌ Gagal.', 'error'); }
-            masterData = od;
+            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            let hd = [];
+            if (currentMode === 'elemen') hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus','Laps','Average','SMH','UPH'];
+            else if (currentMode === 'siklus') hd = ['Line','Model','No. SOP','Nama SOP','Siklus','Laps','Average','SMH','UPH'];
+            else hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus','Laps','Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas'];
+            const rows = [hd];
+            dE.forEach(i => {
+                const st = getRowStats(i);
+                const laps = (i.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | ');
+                if (currentMode === 'elemen') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, i.elemen, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                else if (currentMode === 'siklus') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                else rows.push([i.line, i.model||'-', i.no, i.process, i.subMachine, (i.laps||[]).length, laps, st.avg.toFixed(2), i.ngRate||0, st.gerakan.toFixed(2), st.ctPlusG.toFixed(2), st.capacity, st.actualMachine, '']);
+            });
+            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.csv`)) showToast('📄 CSV diunduh', 'success');
         }
 
         // ===== BACKUP =====
@@ -3280,7 +3336,11 @@
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
         function downloadBackup() {
-            const b = { version: '1.6', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, masterData };
+            const b = {
+                version: '2.0',
+                timestamp: new Date().toISOString(),
+                lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData
+            };
             const j = JSON.stringify(b, null, 2);
             const bl = new Blob([j], { type: 'application/json' });
             if (downloadBlob(bl, `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`)) {
@@ -3301,14 +3361,21 @@
                     const b = JSON.parse(e.target.result);
                     lineList = b.lineList || []; machineList = b.machineList || [];
                     elemenMasterList = b.elemenMasterList || []; siklusMasterList = b.siklusMasterList || [];
+                    modelList = b.modelList || []; archiveList = b.archiveList || [];
                     masterData = b.masterData || [];
                     lsSave(LS_KEY_MACHINES, machineList); lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                     lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(LS_KEY_MASTER, masterData);
-                    if (firebaseReady) { saveLineListToFirebase(); saveMachinesToFirebase(); saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); saveMasterToFirebase(); }
+                    lsSave(LS_KEY_MODEL_LIST, modelList); lsSave(LS_KEY_ARCHIVE, archiveList);
+                    if (firebaseReady) {
+                        saveLineListToFirebase(); saveMachinesToFirebase(); saveElemenMasterToFirebase();
+                        saveSiklusMasterToFirebase(); saveModelListToFirebase(); saveArchiveToFirebase(); saveMasterToFirebase();
+                    }
                     renderLineList(); renderMachineTable(); renderMachineDropdownList();
                     renderElemenMasterTable(); renderSiklusMasterTable();
                     renderMasterTable(); renderStandardCheck();
-                    updateLineDisplay(); updateCounters(); closeBackupModal();
+                    updateLineDisplay(); updateModelDisplay(); updateCounters();
+                    updateArsipCount(); renderArsipList();
+                    closeBackupModal();
                     showToast('✅ Restore berhasil!', 'success');
                 } catch (err) { showToast('❌ Gagal: ' + err.message, 'error'); }
             };
@@ -3336,6 +3403,7 @@
             if (t === 'elemen') renderElemenMasterTable();
             if (t === 'siklus') renderSiklusMasterTable();
             if (t === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
+            if (t === 'arsip') { renderArsipList(); updateArsipCount(); }
             if (t === 'input') {
                 if (currentMode === 'elemen') renderSopDropdownList();
                 else if (currentMode === 'siklus') renderSiklusDropdownList();
@@ -3348,8 +3416,10 @@
         function updateServerInfo() {
             const se = document.getElementById('serverStatusInfo');
             if (!se) return;
-            if (firebaseReady) { se.innerText = '✅ Online'; se.className = 'font-bold text-emerald-600'; }
-            else { se.innerText = '❌ Offline'; se.className = 'font-bold text-red-600'; }
+            if (firebaseReady) {
+                se.innerText = window.apiKV ? '✅ Server PC' : '✅ Firebase';
+                se.className = 'font-bold text-emerald-600';
+            } else { se.innerText = '❌ Offline'; se.className = 'font-bold text-red-600'; }
             const mc = document.getElementById('serverMasterCount'); if (mc) mc.innerText = masterData.length;
             const lu = document.getElementById('serverLastUpdate'); if (lu) lu.innerText = lastServerUpdate ? new Date(lastServerUpdate).toLocaleString('id-ID') : '-';
         }
@@ -3359,26 +3429,31 @@
             const sm = lsLoad(LS_KEY_MODE, '');
             const sl = localStorage.getItem(LS_KEY_ACTIVE_LINE);
             if (sl) activeLine = sl;
+            const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
+            if (smd) activeModel = smd;
             machineList = lsLoad(LS_KEY_MACHINES, []);
             masterData = lsLoad(LS_KEY_MASTER, []);
             elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
             siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
-            // Load batching dari localStorage
+            modelList = lsLoad(LS_KEY_MODEL_LIST, []);
+            archiveList = lsLoad(LS_KEY_ARCHIVE, []);
             const savedBatch = lsLoad(LS_KEY_BATCH, 1);
             if (savedBatch && parseInt(savedBatch) > 1) {
                 batchUnitCount = parseInt(savedBatch);
                 const bEl = document.getElementById('inputBatchUnit');
                 if (bEl) bEl.value = batchUnitCount;
             }
-            updateLineDisplay(); renderMachineDropdownList(); renderMachineTable();
+            updateLineDisplay(); updateModelDisplay();
+            renderMachineDropdownList(); renderMachineTable();
             renderMasterTable(); updateCounters();
             renderSopDropdownList(); renderElemenMasterTable();
             renderSiklusDropdownList(); renderSiklusMasterTable();
+            renderArsipList(); updateArsipCount();
             updateBatchingUI();
-            setLoadingDetail('Menunggu Firebase SDK...');
+            setLoadingDetail('Menunggu database SDK...');
             const af = async () => {
                 firebaseReady = true;
-                setLoadingDetail('Firebase siap...');
+                setLoadingDetail('Database siap...');
                 await loadAllFromFirebaseOnce();
                 setupFirebaseListeners();
                 setSyncStatus('online'); setLoadingDone();
