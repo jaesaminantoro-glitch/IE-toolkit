@@ -28,27 +28,10 @@
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
         .modal-bg.active { display: flex; }
         .modal-content { background: white; border-radius: 16px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
-        /* Modal sticky header & footer */
-        .modal-content.sticky-layout {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .modal-content .modal-body-scroll {
-            overflow-y: auto;
-            flex: 1;
-            -webkit-overflow-scrolling: touch;
-        }
-        .modal-content .modal-footer-sticky {
-            position: sticky;
-            bottom: 0;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-            flex-shrink: 0;
-        }
-        .modal-content .modal-header-fixed {
-            flex-shrink: 0;
-        }
+        .modal-content.sticky-layout { display: flex; flex-direction: column; overflow: hidden; }
+        .modal-content .modal-body-scroll { overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        .modal-content .modal-footer-sticky { position: sticky; bottom: 0; background: white; border-top: 1px solid #e5e7eb; flex-shrink: 0; }
+        .modal-content .modal-header-fixed { flex-shrink: 0; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .sync-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
@@ -107,7 +90,7 @@
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
-    <!-- ===== MODAL MODE ===== -->
+    <!-- MODAL MODE -->
     <div id="modeModal" class="modal-bg active">
         <div class="modal-content" style="max-width: 600px;">
             <div class="p-6 border-b border-gray-200 text-center">
@@ -137,7 +120,7 @@
         </div>
     </div>
 
-    <!-- ===== MODAL LINE + MODEL (GABUNG) — STICKY FOOTER ===== -->
+    <!-- MODAL LINE + MODEL (STICKY FOOTER) -->
     <div id="lineModal" class="modal-bg">
         <div class="modal-content sticky-layout" style="max-width: 560px;">
             <div class="modal-header-fixed p-4 border-b border-gray-200">
@@ -180,7 +163,7 @@
         </div>
     </div>
 
-    <!-- Modal Edit Line -->
+    <!-- MODAL EDIT LINE -->
     <div id="editLineModal" class="modal-bg" onclick="if(event.target===this) closeEditLineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -198,7 +181,7 @@
         </div>
     </div>
 
-    <!-- Modal Edit Model -->
+    <!-- MODAL EDIT MODEL -->
     <div id="editModelModal" class="modal-bg" onclick="if(event.target===this) closeEditModelModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -215,7 +198,7 @@
         </div>
     </div>
 
-    <!-- Modal Edit Elemen -->
+    <!-- MODAL EDIT ELEMEN -->
     <div id="editElemenModal" class="modal-bg" onclick="if(event.target===this) closeEditElemenModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -234,7 +217,7 @@
         </div>
     </div>
 
-    <!-- Modal Edit Siklus -->
+    <!-- MODAL EDIT SIKLUS -->
     <div id="editSiklusModal" class="modal-bg" onclick="if(event.target===this) closeEditSiklusModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -252,7 +235,7 @@
         </div>
     </div>
 
-    <!-- Modal Backup -->
+    <!-- MODAL BACKUP -->
     <div id="backupModal" class="modal-bg" onclick="if(event.target===this) closeBackupModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -260,6 +243,7 @@
                 <button onclick="closeBackupModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
             </div>
             <div class="p-4 space-y-4">
+                <div class="text-[11px] text-gray-500" id="backupInfoLast">Last backup: belum pernah</div>
                 <button onclick="downloadBackup()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg text-sm">📥 Download Backup (.json)</button>
                 <div class="border-t border-gray-200 pt-3">
                     <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Restore dari File Backup</label>
@@ -270,7 +254,7 @@
         </div>
     </div>
 
-    <!-- Modal Preinstall -->
+    <!-- MODAL PREINSTALL -->
     <div id="preinstallModal" class="modal-bg" onclick="if(event.target===this) closePreinstallModal()">
         <div class="modal-content sticky-layout" style="max-width: 550px;">
             <div class="modal-header-fixed p-4 border-b border-gray-200 flex justify-between items-center">
@@ -309,7 +293,7 @@
             </div>
         </div>
     </div>
-        <!-- ===== APP CONTAINER ===== -->
+        <!-- APP CONTAINER -->
     <div id="appContainer" class="hidden">
         <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
@@ -343,7 +327,7 @@
             </div>
         </nav>
 
-        <!-- ===== TAB INPUT ===== -->
+        <!-- TAB INPUT -->
         <div id="tab-input" class="tab-content">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
@@ -417,14 +401,10 @@
                                 <button onclick="resetBatching()" class="text-[10px] bg-white border border-blue-300 text-blue-700 px-2 py-0.5 rounded font-bold">Reset</button>
                             </div>
                             <div class="flex gap-2 items-center">
-                                <input type="number" id="inputBatchUnit" value="1" min="1" step="1" inputmode="numeric"
-                                    onchange="onBatchUnitChange()"
-                                    class="w-24 px-3 py-2 border-2 border-blue-400 rounded-lg text-base font-bold text-blue-700 text-center">
+                                <input type="number" id="inputBatchUnit" value="1" min="1" step="1" inputmode="numeric" onchange="onBatchUnitChange()" class="w-24 px-3 py-2 border-2 border-blue-400 rounded-lg text-base font-bold text-blue-700 text-center">
                                 <span class="text-xs text-blue-700 font-medium">unit per 1 LAP</span>
                             </div>
-                            <p id="batchingHint" class="text-[10px] text-blue-600 mt-1.5">
-                                💡 Isi <b>3</b> kalau 1 LAP = 3 unit. Waktu otomatis dibagi → hasil per unit.
-                            </p>
+                            <p id="batchingHint" class="text-[10px] text-blue-600 mt-1.5">💡 Isi <b>3</b> kalau 1 LAP = 3 unit. Waktu otomatis dibagi → hasil per unit.</p>
                             <div id="batchingActiveInfo" class="hidden mt-2 bg-blue-100 border border-blue-300 rounded-lg px-2.5 py-1.5 text-[11px] text-blue-800">
                                 <b>✅ Batching AKTIF:</b> <span id="batchingActiveText">1 LAP = 3 unit → waktu dibagi 3</span>
                             </div>
@@ -523,7 +503,7 @@
             </div>
         </div>
 
-        <!-- ===== TAB DATA ===== -->
+        <!-- TAB DATA -->
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
@@ -553,7 +533,7 @@
             </div>
         </div>
 
-        <!-- ===== TAB MESIN ===== -->
+        <!-- TAB MESIN -->
         <div id="tab-mesin" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -576,7 +556,7 @@
             </div>
         </div>
 
-        <!-- ===== TAB ELEMEN ===== -->
+        <!-- TAB ELEMEN -->
         <div id="tab-elemen" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -607,7 +587,7 @@
             </div>
         </div>
 
-        <!-- ===== TAB SIKLUS ===== -->
+        <!-- TAB SIKLUS -->
         <div id="tab-siklus" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -637,7 +617,7 @@
             </div>
         </div>
 
-        <!-- ===== TAB ANALISA ===== -->
+        <!-- TAB ANALISA -->
         <div id="tab-export" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-4">
@@ -674,7 +654,7 @@
             </div>
         </div>
 
-        <!-- ===== TAB ARSIP ===== -->
+        <!-- TAB ARSIP -->
         <div id="tab-arsip" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
@@ -737,7 +717,7 @@
         </div>
     </div>
 
-    <!-- ===== MODAL MESIN ===== -->
+    <!-- MODAL MESIN -->
     <div id="machineModal" class="modal-bg" onclick="if(event.target===this) closeMachineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -755,7 +735,7 @@
         </div>
     </div>
 
-    <!-- ===== MODAL BULK IMPORT ===== -->
+    <!-- MODAL BULK IMPORT MESIN -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -776,7 +756,7 @@
         </div>
     </div>
 
-    <!-- ===== MODAL IMPORT ELEMEN ===== -->
+    <!-- MODAL IMPORT ELEMEN -->
     <div id="elemenImportModal" class="modal-bg" onclick="if(event.target===this) closeElemenImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -800,7 +780,7 @@
         </div>
     </div>
 
-    <!-- ===== MODAL IMPORT SIKLUS ===== -->
+    <!-- MODAL IMPORT SIKLUS -->
     <div id="siklusImportModal" class="modal-bg" onclick="if(event.target===this) closeSiklusImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -824,44 +804,56 @@
         </div>
     </div>
 
-    <!-- ===== KONFIGURASI DATABASE ===== -->
+    <!-- ============================================ -->
+    <!-- SETUP DATABASE (FIXED — NO document.write)   -->
+    <!-- ============================================ -->
     <script>
-        const DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
-        const SERVER_PC_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
-        window.IE_DB_MODE = DB_MODE;
-        window.IE_SERVER_URL = SERVER_PC_URL;
+        // Simpan konfigurasi ke window (dipakai modul berikutnya)
+        window.IE_DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
+        window.IE_SERVER_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
     </script>
 
+    <!-- FIREBASE SDK (dynamic import, aman) -->
+    <script type="module">
+        if (window.IE_DB_MODE === 'firebase') {
+            const firebaseConfig = {
+                apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
+                authDomain: "time-study-6f689.firebaseapp.com",
+                databaseURL: "https://time-study-6f689-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "time-study-6f689",
+                storageBucket: "time-study-6f689.firebasestorage.app",
+                messagingSenderId: "448993822556",
+                appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
+                measurementId: "G-3EHX8Z3Y62"
+            };
+
+            try {
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+                const { getDatabase, ref, set, onValue, get, runTransaction } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                const app = initializeApp(firebaseConfig);
+                const db = getDatabase(app);
+
+                window.firebaseDB = db;
+                window.firebaseRef = ref;
+                window.firebaseSet = set;
+                window.firebaseOnValue = onValue;
+                window.firebaseGet = get;
+                window.firebaseRunTransaction = runTransaction;
+                window.DATABASE_TYPE = 'firebase';
+                console.log('✅ Firebase initialized');
+                window.dispatchEvent(new Event('firebaseReady'));
+            } catch (e) {
+                console.error('❌ Firebase gagal:', e);
+                // Tetap trigger event biar UI lanjut
+                window.dispatchEvent(new Event('firebaseReady'));
+            }
+        }
+    </script>
+
+    <!-- SERVER PC (kalau mode bukan firebase) -->
     <script>
-        if (DB_MODE === 'firebase') {
-            document.write(`
-                <script type="module">
-                    const firebaseConfig = {
-                        apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
-                        authDomain: "time-study-6f689.firebaseapp.com",
-                        databaseURL: "https://time-study-6f689-default-rtdb.asia-southeast1.firebasedatabase.app",
-                        projectId: "time-study-6f689",
-                        storageBucket: "time-study-6f689.firebasestorage.app",
-                        messagingSenderId: "448993822556",
-                        appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
-                        measurementId: "G-3EHX8Z3Y62"
-                    };
-                    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-                    import { getDatabase, ref, set, onValue, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-                    const app = initializeApp(firebaseConfig);
-                    const db = getDatabase(app);
-                    window.firebaseDB = db;
-                    window.firebaseRef = ref;
-                    window.firebaseSet = set;
-                    window.firebaseOnValue = onValue;
-                    window.firebaseGet = get;
-                    window.firebaseRunTransaction = runTransaction;
-                    window.DATABASE_TYPE = 'firebase';
-                    console.log('✅ Firebase initialized');
-                    window.dispatchEvent(new Event('firebaseReady'));
-                <\/script>
-            `);
-        } else {
+        if (window.IE_DB_MODE !== 'firebase') {
+            const SERVER_PC_URL = window.IE_SERVER_URL;
             window.apiKV = {
                 async get(node) {
                     const r = await fetch(`${SERVER_PC_URL}/api/kv/${encodeURIComponent(node)}`);
@@ -920,7 +912,6 @@
         let activeSiklusList = [];
         let editingSiklusId = null;
         let isAddModeSiklus = false;
-        // PREINSTALL
         let preinstallActive = false;
         let preinstallOperatorCount = 1;
         let preinstallSelectedKeys = new Set();
@@ -930,14 +921,11 @@
         let preinstallActiveElemenList = [];
         let preinstallElemenIndex = 0;
         let preinstallCycleNum = 1;
-        // BATCHING
         let batchUnitCount = 1;
-        // MODEL
         let modelList = [];
         let activeModel = '';
         let tempSelectedModel = '';
         let editingModelOldName = '';
-        // ARSIP
         let archiveList = [];
 
         const ALLOWANCE_FIXED = 0.10;
@@ -1476,8 +1464,7 @@
             saveModelListToFirebase(); renderModelList();
             showToast('Model dihapus', 'warning');
         }
-    </script>
-            // ===== MACHINE =====
+                  // ===== MACHINE =====
         function toggleMachineDropdown() {
             const p = document.getElementById('machineDropdownPanel'); const b = document.getElementById('machineDropdownBtn');
             if (!p || !b) return;
@@ -2682,12 +2669,11 @@
             if (fv === '__all__') data = masterData;
             else if (fv === '__active__') data = masterData.filter(d => d.line === activeLine);
             else data = data.filter(d => d.line === fv);
-            if (activeModel && activeModel !== '-') {
-                data = data.filter(d => (d.model || '-') === activeModel);
-            }
+            if (activeModel && activeModel !== '-') data = data.filter(d => (d.model || '-') === activeModel);
             return data;
         }
-                        // ===== RENDER MASTER TABLE =====
+
+        // ===== RENDER MASTER TABLE =====
         function renderMasterTable() {
             const tb = document.getElementById('masterTableBody');
             const th = document.getElementById('masterTableHeaderRow');
@@ -3047,8 +3033,7 @@
                 else key = `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
                 return !idsToRemove.has(key);
             });
-            saveArchiveToFirebase();
-            saveMasterToLS();
+            saveArchiveToFirebase(); saveMasterToLS();
             renderArsipList(); updateArsipCount();
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast(`✅ ${entry.count} data diarsipkan`, 'success');
@@ -3073,8 +3058,7 @@
             };
             const idsToRemove = new Set(dataToArchive.map(makeKey));
             masterData = masterData.filter(d => !idsToRemove.has(makeKey(d)));
-            saveArchiveToFirebase();
-            saveMasterToLS();
+            saveArchiveToFirebase(); saveMasterToLS();
             renderArsipList(); updateArsipCount();
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast(`✅ ${entry.count} data diarsipkan (${entry.line} · ${entry.model})`, 'success');
@@ -3410,11 +3394,29 @@
             renderArsipList(); updateArsipCount();
             updateBatchingUI();
             setLoadingDetail('Menunggu database SDK...');
+
+            // Timeout fallback 5 detik — kalau Firebase lambat, lanjut pakai data lokal
+            const firebaseTimeout = setTimeout(() => {
+                if (!firebaseReady) {
+                    console.warn('⚠️ Firebase timeout — lanjut mode lokal');
+                    firebaseReady = true;
+                    setSyncStatus('offline');
+                    setLoadingDone();
+                    if (!sm) document.getElementById('modeModal').classList.add('active');
+                    else selectMode(sm);
+                    if (activeLine) syncUphFromActiveLine();
+                }
+            }, 5000);
+
             const af = async () => {
+                if (firebaseReady && window.DATABASE_TYPE !== 'firebase') {
+                    clearTimeout(firebaseTimeout);
+                    return;
+                }
                 firebaseReady = true;
+                clearTimeout(firebaseTimeout);
                 setLoadingDetail('Database siap...');
                 await loadAllFromFirebaseOnce();
-                // Auto-migrasi data lama yang belum punya field model
                 if (autoMigrateModelField()) {
                     console.log('✅ Auto-migrasi: data lama diberi model "-"');
                     saveMasterToFirebase();
@@ -3427,17 +3429,12 @@
                 else selectMode(sm);
                 if (activeLine) syncUphFromActiveLine();
             };
+
             if (window.firebaseDB) { await af(); }
             else {
                 window.addEventListener('firebaseReady', af, { once: true });
-                setTimeout(() => {
-                    if (!firebaseReady) {
-                        setSyncStatus('offline'); setLoadingDone();
-                        if (!sm) document.getElementById('modeModal').classList.add('active');
-                        else selectMode(sm);
-                    }
-                }, 5000);
             }
+
             document.addEventListener('click', (e) => {
                 const mB = document.getElementById('machineDropdownBtn');
                 const mP = document.getElementById('machineDropdownPanel');
@@ -3453,5 +3450,4 @@
         init();
     </script>
 </body>
-</html>
-                
+</html>  
