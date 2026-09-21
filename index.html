@@ -93,12 +93,18 @@
         // FAILSAFE MUTLAK: apapun yang error di kode lain (localStorage diblokir,
         // Firebase gagal, dll), overlay loading ini WAJIB hilang paling lama 6 detik
         // supaya aplikasi tidak pernah macet selamanya di layar ini.
+        // Hanya bertindak kalau overlay MASIH ADA (berarti proses init memang belum
+        // selesai) — kalau overlay sudah dihapus normal, berarti app sudah jalan
+        // dan modal mode yang tertutup adalah hal yang wajar (user sudah pilih mode).
         setTimeout(function () {
             try {
                 const o = document.getElementById('loadingOverlay');
-                if (o && o.parentNode) o.remove();
-                const mm = document.getElementById('modeModal');
-                if (mm && !mm.classList.contains('active')) mm.classList.add('active');
+                if (o && o.parentNode) {
+                    o.remove();
+                    const sm = localStorage.getItem('timeStudy_mode_v1');
+                    const mm = document.getElementById('modeModal');
+                    if (mm && !sm) mm.classList.add('active');
+                }
             } catch (e) {}
         }, 6000);
     </script>
