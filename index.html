@@ -89,6 +89,19 @@
         <div class="text-sm text-gray-600 font-medium">Menghubungkan ke database...</div>
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
+    <script>
+        // FAILSAFE MUTLAK: apapun yang error di kode lain (localStorage diblokir,
+        // Firebase gagal, dll), overlay loading ini WAJIB hilang paling lama 6 detik
+        // supaya aplikasi tidak pernah macet selamanya di layar ini.
+        setTimeout(function () {
+            try {
+                const o = document.getElementById('loadingOverlay');
+                if (o && o.parentNode) o.remove();
+                const mm = document.getElementById('modeModal');
+                if (mm && !mm.classList.contains('active')) mm.classList.add('active');
+            } catch (e) {}
+        }, 6000);
+    </script>
 
     <div id="modeModal" class="modal-bg active">
         <div class="modal-content" style="max-width: 600px;">
@@ -798,8 +811,14 @@
 
     <!-- SETUP DATABASE -->
     <script>
-        window.IE_DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
-        window.IE_SERVER_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
+        try {
+            window.IE_DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
+            window.IE_SERVER_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
+        } catch (e) {
+            console.warn('⚠️ localStorage tidak bisa diakses, pakai default:', e);
+            window.IE_DB_MODE = 'firebase';
+            window.IE_SERVER_URL = 'http://192.168.1.100:3000';
+        }
     </script>
 
     <script type="module">
@@ -1148,6 +1167,12 @@
 
         function setupFirebaseListeners() {
             if (!firebaseReady) return;
+            // Kalau Firebase SDK gagal dimuat (network diblokir dll), window.firebaseOnValue
+            // tidak akan ada. Berhenti di sini supaya tidak crash dan bikin loading macet.
+            if (!window.apiKV && (window.DATABASE_TYPE !== 'firebase' || typeof window.firebaseOnValue !== 'function')) {
+                console.warn('⚠️ setupFirebaseListeners dilewati — Firebase belum/gagal siap, pakai mode lokal.');
+                return;
+            }
             const nodes = ['lineList', 'machineList', 'elemenMaster', 'siklusMaster', 'masterDataMesin', 'masterDataElemen', 'masterDataSiklus', 'modelList', 'archive'];
             if (!window.apiKV) {
                 window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
@@ -3494,18 +3519,27 @@
                 firebaseReady = true;
                 clearTimeout(firebaseTimeout);
                 setLoadingDetail('Database siap...');
-                await loadAllFromFirebaseOnce();
-                if (autoMigrateModelField()) {
-                    console.log('✅ Auto-migrasi: data lama diberi model "-"');
-                    saveMasterToFirebase();
-                    saveElemenMasterToFirebase();
-                    saveSiklusMasterToFirebase();
+                try {
+                    await loadAllFromFirebaseOnce();
+                    if (autoMigrateModelField()) {
+                        console.log('✅ Auto-migrasi: data lama diberi model "-"');
+                        saveMasterToFirebase();
+                        saveElemenMasterToFirebase();
+                        saveSiklusMasterToFirebase();
+                    }
+                    setupFirebaseListeners();
+                    setSyncStatus('online');
+                } catch (e) {
+                    // Apapun yang gagal di atas (Firebase tidak benar-benar siap, dsb),
+                    // jangan biarkan layar loading macet — lanjut pakai data lokal.
+                    console.error('⚠️ Gagal setup database, lanjut mode lokal:', e);
+                    setSyncStatus('offline');
+                } finally {
+                    setLoadingDone();
+                    if (!sm) document.getElementById('modeModal').classList.add('active');
+                    else selectMode(sm);
+                    if (activeLine) syncUphFromActiveLine();
                 }
-                setupFirebaseListeners();
-                setSyncStatus('online'); setLoadingDone();
-                if (!sm) document.getElementById('modeModal').classList.add('active');
-                else selectMode(sm);
-                if (activeLine) syncUphFromActiveLine();
             };
 
             if (window.firebaseDB) { await af(); }
