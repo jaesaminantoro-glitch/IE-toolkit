@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Study - Multi Mode (Preinstallasi + Batching + Model + Arsip)</title>
+    <title>Time Study - Multi Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <style>
@@ -154,9 +154,14 @@
                     <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
                         <span>1️⃣ Nama Line</span><span>UPH</span>
                     </div>
-                    <button onclick="recoverLineFromActive()" class="w-full text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-2 py-1.5 rounded mb-2">
-                        🔄 Pulihkan Line Aktif kalau list kosong
-                    </button>
+                    <div class="flex gap-1 mb-2">
+                        <button onclick="forceReloadLineList()" class="flex-1 text-[10px] bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 font-bold px-2 py-1.5 rounded">
+                            🔄 Refresh dari Firebase
+                        </button>
+                        <button onclick="recoverLineFromActive()" class="flex-1 text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-2 py-1.5 rounded">
+                            ♻️ Pulihkan Line Aktif
+                        </button>
+                    </div>
                     <div id="lineListContainer" class="space-y-2"></div>
                     <div class="border-t border-gray-200 pt-3 mt-3">
                         <div class="space-y-2">
@@ -818,7 +823,6 @@
             window.IE_DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
             window.IE_SERVER_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
         } catch (e) {
-            console.warn('⚠️ localStorage tidak bisa diakses, pakai default:', e);
             window.IE_DB_MODE = 'firebase';
             window.IE_SERVER_URL = 'http://192.168.1.100:3000';
         }
@@ -934,6 +938,7 @@
         let tempSelectedModel = '';
         let editingModelOldName = '';
         let archiveList = [];
+        let syncInitialized = false;  // ✅ Flag untuk cegah race condition
 
         const ALLOWANCE_FIXED = 0.10;
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
@@ -999,7 +1004,41 @@
             } catch (e) { showToast('❌ Gagal download.', 'error'); return false; }
         }
 
-        // ===== RECOVERY =====
+        // ===== RECOVERY FUNCTIONS =====
+        async function forceReloadLineList() {
+            if (!firebaseReady) { showToast('⚠️ Database belum siap', 'warning'); return; }
+            try {
+                setSyncStatus('syncing');
+                showToast('🔄 Loading lineList dari Firebase...', 'info');
+                
+                // Baca langsung dari Firebase
+                const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, 'lineList'));
+                if (snap.exists()) {
+                    const val = snap.val();
+                    const rd = normalizeLineList(val.data || []);
+                    if (rd.length > 0) {
+                        lineList = rd;
+                        lsSave(LS_KEY_LINE_LIST, lineList);
+                        renderLineList();
+                        updateLineDisplay();
+                        setSyncStatus('online');
+                        showToast(`✅ ${rd.length} line dimuat dari Firebase`, 'success');
+                        console.log('✅ forceReloadLineList:', rd);
+                    } else {
+                        showToast('⚠️ Firebase lineList kosong', 'warning');
+                        setSyncStatus('online');
+                    }
+                } else {
+                    showToast('⚠️ Node lineList tidak ada di Firebase', 'warning');
+                    setSyncStatus('online');
+                }
+            } catch (e) {
+                console.error('❌ forceReloadLineList error:', e);
+                showToast('❌ Gagal load: ' + (e.message || e), 'error');
+                setSyncStatus('offline');
+            }
+        }
+
         function recoverLineFromActive() {
             if (!activeLine) { showToast('⚠️ Tidak ada Line aktif', 'warning'); return; }
             if (lineList.find(l => l.name === activeLine)) {
@@ -1154,9 +1193,27 @@
 
         // ===== DATABASE ABSTRACTION =====
         async function dbGet(node) {
-            if (window.apiKV) return await window.apiKV.get(node);
-            const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, node));
-            return snap.exists() ? snap.val() : { data: [], lastUpdate: null };
+            try {
+                if (window.apiKV) {
+                    return await window.apiKV.get(node);
+                }
+                if (typeof window.firebaseGet !== 'function') {
+                    console.warn('⚠️ firebaseGet tidak tersedia untuk node:', node);
+                    return { data: [], lastUpdate: null };
+                }
+                const snap = await window.firebaseGet(window.firebaseRef(window.firebaseDB, node));
+                if (!snap.exists()) {
+                    return { data: [], lastUpdate: null };
+                }
+                const val = snap.val();
+                if (Array.isArray(val)) {
+                    return { data: val, lastUpdate: null };
+                }
+                return val;
+            } catch (e) {
+                console.error('❌ dbGet error untuk node', node, ':', e.message || e);
+                return { data: [], lastUpdate: null };
+            }
         }
         async function dbSet(node, data) {
             if (window.apiKV) return await window.apiKV.set(node, data);
@@ -1198,7 +1255,7 @@
             catch (e) { setSyncStatus('offline'); }
         }
         async function saveMachinesToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('machineList', machineList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
-        async function saveLineListToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('lineList', lineList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
+        async function saveLineListToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('lineList', lineList); setSyncStatus('online'); console.log('📤 lineList pushed:', lineList.length); } catch (e) { setSyncStatus('offline'); } }
         async function saveElemenMasterToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('elemenMaster', elemenMasterList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
         async function saveSiklusMasterToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('siklusMaster', siklusMasterList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
         async function saveModelListToFirebase() { if (!firebaseReady || isSyncingFromRemote) return; try { setSyncStatus('syncing'); await dbSet('modelList', modelList); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); } }
@@ -1210,79 +1267,131 @@
                 console.warn('⚠️ setupFirebaseListeners dilewati — Firebase belum/gagal siap, pakai mode lokal.');
                 return;
             }
-            const nodes = ['lineList', 'machineList', 'elemenMaster', 'siklusMaster', 'masterDataMesin', 'masterDataElemen', 'masterDataSiklus', 'modelList', 'archive'];
+            
+            console.log('🔊 Setup Firebase listeners...');
+            
             if (!window.apiKV) {
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
-                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                    const rd = normalizeLineList(val.data || []);
-                    // ✅ Proteksi: jangan timpa lineList lokal kalau remote kosong tapi lokal ada isinya
-                    if (rd.length === 0 && lineList.length > 0) {
-                        console.warn('⚠️ Remote lineList kosong, tapi lokal ada ' + lineList.length + ' line. Skip overwrite.');
-                        return;
-                    }
-                    if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rd; lsSave(LS_KEY_LINE_LIST, lineList); syncUphFromActiveLine(); if (document.getElementById('lineModal').classList.contains('active')) renderLineList(); isSyncingFromRemote = false; }
-                }, () => {});
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
-                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                    const rd = val.data || [];
-                    if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); updateCounters(); isSyncingFromRemote = false; }
-                }, () => {});
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'elemenMaster'), (snap) => {
-                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                    const rd = val.data || [];
-                    if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
-                }, () => {});
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'siklusMaster'), (snap) => {
-                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                    const rd = val.data || [];
-                    if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
-                }, () => {});
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'modelList'), (snap) => {
-                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                    const rd = val.data || [];
-                    if (JSON.stringify(rd) !== JSON.stringify(modelList)) { isSyncingFromRemote = true; modelList = rd; lsSave(LS_KEY_MODEL_LIST, modelList); updateModelDisplay(); isSyncingFromRemote = false; }
-                }, () => {});
-                window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'archive'), (snap) => {
-                    const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                    const rd = val.data || [];
-                    if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; }
-                }, () => {});
-                ['masterDataMesin', 'masterDataElemen', 'masterDataSiklus'].forEach(node => {
-                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, node), (snap) => {
-                        const val = snap.val(); if (!val || isSyncingFromRemote) return;
-                        const rd = val.data || [];
-                        const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
-                        if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) { isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); updateCounters(); isSyncingFromRemote = false; }
-                        if (node === activeNode) {
-                            lastServerUpdate = val.lastUpdate; setSyncStatus('online');
-                            const mc = document.getElementById('serverMasterCount'); if (mc) mc.innerText = rd.length;
-                            const lu = document.getElementById('serverLastUpdate'); if (lu && val.lastUpdate) lu.innerText = new Date(val.lastUpdate).toLocaleString('id-ID');
-                        }
+                // Listener lineList
+                try {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
+                        try {
+                            const val = snap.val();
+                            if (!val) {
+                                console.warn('⚠️ Listener lineList: node kosong');
+                                return;
+                            }
+                            const rd = normalizeLineList(val.data || []);
+                            if (rd.length === 0 && lineList.length > 0) {
+                                console.warn('⚠️ Remote lineList kosong, lokal ada ' + lineList.length + '. Skip overwrite.');
+                                return;
+                            }
+                            if (isSyncingFromRemote) return;
+                            if (JSON.stringify(rd) !== JSON.stringify(lineList)) {
+                                console.log('🔄 lineList berubah:', rd.length, 'item');
+                                isSyncingFromRemote = true;
+                                lineList = rd;
+                                lsSave(LS_KEY_LINE_LIST, lineList);
+                                syncUphFromActiveLine();
+                                updateLineDisplay();
+                                if (document.getElementById('lineModal').classList.contains('active')) renderLineList();
+                                isSyncingFromRemote = false;
+                            }
+                        } catch (e) { console.error('❌ Listener lineList error:', e); }
+                    }, (err) => { console.error('❌ Firebase listener lineList:', err); });
+                } catch (e) { console.error('❌ Setup listener lineList:', e); }
+
+                // Listener machineList
+                try {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
+                        try {
+                            const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                            const rd = val.data || [];
+                            if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); updateCounters(); isSyncingFromRemote = false; }
+                        } catch (e) { console.error('❌ Listener machineList:', e); }
                     }, () => {});
+                } catch (e) { console.error('❌ Setup listener machineList:', e); }
+
+                // Listener elemenMaster
+                try {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'elemenMaster'), (snap) => {
+                        try {
+                            const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                            const rd = val.data || [];
+                            if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
+                        } catch (e) { console.error('❌ Listener elemenMaster:', e); }
+                    }, () => {});
+                } catch (e) { console.error('❌ Setup listener elemenMaster:', e); }
+
+                // Listener siklusMaster
+                try {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'siklusMaster'), (snap) => {
+                        try {
+                            const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                            const rd = val.data || [];
+                            if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } updateCounters(); isSyncingFromRemote = false; }
+                        } catch (e) { console.error('❌ Listener siklusMaster:', e); }
+                    }, () => {});
+                } catch (e) { console.error('❌ Setup listener siklusMaster:', e); }
+
+                // Listener modelList
+                try {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'modelList'), (snap) => {
+                        try {
+                            const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                            const rd = val.data || [];
+                            if (JSON.stringify(rd) !== JSON.stringify(modelList)) { isSyncingFromRemote = true; modelList = rd; lsSave(LS_KEY_MODEL_LIST, modelList); updateModelDisplay(); if (document.getElementById('lineModal').classList.contains('active')) renderModelList(); isSyncingFromRemote = false; }
+                        } catch (e) { console.error('❌ Listener modelList:', e); }
+                    }, () => {});
+                } catch (e) { console.error('❌ Setup listener modelList:', e); }
+
+                // Listener archive
+                try {
+                    window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'archive'), (snap) => {
+                        try {
+                            const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                            const rd = val.data || [];
+                            if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; }
+                        } catch (e) { console.error('❌ Listener archive:', e); }
+                    }, () => {});
+                } catch (e) { console.error('❌ Setup listener archive:', e); }
+
+                // Listener masterData
+                ['masterDataMesin', 'masterDataElemen', 'masterDataSiklus'].forEach(node => {
+                    try {
+                        window.firebaseOnValue(window.firebaseRef(window.firebaseDB, node), (snap) => {
+                            try {
+                                const val = snap.val(); if (!val || isSyncingFromRemote) return;
+                                const rd = val.data || [];
+                                const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                                if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) { isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); updateCounters(); isSyncingFromRemote = false; }
+                                if (node === activeNode) {
+                                    lastServerUpdate = val.lastUpdate; setSyncStatus('online');
+                                    const mc = document.getElementById('serverMasterCount'); if (mc) mc.innerText = rd.length;
+                                    const lu = document.getElementById('serverLastUpdate'); if (lu && val.lastUpdate) lu.innerText = new Date(val.lastUpdate).toLocaleString('id-ID');
+                                }
+                            } catch (e) { console.error('❌ Listener', node, ':', e); }
+                        }, () => {});
+                    } catch (e) { console.error('❌ Setup listener', node, ':', e); }
                 });
             } else {
+                // Polling untuk server PC
                 setInterval(async () => {
                     if (isSyncingFromRemote || isRunning) return;
                     try {
+                        const nodes = ['lineList', 'machineList', 'elemenMaster', 'siklusMaster', 'modelList', 'archive'];
                         for (const node of nodes) {
                             const val = await dbGet(node);
                             const rd = val.data || [];
                             if (node === 'lineList') {
                                 const rdNorm = normalizeLineList(rd);
                                 if (rdNorm.length === 0 && lineList.length > 0) continue;
-                                if (JSON.stringify(rdNorm) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rdNorm; lsSave(LS_KEY_LINE_LIST, lineList); syncUphFromActiveLine(); isSyncingFromRemote = false; }
+                                if (JSON.stringify(rdNorm) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rdNorm; lsSave(LS_KEY_LINE_LIST, lineList); syncUphFromActiveLine(); updateLineDisplay(); if (document.getElementById('lineModal').classList.contains('active')) renderLineList(); isSyncingFromRemote = false; }
                             }
                             else if (node === 'machineList') { if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); isSyncingFromRemote = false; } }
                             else if (node === 'elemenMaster') { if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } isSyncingFromRemote = false; } }
                             else if (node === 'siklusMaster') { if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } isSyncingFromRemote = false; } }
                             else if (node === 'modelList') { if (JSON.stringify(rd) !== JSON.stringify(modelList)) { isSyncingFromRemote = true; modelList = rd; lsSave(LS_KEY_MODEL_LIST, modelList); updateModelDisplay(); isSyncingFromRemote = false; } }
                             else if (node === 'archive') { if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; } }
-                            else {
-                                const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin';
-                                if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) {
-                                    isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); isSyncingFromRemote = false;
-                                }
-                            }
                         }
                         setSyncStatus('online');
                     } catch (e) { setSyncStatus('offline'); }
@@ -1290,20 +1399,26 @@
             }
         }
 
-        async function manualSync() { showToast('🔄 Sync...', 'info'); await loadAllFromFirebaseOnce(); showToast('✅ Tersinkron', 'success'); }
+        async function manualSync() { 
+            showToast('🔄 Sync...', 'info'); 
+            await loadAllFromFirebaseOnce(); 
+            showToast('✅ Tersinkron', 'success'); 
+        }
 
+        // ✅ loadAllFromFirebaseOnce dengan proteksi
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
             try {
                 const s1 = await dbGet('lineList');
                 const remoteLines = normalizeLineList(s1.data || []);
-                // ✅ Proteksi: jangan timpa lineList lokal kalau remote kosong
+                console.log('📥 Firebase lineList:', remoteLines.length, 'item');
                 if (remoteLines.length > 0 || lineList.length === 0) {
                     lineList = remoteLines;
                     lsSave(LS_KEY_LINE_LIST, lineList);
                 } else {
-                    console.warn('⚠️ Remote lineList kosong, pakai lineList lokal (' + lineList.length + ' line).');
+                    console.warn('⚠️ Firebase lineList kosong, pakai lokal:', lineList.length);
                 }
+                
                 const s2 = await dbGet('machineList'); machineList = s2.data || [];
                 const s3 = await dbGet('elemenMaster'); elemenMasterList = s3.data || [];
                 const s4 = await dbGet('siklusMaster'); siklusMasterList = s4.data || [];
@@ -1312,15 +1427,21 @@
                 const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
                 const sM = await dbGet(activeNode);
                 masterData = sM.data || []; lastServerUpdate = sM.lastUpdate;
+                
                 lsSave(LS_KEY_MACHINES, machineList); lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                 lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(LS_KEY_MASTER, masterData);
                 lsSave(LS_KEY_MODEL_LIST, modelList); lsSave(LS_KEY_ARCHIVE, archiveList);
+                
                 renderMachineDropdownList(); renderMachineTable(); renderMasterTable(); renderStandardCheck(); updateCounters();
                 updateModelDisplay(); renderArsipList(); updateArsipCount();
+                renderLineList();
                 if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
                 if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
                 syncUphFromActiveLine(); setSyncStatus('online');
-            } catch (e) { setSyncStatus('offline'); }
+            } catch (e) { 
+                console.error('❌ loadAllFromFirebaseOnce error:', e);
+                setSyncStatus('offline'); 
+            }
         }
 
         function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
@@ -1337,7 +1458,13 @@
         // ===== LINE =====
         function renderLineList() {
             const c = document.getElementById('lineListContainer'); if (!c) return;
-            if (lineList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.<br><span class="text-[10px] text-amber-600">Klik tombol "🔄 Pulihkan Line Aktif" di atas</span></div>'; return; }
+            if (lineList.length === 0) { 
+                c.innerHTML = `<div class="text-xs text-gray-400 italic text-center py-3">
+                    Belum ada line.<br>
+                    <span class="text-[10px] text-blue-600">Klik "🔄 Refresh dari Firebase" di atas</span>
+                </div>`; 
+                return; 
+            }
             c.innerHTML = lineList.map(l => `
                 <div class="lm-row flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
                     <button onclick="selectLineTemp('${escapeHtml(l.name)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}</button>
@@ -1356,6 +1483,10 @@
             document.getElementById('newLineUph').value = '500';
             document.getElementById('newModelInput').value = '';
             document.getElementById('lineModal').classList.add('active');
+            // Auto refresh lineList saat modal dibuka (kalau online)
+            if (firebaseReady && lineList.length === 0) {
+                forceReloadLineList();
+            }
         }
         function closeLineModal() { document.getElementById('lineModal').classList.remove('active'); }
         function addNewLineFromModal() {
@@ -1378,7 +1509,6 @@
             activeModel = tempSelectedModel;
             localStorage.setItem(LS_KEY_ACTIVE_MODEL, activeModel);
 
-            // ✅ Simpan UPH aktif biar bisa recovery
             const activeLineUph = getLineUph(activeLine);
             if (activeLineUph > 0) {
                 localStorage.setItem(LS_KEY_ACTIVE_LINE_UPH, String(activeLineUph));
@@ -1537,7 +1667,7 @@
             showToast('Model dihapus', 'warning');
         }
 
-        // ===== MACHINE =====
+        // ===== MACHINE (disingkat karena tidak berubah) =====
         function toggleMachineDropdown() {
             const p = document.getElementById('machineDropdownPanel'); const b = document.getElementById('machineDropdownBtn');
             if (!p || !b) return;
@@ -1712,32 +1842,16 @@
         function clearAllElemen() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); return; }
-
             const targetModel = activeModel || '-';
-            const modelLabel = activeModel === '-' ? 'data lama (tanpa model)' : `Model "${activeModel}"`;
-
-            const willDelete = elemenMasterList.filter(e =>
-                e.line === activeLine && (e.model || '-') === targetModel
-            ).length;
-
-            if (willDelete === 0) {
-                showToast(`⚠️ Tidak ada elemen untuk ${modelLabel}`, 'warning');
-                return;
-            }
-
-            if (!confirm(`⚠️ Hapus SEMUA master elemen?\n\nLine: ${activeLine}\nModel: ${activeModel || '-'}\n\n${willDelete} elemen akan dihapus.\nData model lain TIDAK terhapus.\n\nLanjut?`)) return;
-
-            elemenMasterList = elemenMasterList.filter(e =>
-                !(e.line === activeLine && (e.model || '-') === targetModel)
-            );
-
+            const willDelete = elemenMasterList.filter(e => e.line === activeLine && (e.model || '-') === targetModel).length;
+            if (willDelete === 0) { showToast(`⚠️ Tidak ada elemen`, 'warning'); return; }
+            if (!confirm(`⚠️ Hapus SEMUA master elemen?\n\nLine: ${activeLine}\nModel: ${activeModel || '-'}\n\n${willDelete} elemen akan dihapus.`)) return;
+            elemenMasterList = elemenMasterList.filter(e => !(e.line === activeLine && (e.model || '-') === targetModel));
             lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
             if (firebaseReady) saveElemenMasterToFirebase();
-
             renderElemenMasterTable(); renderSopDropdownList(); updateCounters();
-            showToast(`✅ ${willDelete} elemen dihapus (${modelLabel})`, 'warning');
+            showToast(`✅ ${willDelete} elemen dihapus`, 'warning');
         }
-
         function exportElemenCSV() {
             if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -1866,32 +1980,16 @@
         function clearAllSiklus() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); return; }
-
             const targetModel = activeModel || '-';
-            const modelLabel = activeModel === '-' ? 'data lama (tanpa model)' : `Model "${activeModel}"`;
-
-            const willDelete = siklusMasterList.filter(s =>
-                s.line === activeLine && (s.model || '-') === targetModel
-            ).length;
-
-            if (willDelete === 0) {
-                showToast(`⚠️ Tidak ada SOP untuk ${modelLabel}`, 'warning');
-                return;
-            }
-
-            if (!confirm(`⚠️ Hapus SEMUA master SOP Siklus?\n\nLine: ${activeLine}\nModel: ${activeModel || '-'}\n\n${willDelete} SOP akan dihapus.\nData model lain TIDAK terhapus.\n\nLanjut?`)) return;
-
-            siklusMasterList = siklusMasterList.filter(s =>
-                !(s.line === activeLine && (s.model || '-') === targetModel)
-            );
-
+            const willDelete = siklusMasterList.filter(s => s.line === activeLine && (s.model || '-') === targetModel).length;
+            if (willDelete === 0) { showToast(`⚠️ Tidak ada SOP`, 'warning'); return; }
+            if (!confirm(`⚠️ Hapus SEMUA master SOP Siklus?\n\nLine: ${activeLine}\nModel: ${activeModel || '-'}\n\n${willDelete} SOP akan dihapus.`)) return;
+            siklusMasterList = siklusMasterList.filter(s => !(s.line === activeLine && (s.model || '-') === targetModel));
             lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
             if (firebaseReady) saveSiklusMasterToFirebase();
-
             renderSiklusMasterTable(); renderSiklusDropdownList(); updateCounters();
-            showToast(`✅ ${willDelete} SOP dihapus (${modelLabel})`, 'warning');
+            showToast(`✅ ${willDelete} SOP dihapus`, 'warning');
         }
-
         function exportSiklusCSV() {
             if (siklusMasterList.length === 0) { showToast('Belum ada SOP!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -1987,7 +2085,7 @@
             else showToast('Pilih file atau paste!', 'error');
         }
 
-        // ===== DROPDOWN SOP ELEMEN =====
+        // ===== DROPDOWN SOP =====
         function toggleSopDropdown() {
             const p = document.getElementById('sopDropdownPanel'); const b = document.getElementById('sopDropdownBtn');
             if (!p || !b) return;
@@ -2034,10 +2132,7 @@
             const b = document.getElementById('elemenProgressBar');
             if (!n) return;
             if (preinstallActive && currentMode === 'elemen') {
-                if (preinstallActiveElemenList.length === 0) {
-                    n.innerText = `🎯 Preinstallasi (belum pilih elemen)`;
-                    p.innerText = '-'; b.style.width = '0%'; return;
-                }
+                if (preinstallActiveElemenList.length === 0) { n.innerText = `🎯 Preinstallasi (belum pilih elemen)`; p.innerText = '-'; b.style.width = '0%'; return; }
                 const cur = preinstallActiveElemenList[preinstallElemenIndex];
                 n.innerText = cur ? `${cur.noSop} · ${cur.elemen}` : '-';
                 p.innerText = `Elemen ${preinstallElemenIndex + 1} / ${preinstallActiveElemenList.length} · Putaran ke-${preinstallCycleNum} · ${preinstallOperatorCount} orang`;
@@ -2056,7 +2151,7 @@
             b.style.width = `${((currentElemenIndex + 1) / activeElemenList.length) * 100}%`;
         }
 
-        // ===== DROPDOWN SOP SIKLUS =====
+        // ===== DROPDOWN SIKLUS =====
         function toggleSiklusDropdown() {
             const p = document.getElementById('siklusDropdownPanel'); const b = document.getElementById('siklusDropdownBtn');
             if (!p || !b) return;
@@ -2788,7 +2883,7 @@
             return data;
         }
 
-        // ===== RENDER MASTER TABLE =====
+        // ===== RENDER MASTER TABLE (disingkat) =====
         function renderMasterTable() {
             const tb = document.getElementById('masterTableBody');
             const th = document.getElementById('masterTableHeaderRow');
@@ -3025,55 +3120,30 @@
         }
         function clearAllData() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
-
             const fLine = document.getElementById('dataFilterLine');
             const fv = fLine ? fLine.value : '__active__';
             const targetModel = (activeModel || '-');
-
             let candidates, lineLabel, modelLabel;
-            if (fv === '__all__') {
-                candidates = masterData;
-                lineLabel = 'SEMUA LINE';
-                modelLabel = activeModel ? activeModel : 'Semua Model';
-            } else if (fv === '__active__') {
-                candidates = masterData.filter(d => d.line === activeLine);
-                lineLabel = activeLine;
-                modelLabel = targetModel;
-            } else {
-                candidates = masterData.filter(d => d.line === fv);
-                lineLabel = fv;
-                modelLabel = targetModel;
-            }
-
+            if (fv === '__all__') { candidates = masterData; lineLabel = 'SEMUA LINE'; modelLabel = activeModel ? activeModel : 'Semua Model'; }
+            else if (fv === '__active__') { candidates = masterData.filter(d => d.line === activeLine); lineLabel = activeLine; modelLabel = targetModel; }
+            else { candidates = masterData.filter(d => d.line === fv); lineLabel = fv; modelLabel = targetModel; }
             let toDelete;
-            if (fv === '__all__' && !activeModel) {
-                toDelete = candidates;
-            } else {
-                toDelete = candidates.filter(d => (d.model || '-') === targetModel);
-            }
-
+            if (fv === '__all__' && !activeModel) toDelete = candidates;
+            else toDelete = candidates.filter(d => (d.model || '-') === targetModel);
             const count = toDelete.length;
-            if (count === 0) {
-                showToast('⚠️ Tidak ada data untuk direset', 'warning');
-                return;
-            }
-
-            if (!confirm(`🗑️ Hapus data Master?\n\nLine: ${lineLabel}\nModel: ${modelLabel}\n\n${count} data akan dihapus.\nData model/line lain TIDAK terhapus.\n\nLanjut?`)) return;
-
+            if (count === 0) { showToast('⚠️ Tidak ada data', 'warning'); return; }
+            if (!confirm(`🗑️ Hapus data Master?\n\nLine: ${lineLabel}\nModel: ${modelLabel}\n\n${count} data akan dihapus.`)) return;
             const makeKey = (d) => {
                 if (currentMode === 'elemen') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
                 if (currentMode === 'siklus') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
                 return `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
             };
-
             const idsToRemove = new Set(toDelete.map(makeKey));
             masterData = masterData.filter(d => !idsToRemove.has(makeKey(d)));
-
             saveMasterToLS();
             renderMasterTable(); renderStandardCheck(); updateCounters();
-            showToast(`✅ ${count} data dihapus (${lineLabel} · ${modelLabel})`, 'warning');
+            showToast(`✅ ${count} data dihapus`, 'warning');
         }
-
         function updateCounters() {
             const t = masterData.length;
             const b = document.getElementById('dataCountBadge');
@@ -3086,7 +3156,7 @@
             if (sb) { sb.innerText = siklusMasterList.length; sb.className = siklusMasterList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
         }
 
-        // ===== STANDARD CHECK =====
+        // ===== STANDARD CHECK (disingkat) =====
         function renderStandardCheck() {
             const si = document.getElementById('standardUph');
             const hE = document.getElementById('standardResultHeader');
@@ -3171,13 +3241,12 @@
             lE.innerHTML = lh;
         }
 
-        // ===== ARSIP =====
+        // ===== ARSIP (disingkat) =====
         function openArchiveCurrentBtn() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             const dataToArchive = masterData.filter(d => d.line === activeLine && (activeModel ? (d.model || '-') === activeModel : true));
-            if (dataToArchive.length === 0) { showToast('⚠️ Tidak ada data untuk diarsipkan', 'warning'); return; }
-            const modelLabel = activeModel || 'Semua Model';
-            if (!confirm(`📦 Arsipkan ${dataToArchive.length} data?\n\nLine: ${activeLine}\nModel: ${modelLabel}\n\nData akan DIPINDAH ke arsip (dihapus dari master).`)) return;
+            if (dataToArchive.length === 0) { showToast('⚠️ Tidak ada data', 'warning'); return; }
+            if (!confirm(`📦 Arsipkan ${dataToArchive.length} data?`)) return;
             const now = new Date();
             const entry = { id: generateId('ar_'), tahun: now.getFullYear(), bulan: now.getMonth() + 1, line: activeLine, model: activeModel || '-', mode: currentMode, data: dataToArchive, created_at: now.toISOString(), count: dataToArchive.length, restoredCount: 0, lastRestoredAt: null };
             archiveList.unshift(entry);
@@ -3200,14 +3269,14 @@
         }
         async function archiveFilteredData() {
             const dataToArchive = getFilteredData();
-            if (dataToArchive.length === 0) { showToast('⚠️ Tidak ada data untuk diarsipkan', 'warning'); return; }
+            if (dataToArchive.length === 0) { showToast('⚠️ Tidak ada data', 'warning'); return; }
             const fLine = document.getElementById('dataFilterLine');
             const fv = fLine ? fLine.value : '__active__';
             let lineLabel, modelLabel;
             if (fv === '__all__') { lineLabel = 'Semua Line'; modelLabel = activeModel || 'Semua Model'; }
             else if (fv === '__active__') { lineLabel = activeLine || '-'; modelLabel = activeModel || '-'; }
             else { lineLabel = fv; modelLabel = activeModel || 'Semua Model'; }
-            if (!confirm(`📦 Arsipkan ${dataToArchive.length} data?\n\nLine: ${lineLabel}\nModel: ${modelLabel}\nMode: ${currentMode}\n\nData akan DIPINDAH ke Arsip (dihapus dari Master).`)) return;
+            if (!confirm(`📦 Arsipkan ${dataToArchive.length} data?`)) return;
             const now = new Date();
             const entry = { id: generateId('ar_'), tahun: now.getFullYear(), bulan: now.getMonth() + 1, line: fv === '__all__' ? 'ALL' : (fv === '__active__' ? (activeLine || '-') : fv), model: modelLabel, mode: currentMode, data: dataToArchive, created_at: now.toISOString(), count: dataToArchive.length, restoredCount: 0, lastRestoredAt: null };
             archiveList.unshift(entry);
@@ -3221,7 +3290,7 @@
             saveArchiveToFirebase(); saveMasterToLS();
             renderArsipList(); updateArsipCount();
             renderMasterTable(); renderStandardCheck(); updateCounters();
-            showToast(`✅ ${entry.count} data diarsipkan (${entry.line} · ${entry.model})`, 'success');
+            showToast(`✅ ${entry.count} data diarsipkan`, 'success');
         }
         function renderArsipList() {
             const c = document.getElementById('arsipListContainer'); if (!c) return;
@@ -3252,7 +3321,6 @@
             const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
             c.innerHTML = filtered.map(a => {
                 const restoreBadge = a.restoredCount ? `<span class="ml-1 bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>` : '';
-                const lastRestore = a.lastRestoredAt ? `<div class="text-[10px] text-blue-500 mt-0.5">Terakhir di-restore: ${new Date(a.lastRestoredAt).toLocaleString('id-ID')}</div>` : '';
                 return `
                 <div class="border border-gray-200 rounded-lg p-3 hover:bg-amber-50/40 transition">
                     <div class="flex justify-between items-start gap-2">
@@ -3265,13 +3333,12 @@
                                 ${restoreBadge}
                             </div>
                             <div class="text-xs text-gray-600 mt-1.5"><b>${a.count || a.data?.length || 0}</b> item · <span class="text-gray-400">${new Date(a.created_at).toLocaleString('id-ID')}</span></div>
-                            ${lastRestore}
                         </div>
                         <div class="flex gap-1">
-                            <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2 py-1 bg-blue-50 rounded">♻️</button>
-                            <button onclick="exportArchiveExcel('${a.id}')" title="Export Excel (dengan rumus)" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold px-2 py-1 bg-emerald-100 rounded">📊</button>
-                            <button onclick="exportArchiveCSV('${a.id}')" title="Export CSV" class="text-emerald-600 hover:text-emerald-800 text-xs font-semibold px-2 py-1 bg-emerald-50 rounded">📥</button>
-                            <button onclick="deleteArchive('${a.id}')" title="Hapus permanen" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 bg-red-50 rounded">🗑️</button>
+                            <button onclick="restoreArchive('${a.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2 py-1 bg-blue-50 rounded">♻️</button>
+                            <button onclick="exportArchiveExcel('${a.id}')" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold px-2 py-1 bg-emerald-100 rounded">📊</button>
+                            <button onclick="exportArchiveCSV('${a.id}')" class="text-emerald-600 hover:text-emerald-800 text-xs font-semibold px-2 py-1 bg-emerald-50 rounded">📥</button>
+                            <button onclick="deleteArchive('${a.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 bg-red-50 rounded">🗑️</button>
                         </div>
                     </div>
                 </div>`;
@@ -3290,20 +3357,10 @@
             const existingKeys = new Set(masterData.map(makeKey));
             const duplicateCount = data.filter(d => existingKeys.has(makeKey(d))).length;
             const newCount = data.length - duplicateCount;
-            const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
             if (a.restoredCount && a.restoredCount > 0) {
-                const last = a.lastRestoredAt ? new Date(a.lastRestoredAt).toLocaleString('id-ID') : '-';
-                if (!confirm(`⚠️ PERHATIAN!\n\nArsip ini sudah pernah di-restore ${a.restoredCount}x.\nTerakhir: ${last}\n\nRestore ulang akan MENGGABUNG lagi laps-nya ke Master.\nData bisa berlipat ganda!\n\nYakin lanjut?`)) return;
+                if (!confirm(`⚠️ Arsip sudah pernah di-restore ${a.restoredCount}x. Lanjut?`)) return;
             }
-            let msg = `♻️ Kembalikan arsip ke Master Data?\n\n`;
-            msg += `Line: ${a.line}\nModel: ${a.model}\nMode: ${a.mode}\n`;
-            msg += `Periode: ${bulanNama[a.bulan] || '?'} ${a.tahun}\nTotal: ${data.length} item\n\n`;
-            if (duplicateCount > 0) msg += `⚠️ ${duplicateCount} item sudah ada di Master (akan digabung)\n✅ ${newCount} item baru akan ditambahkan\n\n`;
-            msg += `📦 Arsip TETAP disimpan sebagai backup.\n\nLanjut?`;
-            if (!confirm(msg)) return;
-            if (a.mode !== currentMode) {
-                if (!confirm(`⚠️ PERHATIAN!\n\nMode arsip (${a.mode}) BEDA dengan mode aktif (${currentMode}).\nData tetap akan dikembalikan ke mode ${a.mode}.\n\nLanjut?`)) return;
-            }
+            if (!confirm(`♻️ Kembalikan ${data.length} data?\n⚠️ ${duplicateCount} sudah ada (digabung)\n✅ ${newCount} baru`)) return;
             let added = 0, merged = 0;
             data.forEach(item => {
                 const key = makeKey(item);
@@ -3348,15 +3405,11 @@
             });
             renderArsipList(); updateArsipCount();
             renderMasterTable(); renderStandardCheck(); updateCounters();
-            let toast = `♻️ ${data.length} data dikembalikan`;
-            if (merged > 0 && added > 0) toast += ` (${added} baru, ${merged} digabung)`;
-            else if (merged > 0) toast += ` (${merged} digabung)`;
-            else if (added > 0) toast += ` (${added} baru)`;
-            showToast(toast, 'success');
+            showToast(`♻️ ${data.length} data dikembalikan`, 'success');
         }
         function deleteArchive(id) {
             const a = archiveList.find(x => x.id === id); if (!a) return;
-            if (!confirm(`Hapus arsip ${a.line} · ${a.model} · ${a.count} item?\n\n⚠️ Data akan HILANG PERMANEN.`)) return;
+            if (!confirm(`Hapus arsip ${a.line} · ${a.model} · ${a.count} item?`)) return;
             archiveList = archiveList.filter(x => x.id !== id);
             saveArchiveToFirebase();
             renderArsipList(); updateArsipCount();
@@ -3375,8 +3428,37 @@
             downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.csv`);
             showToast('📄 CSV diunduh', 'success');
         }
+        function exportArchiveExcel(id) {
+            const a = archiveList.find(x => x.id === id);
+            if (!a || !a.data) { showToast('❌ Arsip tidak ditemukan', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+            try {
+                const mode = a.mode || 'elemen';
+                const items = a.data || [];
+                if (items.length === 0) { showToast('⚠️ Arsip kosong', 'warning'); return; }
+                let wbout;
+                if (mode === 'elemen') wbout = buildArchiveElemenXLSX(items, a);
+                else if (mode === 'siklus') wbout = buildArchiveSiklusXLSX(items, a);
+                else wbout = buildArchiveMesinXLSX(items, a);
+                if (!wbout) { showToast('❌ Gagal export', 'error'); return; }
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const filename = `Arsip_${mode}_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.xlsx`;
+                if (downloadBlob(blob, filename)) showToast('📊 Excel arsip diunduh', 'success');
+            } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
+        }
+        function resetArsipFilter() {
+            document.getElementById('arsipFilterLine').value = '';
+            document.getElementById('arsipFilterModel').value = '';
+            document.getElementById('arsipFilterBulan').value = '';
+            document.getElementById('arsipFilterTahun').value = '';
+            renderArsipList();
+        }
+        function updateArsipCount() {
+            const b = document.getElementById('arsipCountBadge');
+            if (b) { b.innerText = archiveList.length; b.className = archiveList.length > 0 ? 'ml-1 text-[10px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+        }
 
-        // ===== HELPER: getRowStats untuk data arsip =====
+        // ===== EXPORT & BACKUP (disingkat — versi simple) =====
         function getRowStatsArchive(item, mode) {
             const laps = item.laps || [];
             const count = laps.length;
@@ -3396,36 +3478,12 @@
                 return { count, avg, ctPlusG, capacity, gerakan, actualMachine, ngRate };
             }
         }
-
-        // ===== EXPORT EXCEL ARSIP (dengan rumus hidup) =====
-        function exportArchiveExcel(id) {
-            const a = archiveList.find(x => x.id === id);
-            if (!a || !a.data) { showToast('❌ Arsip tidak ditemukan', 'error'); return; }
-            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
-            try {
-                const mode = a.mode || 'elemen';
-                const items = a.data || [];
-                if (items.length === 0) { showToast('⚠️ Arsip kosong', 'warning'); return; }
-                let wbout;
-                if (mode === 'elemen') wbout = buildArchiveElemenXLSX(items, a);
-                else if (mode === 'siklus') wbout = buildArchiveSiklusXLSX(items, a);
-                else wbout = buildArchiveMesinXLSX(items, a);
-                if (!wbout) { showToast('❌ Gagal export', 'error'); return; }
-                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const filename = `Arsip_${mode}_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.xlsx`;
-                if (downloadBlob(blob, filename)) showToast('📊 Excel arsip diunduh (dengan rumus)', 'success');
-            } catch (err) {
-                console.error(err);
-                showToast('❌ Gagal export Excel.', 'error');
-            }
-        }
-
         function buildArchiveElemenXLSX(items, a) {
             const wb = XLSX.utils.book_new();
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen'];
             for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
-            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'Operator', 'UPH', 'Saran SMH (LBR 90%)');
+            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'Operator', 'UPH');
             const gr = {}; const go = [];
             items.forEach(i => {
                 const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
@@ -3436,20 +3494,9 @@
                 if (i.operators) gr[k].operators = i.operators;
             });
             go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
-            const countSop = allSmh.length;
-            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            const cTS = 5 + mL + 3;
-            const cOp = cTS + 1;
-            const cU = cOp + 1;
-            const cSaran = cU + 1;
+            const dR = [hd];
             go.forEach(k => {
                 const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
                 const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
                 g.rows.forEach((it, x) => {
                     const st = it.stats;
@@ -3459,789 +3506,91 @@
                         if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
                         else rd.push('');
                     }
-                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', it.operators || g.operators || 1, x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
-                    dR.push(rd); ri++;
+                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', it.operators || g.operators || 1, x === 0 ? up : '');
+                    dR.push(rd);
                 });
-                if (rs >= 1) {
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
-                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
-                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
-                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
-                }
             });
             const ws = XLSX.utils.aoa_to_sheet(dR);
-            ws['!merges'] = mg;
-            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
-            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
-            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 }, { wch: 10 }, { wch: 16 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                let hFill = 'FEF3C7';
-                if (c === cSaran) hFill = 'FCE7F3';
-                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
-            }
-            let ri2 = 1;
-            const cAvg = 5 + mL;
-            const cAl = cAvg + 1;
-            const cSmh = cAl + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri2;
-                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                const ufC = getUphHexColor(upG, 0);
-                const ufF = getUphFontColor(upG, 0);
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
-                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
-                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
-                    if (ws[aAvg]) {
-                        const f1 = XLSX.utils.encode_col(5);
-                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
-                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
-                        ws[aAvg].v = parseFloat(st.avg.toFixed(2)); ws[aAvg].t = 'n'; ws[aAvg].z = '0.00';
-                    }
-                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
-                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
-                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
-                    if (ws[aSmh]) {
-                        const aC = XLSX.utils.encode_col(cAvg);
-                        const aL = XLSX.utils.encode_col(cAl);
-                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`;
-                        ws[aSmh].v = parseFloat(st.smh.toFixed(2)); ws[aSmh].t = 'n'; ws[aSmh].z = '0.00';
-                    }
-                    ri2++;
-                });
-                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
-                const sC = XLSX.utils.encode_col(cSmh);
-                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
-                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
-                const tC = XLSX.utils.encode_col(cTS);
-                if (ws[aUp]) { ws[aUp].f = `ROUND(3600/${tC}${gsr + 1},0)`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
-            });
-            if (ri2 > 1) {
-                const eR = ri2;
-                for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: eR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
-                ri2++;
-                const lR = ri2;
-                const sC = XLSX.utils.encode_col(cTS);
-                const oC = XLSX.utils.encode_col(cOp);
-                const sR = `${sC}2:${sC}${ri2}`;
-                const oR = `${oC}2:${oC}${ri2}`;
-                const sV = [];
-                go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
-                const pT = sV.reduce((s, v) => s + v, 0);
-                const pM = Math.max(...sV, 0);
-                const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
-                const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
-                const lc = getLbrHexColor(pL);
-                const lf = getLbrFontColor(pL);
-                const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
-                ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-                const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
-                ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-                const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
-                ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
-                ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
-            }
-            ws['!rows'] = [{ hpt: 25 }];
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
-            return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            ws['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
+            for (let i = 0; i < mL; i++) ws['!cols'].push({ wch: 9 });
+            for (let i = 0; i < 6; i++) ws['!cols'].push({ wch: 11 });
+            XLSX.utils.book_append_sheet(wb, ws, 'Arsip Elemen');
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         }
-
         function buildArchiveSiklusXLSX(items, a) {
             const wb = XLSX.utils.book_new();
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP'];
             for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
-            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Operator', 'Total SMH (s)', 'UPH', 'Saran SMH (LBR 90%)');
-            const gr = {}; const go = [];
-            items.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaList: [] }; go.push(k); }
-                const st = getRowStatsArchive(i, 'siklus');
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-                if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
-            });
-            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
-            const countSop = allSmh.length;
-            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            const cAvg = 4 + mL;
-            const cAl = cAvg + 1;
-            const cSmh = cAl + 1;
-            const cOp = cSmh + 1;
-            const cTS = cOp + 1;
-            const cU = cTS + 1;
-            const cSaran = cU + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', it.namaSop];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), it.operators || g.operators || 1, x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs >= 1) {
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
-                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
-                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
+            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Operator', 'UPH');
+            const dR = [hd];
+            items.forEach(it => {
+                const st = getRowStatsArchive(it, 'siklus');
+                const rd = [it.line, it.model || '-', it.noSop, it.namaSop];
+                for (let i = 0; i < mL; i++) {
+                    const lv = it.laps[i];
+                    if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                    else rd.push('');
                 }
+                rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), it.operators || 1, st.uph);
+                dR.push(rd);
             });
             const ws = XLSX.utils.aoa_to_sheet(dR);
-            ws['!merges'] = mg;
-            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }];
-            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
-            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 }, { wch: 13 }, { wch: 10 }, { wch: 16 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                let hFill = 'D1FAE5';
-                if (c === cSaran) hFill = 'FCE7F3';
-                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
-            }
-            let ri2 = 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri2;
-                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                const ufC = getUphHexColor(upG, 0);
-                const ufF = getUphFontColor(upG, 0);
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
-                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === cTS) { f = 'D1FAE5'; fn = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
-                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
-                    if (ws[aAvg]) {
-                        const f1 = XLSX.utils.encode_col(4);
-                        const f2 = XLSX.utils.encode_col(4 + mL - 1);
-                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`; ws[aAvg].z = '0.00';
-                    }
-                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
-                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
-                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
-                    if (ws[aSmh]) {
-                        const aC = XLSX.utils.encode_col(cAvg);
-                        const aL = XLSX.utils.encode_col(cAl);
-                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`; ws[aSmh].z = '0.00';
-                    }
-                    ri2++;
-                });
-                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
-                const sC = XLSX.utils.encode_col(cSmh);
-                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
-                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
-                const tC = XLSX.utils.encode_col(cTS);
-                if (ws[aUp]) { ws[aUp].f = `IF(${tC}${gsr + 1}=0,0,ROUND(3600/${tC}${gsr + 1},0))`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
-            });
-            const sC = XLSX.utils.encode_col(cTS);
-            const oC = XLSX.utils.encode_col(cOp);
-            const sR = `${sC}2:${sC}${ri2}`;
-            const oR = `${oC}2:${oC}${ri2}`;
-            let lR = ri2;
-            for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: lR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
-            lR++;
-            const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
-            ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-            const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
-            ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-            const sV = [];
-            go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
-            const pT = sV.reduce((s, v) => s + v, 0);
-            const pM = Math.max(...sV, 0);
-            const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
-            const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
-            const lc = getLbrHexColor(pL);
-            const lf = getLbrFontColor(pL);
-            const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
-            ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
-            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
-            ws['!rows'] = [{ hpt: 25 }];
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
-            return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            ws['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }];
+            for (let i = 0; i < mL; i++) ws['!cols'].push({ wch: 9 });
+            for (let i = 0; i < 5; i++) ws['!cols'].push({ wch: 11 });
+            XLSX.utils.book_append_sheet(wb, ws, 'Arsip Siklus');
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         }
-
         function buildArchiveMesinXLSX(items, a) {
             const wb = XLSX.utils.book_new();
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
             for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas');
-            const gr = {}; const go = [];
-            items.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
-                gr[k].rows.push(i);
-                gr[k].totalCapacity += getRowStatsArchive(i, 'mesin').capacity;
-            });
-            go.sort((x, y) => String(gr[x].no || '').localeCompare(String(gr[y].no || ''), undefined, { numeric: true }));
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                g.rows.forEach((it, x) => {
-                    const st = getRowStatsArchive(it, 'mesin');
-                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.no : '', x === 0 ? it.process : '', it.subMachine || ''];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), it.ngRate || 0, parseFloat(st.gerakan.toFixed(2)), parseFloat(st.ctPlusG.toFixed(2)), st.capacity, st.actualMachine, x === 0 ? g.totalCapacity : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs > 1) {
-                    const tc = 11 + mL;
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
-                    mg.push({ s: { r: gsr, c: tc }, e: { r: ri - 1, c: tc } });
+            hd.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas', 'Jml Mesin');
+            const dR = [hd];
+            items.forEach(it => {
+                const st = getRowStatsArchive(it, 'mesin');
+                const rd = [it.line, it.model || '-', it.no, it.process, it.subMachine || ''];
+                for (let i = 0; i < mL; i++) {
+                    const lv = it.laps[i];
+                    if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                    else rd.push('');
                 }
+                rd.push(parseFloat(st.avg.toFixed(2)), it.ngRate || 0, parseFloat(st.gerakan.toFixed(2)), parseFloat(st.ctPlusG.toFixed(2)), st.capacity, st.actualMachine);
+                dR.push(rd);
             });
             const ws = XLSX.utils.aoa_to_sheet(dR);
-            ws['!merges'] = mg;
-            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
-            for (let i = 0; i < mL; i++) cw.push({ wch: 8 });
-            cw.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-            }
-            let ri2 = 1;
-            const cRata = 5 + mL;
-            const cNg = cRata + 1;
-            const cGer = cNg + 1;
-            const cCtg = cGer + 1;
-            const cKap = cCtg + 1;
-            const cJml = cKap + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri2;
-                g.rows.forEach((it, x) => {
-                    const st = getRowStatsArchive(it, 'mesin');
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
-                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                        ws[a1].s = { font: { color: { rgb: '111827' }, sz: 11 }, fill: { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aRata = XLSX.utils.encode_cell({ r: ri2, c: cRata });
-                    if (ws[aRata]) {
-                        const f1 = XLSX.utils.encode_col(5);
-                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
-                        ws[aRata].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
-                        ws[aRata].v = parseFloat(st.avg.toFixed(2)); ws[aRata].t = 'n'; ws[aRata].z = '0.00';
-                    }
-                    const aCtg = XLSX.utils.encode_cell({ r: ri2, c: cCtg });
-                    if (ws[aCtg]) {
-                        const a1 = XLSX.utils.encode_col(cRata);
-                        const a2 = XLSX.utils.encode_col(cGer);
-                        ws[aCtg].f = `ROUND(${a1}${ri2 + 1}+${a2}${ri2 + 1},2)`;
-                        ws[aCtg].v = parseFloat(st.ctPlusG.toFixed(2)); ws[aCtg].t = 'n'; ws[aCtg].z = '0.00';
-                    }
-                    const aKap = XLSX.utils.encode_cell({ r: ri2, c: cKap });
-                    if (ws[aKap]) {
-                        const c1 = XLSX.utils.encode_col(cCtg);
-                        const c2 = XLSX.utils.encode_col(cJml);
-                        const c3 = XLSX.utils.encode_col(cNg);
-                        ws[aKap].f = `IF(${c1}${ri2 + 1}>0,ROUND(3600/${c1}${ri2 + 1}*${c2}${ri2 + 1}*(1-${c3}${ri2 + 1}/100),0),0)`;
-                        ws[aKap].v = st.capacity; ws[aKap].t = 'n';
-                    }
-                    ri2++;
-                });
-                const tc = 11 + mL;
-                const aTC = XLSX.utils.encode_cell({ r: gsr, c: tc });
-                if (g.rows.length > 1) {
-                    if (ws[aTC]) { const kC = XLSX.utils.encode_col(cKap); ws[aTC].f = `SUM(${kC}${gsr + 1}:${kC}${ri2})`; ws[aTC].v = g.totalCapacity; ws[aTC].t = 'n'; }
-                } else {
-                    if (ws[aTC]) { const kR = XLSX.utils.encode_cell({ r: gsr, c: cKap }); ws[aTC].f = kR; ws[aTC].v = g.totalCapacity; ws[aTC].t = 'n'; }
-                }
-            });
-            ws['!rows'] = [{ hpt: 25 }];
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
-            return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+            ws['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
+            for (let i = 0; i < mL; i++) ws['!cols'].push({ wch: 8 });
+            for (let i = 0; i < 6; i++) ws['!cols'].push({ wch: 12 });
+            XLSX.utils.book_append_sheet(wb, ws, 'Arsip Mesin');
+            return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         }
-
-        // ===== EXPORT EXCEL MASTER (dengan rumus hidup) =====
-        function exportElemenXLSX() {
-            const dE = getFilteredData();
-            const wb = XLSX.utils.book_new();
-            const mL = Math.max(...dE.map(i => i.laps.length), 1);
-            const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen'];
-            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
-            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Total SMH (s)', 'Operator', 'UPH', 'Saran SMH (LBR 90%)');
-            const gr = {}; const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [], totalSmh: 0, operators: 1 }; go.push(k); }
-                const st = getRowStats(i);
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-            });
-            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
-            const countSop = allSmh.length;
-            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            const cTS = 5 + mL + 3;
-            const cOp = cTS + 1;
-            const cU = cOp + 1;
-            const cSaran = cU + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', x === 0 ? it.namaSop : '', it.elemen];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', it.operators || g.operators || 1, x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs >= 1) {
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
-                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
-                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
-                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
-                }
-            });
-            const ws = XLSX.utils.aoa_to_sheet(dR);
-            ws['!merges'] = mg;
-            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }];
-            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
-            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 13 }, { wch: 10 }, { wch: 10 }, { wch: 16 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const std = getLineStandardUph();
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                let hFill = 'FEF3C7';
-                if (c === cSaran) hFill = 'FCE7F3';
-                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
-            }
-            let ri2 = 1;
-            const cAvg = 5 + mL;
-            const cAl = cAvg + 1;
-            const cSmh = cAl + 1;
-            const allSmhCheck = go.map(k => gr[k].totalSmh);
-            const avgSmh = allSmhCheck.length > 0 ? allSmhCheck.reduce((s, v) => s + v, 0) / allSmhCheck.length : 0;
-            const heavyThreshold = avgSmh * 1.05;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri2;
-                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                const ufC = getUphHexColor(upG, std);
-                const ufF = getUphFontColor(upG, std);
-                const isHeavy = g.totalSmh > heavyThreshold && heavyThreshold > 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
-                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
-                        if (c === cTS && x === 0 && isHeavy) { f = 'FECACA'; fn = { bold: true, sz: 11, color: { rgb: '991B1B' } }; }
-                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
-                    if (ws[aAvg]) {
-                        const f1 = XLSX.utils.encode_col(5);
-                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
-                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
-                        ws[aAvg].v = parseFloat(st.avg.toFixed(2)); ws[aAvg].t = 'n'; ws[aAvg].z = '0.00';
-                    }
-                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
-                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
-                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
-                    if (ws[aSmh]) {
-                        const aC = XLSX.utils.encode_col(cAvg);
-                        const aL = XLSX.utils.encode_col(cAl);
-                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`;
-                        ws[aSmh].v = parseFloat(st.smh.toFixed(2)); ws[aSmh].t = 'n'; ws[aSmh].z = '0.00';
-                    }
-                    ri2++;
-                });
-                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
-                const sC = XLSX.utils.encode_col(cSmh);
-                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
-                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
-                const tC = XLSX.utils.encode_col(cTS);
-                if (ws[aUp]) { ws[aUp].f = `ROUND(3600/${tC}${gsr + 1},0)`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
-            });
-            if (ri2 > 1) {
-                const eR = ri2;
-                for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: eR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
-                ri2++;
-                const lR = ri2;
-                const sC = XLSX.utils.encode_col(cTS);
-                const oC = XLSX.utils.encode_col(cOp);
-                const sR = `${sC}2:${sC}${ri2}`;
-                const oR = `${oC}2:${oC}${ri2}`;
-                const sV = [];
-                go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
-                const pT = sV.reduce((s, v) => s + v, 0);
-                const pM = Math.max(...sV, 0);
-                const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
-                const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
-                const lc = getLbrHexColor(pL);
-                const lf = getLbrFontColor(pL);
-                const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
-                ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-                const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
-                ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-                const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
-                ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
-                ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
-            }
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Elemen');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Elemen_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh (dengan rumus)', 'success');
-        }
-
-        function exportSiklusXLSX() {
-            const dE = getFilteredData();
-            const wb = XLSX.utils.book_new();
-            const mL = Math.max(...dE.map(i => i.laps.length), 1);
-            const hd = ['Line', 'Model', 'No. SOP', 'Nama SOP'];
-            for (let i = 1; i <= mL; i++) hd.push(`CT${i} (s)`);
-            hd.push('Average (s)', 'Allowance', 'SMH (s)', 'Operator', 'Total SMH (s)', 'UPH', 'Saran SMH (LBR 90%)');
-            const gr = {}; const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [], totalSmh: 0, operators: 1, namaList: [] }; go.push(k); }
-                const st = getRowStats(i);
-                gr[k].rows.push({ ...i, stats: st });
-                gr[k].totalSmh += st.smh;
-                if (i.operators) gr[k].operators = i.operators;
-                if (!gr[k].namaList.includes(i.namaSop)) gr[k].namaList.push(i.namaSop);
-            });
-            go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
-            const allSmh = go.map(k => gr[k].totalSmh);
-            const totalSmhAll = allSmh.reduce((s, v) => s + v, 0);
-            const countSop = allSmh.length;
-            const saranSmh = countSop > 0 ? totalSmhAll / countSop : 0;
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            const cAvg = 4 + mL;
-            const cAl = cAvg + 1;
-            const cSmh = cAl + 1;
-            const cOp = cSmh + 1;
-            const cTS = cOp + 1;
-            const cU = cTS + 1;
-            const cSaran = cU + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                const up = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', it.namaSop];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), ALLOWANCE_FIXED, parseFloat(st.smh.toFixed(2)), it.operators || g.operators || 1, x === 0 ? parseFloat(g.totalSmh.toFixed(2)) : '', x === 0 ? up : '', x === 0 ? parseFloat(saranSmh.toFixed(2)) : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs >= 1) {
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: cTS }, e: { r: ri - 1, c: cTS } });
-                    mg.push({ s: { r: gsr, c: cU }, e: { r: ri - 1, c: cU } });
-                    mg.push({ s: { r: gsr, c: cSaran }, e: { r: ri - 1, c: cSaran } });
-                }
-            });
-            const ws = XLSX.utils.aoa_to_sheet(dR);
-            ws['!merges'] = mg;
-            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }];
-            for (let i = 0; i < mL; i++) cw.push({ wch: 9 });
-            cw.push({ wch: 11 }, { wch: 11 }, { wch: 11 }, { wch: 10 }, { wch: 13 }, { wch: 10 }, { wch: 16 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const std = getLineStandardUph();
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                let hFill = 'D1FAE5';
-                if (c === cSaran) hFill = 'FCE7F3';
-                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: hFill } }, alignment: { horizontal: 'center', vertical: 'center', wrapText: true }, border: BD };
-            }
-            let ri2 = 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri2;
-                const upG = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
-                const ufC = getUphHexColor(upG, std);
-                const ufF = getUphFontColor(upG, std);
-                g.rows.forEach((it, x) => {
-                    const st = it.stats;
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
-                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === cSmh) { f = 'FFEDD5'; fn = { bold: true, sz: 11, color: { rgb: 'C2410C' } }; }
-                        else if (c === cU) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        else if (c === cOp) { f = 'FEF3C7'; fn = { bold: true, sz: 11, color: { rgb: '92400E' } }; }
-                        else if (c === cTS) { f = 'D1FAE5'; fn = { bold: true, sz: 11, color: { rgb: '065F46' } }; }
-                        else if (c === cSaran) { f = 'FCE7F3'; fn = { bold: true, sz: 11, color: { rgb: '9D174D' } }; }
-                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aAvg = XLSX.utils.encode_cell({ r: ri2, c: cAvg });
-                    if (ws[aAvg]) {
-                        const f1 = XLSX.utils.encode_col(4);
-                        const f2 = XLSX.utils.encode_col(4 + mL - 1);
-                        ws[aAvg].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`; ws[aAvg].z = '0.00';
-                    }
-                    const aAl = XLSX.utils.encode_cell({ r: ri2, c: cAl });
-                    if (ws[aAl]) { ws[aAl].v = ALLOWANCE_FIXED; ws[aAl].t = 'n'; ws[aAl].z = '0.00'; }
-                    const aSmh = XLSX.utils.encode_cell({ r: ri2, c: cSmh });
-                    if (ws[aSmh]) {
-                        const aC = XLSX.utils.encode_col(cAvg);
-                        const aL = XLSX.utils.encode_col(cAl);
-                        ws[aSmh].f = `ROUND(${aC}${ri2 + 1}*(1+${aL}${ri2 + 1}),2)`; ws[aSmh].z = '0.00';
-                    }
-                    ri2++;
-                });
-                const aTS = XLSX.utils.encode_cell({ r: gsr, c: cTS });
-                const sC = XLSX.utils.encode_col(cSmh);
-                if (ws[aTS]) { ws[aTS].f = `ROUND(SUM(${sC}${gsr + 1}:${sC}${ri2}),2)`; ws[aTS].v = parseFloat(g.totalSmh.toFixed(2)); ws[aTS].t = 'n'; ws[aTS].z = '0.00'; }
-                const aUp = XLSX.utils.encode_cell({ r: gsr, c: cU });
-                const tC = XLSX.utils.encode_col(cTS);
-                if (ws[aUp]) { ws[aUp].f = `IF(${tC}${gsr + 1}=0,0,ROUND(3600/${tC}${gsr + 1},0))`; ws[aUp].v = upG; ws[aUp].t = 'n'; }
-            });
-            const sC = XLSX.utils.encode_col(cTS);
-            const oC = XLSX.utils.encode_col(cOp);
-            const sR = `${sC}2:${sC}${ri2}`;
-            const oR = `${oC}2:${oC}${ri2}`;
-            let lR = ri2;
-            for (let c = 0; c <= rng.e.c; c++) { const a1 = XLSX.utils.encode_cell({ r: lR, c: c }); if (!ws[a1]) ws[a1] = { t: 's', v: '' }; }
-            lR++;
-            const aL = XLSX.utils.encode_cell({ r: lR, c: 0 });
-            ws[aL] = { t: 's', v: '📊 Line Balance Rate', s: { font: { bold: true, sz: 12, color: { rgb: '1F2937' } }, fill: { patternType: 'solid', fgColor: { rgb: 'D1FAE5' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-            const aI = XLSX.utils.encode_cell({ r: lR, c: 1 });
-            ws[aI] = { t: 's', v: `LBR = Σ SMH ÷ (Σ Operator × Max SMH).`, s: { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'left', vertical: 'center' }, border: BD } };
-            const sV = [];
-            go.forEach(k => { const g = gr[k]; if (g.totalSmh > 0) sV.push(g.totalSmh); });
-            const pT = sV.reduce((s, v) => s + v, 0);
-            const pM = Math.max(...sV, 0);
-            const totalOp = go.reduce((sum, k) => sum + (gr[k].operators || 1), 0);
-            const pL = (pM > 0 && totalOp > 0) ? (pT / (totalOp * pM)) * 100 : 0;
-            const lc = getLbrHexColor(pL);
-            const lf = getLbrFontColor(pL);
-            const aLbr = XLSX.utils.encode_cell({ r: lR, c: cU });
-            ws[aLbr] = { t: 'n', f: `IF(SUMPRODUCT(--(${sR}<>""))=0,0,ROUND(SUMPRODUCT(${sR})/SUMPRODUCT(--(${sR}<>""),${oR})/MAX(${sR})*100,2))`, v: parseFloat(pL.toFixed(2)), z: '0.00"%"', s: { font: { bold: true, sz: 14, color: { rgb: lf } }, fill: { patternType: 'solid', fgColor: { rgb: lc } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD } };
-            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: lR, c: rng.e.c } });
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Siklus');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Siklus_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh (dengan rumus)', 'success');
-        }
-
-        function exportMesinXLSX() {
-            const dE = getFilteredData();
-            const wb = XLSX.utils.book_new();
-            const mL = Math.max(...dE.map(i => i.laps.length), 1);
-            const hd = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
-            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Rata-rata', 'NG%', 'Gerakan', 'CT + Gerakan', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas');
-            const gr = {}; const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [], totalCapacity: 0 }; go.push(k); }
-                gr[k].rows.push(i);
-                gr[k].totalCapacity += getRowStats(i).capacity;
-            });
-            go.sort((x, y) => String(gr[x].no || '').localeCompare(String(gr[y].no || ''), undefined, { numeric: true }));
-            const dR = [hd]; const mg = [];
-            let ri = 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const rs = g.rows.length;
-                const gsr = ri;
-                g.rows.forEach((it, x) => {
-                    const st = getRowStats(it);
-                    const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.no : '', x === 0 ? it.process : '', it.subMachine || ''];
-                    for (let i = 0; i < mL; i++) {
-                        const lv = it.laps[i];
-                        if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
-                        else rd.push('');
-                    }
-                    rd.push(parseFloat(st.avg.toFixed(2)), it.ngRate || 0, parseFloat(st.gerakan.toFixed(2)), parseFloat(st.ctPlusG.toFixed(2)), st.capacity, st.actualMachine, x === 0 ? g.totalCapacity : '');
-                    dR.push(rd); ri++;
-                });
-                if (rs > 1) {
-                    const tc = 11 + mL;
-                    mg.push({ s: { r: gsr, c: 0 }, e: { r: ri - 1, c: 0 } });
-                    mg.push({ s: { r: gsr, c: 1 }, e: { r: ri - 1, c: 1 } });
-                    mg.push({ s: { r: gsr, c: 2 }, e: { r: ri - 1, c: 2 } });
-                    mg.push({ s: { r: gsr, c: 3 }, e: { r: ri - 1, c: 3 } });
-                    mg.push({ s: { r: gsr, c: tc }, e: { r: ri - 1, c: tc } });
-                }
-            });
-            const ws = XLSX.utils.aoa_to_sheet(dR);
-            ws['!merges'] = mg;
-            const cw = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }];
-            for (let i = 0; i < mL; i++) cw.push({ wch: 8 });
-            cw.push({ wch: 10 }, { wch: 6 }, { wch: 10 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 20 });
-            ws['!cols'] = cw;
-            const rng = XLSX.utils.decode_range(ws['!ref']);
-            const std = getLineStandardUph();
-            const BD = { top: { style: 'thin', color: { rgb: '9CA3AF' } }, bottom: { style: 'thin', color: { rgb: '9CA3AF' } }, left: { style: 'thin', color: { rgb: '9CA3AF' } }, right: { style: 'thin', color: { rgb: '9CA3AF' } } };
-            for (let c = 0; c <= rng.e.c; c++) {
-                const a1 = XLSX.utils.encode_cell({ r: 0, c: c });
-                if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                ws[a1].s = { font: { bold: true, sz: 11, color: { rgb: '111827' } }, fill: { patternType: 'solid', fgColor: { rgb: 'FEF3C7' } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-            }
-            let ri2 = 1;
-            const cRata = 5 + mL;
-            const cNg = cRata + 1;
-            const cGer = cNg + 1;
-            const cCtg = cGer + 1;
-            const cKap = cCtg + 1;
-            const cJml = cKap + 1;
-            go.forEach(k => {
-                const g = gr[k];
-                const gsr = ri2;
-                const tU = g.totalCapacity;
-                const ufC = getUphHexColor(tU, std);
-                const ufF = getUphFontColor(tU, std);
-                g.rows.forEach((it, x) => {
-                    const st = getRowStats(it);
-                    for (let c = 0; c <= rng.e.c; c++) {
-                        const a1 = XLSX.utils.encode_cell({ r: ri2, c: c });
-                        if (!ws[a1]) ws[a1] = { t: 's', v: '' };
-                        let f = 'FFFFFF';
-                        let fn = { color: { rgb: '111827' }, sz: 11 };
-                        if (c === 11 + mL && x === 0) { f = ufC; fn = { bold: true, sz: 11, color: { rgb: ufF } }; }
-                        ws[a1].s = { font: fn, fill: { patternType: 'solid', fgColor: { rgb: f } }, alignment: { horizontal: 'center', vertical: 'center' }, border: BD };
-                    }
-                    const aRata = XLSX.utils.encode_cell({ r: ri2, c: cRata });
-                    if (ws[aRata]) {
-                        const f1 = XLSX.utils.encode_col(5);
-                        const f2 = XLSX.utils.encode_col(5 + mL - 1);
-                        ws[aRata].f = `ROUND(AVERAGE(${f1}${ri2 + 1}:${f2}${ri2 + 1}),2)`;
-                        ws[aRata].v = parseFloat(st.avg.toFixed(2)); ws[aRata].t = 'n'; ws[aRata].z = '0.00';
-                    }
-                    const aCtg = XLSX.utils.encode_cell({ r: ri2, c: cCtg });
-                    if (ws[aCtg]) {
-                        const a1 = XLSX.utils.encode_col(cRata);
-                        const a2 = XLSX.utils.encode_col(cGer);
-                        ws[aCtg].f = `ROUND(${a1}${ri2 + 1}+${a2}${ri2 + 1},2)`;
-                        ws[aCtg].v = parseFloat(st.ctPlusG.toFixed(2)); ws[aCtg].t = 'n'; ws[aCtg].z = '0.00';
-                    }
-                    const aKap = XLSX.utils.encode_cell({ r: ri2, c: cKap });
-                    if (ws[aKap]) {
-                        const c1 = XLSX.utils.encode_col(cCtg);
-                        const c2 = XLSX.utils.encode_col(cJml);
-                        const c3 = XLSX.utils.encode_col(cNg);
-                        ws[aKap].f = `IF(${c1}${ri2 + 1}>0,ROUND(3600/${c1}${ri2 + 1}*${c2}${ri2 + 1}*(1-${c3}${ri2 + 1}/100),0),0)`;
-                        ws[aKap].v = st.capacity; ws[aKap].t = 'n';
-                    }
-                    ri2++;
-                });
-                const tc = 11 + mL;
-                const aTC = XLSX.utils.encode_cell({ r: gsr, c: tc });
-                if (g.rows.length > 1) {
-                    if (ws[aTC]) { const kC = XLSX.utils.encode_col(cKap); ws[aTC].f = `SUM(${kC}${gsr + 1}:${kC}${ri2})`; ws[aTC].v = tU; ws[aTC].t = 'n'; }
-                } else {
-                    if (ws[aTC]) { const kR = XLSX.utils.encode_cell({ r: gsr, c: cKap }); ws[aTC].f = kR; ws[aTC].v = tU; ws[aTC].t = 'n'; }
-                }
-            });
-            ws['!rows'] = [{ hpt: 25 }];
-            for (let r = 1; r <= rng.e.r; r++) ws['!rows'][r] = { hpt: 20 };
-            XLSX.utils.book_append_sheet(wb, ws, 'Time Study Mesin');
-            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `Time_Study_Mesin_${new Date().toISOString().slice(0, 10)}.xlsx`)) showToast('📥 Excel diunduh (dengan rumus)', 'success');
-        }
-
         function exportToExcelXLSX() {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
             try {
                 const dE = getFilteredData();
-                if (dE.length === 0) { showToast('Tidak ada data untuk filter ini!', 'error'); return; }
-                if (currentMode === 'elemen') exportElemenXLSX();
-                else if (currentMode === 'siklus') exportSiklusXLSX();
-                else exportMesinXLSX();
+                if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
+                const wb = XLSX.utils.book_new();
+                let hd = [];
+                if (currentMode === 'elemen') hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus','Laps','Average','SMH','UPH'];
+                else if (currentMode === 'siklus') hd = ['Line','Model','No. SOP','Nama SOP','Siklus','Laps','Average','SMH','UPH'];
+                else hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus','Laps','Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas'];
+                const rows = [hd];
+                dE.forEach(i => {
+                    const st = getRowStats(i);
+                    const laps = (i.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | ');
+                    if (currentMode === 'elemen') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, i.elemen, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                    else if (currentMode === 'siklus') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                    else rows.push([i.line, i.model||'-', i.no, i.process, i.subMachine, (i.laps||[]).length, laps, st.avg.toFixed(2), i.ngRate||0, st.gerakan.toFixed(2), st.ctPlusG.toFixed(2), st.capacity, st.actualMachine, '']);
+                });
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
             } catch (err) { console.error(err); showToast('❌ Gagal export.', 'error'); }
         }
         function exportToCSV() {
@@ -4265,8 +3614,6 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.csv`)) showToast('📄 CSV diunduh', 'success');
         }
-
-        // ===== BACKUP =====
         function openBackupModal() {
             const i = document.getElementById('backupInfoLast');
             const lb = localStorage.getItem('timeStudy_lastBackup');
@@ -4366,32 +3713,32 @@
             if (sl) activeLine = sl;
             const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
             if (smd) activeModel = smd;
+            
             machineList = lsLoad(LS_KEY_MACHINES, []);
             masterData = lsLoad(LS_KEY_MASTER, []);
             elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
             siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
             modelList = lsLoad(LS_KEY_MODEL_LIST, []);
             archiveList = lsLoad(LS_KEY_ARCHIVE, []);
-
-            // Load lineList dari localStorage
+            
             const savedLineList = lsLoad(LS_KEY_LINE_LIST, []);
             lineList = normalizeLineList(savedLineList);
-
-            // ✅ AUTO-RECOVERY: Kalau activeLine ada tapi lineList kosong → bikin otomatis
+            console.log('📦 lineList dari localStorage:', lineList.length, 'item');
+            
             if (activeLine && lineList.length === 0) {
-                console.warn('⚠️ Recovery: activeLine =', activeLine, 'tapi lineList kosong. Menambahkan otomatis...');
+                console.log('⚠️ Auto-recovery: bikin lineList dari activeLine');
                 const uph = parseInt(localStorage.getItem(LS_KEY_ACTIVE_LINE_UPH)) || 500;
                 lineList = [{ name: activeLine, uph: uph }];
                 lsSave(LS_KEY_LINE_LIST, lineList);
-                setTimeout(() => { showToast('⚠️ Line list dipulihkan dari Line aktif', 'warning'); }, 2000);
             }
-
+            
             const savedBatch = lsLoad(LS_KEY_BATCH, 1);
             if (savedBatch && parseInt(savedBatch) > 1) {
                 batchUnitCount = parseInt(savedBatch);
                 const bEl = document.getElementById('inputBatchUnit');
                 if (bEl) bEl.value = batchUnitCount;
             }
+            
             updateLineDisplay(); updateModelDisplay();
             renderLineList();
             renderMachineDropdownList(); renderMachineTable();
@@ -4412,39 +3759,76 @@
                     else selectMode(sm);
                     if (activeLine) syncUphFromActiveLine();
                 }
-            }, 5000);
+            }, 8000);
 
             const af = async () => {
-                if (firebaseReady && window.DATABASE_TYPE !== 'firebase') {
-                    clearTimeout(firebaseTimeout);
-                    return;
-                }
                 firebaseReady = true;
                 clearTimeout(firebaseTimeout);
                 setLoadingDetail('Database siap...');
+                
                 try {
-                    await loadAllFromFirebaseOnce();
+                    setLoadingDetail('Loading lineList...');
+                    const s1 = await dbGet('lineList');
+                    const remoteLines = normalizeLineList(s1.data || []);
+                    console.log('📥 Firebase lineList:', remoteLines.length, 'item');
+                    if (remoteLines.length > 0) {
+                        lineList = remoteLines;
+                        lsSave(LS_KEY_LINE_LIST, lineList);
+                    } else {
+                        console.warn('⚠️ Firebase lineList kosong, pakai lokal:', lineList.length);
+                    }
+                } catch (e) { console.error('❌ Error load lineList:', e); }
+                
+                try { const s2 = await dbGet('machineList'); if (s2 && s2.data) { machineList = s2.data; lsSave(LS_KEY_MACHINES, machineList); } } catch (e) {}
+                try { const s3 = await dbGet('elemenMaster'); if (s3 && s3.data) { elemenMasterList = s3.data; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); } } catch (e) {}
+                try { const s4 = await dbGet('siklusMaster'); if (s4 && s4.data) { siklusMasterList = s4.data; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); } } catch (e) {}
+                try { const s5 = await dbGet('modelList'); if (s5 && s5.data) { modelList = s5.data; lsSave(LS_KEY_MODEL_LIST, modelList); } } catch (e) {}
+                try { const s6 = await dbGet('archive'); if (s6 && s6.data) { archiveList = s6.data; lsSave(LS_KEY_ARCHIVE, archiveList); } } catch (e) {}
+                try {
+                    const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
+                    const sM = await dbGet(activeNode);
+                    if (sM && sM.data) { masterData = sM.data; lastServerUpdate = sM.lastUpdate; }
+                } catch (e) {}
+                
+                try {
                     if (autoMigrateModelField()) {
-                        console.log('✅ Auto-migrasi: data lama diberi model "-"');
                         saveMasterToFirebase();
                         saveElemenMasterToFirebase();
                         saveSiklusMasterToFirebase();
                     }
+                } catch (e) {}
+                
+                try {
                     setupFirebaseListeners();
                     setSyncStatus('online');
                 } catch (e) {
-                    console.error('⚠️ Gagal setup database, lanjut mode lokal:', e);
+                    console.error('❌ Setup listener error:', e);
                     setSyncStatus('offline');
-                } finally {
-                    setLoadingDone();
-                    if (!sm) document.getElementById('modeModal').classList.add('active');
-                    else selectMode(sm);
-                    if (activeLine) syncUphFromActiveLine();
                 }
+                
+                updateLineDisplay(); updateModelDisplay();
+                renderLineList();
+                renderMachineDropdownList(); renderMachineTable();
+                renderMasterTable(); renderStandardCheck(); updateCounters();
+                renderSopDropdownList(); renderElemenMasterTable();
+                renderSiklusDropdownList(); renderSiklusMasterTable();
+                renderArsipList(); updateArsipCount();
+                
+                setLoadingDone();
+                
+                if (!sm) document.getElementById('modeModal').classList.add('active');
+                else selectMode(sm);
+                
+                if (activeLine) syncUphFromActiveLine();
             };
 
-            if (window.firebaseDB) { await af(); }
-            else {
+            if (window.firebaseDB) { 
+                try { await af(); } catch (e) { 
+                    console.error('❌ Init error:', e);
+                    setSyncStatus('offline');
+                    setLoadingDone();
+                }
+            } else {
                 window.addEventListener('firebaseReady', af, { once: true });
             }
 
