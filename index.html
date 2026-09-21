@@ -154,6 +154,9 @@
                     <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
                         <span>1️⃣ Nama Line</span><span>UPH</span>
                     </div>
+                    <button onclick="recoverLineFromActive()" class="w-full text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-2 py-1.5 rounded mb-2">
+                        🔄 Pulihkan Line Aktif kalau list kosong
+                    </button>
                     <div id="lineListContainer" class="space-y-2"></div>
                     <div class="border-t border-gray-200 pt-3 mt-3">
                         <div class="space-y-2">
@@ -935,7 +938,9 @@
         const ALLOWANCE_FIXED = 0.10;
         const LS_KEY_MACHINES = 'timeStudy_machines_v2';
         const LS_KEY_MASTER = 'timeStudy_master_v2';
+        const LS_KEY_LINE_LIST = 'timeStudy_lineList_v1';
         const LS_KEY_ACTIVE_LINE = 'timeStudy_activeLine_v1';
+        const LS_KEY_ACTIVE_LINE_UPH = 'timeStudy_activeLineUph_v1';
         const LS_KEY_MODE = 'timeStudy_mode_v1';
         const LS_KEY_ELEMEN_MASTER = 'timeStudy_elemenMaster_v3';
         const LS_KEY_SIKLUS_MASTER = 'timeStudy_siklusMaster_v1';
@@ -947,7 +952,21 @@
         // ===== UTILS =====
         function lsSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
         function lsLoad(k, d) { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch(e) { return d; } }
-        function normalizeLineList(raw) { if (!Array.isArray(raw)) return []; return raw.map(i => typeof i === 'string' ? { name: i, uph: 500 } : { name: String(i.name || ''), uph: parseFloat(i.uph) || 500 }).filter(l => l.name); }
+        function normalizeLineList(raw) {
+            if (!raw) return [];
+            if (typeof raw === 'string') {
+                try { raw = JSON.parse(raw); } catch(e) { return []; }
+            }
+            if (!Array.isArray(raw)) return [];
+            return raw.map(i => {
+                if (typeof i === 'string') return { name: i, uph: 500 };
+                if (!i || typeof i !== 'object') return null;
+                return {
+                    name: String(i.name || i.line || ''),
+                    uph: parseFloat(i.uph) || 500
+                };
+            }).filter(l => l && l.name);
+        }
         function getLineUph(n) { const f = lineList.find(l => l.name === n); return f ? parseFloat(f.uph) || 0 : 0; }
         function setSyncStatus(s) { const d = document.getElementById('syncDot'); if (d) d.className = 'sync-dot ' + (s === 'online' ? 'sync-online' : s === 'offline' ? 'sync-offline' : 'sync-syncing'); }
         function setLoadingDone() { const o = document.getElementById('loadingOverlay'); if (o) { o.style.opacity = '0'; o.style.transition = 'opacity 0.3s'; setTimeout(() => o.remove(), 350); } }
@@ -978,6 +997,23 @@
                 setTimeout(() => { document.body.removeChild(l); URL.revokeObjectURL(u); }, 1500);
                 return true;
             } catch (e) { showToast('❌ Gagal download.', 'error'); return false; }
+        }
+
+        // ===== RECOVERY =====
+        function recoverLineFromActive() {
+            if (!activeLine) { showToast('⚠️ Tidak ada Line aktif', 'warning'); return; }
+            if (lineList.find(l => l.name === activeLine)) {
+                showToast('✅ Line "' + activeLine + '" sudah ada di list', 'info');
+                return;
+            }
+            const uph = parseInt(localStorage.getItem(LS_KEY_ACTIVE_LINE_UPH)) || 500;
+            lineList.push({ name: activeLine, uph: uph });
+            lineList.sort((a, b) => a.name.localeCompare(b.name));
+            lsSave(LS_KEY_LINE_LIST, lineList);
+            if (firebaseReady) saveLineListToFirebase();
+            tempSelectedLine = activeLine;
+            renderLineList();
+            showToast('✅ Line "' + activeLine + '" dipulihkan (UPH: ' + uph + ')', 'success');
         }
 
         // ===== MIGRASI MODEL LAMA =====
@@ -1179,7 +1215,12 @@
                 window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
                     const val = snap.val(); if (!val || isSyncingFromRemote) return;
                     const rd = normalizeLineList(val.data || []);
-                    if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rd; syncUphFromActiveLine(); if (document.getElementById('lineModal').classList.contains('active')) renderLineList(); isSyncingFromRemote = false; }
+                    // ✅ Proteksi: jangan timpa lineList lokal kalau remote kosong tapi lokal ada isinya
+                    if (rd.length === 0 && lineList.length > 0) {
+                        console.warn('⚠️ Remote lineList kosong, tapi lokal ada ' + lineList.length + ' line. Skip overwrite.');
+                        return;
+                    }
+                    if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rd; lsSave(LS_KEY_LINE_LIST, lineList); syncUphFromActiveLine(); if (document.getElementById('lineModal').classList.contains('active')) renderLineList(); isSyncingFromRemote = false; }
                 }, () => {});
                 window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
                     const val = snap.val(); if (!val || isSyncingFromRemote) return;
@@ -1226,7 +1267,11 @@
                         for (const node of nodes) {
                             const val = await dbGet(node);
                             const rd = val.data || [];
-                            if (node === 'lineList') { if (JSON.stringify(rd) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = normalizeLineList(rd); syncUphFromActiveLine(); isSyncingFromRemote = false; } }
+                            if (node === 'lineList') {
+                                const rdNorm = normalizeLineList(rd);
+                                if (rdNorm.length === 0 && lineList.length > 0) continue;
+                                if (JSON.stringify(rdNorm) !== JSON.stringify(lineList)) { isSyncingFromRemote = true; lineList = rdNorm; lsSave(LS_KEY_LINE_LIST, lineList); syncUphFromActiveLine(); isSyncingFromRemote = false; }
+                            }
                             else if (node === 'machineList') { if (JSON.stringify(rd) !== JSON.stringify(machineList)) { isSyncingFromRemote = true; machineList = rd; lsSave(LS_KEY_MACHINES, machineList); renderMachineDropdownList(); renderMachineTable(); isSyncingFromRemote = false; } }
                             else if (node === 'elemenMaster') { if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } isSyncingFromRemote = false; } }
                             else if (node === 'siklusMaster') { if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } isSyncingFromRemote = false; } }
@@ -1250,7 +1295,15 @@
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
             try {
-                const s1 = await dbGet('lineList'); lineList = normalizeLineList(s1.data || []);
+                const s1 = await dbGet('lineList');
+                const remoteLines = normalizeLineList(s1.data || []);
+                // ✅ Proteksi: jangan timpa lineList lokal kalau remote kosong
+                if (remoteLines.length > 0 || lineList.length === 0) {
+                    lineList = remoteLines;
+                    lsSave(LS_KEY_LINE_LIST, lineList);
+                } else {
+                    console.warn('⚠️ Remote lineList kosong, pakai lineList lokal (' + lineList.length + ' line).');
+                }
                 const s2 = await dbGet('machineList'); machineList = s2.data || [];
                 const s3 = await dbGet('elemenMaster'); elemenMasterList = s3.data || [];
                 const s4 = await dbGet('siklusMaster'); siklusMasterList = s4.data || [];
@@ -1284,7 +1337,7 @@
         // ===== LINE =====
         function renderLineList() {
             const c = document.getElementById('lineListContainer'); if (!c) return;
-            if (lineList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.</div>'; return; }
+            if (lineList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.<br><span class="text-[10px] text-amber-600">Klik tombol "🔄 Pulihkan Line Aktif" di atas</span></div>'; return; }
             c.innerHTML = lineList.map(l => `
                 <div class="lm-row flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
                     <button onclick="selectLineTemp('${escapeHtml(l.name)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}</button>
@@ -1311,6 +1364,7 @@
             if (!v) { showToast('Ketik nama line!', 'error'); return; }
             if (lineList.find(l => l.name === v)) { showToast('Line sudah ada!', 'warning'); return; }
             lineList.push({ name: v, uph: u }); lineList.sort((a, b) => a.name.localeCompare(b.name));
+            lsSave(LS_KEY_LINE_LIST, lineList);
             saveLineListToFirebase(); tempSelectedLine = v; renderLineList();
             inp.value = ''; ui.value = '500';
             showToast('✅ Line ditambahkan', 'success');
@@ -1323,6 +1377,12 @@
             localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine);
             activeModel = tempSelectedModel;
             localStorage.setItem(LS_KEY_ACTIVE_MODEL, activeModel);
+
+            // ✅ Simpan UPH aktif biar bisa recovery
+            const activeLineUph = getLineUph(activeLine);
+            if (activeLineUph > 0) {
+                localStorage.setItem(LS_KEY_ACTIVE_LINE_UPH, String(activeLineUph));
+            }
 
             updateLineDisplay(); updateModelDisplay();
             uphUserOverride = false; syncUphFromActiveLine(); closeLineModal();
@@ -1384,6 +1444,7 @@
                 if (activeLine === on) { activeLine = nn; localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine); updateLineDisplay(); }
                 if (tempSelectedLine === on) tempSelectedLine = nn;
             }
+            lsSave(LS_KEY_LINE_LIST, lineList);
             saveLineListToFirebase();
             if (uc > 0) { saveMasterToLS(); saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); }
             if (activeLine === nn) { uphUserOverride = false; syncUphFromActiveLine(); }
@@ -1401,6 +1462,7 @@
             lineList = lineList.filter(l => l.name !== n);
             if (activeLine === n) { activeLine = ''; localStorage.removeItem(LS_KEY_ACTIVE_LINE); updateLineDisplay(); }
             if (tempSelectedLine === n) tempSelectedLine = '';
+            lsSave(LS_KEY_LINE_LIST, lineList);
             saveLineListToFirebase(); renderLineList();
             showToast('Line dihapus', 'warning');
         }
@@ -3314,7 +3376,7 @@
             showToast('📄 CSV diunduh', 'success');
         }
 
-        // ===== HELPER: getRowStats untuk data arsip (mode dari argumen) =====
+        // ===== HELPER: getRowStats untuk data arsip =====
         function getRowStatsArchive(item, mode) {
             const laps = item.laps || [];
             const count = laps.length;
@@ -4214,7 +4276,7 @@
         }
         function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
         function downloadBackup() {
-            const b = { version: '2.1', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData };
+            const b = { version: '2.2', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData };
             const j = JSON.stringify(b, null, 2);
             const bl = new Blob([j], { type: 'application/json' });
             if (downloadBlob(bl, `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`)) {
@@ -4237,6 +4299,7 @@
                     elemenMasterList = b.elemenMasterList || []; siklusMasterList = b.siklusMasterList || [];
                     modelList = b.modelList || []; archiveList = b.archiveList || [];
                     masterData = b.masterData || [];
+                    lsSave(LS_KEY_LINE_LIST, lineList);
                     lsSave(LS_KEY_MACHINES, machineList); lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
                     lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(LS_KEY_MASTER, masterData);
                     lsSave(LS_KEY_MODEL_LIST, modelList); lsSave(LS_KEY_ARCHIVE, archiveList);
@@ -4309,6 +4372,20 @@
             siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
             modelList = lsLoad(LS_KEY_MODEL_LIST, []);
             archiveList = lsLoad(LS_KEY_ARCHIVE, []);
+
+            // Load lineList dari localStorage
+            const savedLineList = lsLoad(LS_KEY_LINE_LIST, []);
+            lineList = normalizeLineList(savedLineList);
+
+            // ✅ AUTO-RECOVERY: Kalau activeLine ada tapi lineList kosong → bikin otomatis
+            if (activeLine && lineList.length === 0) {
+                console.warn('⚠️ Recovery: activeLine =', activeLine, 'tapi lineList kosong. Menambahkan otomatis...');
+                const uph = parseInt(localStorage.getItem(LS_KEY_ACTIVE_LINE_UPH)) || 500;
+                lineList = [{ name: activeLine, uph: uph }];
+                lsSave(LS_KEY_LINE_LIST, lineList);
+                setTimeout(() => { showToast('⚠️ Line list dipulihkan dari Line aktif', 'warning'); }, 2000);
+            }
+
             const savedBatch = lsLoad(LS_KEY_BATCH, 1);
             if (savedBatch && parseInt(savedBatch) > 1) {
                 batchUnitCount = parseInt(savedBatch);
@@ -4316,6 +4393,7 @@
                 if (bEl) bEl.value = batchUnitCount;
             }
             updateLineDisplay(); updateModelDisplay();
+            renderLineList();
             renderMachineDropdownList(); renderMachineTable();
             renderMasterTable(); updateCounters();
             renderSopDropdownList(); renderElemenMasterTable();
