@@ -90,7 +90,6 @@
         <div id="loadingDetail" class="text-xs text-gray-400 mt-2"></div>
     </div>
 
-    <!-- MODAL MODE -->
     <div id="modeModal" class="modal-bg active">
         <div class="modal-content" style="max-width: 600px;">
             <div class="p-6 border-b border-gray-200 text-center">
@@ -120,7 +119,6 @@
         </div>
     </div>
 
-    <!-- MODAL LINE + MODEL (STICKY FOOTER) -->
     <div id="lineModal" class="modal-bg">
         <div class="modal-content sticky-layout" style="max-width: 560px;">
             <div class="modal-header-fixed p-4 border-b border-gray-200">
@@ -163,7 +161,6 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT LINE -->
     <div id="editLineModal" class="modal-bg" onclick="if(event.target===this) closeEditLineModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -181,7 +178,6 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT MODEL -->
     <div id="editModelModal" class="modal-bg" onclick="if(event.target===this) closeEditModelModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -198,7 +194,6 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT ELEMEN -->
     <div id="editElemenModal" class="modal-bg" onclick="if(event.target===this) closeEditElemenModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -217,7 +212,6 @@
         </div>
     </div>
 
-    <!-- MODAL EDIT SIKLUS -->
     <div id="editSiklusModal" class="modal-bg" onclick="if(event.target===this) closeEditSiklusModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -235,7 +229,6 @@
         </div>
     </div>
 
-    <!-- MODAL BACKUP -->
     <div id="backupModal" class="modal-bg" onclick="if(event.target===this) closeBackupModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -254,7 +247,6 @@
         </div>
     </div>
 
-    <!-- MODAL PREINSTALL -->
     <div id="preinstallModal" class="modal-bg" onclick="if(event.target===this) closePreinstallModal()">
         <div class="modal-content sticky-layout" style="max-width: 550px;">
             <div class="modal-header-fixed p-4 border-b border-gray-200 flex justify-between items-center">
@@ -735,7 +727,7 @@
         </div>
     </div>
 
-    <!-- MODAL BULK IMPORT MESIN -->
+    <!-- MODAL BULK IMPORT -->
     <div id="bulkImportModal" class="modal-bg" onclick="if(event.target===this) closeBulkImportModal()">
         <div class="modal-content">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center">
@@ -804,16 +796,12 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SETUP DATABASE (FIXED — NO document.write)   -->
-    <!-- ============================================ -->
+    <!-- SETUP DATABASE -->
     <script>
-        // Simpan konfigurasi ke window (dipakai modul berikutnya)
         window.IE_DB_MODE = localStorage.getItem('ie_db_mode') || 'firebase';
         window.IE_SERVER_URL = localStorage.getItem('ie_server_url') || 'http://192.168.1.100:3000';
     </script>
 
-    <!-- FIREBASE SDK (dynamic import, aman) -->
     <script type="module">
         if (window.IE_DB_MODE === 'firebase') {
             const firebaseConfig = {
@@ -826,13 +814,11 @@
                 appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
                 measurementId: "G-3EHX8Z3Y62"
             };
-
             try {
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
                 const { getDatabase, ref, set, onValue, get, runTransaction } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
                 const app = initializeApp(firebaseConfig);
                 const db = getDatabase(app);
-
                 window.firebaseDB = db;
                 window.firebaseRef = ref;
                 window.firebaseSet = set;
@@ -844,13 +830,11 @@
                 window.dispatchEvent(new Event('firebaseReady'));
             } catch (e) {
                 console.error('❌ Firebase gagal:', e);
-                // Tetap trigger event biar UI lanjut
                 window.dispatchEvent(new Event('firebaseReady'));
             }
         }
     </script>
 
-    <!-- SERVER PC (kalau mode bukan firebase) -->
     <script>
         if (window.IE_DB_MODE !== 'firebase') {
             const SERVER_PC_URL = window.IE_SERVER_URL;
@@ -1464,7 +1448,8 @@
             saveModelListToFirebase(); renderModelList();
             showToast('Model dihapus', 'warning');
         }
-                  // ===== MACHINE =====
+    </script>
+            // ===== MACHINE =====
         function toggleMachineDropdown() {
             const p = document.getElementById('machineDropdownPanel'); const b = document.getElementById('machineDropdownBtn');
             if (!p || !b) return;
@@ -1636,14 +1621,37 @@
             lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (firebaseReady) saveElemenMasterToFirebase();
             renderElemenMasterTable(); renderSopDropdownList(); updateCounters();
         }
+
+        // ✅ FIXED: Reset hanya menghapus Line + Model yang aktif
         function clearAllElemen() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
-            if (!confirm(`Hapus SEMUA master elemen untuk "${activeLine}"?`)) return;
-            elemenMasterList = elemenMasterList.filter(e => e.line !== activeLine);
-            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (firebaseReady) saveElemenMasterToFirebase();
+            if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); return; }
+
+            const targetModel = activeModel || '-';
+            const modelLabel = activeModel === '-' ? 'data lama (tanpa model)' : `Model "${activeModel}"`;
+
+            const willDelete = elemenMasterList.filter(e =>
+                e.line === activeLine && (e.model || '-') === targetModel
+            ).length;
+
+            if (willDelete === 0) {
+                showToast(`⚠️ Tidak ada elemen untuk ${modelLabel}`, 'warning');
+                return;
+            }
+
+            if (!confirm(`⚠️ Hapus SEMUA master elemen?\n\nLine: ${activeLine}\nModel: ${activeModel || '-'}\n\n${willDelete} elemen akan dihapus.\nData model lain TIDAK terhapus.\n\nLanjut?`)) return;
+
+            elemenMasterList = elemenMasterList.filter(e =>
+                !(e.line === activeLine && (e.model || '-') === targetModel)
+            );
+
+            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
+            if (firebaseReady) saveElemenMasterToFirebase();
+
             renderElemenMasterTable(); renderSopDropdownList(); updateCounters();
-            showToast(`Direset`, 'warning');
+            showToast(`✅ ${willDelete} elemen dihapus (${modelLabel})`, 'warning');
         }
+
         function exportElemenCSV() {
             if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -1769,14 +1777,37 @@
             lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (firebaseReady) saveSiklusMasterToFirebase();
             renderSiklusMasterTable(); renderSiklusDropdownList(); updateCounters();
         }
+
+        // ✅ FIXED: Reset hanya menghapus Line + Model yang aktif
         function clearAllSiklus() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
-            if (!confirm(`Hapus SEMUA SOP siklus untuk "${activeLine}"?`)) return;
-            siklusMasterList = siklusMasterList.filter(s => s.line !== activeLine);
-            lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (firebaseReady) saveSiklusMasterToFirebase();
+            if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); return; }
+
+            const targetModel = activeModel || '-';
+            const modelLabel = activeModel === '-' ? 'data lama (tanpa model)' : `Model "${activeModel}"`;
+
+            const willDelete = siklusMasterList.filter(s =>
+                s.line === activeLine && (s.model || '-') === targetModel
+            ).length;
+
+            if (willDelete === 0) {
+                showToast(`⚠️ Tidak ada SOP untuk ${modelLabel}`, 'warning');
+                return;
+            }
+
+            if (!confirm(`⚠️ Hapus SEMUA master SOP Siklus?\n\nLine: ${activeLine}\nModel: ${activeModel || '-'}\n\n${willDelete} SOP akan dihapus.\nData model lain TIDAK terhapus.\n\nLanjut?`)) return;
+
+            siklusMasterList = siklusMasterList.filter(s =>
+                !(s.line === activeLine && (s.model || '-') === targetModel)
+            );
+
+            lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList);
+            if (firebaseReady) saveSiklusMasterToFirebase();
+
             renderSiklusMasterTable(); renderSiklusDropdownList(); updateCounters();
-            showToast(`Direset`, 'warning');
+            showToast(`✅ ${willDelete} SOP dihapus (${modelLabel})`, 'warning');
         }
+
         function exportSiklusCSV() {
             if (siklusMasterList.length === 0) { showToast('Belum ada SOP!', 'error'); return; }
             const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -2908,12 +2939,59 @@
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast('Data dihapus', 'warning');
         }
+
+        // ✅ FIXED: clearAllData dengan scope Line + Model
         function clearAllData() {
-            if (!confirm('Yakin hapus SEMUA data master?')) return;
-            masterData = []; saveMasterToLS();
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
+
+            const fLine = document.getElementById('dataFilterLine');
+            const fv = fLine ? fLine.value : '__active__';
+            const targetModel = (activeModel || '-');
+
+            let candidates, lineLabel, modelLabel;
+            if (fv === '__all__') {
+                candidates = masterData;
+                lineLabel = 'SEMUA LINE';
+                modelLabel = activeModel ? activeModel : 'Semua Model';
+            } else if (fv === '__active__') {
+                candidates = masterData.filter(d => d.line === activeLine);
+                lineLabel = activeLine;
+                modelLabel = targetModel;
+            } else {
+                candidates = masterData.filter(d => d.line === fv);
+                lineLabel = fv;
+                modelLabel = targetModel;
+            }
+
+            let toDelete;
+            if (fv === '__all__' && !activeModel) {
+                toDelete = candidates;
+            } else {
+                toDelete = candidates.filter(d => (d.model || '-') === targetModel);
+            }
+
+            const count = toDelete.length;
+            if (count === 0) {
+                showToast('⚠️ Tidak ada data untuk direset', 'warning');
+                return;
+            }
+
+            if (!confirm(`🗑️ Hapus data Master?\n\nLine: ${lineLabel}\nModel: ${modelLabel}\n\n${count} data akan dihapus.\nData model/line lain TIDAK terhapus.\n\nLanjut?`)) return;
+
+            const makeKey = (d) => {
+                if (currentMode === 'elemen') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
+                if (currentMode === 'siklus') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
+                return `${d.line}|${d.model||'-'}|${d.no}|${d.process}|${d.subMachine}`;
+            };
+
+            const idsToRemove = new Set(toDelete.map(makeKey));
+            masterData = masterData.filter(d => !idsToRemove.has(makeKey(d)));
+
+            saveMasterToLS();
             renderMasterTable(); renderStandardCheck(); updateCounters();
-            showToast('Semua data dihapus', 'warning');
+            showToast(`✅ ${count} data dihapus (${lineLabel} · ${modelLabel})`, 'warning');
         }
+
         function updateCounters() {
             const t = masterData.length;
             const b = document.getElementById('dataCountBadge');
@@ -3450,4 +3528,4 @@
         init();
     </script>
 </body>
-</html>  
+</html>
