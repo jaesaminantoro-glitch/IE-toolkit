@@ -3231,6 +3231,7 @@
                         </div>
                         <div class="flex gap-1">
                             <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2 py-1 bg-blue-50 rounded">♻️</button>
+                            <button onclick="exportArchiveExcel('${a.id}')" title="Export Excel (dengan rumus)" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold px-2 py-1 bg-emerald-100 rounded">📊</button>
                             <button onclick="exportArchiveCSV('${a.id}')" title="Export CSV" class="text-emerald-600 hover:text-emerald-800 text-xs font-semibold px-2 py-1 bg-emerald-50 rounded">📥</button>
                             <button onclick="deleteArchive('${a.id}')" title="Hapus permanen" class="text-red-500 hover:text-red-700 text-xs font-semibold px-2 py-1 bg-red-50 rounded">🗑️</button>
                         </div>
@@ -3335,6 +3336,101 @@
             const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
             downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.csv`);
             showToast('📄 CSV diunduh', 'success');
+        }
+        // Export arsip ke Excel (.xlsx) dengan RUMUS asli (Average/SMH/UPH atau CT+Gerakan/Kapasitas
+        // dihitung oleh Excel dari kolom Lap, bukan angka mati hasil hitungan JS), mengikuti
+        // struktur kolom yang sama dengan export Master Data sesuai mode arsip (elemen/siklus/mesin).
+        function exportArchiveExcel(id) {
+            const a = archiveList.find(x => x.id === id);
+            if (!a || !a.data) { showToast('❌ Arsip tidak ditemukan', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+            try {
+                const mode = a.mode || 'elemen';
+                const items = a.data || [];
+                if (items.length === 0) { showToast('⚠️ Arsip kosong', 'warning'); return; }
+
+                const lapsArr = items.map(d => (d.laps || []).map(l => (typeof l === 'object' && l !== null) ? (parseFloat(l.dur) || 0) : (parseFloat(l) || 0)));
+                const maxLaps = Math.max(1, ...lapsArr.map(l => l.length));
+
+                let hdFixed = [];
+                if (mode === 'elemen') hdFixed = ['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen'];
+                else if (mode === 'siklus') hdFixed = ['Line', 'Model', 'No. SOP', 'Nama SOP'];
+                else hdFixed = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
+
+                const lapHeaders = Array.from({ length: maxLaps }, (_, i) => `Lap ${i + 1}`);
+
+                let hdTail = [];
+                if (mode === 'elemen' || mode === 'siklus') hdTail = ['Jml Siklus', 'Average (dtk)', 'Allowance', 'SMH (dtk)', 'UPH'];
+                else hdTail = ['Jml Siklus', 'Average (dtk)', 'NG%', 'Gerakan (dtk)', 'CT+Gerakan (dtk)', 'Kapasitas', 'Jml Mesin', 'Total Kapasitas'];
+
+                const header = [...hdFixed, ...lapHeaders, ...hdTail];
+                const rows = [header];
+
+                items.forEach((d, idx) => {
+                    const laps = lapsArr[idx];
+                    let rowFixed = [];
+                    if (mode === 'elemen') rowFixed = [a.line, a.model || '-', d.noSop || d.no || '-', d.namaSop || d.process || '-', d.elemen || '-'];
+                    else if (mode === 'siklus') rowFixed = [a.line, a.model || '-', d.noSop || d.no || '-', d.namaSop || d.process || '-'];
+                    else rowFixed = [a.line, a.model || '-', d.no || '-', d.process || '-', d.subMachine || '-'];
+
+                    const lapCells = Array.from({ length: maxLaps }, (_, i) => laps[i] !== undefined ? laps[i] : '');
+
+                    let rowTail = [];
+                    if (mode === 'elemen' || mode === 'siklus') rowTail = ['', '', ALLOWANCE_FIXED, '', ''];
+                    else rowTail = ['', '', (d.ngRate !== undefined ? parseFloat(d.ngRate) || 0 : 0), (d.gerakan !== undefined ? parseFloat(d.gerakan) || 0 : 0), '', '', (d.actualMachine !== undefined ? parseFloat(d.actualMachine) || 1 : 1), ''];
+
+                    rows.push([...rowFixed, ...lapCells, ...rowTail]);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(rows);
+                const fixedCols = hdFixed.length;
+                const lapStartCol = fixedCols;
+                const lapEndCol = fixedCols + maxLaps - 1;
+                const lapColStartLetter = XLSX.utils.encode_col(lapStartCol);
+                const lapColEndLetter = XLSX.utils.encode_col(lapEndCol);
+
+                for (let r = 1; r <= items.length; r++) {
+                    const rowNum = r + 1;
+                    const lapRange = `${lapColStartLetter}${rowNum}:${lapColEndLetter}${rowNum}`;
+
+                    if (mode === 'elemen' || mode === 'siklus') {
+                        const cJml = fixedCols + maxLaps, cAvg = cJml + 1, cAllow = cAvg + 1, cSmh = cAllow + 1, cUph = cSmh + 1;
+                        const addrJml = XLSX.utils.encode_cell({ r, c: cJml });
+                        const addrAvg = XLSX.utils.encode_cell({ r, c: cAvg });
+                        const addrAllow = XLSX.utils.encode_cell({ r, c: cAllow });
+                        const addrSmh = XLSX.utils.encode_cell({ r, c: cSmh });
+                        const addrUph = XLSX.utils.encode_cell({ r, c: cUph });
+                        ws[addrJml] = { t: 'n', f: `COUNT(${lapRange})` };
+                        ws[addrAvg] = { t: 'n', f: `IFERROR(AVERAGE(${lapRange}),0)` };
+                        ws[addrSmh] = { t: 'n', f: `${addrAvg}*(1+${addrAllow})` };
+                        ws[addrUph] = { t: 'n', f: `IF(${addrSmh}>0,ROUND(3600/${addrSmh},0),0)` };
+                        if (ws[addrAllow]) ws[addrAllow].z = '0%';
+                    } else {
+                        const cJml = fixedCols + maxLaps, cAvg = cJml + 1, cNg = cAvg + 1, cGerakan = cNg + 1, cCtg = cGerakan + 1, cKap = cCtg + 1, cJmlMesin = cKap + 1;
+                        const addrJml = XLSX.utils.encode_cell({ r, c: cJml });
+                        const addrAvg = XLSX.utils.encode_cell({ r, c: cAvg });
+                        const addrNg = XLSX.utils.encode_cell({ r, c: cNg });
+                        const addrGerakan = XLSX.utils.encode_cell({ r, c: cGerakan });
+                        const addrCtg = XLSX.utils.encode_cell({ r, c: cCtg });
+                        const addrKap = XLSX.utils.encode_cell({ r, c: cKap });
+                        const addrJmlMesin = XLSX.utils.encode_cell({ r, c: cJmlMesin });
+                        ws[addrJml] = { t: 'n', f: `COUNT(${lapRange})` };
+                        ws[addrAvg] = { t: 'n', f: `IFERROR(AVERAGE(${lapRange}),0)` };
+                        ws[addrCtg] = { t: 'n', f: `${addrAvg}+${addrGerakan}` };
+                        ws[addrKap] = { t: 'n', f: `IF(${addrCtg}>0,ROUND((3600/${addrCtg})*${addrJmlMesin}*(1-MIN(100,MAX(0,${addrNg}))/100),0),0)` };
+                    }
+                }
+
+                ws['!cols'] = header.map(() => ({ wch: 12 }));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Arsip');
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                if (downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2, '0')}.xlsx`)) showToast('📊 Excel diunduh (dengan rumus)', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('❌ Gagal export Excel.', 'error');
+            }
         }
         function resetArsipFilter() {
             document.getElementById('arsipFilterLine').value = '';
