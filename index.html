@@ -90,6 +90,18 @@
             .mode-card-title { font-size: 26px; }
             .mode-card-desc { font-size: 15px; }
         }
+        /* === INLINE EDIT HINT === */
+        .editable-cell { position: relative; cursor: pointer; transition: background 0.15s; }
+        .editable-cell:hover { background-color: #fef3c7 !important; }
+        .editable-cell:hover::after {
+            content: "✏️";
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            font-size: 8px;
+            opacity: 0.7;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
@@ -529,7 +541,7 @@
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                    <div><h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2><p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time</p></div>
+                    <div><h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2><p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time · <span class="text-amber-700 font-semibold">💡 Klik angka di kolom kuning untuk edit langsung</span></p></div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 mb-3 bg-white border border-gray-200 rounded-lg p-2">
                     <div class="flex items-center gap-1.5">
@@ -887,7 +899,7 @@
     </script>
         <script>
 // ============================================================
-// STATE & KONSTANTA
+// STATE
 // ============================================================
 let currentMode = '';
 let startTime = 0;
@@ -994,6 +1006,124 @@ function downloadBlob(blob, filename) {
         setTimeout(() => { document.body.removeChild(l); URL.revokeObjectURL(u); }, 1500);
         return true;
     } catch (e) { showToast('❌ Gagal download.', 'error'); return false; }
+}
+
+// ============================================================
+// INLINE EDIT (Universal)
+// ============================================================
+function startInlineEdit(idx, field, cellEl) {
+    const item = masterData[idx];
+    if (!item) return;
+    if (cellEl.querySelector('input')) return;
+
+    const originalHtml = cellEl.innerHTML;
+    let originalValue, isInteger, step, min, label, unit, max;
+
+    if (field === 'ngRate') {
+        originalValue = parseFloat(item.ngRate) || 0;
+        isInteger = false; step = '0.01'; min = '0'; max = 100;
+        label = 'NG%'; unit = '%';
+    } else if (field === 'gerakan') {
+        originalValue = parseFloat(item.gerakan) || 0;
+        isInteger = false; step = '0.01'; min = '0'; max = 99999;
+        label = 'Gerakan'; unit = 's';
+    } else if (field === 'actualMachine') {
+        originalValue = parseInt(item.actualMachine) || 1;
+        isInteger = true; step = '1'; min = '1'; max = 9999;
+        label = 'Jml Mesin'; unit = '';
+    } else if (field === 'operators') {
+        originalValue = parseInt(item.operators) || 1;
+        isInteger = true; step = '1'; min = '1'; max = 99;
+        label = 'Operator'; unit = ' org';
+    } else return;
+
+    cellEl.innerHTML = `<input type="number" value="${originalValue}" step="${step}" min="${min}" max="${max}" inputmode="decimal"
+        class="w-16 px-1 py-0.5 text-center border-2 border-indigo-500 rounded font-bold text-indigo-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300" style="font-size:12px;">`;
+
+    const input = cellEl.querySelector('input');
+    input.focus(); input.select();
+    let cancelled = false;
+
+    const commit = () => {
+        if (cancelled) return;
+        let newVal;
+        if (isInteger) {
+            newVal = parseInt(input.value);
+            if (isNaN(newVal) || newVal < parseInt(min)) newVal = parseInt(min);
+            if (newVal > max) newVal = max;
+        } else {
+            newVal = parseFloat(input.value);
+            if (isNaN(newVal) || newVal < parseFloat(min)) newVal = parseFloat(min);
+            if (newVal > max) newVal = max;
+        }
+        if (newVal === originalValue) { cellEl.innerHTML = originalHtml; return; }
+        if (field === 'ngRate') item.ngRate = newVal;
+        else if (field === 'gerakan') item.gerakan = newVal;
+        else if (field === 'actualMachine') item.actualMachine = newVal;
+        else if (field === 'operators') item.operators = newVal;
+
+        saveMasterToLS((serverArr) => {
+            const ref = { line: item.line, model: item.model || '-', no: item.no, process: item.process, subMachine: item.subMachine, noSop: item.noSop, namaSop: item.namaSop, elemen: item.elemen };
+            const arr = serverArr.map(x => ({ ...x }));
+            const i2 = arr.findIndex(x => recordIdentityMatch(x, ref, currentMode));
+            if (i2 !== -1) arr[i2][field] = newVal;
+            return arr;
+        });
+        renderMasterTable(); renderStandardCheck();
+        showToast(`✅ ${label} → ${newVal}${unit}`, 'success');
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancelled = true; cellEl.innerHTML = originalHtml; showToast('⏹️ Dibatalkan', 'info'); }
+    });
+}
+
+function startInlineEditGroup(indices, field, cellEl) {
+    if (!indices || indices.length === 0) return;
+    const firstIdx = indices[0];
+    const item = masterData[firstIdx];
+    if (!item) return;
+    if (cellEl.querySelector('input')) return;
+
+    const originalHtml = cellEl.innerHTML;
+    const originalValue = parseInt(item.operators) || 1;
+
+    cellEl.innerHTML = `<input type="number" value="${originalValue}" step="1" min="1" max="99" inputmode="numeric"
+        class="w-16 px-1 py-0.5 text-center border-2 border-indigo-500 rounded font-bold text-indigo-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300" style="font-size:12px;">`;
+
+    const input = cellEl.querySelector('input');
+    input.focus(); input.select();
+    let cancelled = false;
+
+    const commit = () => {
+        if (cancelled) return;
+        let newVal = parseInt(input.value);
+        if (isNaN(newVal) || newVal < 1) newVal = 1;
+        if (newVal > 99) newVal = 99;
+        if (newVal === originalValue) { cellEl.innerHTML = originalHtml; return; }
+
+        indices.forEach(i => { if (masterData[i]) masterData[i].operators = newVal; });
+
+        saveMasterToLS((serverArr) => {
+            const arr = serverArr.map(x => ({ ...x }));
+            indices.forEach(i => {
+                const it = masterData[i];
+                if (!it) return;
+                const ref = { line: it.line, model: it.model || '-', no: it.no, process: it.process, subMachine: it.subMachine, noSop: it.noSop, namaSop: it.namaSop, elemen: it.elemen };
+                const i2 = arr.findIndex(x => recordIdentityMatch(x, ref, currentMode));
+                if (i2 !== -1) arr[i2].operators = newVal;
+            });
+            return arr;
+        });
+        renderMasterTable(); renderStandardCheck();
+        showToast(`✅ Operator → ${newVal} org (${indices.length} baris)`, 'success');
+    };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancelled = true; cellEl.innerHTML = originalHtml; showToast('⏹️ Dibatalkan', 'info'); }
+    });
 }
 
 // ============================================================
@@ -1140,7 +1270,7 @@ function applyModeToUI() {
 }
 
 // ============================================================
-// DATABASE ABSTRACTION
+// DB ABSTRACTION
 // ============================================================
 async function dbGet(node) {
     try {
@@ -1335,7 +1465,6 @@ async function loadAllFromFirebaseOnce() {
 
 function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
 function saveMasterToLS(mutatorFn) { lsSave(LS_KEY_MASTER, masterData); if (firebaseReady) saveMasterToFirebase(mutatorFn); }
-
 function syncUphFromActiveLine() {
     if (uphUserOverride || !activeLine) return;
     const uph = getLineUph(activeLine);
@@ -2815,6 +2944,7 @@ function renderMasterTableElemen(fd, tb, th) {
         const uph = g.totalSmh > 0 ? Math.round(3600 / g.totalSmh) : 0;
         const uc = getUphColorClass(uph, std);
         const isHeavy = g.totalSmh > heavyThreshold && heavyThreshold > 0;
+        const allIdx = g.rows.map(rr => rr.originalIndex).filter(i => i >= 0);
         g.rows.forEach((r, ri) => {
             const st = r.stats;
             const pb = r.preinstall ? `<span class="ml-1 text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full font-bold">🎯</span>` : '';
@@ -2827,7 +2957,10 @@ function renderMasterTableElemen(fd, tb, th) {
                 out += `<td rowspan="${rs}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(g.namaSop || '-')}</td>`;
             }
             out += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">${escapeHtml(r.elemen || '-')}${sb}${pb}</td>`;
-            if (ri === 0) out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-amber-50 align-middle whitespace-nowrap font-bold text-amber-800">${g.operators || 1}</td>`;
+            // Operator — editable (semua baris grup)
+            if (ri === 0) {
+                out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-amber-50 align-middle whitespace-nowrap font-bold text-amber-800 editable-cell" onclick="startInlineEditGroup([${allIdx.join(',')}], 'operators', this)" title="Klik untuk edit Operator (semua baris grup)">${g.operators || 1}</td>`;
+            }
             for (let i = 0; i < mL; i++) {
                 const lv = r.laps[i];
                 if (lv !== undefined && lv !== null) {
@@ -2897,7 +3030,8 @@ function renderMasterTableSiklus(fd, tb, th) {
                 out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 align-middle whitespace-nowrap text-emerald-700">${escapeHtml(g.noSop || '-')}</td>`;
             }
             out += `<td class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40 whitespace-nowrap">${escapeHtml(r.namaSop || '-')}${sb}${pb}</td>`;
-            out += `<td class="px-2 py-2 text-center border-r border-b bg-amber-50 whitespace-nowrap font-bold text-amber-800">${r.operators || 1}</td>`;
+            // Operator — editable (per baris)
+            out += `<td class="px-2 py-2 text-center border-r border-b bg-amber-50 whitespace-nowrap font-bold text-amber-800 editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'operators', this)" title="Klik untuk edit Operator">${r.operators || 1}</td>`;
             for (let i = 0; i < mL; i++) {
                 const lv = r.laps[i];
                 if (lv !== undefined && lv !== null) {
@@ -2968,11 +3102,14 @@ function renderMasterTableMesin(fd, tb, th) {
                 } else out += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
             }
             out += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${st.avg.toFixed(2)}</td>`;
-            out += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap">${r.ngRate || 0}%</td>`;
-            out += `<td class="px-2 py-2 text-center font-mono text-amber-700 bg-amber-50 border-r border-b whitespace-nowrap">${st.gerakan.toFixed(2)}</td>`;
+            // NG% — editable
+            out += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'ngRate', this)" title="Klik untuk edit NG%">${r.ngRate || 0}%</td>`;
+            // Gerakan — editable
+            out += `<td class="px-2 py-2 text-center font-mono text-amber-700 bg-amber-50 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'gerakan', this)" title="Klik untuk edit Gerakan">${st.gerakan.toFixed(2)}</td>`;
             out += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${st.ctPlusG.toFixed(2)}</td>`;
             out += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${st.capacity}</td>`;
-            out += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap">${st.actualMachine}</td>`;
+            // Jml Mesin — editable
+            out += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'actualMachine', this)" title="Klik untuk edit Jml Mesin">${st.actualMachine}</td>`;
             if (ri === 0) out += `<td rowspan="${rs}" class="px-3 py-2 text-center font-extrabold border-r border-b align-middle whitespace-nowrap text-sm ${tc}">${g.totalCapacity}</td>`;
             out += `<td class="px-2 py-2 text-center border-b whitespace-nowrap"><button onclick="deleteMasterRow(${r.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button></td></tr>`;
         });
@@ -3339,33 +3476,22 @@ function updateArsipCount() {
 }
 
 // ============================================================
-// HELPER STYLING EXCEL — dengan dukungan function-based & warna dinamis
+// EXCEL STYLING + BUILDERS + EXPORT
 // ============================================================
 function applySheetStyle(ws, opts) {
-    const {
-        headerFill = 'C6E0B4',
-        headerFont = '000000',
-        columnStyles = {},
-        numFmtCols = [],
-        mL = 0,
-        s1Col = 0,
-        defaultBorderColor = '9CA3AF'
-    } = opts;
-
+    const { headerFill = 'C6E0B4', headerFont = '000000', columnStyles = {}, numFmtCols = [], mL = 0, s1Col = 0, defaultBorderColor = '9CA3AF' } = opts;
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let R = range.s.r; R <= range.e.r; R++) {
         for (let C = range.s.c; C <= range.e.c; C++) {
             const addr = XLSX.utils.encode_cell({ r: R, c: C });
             if (!ws[addr]) ws[addr] = { t: 's', v: '' };
             if (!ws[addr].s) ws[addr].s = {};
-
             ws[addr].s.border = {
                 top:    { style: 'thin', color: { rgb: defaultBorderColor } },
                 bottom: { style: 'thin', color: { rgb: defaultBorderColor } },
                 left:   { style: 'thin', color: { rgb: defaultBorderColor } },
                 right:  { style: 'thin', color: { rgb: defaultBorderColor } }
             };
-
             if (R === 0) {
                 ws[addr].s.font = { bold: true, color: { rgb: headerFont }, sz: 11 };
                 ws[addr].s.fill = { patternType: 'solid', fgColor: { rgb: headerFill } };
@@ -3378,24 +3504,14 @@ function applySheetStyle(ws, opts) {
                 };
                 continue;
             }
-
             ws[addr].s.alignment = { vertical: 'center', horizontal: 'left' };
-            if (C >= s1Col && C < s1Col + mL) {
-                ws[addr].s.alignment = { horizontal: 'center', vertical: 'center' };
-            }
-            if (numFmtCols.includes(C)) {
-                ws[addr].s.numFmt = '0.00';
-            }
-
+            if (C >= s1Col && C < s1Col + mL) ws[addr].s.alignment = { horizontal: 'center', vertical: 'center' };
+            if (numFmtCols.includes(C)) ws[addr].s.numFmt = '0.00';
             const styleDef = columnStyles[C];
             if (styleDef) {
                 let cs;
-                if (typeof styleDef === 'function') {
-                    const cellVal = ws[addr].v !== undefined ? ws[addr].v : null;
-                    cs = styleDef(cellVal, R, C, ws);
-                } else {
-                    cs = styleDef;
-                }
+                if (typeof styleDef === 'function') { const cellVal = ws[addr].v !== undefined ? ws[addr].v : null; cs = styleDef(cellVal, R, C, ws); }
+                else cs = styleDef;
                 if (cs) {
                     if (cs.fill) ws[addr].s.fill = { patternType: 'solid', fgColor: { rgb: cs.fill } };
                     if (cs.font) ws[addr].s.font = { ...(ws[addr].s.font || {}), ...cs.font };
@@ -3406,240 +3522,6 @@ function applySheetStyle(ws, opts) {
         }
     }
     ws['!freeze'] = { xSplit: 0, ySplit: 1 };
-}
-
-// ============================================================
-// ARSIP EXCEL BUILDERS (dengan RUMUS + styling dinamis)
-// ============================================================
-function buildArchiveElemenXLSX(items, a) {
-    const wb = XLSX.utils.book_new();
-    const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
-    const hd = ['Line','Model','No. SOP','Nama SOP','Elemen'];
-    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-    hd.push('Average','Allowance','SMH','Total SMH','Operator','UPH');
-
-    const gr = {}; const go = [];
-    items.forEach(i => {
-        const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
-        if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [], operators: 1 }; go.push(k); }
-        gr[k].rows.push(i);
-        if (i.operators) gr[k].operators = i.operators;
-    });
-    go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
-
-    const data = [hd];
-    const meta = [];
-    go.forEach(k => {
-        const g = gr[k];
-        const startRow = data.length + 1;
-        g.rows.forEach((it, x) => {
-            const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', x === 0 ? it.namaSop : '', it.elemen];
-            for (let i = 0; i < mL; i++) {
-                const lv = it.laps[i];
-                if (lv !== undefined && lv !== null) {
-                    const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                    rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                } else rd.push('');
-            }
-            rd.push(null, 0.1, null, null, it.operators || g.operators || 1, null);
-            data.push(rd);
-        });
-        meta.push({ startRow, endRow: data.length, group: g });
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    const s1Col = 5;
-    const avgCol = 5 + mL;
-    const allowCol = avgCol + 1;
-    const smhCol = allowCol + 1;
-    const totalSmhCol = smhCol + 1;
-    const opCol = totalSmhCol + 1;
-    const uphCol = opCol + 1;
-    const cl = (n) => XLSX.utils.encode_col(n);
-    const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
-    const avgL = cl(avgCol), allowL = cl(allowCol), smhL = cl(smhCol), totalSmhL = cl(totalSmhCol), uphL = cl(uphCol);
-
-    // Calculate cached values
-    const grouped = {};
-    meta.forEach(m => {
-        const k = `${m.group.line}||${m.group.model}||${m.group.noSop}||${m.group.namaSop}`;
-        grouped[k] = { totalSmh: 0 };
-    });
-    meta.forEach(m => {
-        for (let r = m.startRow; r <= m.endRow; r++) {
-            const rowItem = m.group.rows[r - m.startRow];
-            const st = getRowStatsArchive(rowItem, 'elemen');
-            ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
-            ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
-            ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
-            m.group.totalSmh = (m.group.totalSmh || 0) + st.smh;
-        }
-        ws[`${totalSmhL}${m.startRow}`] = { t: 'n', f: `SUM(${smhL}${m.startRow}:${smhL}${m.endRow})`, v: parseFloat(m.group.totalSmh.toFixed(4)) };
-        ws[`${uphL}${m.startRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${m.startRow},0)`, v: Math.round(3600 / m.group.totalSmh) };
-    });
-
-    const stdUph = getLineStandardUph();
-    const numFmtCols = [];
-    for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
-    numFmtCols.push(avgCol, smhCol);
-    const columnStyles = {};
-    columnStyles[avgCol]      = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-    columnStyles[allowCol]    = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
-    columnStyles[smhCol]      = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
-    columnStyles[opCol]       = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-    columnStyles[totalSmhCol] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true } };
-    // UPH dinamis: hijau kalau ≥ std, merah kalau < std
-    columnStyles[uphCol] = (val) => {
-        const v = parseFloat(val);
-        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-        return v >= stdUph
-            ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } }
-            : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
-    };
-
-    applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-
-    ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22},{wch:24}];
-    for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
-    ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10});
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Arsip Elemen');
-    return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-}
-function buildArchiveSiklusXLSX(items, a) {
-    const wb = XLSX.utils.book_new();
-    const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
-    const hd = ['Line','Model','No. SOP','Nama SOP'];
-    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-    hd.push('Average','Allowance','SMH','Operator','UPH');
-
-    const data = [hd];
-    items.forEach(it => {
-        const rd = [it.line, it.model || '-', it.noSop, it.namaSop];
-        for (let i = 0; i < mL; i++) {
-            const lv = it.laps[i];
-            if (lv !== undefined && lv !== null) {
-                const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-            } else rd.push('');
-        }
-        rd.push(null, 0.1, null, it.operators || 1, null);
-        data.push(rd);
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    const s1Col = 4;
-    const avgCol = 4 + mL;
-    const allowCol = avgCol + 1;
-    const smhCol = allowCol + 1;
-    const opCol = smhCol + 1;
-    const uphCol = opCol + 1;
-    const cl = (n) => XLSX.utils.encode_col(n);
-    const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
-    const avgL = cl(avgCol), allowL = cl(allowCol), smhL = cl(smhCol), uphL = cl(uphCol);
-
-    for (let r = 2; r <= items.length + 1; r++) {
-        const rowItem = items[r - 2];
-        const st = getRowStatsArchive(rowItem, 'siklus');
-        ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
-        ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
-        ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
-        ws[`${uphL}${r}`] = { t: 'n', f: `ROUND(3600/${smhL}${r},0)`, v: st.uph };
-    }
-
-    const stdUph = getLineStandardUph();
-    const numFmtCols = [];
-    for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
-    numFmtCols.push(avgCol, smhCol);
-    const columnStyles = {};
-    columnStyles[avgCol]   = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-    columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
-    columnStyles[smhCol]   = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
-    columnStyles[opCol]    = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-    columnStyles[uphCol] = (val) => {
-        const v = parseFloat(val);
-        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-        return v >= stdUph
-            ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } }
-            : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
-    };
-
-    applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-
-    ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22}];
-    for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
-    ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:10},{wch:10});
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Arsip Siklus');
-    return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-}
-function buildArchiveMesinXLSX(items, a) {
-    const wb = XLSX.utils.book_new();
-    const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
-    const hd = ['Line','Model','No','Nama Mesin','Sub Mesin'];
-    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-    hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin');
-
-    const data = [hd];
-    items.forEach(it => {
-        const rd = [it.line, it.model || '-', it.no, it.process, it.subMachine || ''];
-        for (let i = 0; i < mL; i++) {
-            const lv = it.laps[i];
-            if (lv !== undefined && lv !== null) {
-                const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-            } else rd.push('');
-        }
-        rd.push(null, parseFloat(it.ngRate) || 0, parseFloat(it.gerakan) || 0, null, null, parseFloat(it.actualMachine) || 1);
-        data.push(rd);
-    });
-
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    const s1Col = 5;
-    const avgCol = 5 + mL;
-    const ngCol = avgCol + 1;
-    const gerCol = ngCol + 1;
-    const ctgCol = gerCol + 1;
-    const capCol = ctgCol + 1;
-    const jmlCol = capCol + 1;
-    const cl = (n) => XLSX.utils.encode_col(n);
-    const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
-    const avgL = cl(avgCol), ngL = cl(ngCol), gerL = cl(gerCol), ctgL = cl(ctgCol), capL = cl(capCol), jmlL = cl(jmlCol);
-
-    for (let r = 2; r <= items.length + 1; r++) {
-        const rowItem = items[r - 2];
-        const st = getRowStatsArchive(rowItem, 'mesin');
-        ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
-        ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
-        ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
-    }
-
-    const stdUph = getLineStandardUph();
-    const numFmtCols = [];
-    for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
-    numFmtCols.push(avgCol, ctgCol);
-    const columnStyles = {};
-    columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-    columnStyles[ngCol]  = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-    columnStyles[gerCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-    columnStyles[ctgCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, font: { bold: true } };
-    columnStyles[jmlCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-    columnStyles[capCol] = (val) => {
-        const v = parseFloat(val);
-        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-        return v >= stdUph
-            ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } }
-            : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
-    };
-
-    applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-
-    ws['!cols'] = [{wch:10},{wch:12},{wch:6},{wch:18},{wch:12}];
-    for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
-    ws['!cols'].push({wch:10},{wch:8},{wch:10},{wch:12},{wch:12},{wch:10});
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Arsip Mesin');
-    return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
 }
 function getRowStatsArchive(item, mode) {
     const laps = item.laps || [];
@@ -3660,9 +3542,199 @@ function getRowStatsArchive(item, mode) {
         return { count, avg, ctPlusG, capacity, gerakan, actualMachine, ngRate };
     }
 }
+function buildArchiveElemenXLSX(items, a) {
+    const wb = XLSX.utils.book_new();
+    const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
+    const hd = ['Line','Model','No. SOP','Nama SOP','Elemen'];
+    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+    hd.push('Average','Allowance','SMH','Total SMH','Operator','UPH');
+    const gr = {}; const go = [];
+    items.forEach(i => {
+        const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
+        if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [], operators: 1 }; go.push(k); }
+        gr[k].rows.push(i);
+        if (i.operators) gr[k].operators = i.operators;
+    });
+    go.sort((x, y) => String(gr[x].noSop || '').localeCompare(String(gr[y].noSop || ''), undefined, { numeric: true }));
+    const data = [hd];
+    const meta = [];
+    go.forEach(k => {
+        const g = gr[k];
+        const startRow = data.length + 1;
+        g.rows.forEach((it, x) => {
+            const rd = [x === 0 ? it.line : '', x === 0 ? (it.model || '-') : '', x === 0 ? it.noSop : '', x === 0 ? it.namaSop : '', it.elemen];
+            for (let i = 0; i < mL; i++) {
+                const lv = it.laps[i];
+                if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+                else rd.push('');
+            }
+            rd.push(null, 0.1, null, null, it.operators || g.operators || 1, null);
+            data.push(rd);
+        });
+        meta.push({ startRow, endRow: data.length, group: g });
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const s1Col = 5;
+    const avgCol = 5 + mL;
+    const allowCol = avgCol + 1;
+    const smhCol = allowCol + 1;
+    const totalSmhCol = smhCol + 1;
+    const opCol = totalSmhCol + 1;
+    const uphCol = opCol + 1;
+    const cl = (n) => XLSX.utils.encode_col(n);
+    const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
+    const avgL = cl(avgCol), allowL = cl(allowCol), smhL = cl(smhCol), totalSmhL = cl(totalSmhCol), uphL = cl(uphCol);
+    meta.forEach(m => {
+        m.group.totalSmh = 0;
+        for (let r = m.startRow; r <= m.endRow; r++) {
+            const rowItem = m.group.rows[r - m.startRow];
+            const st = getRowStatsArchive(rowItem, 'elemen');
+            ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
+            ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
+            ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
+            m.group.totalSmh += st.smh;
+        }
+        ws[`${totalSmhL}${m.startRow}`] = { t: 'n', f: `SUM(${smhL}${m.startRow}:${smhL}${m.endRow})`, v: parseFloat(m.group.totalSmh.toFixed(4)) };
+        ws[`${uphL}${m.startRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${m.startRow},0)`, v: Math.round(3600 / m.group.totalSmh) };
+    });
+    const stdUph = getLineStandardUph();
+    const numFmtCols = [];
+    for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
+    numFmtCols.push(avgCol, smhCol);
+    const columnStyles = {};
+    columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+    columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
+    columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
+    columnStyles[opCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
+    columnStyles[totalSmhCol] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true } };
+    columnStyles[uphCol] = (val) => {
+        const v = parseFloat(val);
+        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
+        return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+    };
+    applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+    ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22},{wch:24}];
+    for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
+    ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10});
+    XLSX.utils.book_append_sheet(wb, ws, 'Arsip Elemen');
+    return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+}
+function buildArchiveSiklusXLSX(items, a) {
+    const wb = XLSX.utils.book_new();
+    const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
+    const hd = ['Line','Model','No. SOP','Nama SOP'];
+    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+    hd.push('Average','Allowance','SMH','Operator','UPH');
+    const data = [hd];
+    items.forEach(it => {
+        const rd = [it.line, it.model || '-', it.noSop, it.namaSop];
+        for (let i = 0; i < mL; i++) {
+            const lv = it.laps[i];
+            if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+            else rd.push('');
+        }
+        rd.push(null, 0.1, null, it.operators || 1, null);
+        data.push(rd);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const s1Col = 4;
+    const avgCol = 4 + mL;
+    const allowCol = avgCol + 1;
+    const smhCol = allowCol + 1;
+    const opCol = smhCol + 1;
+    const uphCol = opCol + 1;
+    const cl = (n) => XLSX.utils.encode_col(n);
+    const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
+    const avgL = cl(avgCol), allowL = cl(allowCol), smhL = cl(smhCol), uphL = cl(uphCol);
+    for (let r = 2; r <= items.length + 1; r++) {
+        const rowItem = items[r - 2];
+        const st = getRowStatsArchive(rowItem, 'siklus');
+        ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
+        ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
+        ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
+        ws[`${uphL}${r}`] = { t: 'n', f: `ROUND(3600/${smhL}${r},0)`, v: st.uph };
+    }
+    const stdUph = getLineStandardUph();
+    const numFmtCols = [];
+    for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
+    numFmtCols.push(avgCol, smhCol);
+    const columnStyles = {};
+    columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+    columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
+    columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
+    columnStyles[opCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
+    columnStyles[uphCol] = (val) => {
+        const v = parseFloat(val);
+        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
+        return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+    };
+    applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+    ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22}];
+    for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
+    ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:10},{wch:10});
+    XLSX.utils.book_append_sheet(wb, ws, 'Arsip Siklus');
+    return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+}
+function buildArchiveMesinXLSX(items, a) {
+    const wb = XLSX.utils.book_new();
+    const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
+    const hd = ['Line','Model','No','Nama Mesin','Sub Mesin'];
+    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+    hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin');
+    const data = [hd];
+    items.forEach(it => {
+        const rd = [it.line, it.model || '-', it.no, it.process, it.subMachine || ''];
+        for (let i = 0; i < mL; i++) {
+            const lv = it.laps[i];
+            if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
+            else rd.push('');
+        }
+        rd.push(null, parseFloat(it.ngRate) || 0, parseFloat(it.gerakan) || 0, null, null, parseFloat(it.actualMachine) || 1);
+        data.push(rd);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const s1Col = 5;
+    const avgCol = 5 + mL;
+    const ngCol = avgCol + 1;
+    const gerCol = ngCol + 1;
+    const ctgCol = gerCol + 1;
+    const capCol = ctgCol + 1;
+    const jmlCol = capCol + 1;
+    const cl = (n) => XLSX.utils.encode_col(n);
+    const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
+    const avgL = cl(avgCol), ngL = cl(ngCol), gerL = cl(gerCol), ctgL = cl(ctgCol), capL = cl(capCol), jmlL = cl(jmlCol);
+    for (let r = 2; r <= items.length + 1; r++) {
+        const rowItem = items[r - 2];
+        const st = getRowStatsArchive(rowItem, 'mesin');
+        ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
+        ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
+        ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
+    }
+    const stdUph = getLineStandardUph();
+    const numFmtCols = [];
+    for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
+    numFmtCols.push(avgCol, ctgCol);
+    const columnStyles = {};
+    columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+    columnStyles[ngCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
+    columnStyles[gerCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+    columnStyles[ctgCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, font: { bold: true } };
+    columnStyles[jmlCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
+    columnStyles[capCol] = (val) => {
+        const v = parseFloat(val);
+        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
+        return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+    };
+    applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+    ws['!cols'] = [{wch:10},{wch:12},{wch:6},{wch:18},{wch:12}];
+    for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
+    ws['!cols'].push({wch:10},{wch:8},{wch:10},{wch:12},{wch:12},{wch:10});
+    XLSX.utils.book_append_sheet(wb, ws, 'Arsip Mesin');
+    return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+}
 
 // ============================================================
-// EXPORT MASTER (dengan RUMUS + styling dinamis UPH/Kapasitas)
+// EXPORT MASTER DATA
 // ============================================================
 function exportToExcelXLSX() {
     if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
@@ -3670,11 +3742,9 @@ function exportToExcelXLSX() {
     try {
         const dE = getFilteredData();
         if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
-
         const wb = XLSX.utils.book_new();
         const wsData = [];
         let mL = Math.max(...dE.map(i => (i.laps || []).length), 1);
-
         let hd = [];
         if (currentMode === 'elemen') {
             hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus'];
@@ -3690,55 +3760,32 @@ function exportToExcelXLSX() {
             hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin');
         }
         wsData.push(hd);
-
         dE.forEach(i => {
             const lapsCount = (i.laps || []).length;
             const row = [];
             if (currentMode === 'elemen') {
                 row.push(i.line, i.model || '-', i.noSop, i.namaSop, i.elemen, lapsCount);
-                for (let k = 0; k < mL; k++) {
-                    const lv = i.laps[k];
-                    if (lv !== undefined && lv !== null) {
-                        const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                        row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                    } else row.push('');
-                }
+                for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
                 row.push(null, 0.1, null, null);
             } else if (currentMode === 'siklus') {
                 row.push(i.line, i.model || '-', i.noSop, i.namaSop, lapsCount);
-                for (let k = 0; k < mL; k++) {
-                    const lv = i.laps[k];
-                    if (lv !== undefined && lv !== null) {
-                        const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                        row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                    } else row.push('');
-                }
+                for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
                 row.push(null, 0.1, null, null);
             } else {
                 row.push(i.line, i.model || '-', i.no, i.process, i.subMachine, lapsCount);
-                for (let k = 0; k < mL; k++) {
-                    const lv = i.laps[k];
-                    if (lv !== undefined && lv !== null) {
-                        const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                        row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                    } else row.push('');
-                }
+                for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
                 row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1);
             }
             wsData.push(row);
         });
-
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         const firstDataRow = 2;
         const lastDataRow = firstDataRow + dE.length - 1;
-
         let s1Col, avgCol, allowCol, smhCol, uphCol;
         if (currentMode === 'elemen') { s1Col = 6; avgCol = 6 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; uphCol = smhCol + 1; }
         else if (currentMode === 'siklus') { s1Col = 5; avgCol = 5 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; uphCol = smhCol + 1; }
         else { s1Col = 6; avgCol = 6 + mL; }
-
         const colLetter = (n) => XLSX.utils.encode_col(n);
-
         for (let r = firstDataRow; r <= lastDataRow; r++) {
             const rowData = dE[r - firstDataRow];
             const st = getRowStats(rowData);
@@ -3748,7 +3795,6 @@ function exportToExcelXLSX() {
             const allowL = colLetter(allowCol);
             const smhL = colLetter(smhCol);
             const uphL = colLetter(uphCol);
-
             if (currentMode === 'elemen' || currentMode === 'siklus') {
                 ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
                 ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
@@ -3765,27 +3811,20 @@ function exportToExcelXLSX() {
                 ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
             }
         }
-
         const stdUph = getLineStandardUph();
         const numFmtCols = [];
         for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
-        if (currentMode === 'elemen' || currentMode === 'siklus') {
-            numFmtCols.push(avgCol, smhCol);
-        } else {
-            numFmtCols.push(avgCol, avgCol + 2, avgCol + 3);
-        }
-
+        if (currentMode === 'elemen' || currentMode === 'siklus') numFmtCols.push(avgCol, smhCol);
+        else numFmtCols.push(avgCol, avgCol + 2, avgCol + 3);
         const columnStyles = {};
         if (currentMode === 'elemen' || currentMode === 'siklus') {
-            columnStyles[avgCol]   = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+            columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
             columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
-            columnStyles[smhCol]   = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
+            columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
             columnStyles[uphCol] = (val) => {
                 const v = parseFloat(val);
                 if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-                return v >= stdUph
-                    ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } }
-                    : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+                return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
         } else {
             columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
@@ -3796,14 +3835,10 @@ function exportToExcelXLSX() {
             columnStyles[avgCol + 4] = (val) => {
                 const v = parseFloat(val);
                 if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-                return v >= stdUph
-                    ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } }
-                    : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+                return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
         }
-
         applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-
         const cols = [];
         if (currentMode === 'elemen') {
             cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }, { wch: 8 });
@@ -3819,7 +3854,6 @@ function exportToExcelXLSX() {
             cols.push({ wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 });
         }
         ws['!cols'] = cols;
-
         XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -3860,7 +3894,7 @@ function openBackupModal() {
 }
 function closeBackupModal() { document.getElementById('backupModal').classList.remove('active'); }
 function downloadBackup() {
-    const b = { version: '2.2', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData };
+    const b = { version: '2.3', timestamp: new Date().toISOString(), lineList, machineList, elemenMasterList, siklusMasterList, modelList, archiveList, masterData };
     const j = JSON.stringify(b, null, 2);
     const bl = new Blob([j], { type: 'application/json' });
     if (downloadBlob(bl, `TimeStudy_Backup_${new Date().toISOString().slice(0, 10)}_${Date.now()}.json`)) {
@@ -3954,30 +3988,25 @@ async function init() {
     if (sl) activeLine = sl;
     const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
     if (smd) activeModel = smd;
-    
     machineList = lsLoad(LS_KEY_MACHINES, []);
     masterData = lsLoad(LS_KEY_MASTER, []);
     elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
     siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
     modelList = lsLoad(LS_KEY_MODEL_LIST, []);
     archiveList = lsLoad(LS_KEY_ARCHIVE, []);
-    
     const savedLineList = lsLoad(LS_KEY_LINE_LIST, []);
     lineList = normalizeLineList(savedLineList);
-    
     if (activeLine && lineList.length === 0) {
         const uph = parseInt(localStorage.getItem(LS_KEY_ACTIVE_LINE_UPH)) || 500;
         lineList = [{ name: activeLine, uph: uph }];
         lsSave(LS_KEY_LINE_LIST, lineList);
     }
-    
     const savedBatch = lsLoad(LS_KEY_BATCH, 1);
     if (savedBatch && parseInt(savedBatch) > 1) {
         batchUnitCount = parseInt(savedBatch);
         const bEl = document.getElementById('inputBatchUnit');
         if (bEl) bEl.value = batchUnitCount;
     }
-    
     updateLineDisplay(); updateModelDisplay();
     renderLineList();
     renderMachineDropdownList(); renderMachineTable();
@@ -4003,16 +4032,7 @@ async function init() {
         firebaseReady = true;
         clearTimeout(firebaseTimeout);
         setLoadingDetail('Database siap...');
-        
-        try {
-            const s1 = await dbGet('lineList');
-            const remoteLines = normalizeLineList(s1.data || []);
-            if (remoteLines.length > 0) {
-                lineList = remoteLines;
-                lsSave(LS_KEY_LINE_LIST, lineList);
-            }
-        } catch (e) {}
-        
+        try { const s1 = await dbGet('lineList'); const remoteLines = normalizeLineList(s1.data || []); if (remoteLines.length > 0) { lineList = remoteLines; lsSave(LS_KEY_LINE_LIST, lineList); } } catch (e) {}
         try { const s2 = await dbGet('machineList'); if (s2 && s2.data) { machineList = s2.data; lsSave(LS_KEY_MACHINES, machineList); } } catch (e) {}
         try { const s3 = await dbGet('elemenMaster'); if (s3 && s3.data) { elemenMasterList = s3.data; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); } } catch (e) {}
         try { const s4 = await dbGet('siklusMaster'); if (s4 && s4.data) { siklusMasterList = s4.data; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); } } catch (e) {}
@@ -4023,17 +4043,8 @@ async function init() {
             const sM = await dbGet(activeNode);
             if (sM && sM.data) { masterData = sM.data; lastServerUpdate = sM.lastUpdate; }
         } catch (e) {}
-        
-        try {
-            if (autoMigrateModelField()) {
-                saveMasterToFirebase();
-                saveElemenMasterToFirebase();
-                saveSiklusMasterToFirebase();
-            }
-        } catch (e) {}
-        
+        try { if (autoMigrateModelField()) { saveMasterToFirebase(); saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); } } catch (e) {}
         try { setupFirebaseListeners(); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); }
-        
         updateLineDisplay(); updateModelDisplay();
         renderLineList();
         renderMachineDropdownList(); renderMachineTable();
@@ -4041,12 +4052,9 @@ async function init() {
         renderSopDropdownList(); renderElemenMasterTable();
         renderSiklusDropdownList(); renderSiklusMasterTable();
         renderArsipList(); updateArsipCount();
-        
         setLoadingDone();
-        
         if (!sm) document.getElementById('modeModal').classList.add('active');
         else selectMode(sm);
-        
         if (activeLine) syncUphFromActiveLine();
     };
 
