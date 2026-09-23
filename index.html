@@ -987,6 +987,19 @@ function setLoadingDetail(t) { const e = document.getElementById('loadingDetail'
 function formatTimeMs(ms) { if (ms < 0) ms = 0; const s = ms / 1000; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); const cs = Math.floor((ms % 1000) / 10); return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(cs).padStart(2, '0')}`; }
 function escapeHtml(s) { if (s == null) return ''; return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 function generateId(p) { return (p || 'm_') + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
+
+// === NEW: sanitasi nama file untuk Line/Model ===
+function sanitizeFilename(name) {
+    return String(name == null ? '' : name).replace(/[\\/:*?"<>|]/g, '_').trim() || 'Unknown';
+}
+// === NEW: helper untuk komponen nama file export ===
+function getExportNameParts() {
+    const lineName = sanitizeFilename(activeLine || 'AllLine');
+    const modelName = sanitizeFilename(activeModel || 'AllModel');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    return { lineName, modelName, dateStr };
+}
+
 function showToast(msg, type = 'info') {
     const colors = { info: 'bg-gray-800', success: 'bg-emerald-600', warning: 'bg-yellow-600', error: 'bg-red-600' };
     const t = document.createElement('div');
@@ -1795,7 +1808,9 @@ function exportMachineCSV() {
     machineList.forEach(m => rows.push([m.proses, m.mesin]));
     const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    if (downloadBlob(blob, `Daftar_Mesin_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 di-export', 'success');
+    // === MODIFIKASI: tambahkan Line pada nama file ===
+    const { lineName, dateStr } = getExportNameParts();
+    if (downloadBlob(blob, `Daftar_Mesin_${lineName}_${dateStr}.csv`)) showToast('📄 di-export', 'success');
 }
 
 // ============================================================
@@ -1848,7 +1863,9 @@ function exportElemenCSV() {
     elemenMasterList.forEach(e => rows.push([e.line, e.model || '-', e.noSop, e.namaSop, e.elemen]));
     const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    if (downloadBlob(blob, `Master_Elemen_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 di-export', 'success');
+    // === MODIFIKASI: tambahkan Line + Model ===
+    const { lineName, modelName, dateStr } = getExportNameParts();
+    if (downloadBlob(blob, `Master_Elemen_${lineName}_${modelName}_${dateStr}.csv`)) showToast('📄 di-export', 'success');
 }
 function openAddElemenModal() {
     if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
@@ -1988,7 +2005,9 @@ function exportSiklusCSV() {
     siklusMasterList.forEach(s => rows.push([s.line, s.model || '-', s.noSop, s.namaSop]));
     const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    if (downloadBlob(blob, `Master_Siklus_${new Date().toISOString().slice(0, 10)}.csv`)) showToast('📄 di-export', 'success');
+    // === MODIFIKASI: tambahkan Line + Model ===
+    const { lineName, modelName, dateStr } = getExportNameParts();
+    if (downloadBlob(blob, `Master_Siklus_${lineName}_${modelName}_${dateStr}.csv`)) showToast('📄 di-export', 'success');
 }
 function openAddSiklusModal() {
     if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
@@ -3442,7 +3461,11 @@ function exportArchiveCSV(id) {
     });
     const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    downloadBlob(blob, `Arsip_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.csv`);
+    // === MODIFIKASI: tambahkan Line + Model + tanggal export ===
+    const sLine = sanitizeFilename(a.line || 'AllLine');
+    const sModel = sanitizeFilename(a.model || 'AllModel');
+    const dateStr = new Date().toISOString().slice(0,10);
+    downloadBlob(blob, `Arsip_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}_${dateStr}.csv`);
     showToast('📄 CSV diunduh', 'success');
 }
 function exportArchiveExcel(id) {
@@ -3459,7 +3482,11 @@ function exportArchiveExcel(id) {
         else wbout = buildArchiveMesinXLSX(items, a);
         if (!wbout) { showToast('❌ Gagal export', 'error'); return; }
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const filename = `Arsip_${mode}_${a.line}_${a.model}_${a.tahun}-${String(a.bulan).padStart(2,'0')}.xlsx`;
+        // === MODIFIKASI: tambahkan Line + Model + tanggal export ===
+        const sLine = sanitizeFilename(a.line || 'AllLine');
+        const sModel = sanitizeFilename(a.model || 'AllModel');
+        const dateStr = new Date().toISOString().slice(0,10);
+        const filename = `Arsip_${mode}_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}_${dateStr}.xlsx`;
         if (downloadBlob(blob, filename)) showToast('📊 Excel arsip diunduh', 'success');
     } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
 }
@@ -3857,7 +3884,10 @@ function exportToExcelXLSX() {
         XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.xlsx`)) showToast('📥 Excel diunduh', 'success');
+        // === MODIFIKASI: tambahkan Line + Model ===
+        const { lineName, modelName, dateStr } = getExportNameParts();
+        const filename = `Time_Study_${currentMode}_${lineName}_${modelName}_${dateStr}.xlsx`;
+        if (downloadBlob(blob, filename)) showToast('📥 Excel diunduh', 'success');
     } catch (err) { console.error(err); showToast('❌ Gagal export.', 'error'); }
 }
 function exportToCSV() {
@@ -3879,7 +3909,10 @@ function exportToCSV() {
     });
     const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    if (downloadBlob(blob, `Time_Study_${currentMode}_${new Date().toISOString().slice(0,10)}.csv`)) showToast('📄 CSV diunduh', 'success');
+    // === MODIFIKASI: tambahkan Line + Model ===
+    const { lineName, modelName, dateStr } = getExportNameParts();
+    const filename = `Time_Study_${currentMode}_${lineName}_${modelName}_${dateStr}.csv`;
+    if (downloadBlob(blob, filename)) showToast('📄 CSV diunduh', 'success');
 }
 
 // ============================================================
