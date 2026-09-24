@@ -102,6 +102,11 @@
             opacity: 0.7;
             pointer-events: none;
         }
+        /* === SOP ELEMEN LIST === */
+        .sop-elemen-list { max-height: 300px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .sop-elemen-list::-webkit-scrollbar { width: 6px; }
+        .sop-elemen-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .sop-elemen-list::-webkit-scrollbar-track { background: #f1f5f9; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans antialiased min-h-screen">
@@ -460,12 +465,31 @@
                             </div>
                         </div>
 
+                        <!-- ============================================= -->
+                        <!-- DAFTAR SEMUA ELEMEN (1 SOP) - YANG DIUBAH    -->
+                        <!-- ============================================= -->
                         <div id="elemenActiveInfo" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div class="text-[10px] text-blue-600 uppercase font-semibold mb-1">Sedang Direkam</div>
-                            <div id="elemenActiveName" class="text-base font-bold text-blue-800">-</div>
-                            <div id="elemenProgressText" class="text-xs text-blue-600 mt-1">-</div>
-                            <div class="mt-2 bg-blue-200 rounded-full h-1.5 overflow-hidden"><div id="elemenProgressBar" class="bg-blue-600 h-full transition-all" style="width: 0%"></div></div>
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-[10px] text-blue-600 uppercase font-semibold">Sedang Direkam</div>
+                                <div id="elemenProgressText" class="text-[10px] text-blue-600 font-medium">-</div>
+                            </div>
+                            <div id="elemenActiveName" class="text-base font-bold text-blue-800 mb-2">-</div>
+                            <div class="mb-3 bg-blue-200 rounded-full h-1.5 overflow-hidden">
+                                <div id="elemenProgressBar" class="bg-blue-600 h-full transition-all" style="width: 0%"></div>
+                            </div>
+                            
+                            <!-- Daftar Semua Elemen -->
+                            <div class="border-t border-blue-200 pt-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="text-[10px] font-bold text-blue-700 uppercase">📋 Daftar Elemen (1 SOP)</div>
+                                    <div id="elemenListBadge" class="text-[10px] bg-blue-200 text-blue-700 px-2 py-0.5 rounded-full font-bold">0 Elemen</div>
+                                </div>
+                                <div id="elemenListContainer" class="sop-elemen-list space-y-1">
+                                    <!-- Diisi via JS -->
+                                </div>
+                            </div>
                         </div>
+                        <!-- ============================================= -->
 
                         <div id="siklusActiveInfo" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-3">
                             <div class="text-[10px] text-emerald-600 uppercase font-semibold mb-1">Sedang Direkam</div>
@@ -2142,25 +2166,86 @@ function updateElemenActiveInfo() {
     const n = document.getElementById('elemenActiveName');
     const p = document.getElementById('elemenProgressText');
     const b = document.getElementById('elemenProgressBar');
+    const listContainer = document.getElementById('elemenListContainer');
+    const listBadge = document.getElementById('elemenListBadge');
+
     if (!n) return;
+
+    // Preinstall Mode
     if (preinstallActive && currentMode === 'elemen') {
-        if (preinstallActiveElemenList.length === 0) { n.innerText = `🎯 Preinstallasi (belum pilih elemen)`; p.innerText = '-'; b.style.width = '0%'; return; }
+        if (preinstallActiveElemenList.length === 0) { 
+            n.innerText = `🎯 Preinstallasi (belum pilih elemen)`; 
+            p.innerText = '-'; 
+            b.style.width = '0%'; 
+            if(listContainer) listContainer.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-2">Belum ada elemen dipilih.</div>';
+            if(listBadge) listBadge.innerText = '0 Elemen';
+            return; 
+        }
         const cur = preinstallActiveElemenList[preinstallElemenIndex];
         n.innerText = cur ? `${cur.noSop} · ${cur.elemen}` : '-';
-        p.innerText = `Elemen ${preinstallElemenIndex + 1} / ${preinstallActiveElemenList.length} · Putaran ke-${preinstallCycleNum} · ${preinstallOperatorCount} orang`;
+        p.innerText = `Elemen ${preinstallElemenIndex + 1} / ${preinstallActiveElemenList.length} · Putaran ke-${preinstallCycleNum}`;
         b.style.width = `${((preinstallElemenIndex + 1) / preinstallActiveElemenList.length) * 100}%`;
+        if(listBadge) listBadge.innerText = `${preinstallActiveElemenList.length} Elemen`;
+        if(listContainer) {
+            listContainer.innerHTML = preinstallActiveElemenList.map((item, idx) => {
+                const isCurrent = idx === preinstallElemenIndex;
+                const isDone = idx < preinstallElemenIndex;
+                let cls = 'flex items-center gap-2 px-2 py-1.5 rounded border text-xs transition ';
+                let icon = '';
+                if (isCurrent) { cls += 'bg-blue-100 border-blue-400 ring-1 ring-blue-300'; icon = '🔵'; }
+                else if (isDone) { cls += 'bg-green-50 border-green-200 opacity-75'; icon = '✅'; }
+                else { cls += 'bg-white border-gray-200'; icon = '⚪'; }
+                return `<div class="${cls}">
+                    <span class="text-[10px]">${icon}</span>
+                    <span class="font-bold text-gray-800">${idx+1}.</span>
+                    <span class="flex-1 truncate">${escapeHtml(item.elemen)}</span>
+                    ${isCurrent ? '<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold">REKAM</span>' : ''}
+                </div>`;
+            }).join('');
+        }
         return;
     }
+
+    // Preinstall Siklus
     if (preinstallActive && currentMode === 'siklus') {
         n.innerText = `🎯 Preinstallasi (${preinstallSelectedKeys.size} SOP)`;
         p.innerText = `Dikerjakan oleh ${preinstallOperatorCount} orang · LAP setiap siklus penuh`;
-        b.style.width = '100%'; return;
+        b.style.width = '100%';
+        if(listContainer) listContainer.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-2">Mode Siklus: cek daftar di bawah timer.</div>';
+        if(listBadge) listBadge.innerText = '-';
+        return;
     }
-    if (activeElemenList.length === 0) { n.innerText = '-'; p.innerText = '-'; b.style.width = '0%'; return; }
+
+    // Mode Normal
+    if (activeElemenList.length === 0) { 
+        n.innerText = '-'; p.innerText = '-'; b.style.width = '0%'; 
+        if(listContainer) listContainer.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-2">Pilih No. SOP untuk melihat daftar elemen.</div>';
+        if(listBadge) listBadge.innerText = '0 Elemen';
+        return; 
+    }
     const c = activeElemenList[currentElemenIndex];
     n.innerText = c ? c.elemen : '-';
     p.innerText = `Elemen ${currentElemenIndex + 1} / ${activeElemenList.length} · Putaran ke-${currentCycleNum}`;
     b.style.width = `${((currentElemenIndex + 1) / activeElemenList.length) * 100}%`;
+    
+    if(listBadge) listBadge.innerText = `${activeElemenList.length} Elemen`;
+    if(listContainer) {
+        listContainer.innerHTML = activeElemenList.map((item, idx) => {
+            const isCurrent = idx === currentElemenIndex;
+            const isDone = idx < currentElemenIndex;
+            let cls = 'flex items-center gap-2 px-2 py-1.5 rounded border text-xs transition ';
+            let icon = '';
+            if (isCurrent) { cls += 'bg-blue-100 border-blue-400 ring-1 ring-blue-300'; icon = '🔵'; }
+            else if (isDone) { cls += 'bg-green-50 border-green-200 opacity-75'; icon = '✅'; }
+            else { cls += 'bg-white border-gray-200'; icon = '⚪'; }
+            return `<div class="${cls}">
+                <span class="text-[10px]">${icon}</span>
+                <span class="font-bold text-gray-800">${idx+1}.</span>
+                <span class="flex-1 truncate">${escapeHtml(item.elemen)}</span>
+                ${isCurrent ? '<span class="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold">REKAM</span>' : ''}
+            </div>`;
+        }).join('');
+    }
 }
 
 // ============================================================
