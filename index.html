@@ -30,6 +30,15 @@
         .master-scroll { scrollbar-color: #64748b #f1f5f9; }
         .master-scroll thead th { position: sticky; top: 0; z-index: 5; box-shadow: inset 0 -1px 0 #e5e7eb; }
         .master-scroll thead th:not([class*="bg-"]) { background-color: #fef9c3; }
+        /* ===== Mobile: kolom No. SOP + Nama SOP dibekukan (sticky) agar proses tetap terlihat saat geser ke UPH ===== */
+        @media (max-width: 1023px) {
+            .master-scroll .col-line, .master-scroll .col-model { display: none; }
+            .master-scroll .col-sop { position: sticky; left: 0; z-index: 3; min-width: 50px; max-width: 50px; width: 50px; padding-left: 4px !important; padding-right: 4px !important; }
+            .master-scroll .col-nama { position: sticky; left: 50px; z-index: 3; min-width: 118px; max-width: 118px; width: 118px; white-space: normal !important; word-break: break-word; line-height: 1.25; font-size: 11px; padding-left: 6px !important; padding-right: 6px !important; background-color: #f8fafc; box-shadow: 3px 0 4px -2px rgba(15,23,42,.25); }
+            .master-scroll thead th.col-sop, .master-scroll thead th.col-nama { z-index: 8; background-color: #fef9c3; }
+            .master-scroll thead th.col-nama { white-space: normal !important; }
+        }
+
         .laps-scroll::-webkit-scrollbar { width: 6px; }
         .laps-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -3031,10 +3040,10 @@ function renderMasterTable() {
 function renderMasterTableElemen(fd, tb, th) {
     const mL = Math.max(...fd.map(i => i.laps.length));
     const std = getLineStandardUph();
-    let h = `<th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
-        <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
-        <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
-        <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
+    let h = `<th class="col-line px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+        <th class="col-model px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
+        <th class="col-sop px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
+        <th class="col-nama px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
         <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Elemen</th>
         <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Op</th>`;
     for (let i = 1; i <= mL; i++) h += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
@@ -3073,10 +3082,10 @@ function renderMasterTableElemen(fd, tb, th) {
             const sb = r.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${r.sessions}x</span>` : '';
             out += `<tr class="hover:bg-purple-50/30 transition">`;
             if (ri === 0) {
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.line || '-')}</span></td>`;
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(g.noSop || '-')}</td>`;
-                out += `<td rowspan="${rs}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(g.namaSop || '-')}</td>`;
+                out += `<td rowspan="${rs}" class="col-line px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.line || '-')}</span></td>`;
+                out += `<td rowspan="${rs}" class="col-model px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
+                out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-purple-50 align-middle whitespace-nowrap text-purple-700">${escapeHtml(g.noSop || '-')}</td>`;
+                out += `<td rowspan="${rs}" class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-purple-50/40 align-middle whitespace-nowrap">${escapeHtml(g.namaSop || '-')}</td>`;
             }
             out += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap">${escapeHtml(r.elemen || '-')}${sb}${pb}</td>`;
             // Operator — editable (semua baris grup)
@@ -3106,10 +3115,10 @@ function renderMasterTableElemen(fd, tb, th) {
 function renderMasterTableSiklus(fd, tb, th) {
     const mL = Math.max(...fd.map(i => i.laps.length));
     const std = getLineStandardUph();
-    let h = `<th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
-        <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
-        <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
-        <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
+    let h = `<th class="col-line px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+        <th class="col-model px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
+        <th class="col-sop px-2 py-3 text-center font-bold border-r whitespace-nowrap">No. SOP</th>
+        <th class="col-nama px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama SOP</th>
         <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Op</th>`;
     for (let i = 1; i <= mL; i++) h += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
     h += `<th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Average</th>
@@ -3147,11 +3156,11 @@ function renderMasterTableSiklus(fd, tb, th) {
             const sb = r.sessions > 1 ? `<span class="ml-1 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">${r.sessions}x</span>` : '';
             out += `<tr class="hover:bg-emerald-50/30 transition">`;
             if (ri === 0) {
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.line || '-')}</span></td>`;
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 align-middle whitespace-nowrap text-emerald-700">${escapeHtml(g.noSop || '-')}</td>`;
+                out += `<td rowspan="${rs}" class="col-line px-2 py-2 text-center border-r border-b bg-indigo-50 align-middle whitespace-nowrap"><span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.line || '-')}</span></td>`;
+                out += `<td rowspan="${rs}" class="col-model px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
+                out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 align-middle whitespace-nowrap text-emerald-700">${escapeHtml(g.noSop || '-')}</td>`;
             }
-            out += `<td class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40 whitespace-nowrap">${escapeHtml(r.namaSop || '-')}${sb}${pb}</td>`;
+            out += `<td class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40 whitespace-nowrap">${escapeHtml(r.namaSop || '-')}${sb}${pb}</td>`;
             // Operator — editable (per baris)
             out += `<td class="px-2 py-2 text-center border-r border-b bg-amber-50 whitespace-nowrap font-bold text-amber-800 editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'operators', this)" title="Klik untuk edit Operator">${r.operators || 1}</td>`;
             for (let i = 0; i < mL; i++) {
@@ -3177,10 +3186,10 @@ function renderMasterTableSiklus(fd, tb, th) {
 function renderMasterTableMesin(fd, tb, th) {
     const mL = Math.max(...fd.map(i => i.laps.length));
     const std = getLineStandardUph();
-    let h = `<th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
-        <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
-        <th class="px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
-        <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
+    let h = `<th class="col-line px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
+        <th class="col-model px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
+        <th class="col-sop px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
+        <th class="col-nama px-3 py-3 text-left font-bold border-r whitespace-nowrap">Nama Mesin</th>
         <th class="px-3 py-3 text-left font-bold border-r whitespace-nowrap">Sub Mesin</th>`;
     for (let i = 1; i <= mL; i++) h += `<th class="px-2 py-3 text-center font-bold border-r bg-blue-50 text-blue-800 whitespace-nowrap" style="min-width:60px;">S${i}</th>`;
     h += `<th class="px-2 py-3 text-center font-bold border-r bg-yellow-200 whitespace-nowrap">Σ Rata²</th>
@@ -3210,10 +3219,10 @@ function renderMasterTableMesin(fd, tb, th) {
             const st = getRowStats(r);
             out += `<tr class="hover:bg-yellow-50/50">`;
             if (ri === 0) {
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(g.line || '-')}</td>`;
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
-                out += `<td rowspan="${rs}" class="px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(g.no || '-')}</td>`;
-                out += `<td rowspan="${rs}" class="px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(g.process || '-')}</td>`;
+                out += `<td rowspan="${rs}" class="col-line px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(g.line || '-')}</td>`;
+                out += `<td rowspan="${rs}" class="col-model px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
+                out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(g.no || '-')}</td>`;
+                out += `<td rowspan="${rs}" class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle whitespace-nowrap">${escapeHtml(g.process || '-')}</td>`;
             }
             out += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(r.subMachine || '-')}</span></td>`;
             for (let i = 0; i < mL; i++) {
