@@ -1646,7 +1646,12 @@ function applyBatchToDur(rawDur) { if (batchUnitCount <= 1) return rawDur; retur
 // MODE
 // ============================================================
 async function selectMode(mode) {
-    currentMode = mode; lsSave(LS_KEY_MODE, mode); masterData = [];
+    currentMode = mode;
+    // Mode BOM tidak disimpan ke localStorage — biar refresh tidak balik ke BOM
+    if (mode !== 'bom') {
+        lsSave(LS_KEY_MODE, mode);
+    }
+    masterData = [];
     const mm = document.getElementById('modeModal');
     const mc = mm ? mm.querySelector(`button[onclick="selectMode('${mode}')"]`) : null;
     if (mc) { mc.style.opacity = '0.5'; mc.style.pointerEvents = 'none'; }
@@ -1689,16 +1694,22 @@ function applyModeToUI() {
         tM.classList.remove('hidden'); tE.classList.add('hidden'); tS.classList.add('hidden');
         mfg.classList.remove('hidden'); efg.classList.add('hidden'); sfg.classList.add('hidden');
         eai.classList.add('hidden'); sai.classList.add('hidden');
+        const tB = document.getElementById('tabBtn-bom');
+if (tB) tB.classList.add('hidden');
     } else if (currentMode === 'elemen') {
         mw.classList.add('hidden'); ew.classList.remove('hidden'); sw.classList.add('hidden');
         tM.classList.add('hidden'); tE.classList.remove('hidden'); tS.classList.add('hidden');
         mfg.classList.add('hidden'); efg.classList.remove('hidden'); sfg.classList.add('hidden');
         eai.classList.remove('hidden'); sai.classList.add('hidden');
+        const tB = document.getElementById('tabBtn-bom');
+if (tB) tB.classList.add('hidden');
     } else if (currentMode === 'siklus') {
         mw.classList.add('hidden'); ew.classList.add('hidden'); sw.classList.remove('hidden');
         tM.classList.add('hidden'); tE.classList.add('hidden'); tS.classList.remove('hidden');
         mfg.classList.add('hidden'); efg.classList.add('hidden'); sfg.classList.remove('hidden');
         eai.classList.add('hidden'); sai.classList.remove('hidden');
+        const tB = document.getElementById('tabBtn-bom');
+if (tB) tB.classList.add('hidden');
     } else if (currentMode === 'bom') {
     mw.classList.add('hidden'); ew.classList.add('hidden'); sw.classList.add('hidden');
     tM.classList.add('hidden'); tE.classList.add('hidden'); tS.classList.add('hidden');
@@ -4704,7 +4715,8 @@ function updateServerInfo() {
 // INIT
 // ============================================================
 async function init() {
-    const sm = lsLoad(LS_KEY_MODE, '');
+    let sm = lsLoad(LS_KEY_MODE, '');
+if (sm === 'bom') sm = ''; // paksa balik ke modal kalau yang tersimpan BOM
     const sl = localStorage.getItem(LS_KEY_ACTIVE_LINE);
     if (sl) activeLine = sl;
     const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
