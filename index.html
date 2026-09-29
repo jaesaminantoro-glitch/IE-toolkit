@@ -1746,9 +1746,9 @@ if (tB) tB.classList.add('hidden');
     renderMasterTable(); renderStandardCheck(); updateCounters();
     if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
     else if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
+    const tB2 = document.getElementById('tabBtn-bom');
+    if (tB2) tB2.classList.toggle('hidden', currentMode !== 'bom');
 }
-            const tB2 = document.getElementById('tabBtn-bom');
-if (tB2) tB2.classList.toggle('hidden', currentMode !== 'bom');
 
 // ============================================================
 // DB ABSTRACTION
