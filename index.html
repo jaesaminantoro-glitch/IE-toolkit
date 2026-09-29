@@ -3173,7 +3173,35 @@ function renderMasterTable() {
             ? `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r bg-emerald-50">Model</th><th class="px-2 py-3 text-center font-bold border-r">No</th><th class="px-3 py-3 text-left font-bold border-r">Nama Mesin</th><th class="px-3 py-3 text-left font-bold border-r">Sub Mesin</th>`
             : `<th class="px-2 py-3 text-center font-bold border-r">Line</th><th class="px-2 py-3 text-center font-bold border-r bg-emerald-50">Model</th><th class="px-2 py-3 text-center font-bold border-r">No. SOP</th><th class="px-3 py-3 text-left font-bold border-r">Nama SOP</th>${currentMode === 'elemen' ? '<th class="px-3 py-3 text-left font-bold border-r">Elemen</th>' : ''}`;
         th.innerHTML = cols;
-        tb.innerHTML = `<tr><td colspan="20" class="px-4 py-12 text-center text-gray-400 italic">Belum ada data.</td></tr>`;
+        // Cek apakah ada data arsip untuk Line+Model aktif
+const arsipTerkait = archiveList.filter(a =>
+    a.line === activeLine &&
+    (activeModel ? a.model === activeModel : true)
+);
+
+const colspanCount = currentMode === 'elemen' ? 20 : (currentMode === 'siklus' ? 20 : 20);
+
+if (arsipTerkait.length > 0) {
+    // Ada di arsip
+    const totalArsip = arsipTerkait.reduce((sum, a) => sum + (a.count || a.data?.length || 0), 0);
+    tb.innerHTML = `<tr>
+        <td colspan="${colspanCount}" class="px-4 py-12 text-center">
+            <div class="text-base font-bold text-amber-700 mb-1">📁 Data Berada di Arsip</div>
+            <div class="text-xs text-gray-500 mb-3">Master Data kosong, tapi ada <b>${totalArsip} data</b> tersimpan di arsip (${arsipTerkait.length} entri).</div>
+            <button onclick="switchTab('arsip')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm">
+                📁 Buka Tab Arsip
+            </button>
+        </td>
+    </tr>`;
+} else {
+    // Benar-benar belum ada data
+    tb.innerHTML = `<tr>
+        <td colspan="${colspanCount}" class="px-4 py-12 text-center">
+            <div class="text-sm font-semibold text-gray-500 mb-1">📋 Belum Ada Data</div>
+            <div class="text-[11px] text-gray-400">Rekam data dulu di tab <b>Input</b>, lalu simpan ke Master Data.</div>
+        </td>
+    </tr>`;
+}
         return;
     }
     if (currentMode === 'elemen') renderMasterTableElemen(fd, tb, th);
