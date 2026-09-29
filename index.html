@@ -3885,15 +3885,30 @@ function clearAllData() {
     showToast(`✅ ${count} data dihapus`, 'warning');
 }
 function updateCounters() {
-    const t = masterData.length;
+    // === DATA: filter by Line + Model Aktif ===
+    let activeData = masterData.filter(d => d.line === activeLine);
+    if (activeModel && activeModel !== '-') {
+        activeData = activeData.filter(d => (d.model || '-') === activeModel);
+    }
+    const t = activeData.length;
     const b = document.getElementById('dataCountBadge');
     if (b) { b.innerText = t; b.className = t > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
     const mb = document.getElementById('machineCountBadge');
     if (mb) { mb.innerText = machineList.length; mb.className = machineList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+    // === ELEMEN: filter by Line + Model Aktif ===
+    let activeElemen = elemenMasterList.filter(e => e.line === activeLine);
+    if (activeModel && activeModel !== '-') {
+        activeElemen = activeElemen.filter(e => (e.model || '-') === activeModel);
+    }
     const eb = document.getElementById('elemenCountBadge');
-    if (eb) { eb.innerText = elemenMasterList.length; eb.className = elemenMasterList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+    if (eb) { eb.innerText = activeElemen.length; eb.className = activeElemen.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+    // === SIKLUS: filter by Line + Model Aktif ===
+    let activeSiklus = siklusMasterList.filter(s => s.line === activeLine);
+    if (activeModel && activeModel !== '-') {
+        activeSiklus = activeSiklus.filter(s => (s.model || '-') === activeModel);
+    }
     const sb = document.getElementById('siklusCountBadge');
-    if (sb) { sb.innerText = siklusMasterList.length; sb.className = siklusMasterList.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+    if (sb) { sb.innerText = activeSiklus.length; sb.className = activeSiklus.length > 0 ? 'ml-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
 }
 
 // ============================================================
@@ -4213,8 +4228,13 @@ function resetArsipFilter() {
     renderArsipList();
 }
 function updateArsipCount() {
+    // === ARSIP: filter by Line + Model Aktif ===
+    let activeArsip = archiveList.filter(a => a.line === activeLine);
+    if (activeModel && activeModel !== '-') {
+        activeArsip = activeArsip.filter(a => a.model === activeModel);
+    }
     const b = document.getElementById('arsipCountBadge');
-    if (b) { b.innerText = archiveList.length; b.className = archiveList.length > 0 ? 'ml-1 text-[10px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
+    if (b) { b.innerText = activeArsip.length; b.className = activeArsip.length > 0 ? 'ml-1 text-[10px] bg-amber-600 text-white px-1.5 py-0.5 rounded-full' : 'ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full'; }
 }
 
 // ============================================================
