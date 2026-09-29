@@ -3475,34 +3475,37 @@ function renderArsipList() {
     if (filterTahun) filtered = filtered.filter(a => String(a.tahun) === String(filterTahun));
     if (filtered.length === 0) { c.innerHTML = '<div class="text-center text-gray-400 italic text-xs py-8">Belum ada arsip.</div>'; return; }
     const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
     c.innerHTML = filtered.map(a => {
-    const restoreBadge = a.restoredCount ? `<span class="ml-1 bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>` : '';
-    return `
-    <div class="border border-gray-200 rounded-lg p-3 hover:bg-amber-50/40 transition">
-        <!-- Baris 1: Badge -->
-        <div class="flex items-center gap-1.5 flex-wrap mb-2">
-            <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">${escapeHtml(a.line || '-')}</span>
-            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">📦 ${escapeHtml(a.model || '-')}</span>
-            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
-            <span class="bg-gray-100 text-gray-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${escapeHtml(a.mode || '-')}</span>
-            ${restoreBadge}
-        </div>
+        const restoreBadge = a.restoredCount
+            ? `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">♻️ ${a.restoredCount}x</span>`
+            : '';
+        return `
+        <div class="bg-white border-2 border-gray-300 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-amber-400 transition">
+            <!-- Baris 1: Badge -->
+            <div class="flex items-center gap-1.5 flex-wrap mb-2">
+                <span class="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">${escapeHtml(a.line || '-')}</span>
+                <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">📦 ${escapeHtml(a.model || '-')}</span>
+                <span class="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
+                <span class="bg-gray-700 text-white text-[10px] font-bold px-2 py-1 rounded uppercase shadow-sm">${escapeHtml(a.mode || '-')}</span>
+                ${restoreBadge}
+            </div>
 
-        <!-- Baris 2: Info -->
-        <div class="text-xs text-gray-600 mb-2">
-            <b>${a.count || a.data?.length || 0}</b> item
-            <span class="text-gray-400">· ${new Date(a.created_at).toLocaleString('id-ID')}</span>
-        </div>
+            <!-- Baris 2: Info -->
+            <div class="text-xs text-gray-800 mb-2 font-medium bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
+                <b>${a.count || a.data?.length || 0}</b> item
+                <span class="text-gray-500">· ${new Date(a.created_at).toLocaleString('id-ID')}</span>
+            </div>
 
-        <!-- Baris 3: Tombol Aksi -->
-        <div class="grid grid-cols-4 gap-1.5">
-            <button onclick="restoreArchive('${a.id}')" class="text-blue-600 hover:text-blue-800 text-[10px] font-semibold px-1 py-1.5 bg-blue-50 rounded flex items-center justify-center gap-1">♻️ <span class="hidden sm:inline">Restore</span></button>
-            <button onclick="exportArchiveExcel('${a.id}')" class="text-emerald-700 hover:text-emerald-900 text-[10px] font-semibold px-1 py-1.5 bg-emerald-100 rounded flex items-center justify-center gap-1">📊 <span class="hidden sm:inline">Excel</span></button>
-            <button onclick="exportArchiveCSV('${a.id}')" class="text-emerald-600 hover:text-emerald-800 text-[10px] font-semibold px-1 py-1.5 bg-emerald-50 rounded flex items-center justify-center gap-1">📥 <span class="hidden sm:inline">CSV</span></button>
-            <button onclick="deleteArchive('${a.id}')" class="text-red-500 hover:text-red-700 text-[10px] font-semibold px-1 py-1.5 bg-red-50 rounded flex items-center justify-center gap-1">🗑️ <span class="hidden sm:inline">Hapus</span></button>
-        </div>
-    </div>`;
-}).join('');
+            <!-- Baris 3: Tombol Aksi -->
+            <div class="grid grid-cols-4 gap-1.5">
+                <button onclick="restoreArchive('${a.id}')" class="text-blue-700 hover:text-white hover:bg-blue-600 border border-blue-300 text-[10px] font-bold px-1 py-1.5 bg-blue-50 rounded flex items-center justify-center gap-1 transition">♻️ <span class="hidden sm:inline">Restore</span></button>
+                <button onclick="exportArchiveExcel('${a.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 border border-emerald-300 text-[10px] font-bold px-1 py-1.5 bg-emerald-50 rounded flex items-center justify-center gap-1 transition">📊 <span class="hidden sm:inline">Excel</span></button>
+                <button onclick="exportArchiveCSV('${a.id}')" class="text-teal-700 hover:text-white hover:bg-teal-600 border border-teal-300 text-[10px] font-bold px-1 py-1.5 bg-teal-50 rounded flex items-center justify-center gap-1 transition">📥 <span class="hidden sm:inline">CSV</span></button>
+                <button onclick="deleteArchive('${a.id}')" class="text-red-700 hover:text-white hover:bg-red-600 border border-red-300 text-[10px] font-bold px-1 py-1.5 bg-red-50 rounded flex items-center justify-center gap-1 transition">🗑️ <span class="hidden sm:inline">Hapus</span></button>
+            </div>
+        </div>`;
+    }).join('');
 }
 async function restoreArchive(id) {
     const a = archiveList.find(x => x.id === id);
