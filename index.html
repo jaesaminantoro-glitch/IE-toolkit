@@ -302,6 +302,11 @@
                     <div class="flex-1"><div class="mode-card-title">Time Study Siklus</div><div class="mode-card-desc">Ukur cycle time 1 SOP keseluruhan</div></div>
                     <div class="text-3xl text-gray-300">›</div>
                 </button>
+                <button onclick="selectMode('bom')" class="mode-card w-full">
+    <div class="mode-card-icon">🔧</div>
+    <div class="flex-1"><div class="mode-card-title">Compare BOM</div><div class="mode-card-desc">Bandingkan 2 sheet pertama dari file BOM pabrik</div></div>
+    <div class="text-3xl text-gray-300">›</div>
+</button>
             </div>
             <div class="p-4 border-t border-gray-200 text-center">
                 <p class="text-xs text-gray-400">💡 Bisa ganti mode kapan saja lewat tombol 🏠 di header</p>
@@ -516,6 +521,7 @@
                 <button onclick="switchTab('siklus')" id="tabBtn-siklus" class="tab-btn hidden">🔄 Siklus <span id="siklusCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
                 <button onclick="switchTab('export')" id="tabBtn-export" class="tab-btn">📈 Analisa</button>
                 <button onclick="switchTab('arsip')" id="tabBtn-arsip" class="tab-btn">📁 Arsip <span id="arsipCountBadge" class="ml-1 text-[10px] bg-gray-200 px-1.5 py-0.5 rounded-full">0</span></button>
+                <button onclick="switchTab('bom')" id="tabBtn-bom" class="tab-btn hidden">🔧 BOM</button>
             </div>
         </nav>
 
@@ -909,6 +915,64 @@
             </div>
         </div>
 
+       <div id="tab-bom" class="tab-content hidden">
+    <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-sm md:text-base font-semibold text-gray-800">🔧 Compare BOM Multi-Sheet</h2>
+                    <p class="text-[10px] md:text-xs text-gray-500 mt-1">Bandingkan 2 sheet pertama dari setiap file BOM. Hasil muncul di tab terpisah.</p>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button onclick="processBOMFiles()" id="bomProcessBtn" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">🔍 Bandingkan</button>
+                    <button onclick="exportBOMToExcel()" id="bomExportBtn" class="hidden flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Export Excel</button>
+                </div>
+            </div>
+
+            <label for="bomFiles" class="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                <div class="flex flex-col items-center justify-center px-4 text-center">
+                    <div class="text-2xl mb-1">📁</div>
+                    <p class="text-sm text-slate-600"><span class="font-semibold text-indigo-600">Klik untuk upload</span> atau seret file BOM</p>
+                    <p class="text-xs text-slate-400">Format: .xlsx, .xls (bisa multiple)</p>
+                </div>
+                <input type="file" id="bomFiles" multiple accept=".xlsx, .xls" class="hidden" onchange="handleBOMFileSelect(event)"/>
+            </label>
+            <div id="bomFileListPreview" class="mt-3 flex flex-wrap gap-1.5"></div>
+            <p id="bomStatusMsg" class="text-xs text-slate-500 mt-2"></p>
+        </div>
+
+        <div id="bomTableContainer" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-3 border-b border-gray-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-2">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <div id="bomSheetTabs" class="flex bg-slate-200 p-1 rounded-lg">
+                        <button onclick="switchBOMTab(0)" id="bomTabBtn0" class="px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm">Sheet 1</button>
+                        <button onclick="switchBOMTab(1)" id="bomTabBtn1" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 2</button>
+                    </div>
+                    <span id="bomSummaryCount" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-bold"></span>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="text" id="bomSearchInput" onkeyup="filterBOMTable()" placeholder="🔍 Cari..." class="w-full sm:w-56 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <select id="bomFilterType" onchange="filterBOMTable()" class="px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs">
+                        <option value="all">Semua</option>
+                        <option value="diff">Berbeda/Unik</option>
+                        <option value="common">Universal</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto max-h-[600px]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead id="bomTableHead" class="bg-slate-100 sticky top-0 z-20 text-slate-700"></thead>
+                    <tbody id="bomTableBody" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center gap-4 text-[10px] text-slate-600">
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300 inline-block"></span><span>Qty sama</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block"></span><span>Qty beda</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span><span>Tidak ada (-)</span></div>
+            </div>
+        </div>
+    </div>
+</div>
         <div class="bottom-controls">
             <div class="max-w-7xl mx-auto">
                 <div class="flex gap-2">
@@ -1084,6 +1148,185 @@
     </script>
         <script>
 // ============================================================
+            // ============================================================
+// COMPARE BOM STATE
+// ============================================================
+let bomSelectedFiles = [];
+let bomMultiSheetData = [[], []];
+let bomSheetNames = ['Sheet 1', 'Sheet 2'];
+let bomVersions = [];
+let bomActiveTab = 0;
+
+function handleBOMFileSelect(event) {
+    const files = event.target.files;
+    bomSelectedFiles = Array.from(files);
+    const previewContainer = document.getElementById('bomFileListPreview');
+    previewContainer.innerHTML = '';
+    if (bomSelectedFiles.length > 0) {
+        bomSelectedFiles.forEach(file => {
+            const chip = document.createElement('div');
+            chip.className = 'inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 text-[10px] px-2 py-1 rounded font-medium';
+            chip.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> ${file.name}`;
+            previewContainer.appendChild(chip);
+        });
+    }
+    const st = document.getElementById('bomStatusMsg');
+    if (st) st.textContent = `${bomSelectedFiles.length} file dipilih.`;
+}
+
+async function processBOMFiles() {
+    if (bomSelectedFiles.length === 0) { showToast('⚠️ Pilih file BOM dulu!', 'error'); return; }
+    const statusMsg = document.getElementById('bomStatusMsg');
+    const processBtn = document.getElementById('bomProcessBtn');
+    processBtn.disabled = true;
+    statusMsg.textContent = "Memproses...";
+
+    bomMultiSheetData = [[], []];
+    bomVersions = [];
+    const sheetMaps = [new Map(), new Map()];
+    let detectedSheetNames = ['Sheet 1', 'Sheet 2'];
+
+    for (let i = 0; i < bomSelectedFiles.length; i++) {
+        const file = bomSelectedFiles[i];
+        const versionNumber = file.name.split('-')[0].trim() || file.name;
+        bomVersions.push(versionNumber);
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data);
+            const sheetNames = workbook.SheetNames.slice(0, 2);
+            if (i === 0) {
+                if (sheetNames[0]) detectedSheetNames[0] = sheetNames[0];
+                if (sheetNames[1]) detectedSheetNames[1] = sheetNames[1];
+            }
+            sheetNames.forEach((sheetName, sIdx) => {
+                if (sIdx > 1) return;
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                const currentMap = sheetMaps[sIdx];
+                for (let r = 2; r < json.length; r++) {
+                    const row = json[r];
+                    if (!row || !row[3]) continue;
+                    const matCode = String(row[3]).trim();
+                    const matNameEN = row[6] ? String(row[6]).trim() : '-';
+                    const matSpec = row[7] ? String(row[7]).trim() : '-';
+                    const matQty = row[9] !== undefined ? row[9] : '-';
+                    if (!currentMap.has(matCode)) {
+                        currentMap.set(matCode, { code: matCode, nameEN: matNameEN, spec: matSpec, qtys: {} });
+                    }
+                    const current = currentMap.get(matCode);
+                    if (matNameEN !== '-' && current.nameEN === '-') current.nameEN = matNameEN;
+                    if (matSpec !== '-' && current.spec === '-') current.spec = matSpec;
+                    current.qtys[versionNumber] = matQty;
+                }
+            });
+        } catch (err) { console.error("Gagal baca:", file.name, err); }
+    }
+
+    bomSheetNames = detectedSheetNames;
+    bomMultiSheetData[0] = Array.from(sheetMaps[0].values());
+    bomMultiSheetData[1] = Array.from(sheetMaps[1].values());
+
+    document.getElementById('bomTabBtn0').textContent = bomSheetNames[0].length > 20 ? bomSheetNames[0].substring(0, 17) + '...' : bomSheetNames[0];
+    document.getElementById('bomTabBtn1').textContent = bomSheetNames[1].length > 20 ? bomSheetNames[1].substring(0, 17) + '...' : bomSheetNames[1];
+
+    switchBOMTab(0);
+    statusMsg.textContent = `✅ Selesai! ${bomSelectedFiles.length} file diproses.`;
+    document.getElementById('bomTableContainer').classList.remove('hidden');
+    document.getElementById('bomExportBtn').classList.remove('hidden');
+    processBtn.disabled = false;
+}
+
+function switchBOMTab(idx) {
+    bomActiveTab = idx;
+    document.getElementById('bomTabBtn0').className = idx === 0 ? 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm' : 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
+    document.getElementById('bomTabBtn1').className = idx === 1 ? 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm' : 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
+    document.getElementById('bomSearchInput').value = '';
+    document.getElementById('bomFilterType').value = 'all';
+    renderBOMTable(bomMultiSheetData[bomActiveTab]);
+}
+
+function renderBOMTable(dataToRender) {
+    const thead = document.getElementById('bomTableHead');
+    const tbody = document.getElementById('bomTableBody');
+    const summaryCount = document.getElementById('bomSummaryCount');
+    summaryCount.textContent = `${dataToRender.length} Material (${bomSheetNames[bomActiveTab]})`;
+
+    let headHTML = `<tr>
+        <th class="p-2.5 border-b font-bold text-slate-700 bg-slate-100">Kode</th>
+        <th class="p-2.5 border-b font-bold text-slate-700 bg-slate-100">Nama (EN)</th>
+        <th class="p-2.5 border-b font-bold text-slate-700 bg-slate-100">Spesifikasi</th>`;
+    bomVersions.forEach(ver => { headHTML += `<th class="p-2.5 border-b font-bold text-center text-slate-700 bg-slate-100 border-l border-slate-200">${ver}</th>`; });
+    headHTML += `</tr>`;
+    thead.innerHTML = headHTML;
+
+    if (dataToRender.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${bomVersions.length + 3}" class="text-center py-8 text-slate-400 italic">Tidak ada data.</td></tr>`;
+        return;
+    }
+
+    let bodyHTML = '';
+    dataToRender.forEach(item => {
+        bodyHTML += `<tr class="hover:bg-slate-50/80">
+            <td class="p-2.5 font-mono text-[10px] font-bold text-indigo-600">${item.code}</td>
+            <td class="p-2.5 text-slate-700 font-medium">${item.nameEN}</td>
+            <td class="p-2.5 text-slate-600 text-[10px]">${item.spec}</td>`;
+        const qtysInVersions = bomVersions.map(ver => item.qtys[ver]);
+        const firstValidQty = qtysInVersions.find(q => q !== undefined);
+        const isQuantityVarying = qtysInVersions.some(q => q !== undefined && q !== firstValidQty);
+        bomVersions.forEach(ver => {
+            const qty = item.qtys[ver];
+            const hasItem = qty !== undefined;
+            let cellBg = 'bg-slate-50 text-slate-400';
+            let displayVal = '-';
+            if (hasItem) {
+                if (isQuantityVarying) cellBg = 'bg-amber-50 text-amber-800 font-semibold';
+                else cellBg = 'bg-emerald-50 text-emerald-800';
+                displayVal = qty;
+            }
+            bodyHTML += `<td class="p-2.5 text-center font-mono text-[10px] ${cellBg} border-l border-slate-100">${displayVal}</td>`;
+        });
+        bodyHTML += `</tr>`;
+    });
+    tbody.innerHTML = bodyHTML;
+}
+
+function filterBOMTable() {
+    const query = document.getElementById('bomSearchInput').value.toLowerCase();
+    const filterType = document.getElementById('bomFilterType').value;
+    const currentData = bomMultiSheetData[bomActiveTab];
+    let filtered = currentData.filter(item => {
+        const matchText = item.code.toLowerCase().includes(query) || item.nameEN.toLowerCase().includes(query) || item.spec.toLowerCase().includes(query);
+        if (!matchText) return false;
+        if (filterType === 'diff') {
+            const presentCount = bomVersions.filter(ver => item.qtys[ver] !== undefined).length;
+            return presentCount < bomVersions.length;
+        } else if (filterType === 'common') {
+            const presentCount = bomVersions.filter(ver => item.qtys[ver] !== undefined).length;
+            return presentCount === bomVersions.length;
+        }
+        return true;
+    });
+    renderBOMTable(filtered);
+}
+
+function exportBOMToExcel() {
+    if (bomMultiSheetData[0].length === 0 && bomMultiSheetData[1].length === 0) return;
+    const workbook = XLSX.utils.book_new();
+    bomMultiSheetData.forEach((sheetData, sIdx) => {
+        if (sheetData.length === 0) return;
+        const exportRows = sheetData.map(item => {
+            const rowObj = { "Kode Material": item.code, "Material Name (English)": item.nameEN, "Specification": item.spec };
+            bomVersions.forEach(ver => { rowObj[`BOM ${ver}`] = item.qtys[ver] !== undefined ? item.qtys[ver] : '-'; });
+            return rowObj;
+        });
+        const worksheet = XLSX.utils.json_to_sheet(exportRows);
+        let safeSheetName = (bomSheetNames[sIdx] || `Sheet_${sIdx+1}`).replace(/[\/\\\?\*\[\]]/g, "_");
+        if (safeSheetName.length > 31) safeSheetName = safeSheetName.substring(0, 31);
+        XLSX.utils.book_append_sheet(workbook, worksheet, safeSheetName);
+    });
+    XLSX.writeFile(workbook, "Master_BOM_MultiSheet_Comparison.xlsx");
+    showToast('📥 Excel BOM diunduh', 'success');
+}
 // STATE
 // ============================================================
 let currentMode = '';
@@ -1416,7 +1659,7 @@ async function selectMode(mode) {
     renderMachineTable(); renderElemenMasterTable(); renderSiklusMasterTable();
     updateLineDisplay(); updateModelDisplay(); syncUphFromActiveLine();
     showToast('✅ Data tersinkron', 'success');
-    setTimeout(() => { openLineModal(); }, 300);
+    if (mode !== 'bom') { setTimeout(() => { openLineModal(); }, 300); }
 }
 function openModeModal() {
     if (isRunning || currentLaps.length > 0) { if (!confirm('⚠️ Timer jalan. Lanjut?')) return; }
@@ -1428,7 +1671,7 @@ function openModeModal() {
     document.getElementById('modeModal').classList.add('active');
 }
 function applyModeToUI() {
-    const titles = { 'mesin': '⏱️ Time Study Mesin', 'elemen': '⏱️ Time Study Elemen', 'siklus': '⏱️ Time Study Siklus' };
+    const titles = { 'mesin': '⏱️ Time Study Mesin', 'elemen': '⏱️ Time Study Elemen', 'siklus': '⏱️ Time Study Siklus', 'bom': '🔧 Compare BOM' };
     const tEl = document.getElementById('appTitle'); if (tEl) tEl.innerText = titles[currentMode] || '⏱️ Time Study';
     const mw = document.getElementById('machineInputWrapper');
     const ew = document.getElementById('elemenInputWrapper');
@@ -1457,6 +1700,15 @@ function applyModeToUI() {
         mfg.classList.add('hidden'); efg.classList.add('hidden'); sfg.classList.remove('hidden');
         eai.classList.add('hidden'); sai.classList.remove('hidden');
     }
+    } else if (currentMode === 'bom') {
+    mw.classList.add('hidden'); ew.classList.add('hidden'); sw.classList.add('hidden');
+    tM.classList.add('hidden'); tE.classList.add('hidden'); tS.classList.add('hidden');
+    mfg.classList.add('hidden'); efg.classList.add('hidden'); sfg.classList.add('hidden');
+    eai.classList.add('hidden'); sai.classList.add('hidden');
+    const tB = document.getElementById('tabBtn-bom');
+    if (tB) tB.classList.remove('hidden');
+    switchTab('bom');
+}
     preinstallActive = false; preinstallSelectedKeys.clear(); preinstallActiveSops = []; preinstallOperatorCount = 1;
     preinstallActiveElemenList = []; preinstallElemenIndex = 0; preinstallCycleNum = 1;
     batchUnitCount = 1;
@@ -1466,6 +1718,8 @@ function applyModeToUI() {
     if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
     else if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
 }
+            const tB2 = document.getElementById('tabBtn-bom');
+if (tB2) tB2.classList.toggle('hidden', currentMode !== 'bom');
 
 // ============================================================
 // DB ABSTRACTION
@@ -4428,6 +4682,7 @@ function switchTab(t) {
     if (t === 'siklus') renderSiklusMasterTable();
     if (t === 'export') { updateServerInfo(); syncUphFromActiveLine(); renderStandardCheck(); }
     if (t === 'arsip') { renderArsipList(); updateArsipCount(); }
+    if (t === 'bom') { /* tab BOM tidak perlu render khusus */ }
     if (t === 'input') {
         if (currentMode === 'elemen') renderSopDropdownList();
         else if (currentMode === 'siklus') renderSiklusDropdownList();
