@@ -62,12 +62,23 @@
         .line-model-body #modelListContainer { max-height: 168px; overflow-y: auto; padding-right: 2px; }
         .line-model-body .lm-row { padding: 6px 10px; font-size: 13px; }
         .line-model-body .lm-uph { font-size: 11px; padding: 1px 6px; }
-        @media (min-width: 640px) {
-            .line-model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-            .line-model-grid > .lm-divider { border-top: 0; border-left: 2px dashed #d1d5db; padding-top: 0; padding-left: 16px; margin-top: 0; }
-            .line-model-body #lineListContainer,
-            .line-model-body #modelListContainer { max-height: 260px; }
-        }
+       /* Di HP: tetap 2 kolom, tapi font & padding lebih kecil */
+.line-model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+.line-model-grid > .lm-divider { border-top: 0; border-left: 2px dashed #d1d5db; padding-left: 8px; margin-top: 0; }
+.line-model-body #lineListContainer,
+.line-model-body #modelListContainer { max-height: 200px; overflow-y: auto; }
+.line-model-body .lm-row { padding: 6px 8px; font-size: 12px; gap: 4px; }
+.line-model-body .lm-uph { font-size: 10px; padding: 1px 4px; }
+.line-model-body .lm-row button { padding: 2px 4px; font-size: 12px; }
+
+@media (min-width: 768px) {
+    .line-model-grid { gap: 16px; }
+    .line-model-grid > .lm-divider { padding-left: 16px; }
+    .line-model-body #lineListContainer,
+    .line-model-body #modelListContainer { max-height: 260px; }
+    .line-model-body .lm-row { padding: 6px 10px; font-size: 13px; }
+    .line-model-body .lm-uph { font-size: 11px; padding: 1px 6px; }
+}
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .sync-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
@@ -109,8 +120,16 @@
         .mode-card:hover { border-color: #93c5fd; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .mode-card:active { transform: scale(0.98); }
         .mode-card-icon { font-size: 48px; line-height: 1; flex-shrink: 0; }
-        .mode-card-title { font-size: 22px; font-weight: 800; color: #1f2937; line-height: 1.2; }
-        .mode-card-desc { font-size: 14px; color: #6b7280; margin-top: 4px; line-height: 1.4; }
+        .mode-card { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.mode-card-icon { font-size: 32px; line-height: 1; flex-shrink: 0; }
+.mode-card-title { font-size: 15px; font-weight: 800; color: #1f2937; line-height: 1.2; }
+.mode-card-desc { font-size: 11px; color: #6b7280; margin-top: 2px; line-height: 1.3; }
+@media (min-width: 768px) {
+    .mode-card { gap: 16px; padding: 20px; }
+    .mode-card-icon { font-size: 48px; }
+    .mode-card-title { font-size: 22px; }
+    .mode-card-desc { font-size: 14px; }
+}
         @media (min-width: 768px) {
             .mode-card-icon { font-size: 56px; }
             .mode-card-title { font-size: 26px; }
@@ -280,13 +299,13 @@
             } catch (e) {}
         }, 6000);
     </script>
-        <div id="modeModal" class="modal-bg active">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="p-6 border-b border-gray-200 text-center">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">⏱️ Time Study</h1>
-                <p class="text-base md:text-lg text-gray-500 mt-2">Pilih Mode Time Study</p>
-            </div>
-            <div class="p-4 md:p-6 space-y-4">
+       <div id="modeModal" class="modal-bg active">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="p-4 md:p-6 border-b border-gray-200 text-center">
+            <h1 class="text-2xl md:text-4xl font-extrabold text-gray-800">⏱️ Time Study</h1>
+            <p class="text-sm md:text-lg text-gray-500 mt-1">Pilih Mode Time Study</p>
+        </div>
+        <div class="p-3 md:p-6 space-y-2 md:space-y-4">
                 <button onclick="selectMode('mesin')" class="mode-card w-full">
                     <div class="mode-card-icon">🔧</div>
                     <div class="flex-1"><div class="mode-card-title">Time Study Mesin</div><div class="mode-card-desc">Ukur cycle time per mesin untuk hitung kapasitas</div></div>
@@ -327,12 +346,12 @@
                         <span>1️⃣ Nama Line</span><span>UPH</span>
                     </div>
                     <div class="flex gap-1 mb-2">
-                        <button onclick="forceReloadLineList()" class="flex-1 text-[10px] bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 font-bold px-2 py-1.5 rounded">
-                            🔄 Refresh dari Firebase
-                        </button>
-                        <button onclick="recoverLineFromActive()" class="flex-1 text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-2 py-1.5 rounded">
-                            ♻️ Pulihkan Line Aktif
-                        </button>
+                       <button onclick="forceReloadLineList()" class="flex-1 text-[9px] md:text-[10px] bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 font-bold px-1.5 py-1.5 rounded whitespace-nowrap">
+    🔄 Refresh
+</button>
+<button onclick="recoverLineFromActive()" class="flex-1 text-[9px] md:text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-1.5 py-1.5 rounded whitespace-nowrap">
+    ♻️ Pulihkan
+</button>
                     </div>
                     <div id="lineListContainer" class="space-y-2"></div>
                     <div class="border-t border-gray-200 pt-3 mt-3">
