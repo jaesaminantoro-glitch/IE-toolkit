@@ -50,17 +50,40 @@
         .master-scroll thead th.col-model { background-color: #ecfdf5; }
         .master-scroll thead th.col-nama { white-space: normal !important; }
         @media (max-width: 1023px) {
-    /* Tetap tampilkan Line + Model, tapi diperkecil */
-    .master-scroll .col-line  { left: 0;     min-width: 50px; max-width: 50px; width: 50px;  font-size: 9px; padding: 4px 3px !important; }
-    .master-scroll .col-model { left: 50px;  min-width: 68px; max-width: 68px; width: 68px;  font-size: 9px; padding: 4px 3px !important; }
-    .master-scroll .col-sop   { left: 118px; min-width: 42px; max-width: 42px; width: 42px;  padding: 4px 3px !important; font-size: 10px; }
-    .master-scroll .col-nama  { 
-        left: 160px; min-width: 130px; max-width: 130px; width: 130px; 
+    /* Line & Model TAMPIL TAPI TIDAK STICKY — akan hilang saat di-scroll ke kanan */
+    .master-scroll .col-line  { 
+        position: static !important;   /* ← tidak sticky */
+        min-width: 50px; max-width: 50px; width: 50px;  
+        font-size: 9px; padding: 4px 3px !important; 
+    }
+    .master-scroll .col-model { 
+        position: static !important;   /* ← tidak sticky */
+        min-width: 68px; max-width: 68px; width: 68px;  
+        font-size: 9px; padding: 4px 3px !important; 
+    }
+    /* HANYA No. SOP & Nama SOP yang sticky di kiri */
+    .master-scroll .col-sop { 
+        left: 0 !important;            /* ← sticky di kiri */
+        min-width: 42px; max-width: 42px; width: 42px;  
+        padding: 4px 3px !important; font-size: 10px; 
+    }
+    .master-scroll .col-nama { 
+        left: 42px !important;         /* ← sticky di samping No. SOP */
+        min-width: 130px; max-width: 130px; width: 130px; 
         font-size: 10px; line-height: 1.2; 
         padding: 4px 5px !important; 
     }
     /* Sembunyikan badge karena Line & Model sudah ada di kolomnya sendiri */
     .master-scroll .col-nama .hp-model-badge { display: none !important; }
+             /* Efek fade di kanan Nama SOP */
+    .master-scroll .col-nama::after {
+        content: '';
+        position: absolute;
+        top: 0; right: -8px; bottom: 0;
+        width: 8px;
+        background: linear-gradient(to right, rgba(15,23,42,0.15), transparent);
+        pointer-events: none;
+    }
 }
         .hp-model-badge { display: none; }
 
