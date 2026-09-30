@@ -35,14 +35,33 @@
         .master-scroll .col-sop   { left: 182px; min-width: 66px;  max-width: 66px;  width: 66px; }
         .master-scroll .col-nama  { left: 248px; min-width: 230px; max-width: 230px; width: 230px; white-space: normal !important; word-break: break-word; line-height: 1.3; background-color: #f8fafc; box-shadow: 3px 0 4px -2px rgba(15,23,42,.25); }
         .master-scroll thead th.col-line, .master-scroll thead th.col-model, .master-scroll thead th.col-sop, .master-scroll thead th.col-nama { z-index: 8; background-color: #fef9c3; }
+        @media (max-width: 1023px) {
+    .master-scroll thead th.col-line,
+    .master-scroll thead th.col-model,
+    .master-scroll thead th.col-sop,
+    .master-scroll thead th.col-nama {
+        font-size: 9px !important;
+        padding: 6px 3px !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
         .master-scroll thead th.col-model { background-color: #ecfdf5; }
         .master-scroll thead th.col-nama { white-space: normal !important; }
         @media (max-width: 1023px) {
-            .master-scroll .col-line, .master-scroll .col-model { display: none; }
-            .master-scroll .col-sop { left: 0; min-width: 58px; max-width: 58px; width: 58px; padding: 4px !important; }
-            .master-scroll .col-nama { left: 58px; min-width: 130px; max-width: 130px; width: 130px; font-size: 10px; line-height: 1.2; padding: 4px 5px !important; }
-            .master-scroll .col-nama .hp-model-badge { display: inline-block; background: #d1fae5; color: #065f46; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-bottom: 2px; }
-        }
+    /* Tetap tampilkan Line + Model, tapi diperkecil */
+    .master-scroll .col-line  { left: 0;     min-width: 50px; max-width: 50px; width: 50px;  font-size: 9px; padding: 4px 3px !important; }
+    .master-scroll .col-model { left: 50px;  min-width: 68px; max-width: 68px; width: 68px;  font-size: 9px; padding: 4px 3px !important; }
+    .master-scroll .col-sop   { left: 118px; min-width: 42px; max-width: 42px; width: 42px;  padding: 4px 3px !important; font-size: 10px; }
+    .master-scroll .col-nama  { 
+        left: 160px; min-width: 130px; max-width: 130px; width: 130px; 
+        font-size: 10px; line-height: 1.2; 
+        padding: 4px 5px !important; 
+    }
+    /* Sembunyikan badge karena Line & Model sudah ada di kolomnya sendiri */
+    .master-scroll .col-nama .hp-model-badge { display: none !important; }
+}
         .hp-model-badge { display: none; }
 
 @media (max-width: 1023px) {
