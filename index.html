@@ -247,12 +247,12 @@
                 <p class="text-xs text-gray-500 mt-1">Line punya UPH. Model menentukan data dipisah per tipe.</p>
             </div>
             <div class="modal-body-scroll p-4 space-y-4 line-model-body">
-                <div class="line-model-grid">
+               <div class="flex gap-1 mb-3 bg-gray-100 p-1 rounded-lg">
+    <button type="button" id="lmTabLineBtn" onclick="switchLineModelTab('line')" class="flex-1 py-2.5 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition">🏭 Line</button>
+    <button type="button" id="lmTabModelBtn" onclick="switchLineModelTab('model')" class="flex-1 py-2.5 rounded-md text-xs font-bold text-gray-500 transition">📦 Model</button>
+</div>
+<div class="line-model-grid">
     <div>
-        <div class="flex gap-1 mb-2 bg-gray-100 p-1 rounded-lg">
-            <button type="button" id="lmTabLineBtn" onclick="switchLineModelTab('line')" class="flex-1 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition">🏭 Line</button>
-            <button type="button" id="lmTabModelBtn" onclick="switchLineModelTab('model')" class="flex-1 py-2 rounded-md text-xs font-bold text-gray-500 transition">📦 Model</button>
-        </div>
         <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
             <span>1️⃣ Nama Line</span><span>UPH</span>
         </div>
