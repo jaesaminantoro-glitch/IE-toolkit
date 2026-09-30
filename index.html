@@ -1635,18 +1635,21 @@
                     if(mfg) mfg.classList.remove('hidden'); if(efg) efg.classList.add('hidden'); if(sfg) sfg.classList.add('hidden');
                     if(eai) eai.classList.add('hidden'); if(sai) sai.classList.add('hidden');
                     if (tB) tB.classList.add('hidden');
+                     switchTab('input');
                 } else if (currentMode === 'elemen') {
                     if(mw) mw.classList.add('hidden'); if(ew) ew.classList.remove('hidden'); if(sw) sw.classList.add('hidden');
                     if(tM) tM.classList.add('hidden'); if(tE) tE.classList.remove('hidden'); if(tS) tS.classList.add('hidden');
                     if(mfg) mfg.classList.add('hidden'); if(efg) efg.classList.remove('hidden'); if(sfg) sfg.classList.add('hidden');
                     if(eai) eai.classList.remove('hidden'); if(sai) sai.classList.add('hidden');
                     if (tB) tB.classList.add('hidden');
+                     switchTab('input');
                 } else if (currentMode === 'siklus') {
                     if(mw) mw.classList.add('hidden'); if(ew) ew.classList.add('hidden'); if(sw) sw.classList.remove('hidden');
                     if(tM) tM.classList.add('hidden'); if(tE) tE.classList.add('hidden'); if(tS) tS.classList.remove('hidden');
                     if(mfg) mfg.classList.add('hidden'); if(efg) efg.classList.add('hidden'); if(sfg) sfg.classList.remove('hidden');
                     if(eai) eai.classList.add('hidden'); if(sai) sai.classList.remove('hidden');
                     if (tB) tB.classList.add('hidden');
+                     switchTab('input');
                 } else if (currentMode === 'bom') {
                     if(mw) mw.classList.add('hidden'); if(ew) ew.classList.add('hidden'); if(sw) sw.classList.add('hidden');
                     if(tM) tM.classList.add('hidden'); if(tE) tE.classList.add('hidden'); if(tS) tS.classList.add('hidden');
@@ -1664,7 +1667,17 @@
                 if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); }
                 else if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); }
                 const tB2 = document.getElementById('tabBtn-bom');
-                if (tB2) tB2.classList.toggle('hidden', currentMode !== 'bom');
+                if (tB2) {
+                    if (currentMode === 'bom') tB2.classList.remove('hidden');
+                    else tB2.classList.add('hidden');
+                }
+                // 🔥 Paksa tab BOM hilang kalau bukan mode BOM
+                if (currentMode !== 'bom') {
+                    const tabBomContent = document.getElementById('tab-bom');
+                    if (tabBomContent) tabBomContent.classList.add('hidden');
+                    const tabBomBtn = document.getElementById('tabBtn-bom');
+                    if (tabBomBtn) tabBomBtn.classList.remove('tab-active');
+                }
             } catch (e) {
                 console.error('❌ applyModeToUI gagal:', e);
                 const ac = document.getElementById('appContainer');
@@ -4627,6 +4640,11 @@
         // TAB NAV
         // ============================================================
         function switchTab(t) {
+            // 🔥 Kalau mode bukan BOM tapi user mencoba buka tab BOM → redirect ke input
+            if (t === 'bom' && currentMode !== 'bom') {
+                console.log('⚠️ Tab BOM diblokir, mode bukan BOM');
+                t = 'input';
+            }
             if (isRunning && t !== 'input') {
                 if (!confirm('⚠️ Timer jalan. Pause timer?')) return;
                 autoLapBeforeStop();
