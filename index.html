@@ -44,6 +44,25 @@
             .master-scroll .col-nama .hp-model-badge { display: inline-block; background: #d1fae5; color: #065f46; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-bottom: 2px; }
         }
         .hp-model-badge { display: none; }
+
+@media (max-width: 1023px) {
+    .master-scroll .col-nama .hp-model-badge {
+        display: inline-block;
+        background: #d1fae5;
+        color: #065f46;
+        font-size: 8px;
+        font-weight: 600;
+        padding: 0px 4px;
+        border-radius: 3px;
+        margin-bottom: 2px;
+        border: 1px solid #a7f3d0;
+        white-space: nowrap;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.4;
+    }
+}
         .laps-scroll::-webkit-scrollbar { width: 6px; }
         .laps-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
@@ -3660,7 +3679,10 @@ function switchLineModelTab(tab) {
                         out += `<td rowspan="${rs}" class="col-model px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
                         out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-emerald-50 align-middle whitespace-nowrap text-emerald-700">${escapeHtml(g.noSop || '-')}</td>`;
                     }
-                    out += `<td class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40"><span class="hp-model-badge">📦 ${escapeHtml(r.model || '-')}</span><div>${escapeHtml(r.namaSop || '-')}${sb}${pb}</div></td>`;
+                    out += `<td class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-emerald-50/40">
+    ${ri === 0 ? `<span class="hp-model-badge">📦 ${escapeHtml(g.model || '-')}</span>` : ''}
+    <div>${escapeHtml(r.namaSop || '-')}${sb}${pb}</div>
+</td>`;
                     out += `<td class="px-2 py-2 text-center border-r border-b bg-amber-50 whitespace-nowrap font-bold text-amber-800 editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'operators', this)" title="Klik untuk edit Operator">${r.operators || 1}</td>`;
                     for (let i = 0; i < mL; i++) {
                         const lv = r.laps[i];
