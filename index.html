@@ -59,6 +59,13 @@
         .line-model-body .lm-row { padding: 6px 10px; font-size: 13px; }
         .line-model-body .lm-uph { font-size: 11px; padding: 1px 6px; }
         .line-model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: start; }
+        /* Di HP: sembunyikan salah satu kolom, tampilkan sesuai tab */
+@media (max-width: 1023px) {
+    .line-model-grid { grid-template-columns: 1fr; }
+    .line-model-grid > .lm-divider { border-top: 0; border-left: 0; padding-left: 0; margin-top: 0; }
+    .line-model-grid.mode-line > .lm-divider { display: none; }
+    .line-model-grid.mode-model > div:first-child { display: none; }
+}
         .line-model-grid > .lm-divider { border-top: 0; border-left: 2px dashed #d1d5db; padding-left: 8px; margin-top: 0; }
         .line-model-body #lineListContainer, .line-model-body #modelListContainer { max-height: 200px; overflow-y: auto; }
         .line-model-body .lm-row { padding: 6px 8px; font-size: 12px; gap: 4px; }
@@ -222,10 +229,14 @@
             </div>
             <div class="modal-body-scroll p-4 space-y-4 line-model-body">
                 <div class="line-model-grid">
-                    <div>
-                        <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
-                            <span>1️⃣ Nama Line</span><span>UPH</span>
-                        </div>
+    <div>
+        <div class="flex gap-1 mb-2 bg-gray-100 p-1 rounded-lg">
+            <button type="button" id="lmTabLineBtn" onclick="switchLineModelTab('line')" class="flex-1 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition">🏭 Line</button>
+            <button type="button" id="lmTabModelBtn" onclick="switchLineModelTab('model')" class="flex-1 py-2 rounded-md text-xs font-bold text-gray-500 transition">📦 Model</button>
+        </div>
+        <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
+            <span>1️⃣ Nama Line</span><span>UPH</span>
+        </div>
                         <div class="flex gap-1 mb-2">
                             <button onclick="forceReloadLineList()" class="flex-1 text-[9px] md:text-[10px] bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 font-bold px-1.5 py-1.5 rounded whitespace-nowrap">🔄 Refresh</button>
                             <button onclick="recoverLineFromActive()" class="flex-1 text-[9px] md:text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-1.5 py-1.5 rounded whitespace-nowrap">♻️ Pulihkan</button>
@@ -1981,16 +1992,49 @@
                     <button onclick="deleteLineFromModal('${escapeHtml(l.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
                 </div>`).join('');
         }
-        function selectLineTemp(n) { tempSelectedLine = n; renderLineList(); }
+        function selectLineTemp(n) { 
+    tempSelectedLine = n; 
+    renderLineList(); 
+    // 🔥 Auto switch ke tab Model setelah pilih Line (di HP)
+    if (window.innerWidth <= 1023) {
+        setTimeout(() => switchLineModelTab('model'), 250);
+    }
+}
+        // === TAB SWITCH Line / Model (untuk HP) ===
+let currentLineModelTab = 'line';
+
+function switchLineModelTab(tab) {
+    currentLineModelTab = tab;
+    const grid = document.querySelector('.line-model-grid');
+    const btnLine = document.getElementById('lmTabLineBtn');
+    const btnModel = document.getElementById('lmTabModelBtn');
+    if (!grid || !btnLine || !btnModel) return;
+    
+    if (tab === 'line') {
+        grid.classList.remove('mode-model');
+        grid.classList.add('mode-line');
+        btnLine.className = 'flex-1 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition';
+        btnModel.className = 'flex-1 py-2 rounded-md text-xs font-bold text-gray-500 transition';
+    } else {
+        grid.classList.remove('mode-line');
+        grid.classList.add('mode-model');
+        btnLine.className = 'flex-1 py-2 rounded-md text-xs font-bold text-gray-500 transition';
+        btnModel.className = 'flex-1 py-2 rounded-md text-xs font-bold bg-white text-indigo-700 shadow-sm transition';
+    }
+    // Update tampilan aktif
+    document.querySelectorAll('.lm-row').forEach(el => el.classList.remove('ring-2', 'ring-indigo-300'));
+}
         function openLineModal() {
-            tempSelectedLine = activeLine || ''; tempSelectedModel = activeModel || '';
-            renderLineList(); renderModelList();
-            document.getElementById('newLineInput').value = '';
-            document.getElementById('newLineUph').value = '500';
-            document.getElementById('newModelInput').value = '';
-            document.getElementById('lineModal').classList.add('active');
-            if (firebaseReady && navigator.onLine && lineList.length === 0) forceReloadLineList();
-        }
+    tempSelectedLine = activeLine || ''; tempSelectedModel = activeModel || '';
+    renderLineList(); renderModelList();
+    document.getElementById('newLineInput').value = '';
+    document.getElementById('newLineUph').value = '500';
+    document.getElementById('newModelInput').value = '';
+    document.getElementById('lineModal').classList.add('active');
+    // 🔥 Auto switch ke tab Line setiap buka modal
+    setTimeout(() => switchLineModelTab('line'), 50);
+    if (firebaseReady && navigator.onLine && lineList.length === 0) forceReloadLineList();
+}
         function closeLineModal() { document.getElementById('lineModal').classList.remove('active'); }
         function addNewLineFromModal() {
             const inp = document.getElementById('newLineInput'); const ui = document.getElementById('newLineUph');
