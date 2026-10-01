@@ -919,10 +919,12 @@
                 <div id="bomTableContainer" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="p-3 border-b border-gray-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-2">
                         <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <div id="bomSheetTabs" class="flex bg-slate-200 p-1 rounded-lg">
-                                <button onclick="switchBOMTab(0)" id="bomTabBtn0" class="px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm">Sheet 1</button>
-                                <button onclick="switchBOMTab(1)" id="bomTabBtn1" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 2</button>
-                            </div>
+                            <div id="bomSheetTabs" class="flex bg-slate-200 p-1 rounded-lg flex-wrap gap-1">
+    <button onclick="switchBOMTab(0)" id="bomTabBtn0" class="px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm">Sheet 1</button>
+    <button onclick="switchBOMTab(1)" id="bomTabBtn1" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 2</button>
+    <button onclick="switchBOMTab(2)" id="bomTabBtn2" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 3</button>
+    <button onclick="switchBOMTab(3)" id="bomTabBtn3" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 4</button>
+</div>
                             <span id="bomSummaryCount" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-bold"></span>
                         </div>
                         <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -1125,11 +1127,12 @@
         // ============================================================
         // COMPARE BOM STATE
         // ============================================================
-        let bomSelectedFiles = [];
-        let bomMultiSheetData = [[], []];
-        let bomSheetNames = ['Sheet 1', 'Sheet 2'];
-        let bomVersions = [];
-        let bomActiveTab = 0;
+        const BOM_MAX_SHEETS = 4;  // ⚙️ Ubah angka ini kalau mau tambah/kurangi sheet
+let bomSelectedFiles = [];
+let bomMultiSheetData = [[], [], [], []];
+let bomSheetNames = ['Sheet 1', 'Sheet 2', 'Sheet 3', 'Sheet 4'];
+let bomVersions = [];
+let bomActiveTab = 0;
 
         function handleBOMFileSelect(event) {
             const files = event.target.files;
@@ -1155,69 +1158,75 @@
             processBtn.disabled = true;
             statusMsg.textContent = "Memproses...";
 
-            bomMultiSheetData = [[], []];
-            bomVersions = [];
-            const sheetMaps = [new Map(), new Map()];
-            let detectedSheetNames = ['Sheet 1', 'Sheet 2'];
+            bomMultiSheetData = [[], [], [], []];
+bomVersions = [];
+const sheetMaps = [new Map(), new Map(), new Map(), new Map()];
+let detectedSheetNames = ['Sheet 1', 'Sheet 2', 'Sheet 3', 'Sheet 4'];
 
-            for (let i = 0; i < bomSelectedFiles.length; i++) {
-                const file = bomSelectedFiles[i];
-                const versionNumber = file.name.split('-')[0].trim() || file.name;
-                bomVersions.push(versionNumber);
-                try {
-                    const data = await file.arrayBuffer();
-                    const workbook = XLSX.read(data);
-                    const sheetNames = workbook.SheetNames.slice(0, 2);
-                    if (i === 0) {
-                        if (sheetNames[0]) detectedSheetNames[0] = sheetNames[0];
-                        if (sheetNames[1]) detectedSheetNames[1] = sheetNames[1];
-                    }
-                    sheetNames.forEach((sheetName, sIdx) => {
-                        if (sIdx > 1) return;
-                        const worksheet = workbook.Sheets[sheetName];
-                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        const currentMap = sheetMaps[sIdx];
-                        for (let r = 2; r < json.length; r++) {
-                            const row = json[r];
-                            if (!row || !row[3]) continue;
-                            const matCode = String(row[3]).trim();
-                            const matNameEN = row[6] ? String(row[6]).trim() : '-';
-                            const matSpec = row[7] ? String(row[7]).trim() : '-';
-                            const matQty = row[9] !== undefined ? row[9] : '-';
-                            if (!currentMap.has(matCode)) {
-                                currentMap.set(matCode, { code: matCode, nameEN: matNameEN, spec: matSpec, qtys: {} });
-                            }
-                            const current = currentMap.get(matCode);
-                            if (matNameEN !== '-' && current.nameEN === '-') current.nameEN = matNameEN;
-                            if (matSpec !== '-' && current.spec === '-') current.spec = matSpec;
-                            current.qtys[versionNumber] = matQty;
-                        }
-                    });
-                } catch (err) { console.error("Gagal baca:", file.name, err); }
+for (let i = 0; i < bomSelectedFiles.length; i++) {
+    const file = bomSelectedFiles[i];
+    const versionNumber = file.name.split('-')[0].trim() || file.name;
+    bomVersions.push(versionNumber);
+    try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheetNames = workbook.SheetNames.slice(0, BOM_MAX_SHEETS);
+        if (i === 0) {
+            sheetNames.forEach((sn, idx) => { detectedSheetNames[idx] = sn; });
+        }
+        sheetNames.forEach((sheetName, sIdx) => {
+            if (sIdx >= BOM_MAX_SHEETS) return;
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const currentMap = sheetMaps[sIdx];
+            for (let r = 2; r < json.length; r++) {
+                const row = json[r];
+                if (!row || !row[3]) continue;
+                const matCode = String(row[3]).trim();
+                const matNameEN = row[6] ? String(row[6]).trim() : '-';
+                const matSpec = row[7] ? String(row[7]).trim() : '-';
+                const matQty = row[9] !== undefined ? row[9] : '-';
+                if (!currentMap.has(matCode)) {
+                    currentMap.set(matCode, { code: matCode, nameEN: matNameEN, spec: matSpec, qtys: {} });
+                }
+                const current = currentMap.get(matCode);
+                if (matNameEN !== '-' && current.nameEN === '-') current.nameEN = matNameEN;
+                if (matSpec !== '-' && current.spec === '-') current.spec = matSpec;
+                current.qtys[versionNumber] = matQty;
             }
+        });
+    } catch (err) { console.error("Gagal baca:", file.name, err); }
+}
 
-            bomSheetNames = detectedSheetNames;
-            bomMultiSheetData[0] = Array.from(sheetMaps[0].values());
-            bomMultiSheetData[1] = Array.from(sheetMaps[1].values());
+bomSheetNames = detectedSheetNames;
+for (let s = 0; s < BOM_MAX_SHEETS; s++) {
+    bomMultiSheetData[s] = Array.from(sheetMaps[s].values());
+    const btn = document.getElementById('bomTabBtn' + s);
+    if (btn) {
+        const nm = bomSheetNames[s] || ('Sheet ' + (s + 1));
+        btn.textContent = nm.length > 20 ? nm.substring(0, 17) + '...' : nm;
+    }
+}
 
-            document.getElementById('bomTabBtn0').textContent = bomSheetNames[0].length > 20 ? bomSheetNames[0].substring(0, 17) + '...' : bomSheetNames[0];
-            document.getElementById('bomTabBtn1').textContent = bomSheetNames[1].length > 20 ? bomSheetNames[1].substring(0, 17) + '...' : bomSheetNames[1];
-
-            switchBOMTab(0);
-            statusMsg.textContent = `✅ Selesai! ${bomSelectedFiles.length} file diproses.`;
-            document.getElementById('bomTableContainer').classList.remove('hidden');
-            document.getElementById('bomExportBtn').classList.remove('hidden');
-            processBtn.disabled = false;
+switchBOMTab(0);
+statusMsg.textContent = `✅ Selesai! ${bomSelectedFiles.length} file diproses.`;
+document.getElementById('bomTableContainer').classList.remove('hidden');
+document.getElementById('bomExportBtn').classList.remove('hidden');
+processBtn.disabled = false;
         }
 
         function switchBOMTab(idx) {
-            bomActiveTab = idx;
-            document.getElementById('bomTabBtn0').className = idx === 0 ? 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm' : 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
-            document.getElementById('bomTabBtn1').className = idx === 1 ? 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm' : 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
-            document.getElementById('bomSearchInput').value = '';
-            document.getElementById('bomFilterType').value = 'all';
-            renderBOMTable(bomMultiSheetData[bomActiveTab]);
-        }
+    bomActiveTab = idx;
+    const activeCls = 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm';
+    const inactiveCls = 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
+    for (let s = 0; s < BOM_MAX_SHEETS; s++) {
+        const btn = document.getElementById('bomTabBtn' + s);
+        if (btn) btn.className = (s === idx) ? activeCls : inactiveCls;
+    }
+    document.getElementById('bomSearchInput').value = '';
+    document.getElementById('bomFilterType').value = 'all';
+    renderBOMTable(bomMultiSheetData[bomActiveTab]);
+}
 
         function renderBOMTable(dataToRender) {
             const thead = document.getElementById('bomTableHead');
@@ -1284,8 +1293,9 @@
         }
 
         function exportBOMToExcel() {
-            if (bomMultiSheetData[0].length === 0 && bomMultiSheetData[1].length === 0) return;
-            const workbook = XLSX.utils.book_new();
+    const hasAny = bomMultiSheetData.some(sd => sd.length > 0);
+    if (!hasAny) return;
+    const workbook = XLSX.utils.book_new();
             bomMultiSheetData.forEach((sheetData, sIdx) => {
                 if (sheetData.length === 0) return;
                 const exportRows = sheetData.map(item => {
