@@ -1636,12 +1636,12 @@
         // MODE
         // ============================================================
         async function selectMode(mode) {
-            console.log('🎯 selectMode dipanggil:', mode);
-            currentMode = mode;
-            if (mode !== 'bom') {
-                lsSave(LS_KEY_MODE, mode);
-            }
-            masterData = [];
+    console.log('🎯 selectMode dipanggil:', mode);
+    currentMode = mode;
+    // Simpan semua mode termasuk 'bom'
+    lsSave(LS_KEY_MODE, mode);
+    masterData = [];
+    // ...
 
             const mm = document.getElementById('modeModal');
             const mc = mm ? mm.querySelector(`button[onclick="selectMode('${mode}')"]`) : null;
@@ -4803,8 +4803,9 @@ function switchLineModelTab(tab) {
         // INIT
         // ============================================================
         async function init() {
-            let sm = lsLoad(LS_KEY_MODE, '');
-            if (sm === 'bom') sm = '';
+    let sm = lsLoad(LS_KEY_MODE, '');
+    // Hapus baris: if (sm === 'bom') sm = '';
+    // ...
             const sl = localStorage.getItem(LS_KEY_ACTIVE_LINE);
             if (sl) activeLine = sl;
             const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
