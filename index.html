@@ -1129,8 +1129,8 @@
         // ============================================================
         const BOM_MAX_SHEETS = 4;  // ⚙️ Ubah angka ini kalau mau tambah/kurangi sheet
 let bomSelectedFiles = [];
-let bomMultiSheetData = [[], [], [], []];
-let bomSheetNames = ['Sheet 1', 'Sheet 2', 'Sheet 3', 'Sheet 4'];
+let bomMultiSheetData = Array.from({ length: BOM_MAX_SHEETS }, () => []);
+let bomSheetNames = Array.from({ length: BOM_MAX_SHEETS }, (_, i) => `Sheet ${i + 1}`);
 let bomVersions = [];
 let bomActiveTab = 0;
 
@@ -1158,7 +1158,7 @@ let bomActiveTab = 0;
             processBtn.disabled = true;
             statusMsg.textContent = "Memproses...";
 
-            bomMultiSheetData = [[], [], [], []];
+            bomMultiSheetData = Array.from({ length: BOM_MAX_SHEETS }, () => []);
 bomVersions = [];
 const sheetMaps = [new Map(), new Map(), new Map(), new Map()];
 let detectedSheetNames = ['Sheet 1', 'Sheet 2', 'Sheet 3', 'Sheet 4'];
@@ -1364,6 +1364,8 @@ processBtn.disabled = false;
         let tempSelectedModel = '';
         let editingModelOldName = '';
         let archiveList = [];
+let preinstallTempSelected = new Set();     // ← TAMBAH INI
+let preinstallTempOperators = 1;            // ← TAMBAH INI
 
         // === PENDING SYNC (untuk mode offline) ===
         let pendingSync = lsLoad('timeStudy_pendingSync', { master: false, machines: false, lines: false, elemen: false, siklus: false, models: false, archive: false });
@@ -1438,6 +1440,11 @@ processBtn.disabled = false;
             setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, 1800);
         }
         function getLineStandardUph() { if (!activeLine) return 0; const l = lineList.find(x => x.name === activeLine); return l ? parseFloat(l.uph) || 0 : 0; }
+        function getLineUphByName(lineName) {
+    if (!lineName) return 0;
+    const l = lineList.find(x => x.name === lineName);
+    return l ? parseFloat(l.uph) || 0 : 0;
+}
         function getUphColorClass(uph, std) { if (!std || std <= 0) return 'bg-purple-50 text-purple-700 border border-purple-200'; if (uph >= std) return 'bg-emerald-100 text-emerald-800 border border-emerald-300'; return 'bg-red-100 text-red-800 border border-red-300'; }
         function downloadBlob(blob, filename) {
             try {
@@ -1900,19 +1907,23 @@ processBtn.disabled = false;
             if (!window.apiKV) {
                 try {
                     window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'lineList'), (snap) => {
-                        try {
-                            const val = snap.val(); if (!val) return;
-                            const rd = normalizeLineList(val.data || []);
-                            if (rd.length === 0 && lineList.length > 0) return;
-                            if (isSyncingFromRemote) return;
-                            if (JSON.stringify(rd) !== JSON.stringify(lineList)) {
-                                isSyncingFromRemote = true; lineList = rd; lsSave(LS_KEY_LINE_LIST, lineList);
-                                syncUphFromActiveLine(); updateLineDisplay();
-                                if (document.getElementById('lineModal').classList.contains('active')) renderLineList();
-                                isSyncingFromRemote = false;
-                            }
-                        } catch (e) {}
-                    }, () => {});
+    if (isSyncingFromRemote) return;
+    try {
+        const val = snap.val(); if (!val) return;
+        const rd = normalizeLineList(val.data || []);
+        if (rd.length === 0 && lineList.length > 0) return;
+        if (JSON.stringify(rd) !== JSON.stringify(lineList)) {
+            isSyncingFromRemote = true;
+            lineList = rd; lsSave(LS_KEY_LINE_LIST, lineList);
+            syncUphFromActiveLine(); updateLineDisplay();
+            if (document.getElementById('lineModal').classList.contains('active')) renderLineList();
+        }
+    } catch (e) {
+        console.error('Listener lineList error:', e);   // ← log error
+    } finally {
+        isSyncingFromRemote = false;                    // ← SELALU reset
+    }
+}, () => {});
                 } catch (e) {}
                 try {
                     window.firebaseOnValue(window.firebaseRef(window.firebaseDB, 'machineList'), (snap) => {
@@ -2062,13 +2073,16 @@ processBtn.disabled = false;
         function renderLineList() {
             const c = document.getElementById('lineListContainer'); if (!c) return;
             if (lineList.length === 0) { c.innerHTML = `<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.<br><span class="text-[10px] text-blue-600">Klik "🔄 Refresh dari Firebase"</span></div>`; return; }
-            c.innerHTML = lineList.map(l => `
-                <div class="lm-row flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedLine === l.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
-                    <button onclick="selectLineTemp('${escapeHtml(l.name)}')" class="flex-1 text-left font-semibold ${tempSelectedLine === l.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}</button>
-                    <span class="lm-uph text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${l.uph} UPH</span>
-                    <button onclick="openEditLineModal('${escapeHtml(l.name)}')" class="text-blue-500 hover:text-blue-700 px-1 py-1 text-sm">✏️</button>
-                    <button onclick="deleteLineFromModal('${escapeHtml(l.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
-                </div>`).join('');
+            c.innerHTML = lineList.map(l => {
+    const safeName = encodeURIComponent(l.name);
+    return `
+    <div class="lm-row ...">
+        <button onclick="selectLineTemp(decodeURIComponent('${safeName}'))" ...>${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}</button>
+        <span ...>${l.uph} UPH</span>
+        <button onclick="openEditLineModal(decodeURIComponent('${safeName}'))" ...>✏️</button>
+        <button onclick="deleteLineFromModal(decodeURIComponent('${safeName}'))" ...>🗑️</button>
+    </div>`;
+}).join('');
         }
         function selectLineTemp(n) { 
     tempSelectedLine = n; 
@@ -2222,15 +2236,18 @@ function switchLineModelTab(tab) {
         // MODEL
         // ============================================================
         function renderModelList() {
-            const c = document.getElementById('modelListContainer'); if (!c) return;
-            if (modelList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada model.</div>'; return; }
-            c.innerHTML = modelList.map(m => `
-                <div class="lm-row flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition ${tempSelectedModel === m.name ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
-                    <button onclick="selectModelTemp('${escapeHtml(m.name)}')" class="flex-1 text-left font-semibold ${tempSelectedModel === m.name ? 'text-emerald-800' : 'text-gray-700'}">${tempSelectedModel === m.name ? '✅ ' : ''}${escapeHtml(m.name)}</button>
-                    <button onclick="openEditModelModal('${escapeHtml(m.name)}')" class="text-blue-500 hover:text-blue-700 px-1 py-1 text-sm">✏️</button>
-                    <button onclick="deleteModelFromModal('${escapeHtml(m.name)}')" class="text-red-500 hover:text-red-700 px-1 py-1 text-sm">🗑️</button>
-                </div>`).join('');
-        }
+    const c = document.getElementById('modelListContainer'); if (!c) return;
+    if (modelList.length === 0) { c.innerHTML = '...'; return; }
+    c.innerHTML = modelList.map(m => {
+        const safeName = encodeURIComponent(m.name);
+        return `
+        <div class="lm-row ...">
+            <button onclick="selectModelTemp(decodeURIComponent('${safeName}'))" ...>${tempSelectedModel === m.name ? '✅ ' : ''}${escapeHtml(m.name)}</button>
+            <button onclick="openEditModelModal(decodeURIComponent('${safeName}'))" ...>✏️</button>
+            <button onclick="deleteModelFromModal(decodeURIComponent('${safeName}'))" ...>🗑️</button>
+        </div>`;
+    }).join('');
+}
         function selectModelTemp(n) { tempSelectedModel = n; renderModelList(); }
         function addNewModelFromModal() {
             const inp = document.getElementById('newModelInput');
@@ -4415,7 +4432,7 @@ function switchLineModelTab(tab) {
                 ws[`${totalSmhL}${m.startRow}`] = { t: 'n', f: `SUM(${smhL}${m.startRow}:${smhL}${m.endRow})`, v: parseFloat(m.group.totalSmh.toFixed(4)) };
                 ws[`${uphL}${m.startRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${m.startRow},0)`, v: Math.round(3600 / m.group.totalSmh) };
             });
-            const stdUph = getLineStandardUph();
+            const stdUph = getLineUphByName(a.line);
             const numFmtCols = [];
             for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
             numFmtCols.push(avgCol, smhCol);
@@ -4473,7 +4490,7 @@ function switchLineModelTab(tab) {
                 ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
                 ws[`${uphL}${r}`] = { t: 'n', f: `ROUND(3600/${smhL}${r},0)`, v: st.uph };
             }
-            const stdUph = getLineStandardUph();
+           const stdUph = getLineUphByName(a.line);
             const numFmtCols = [];
             for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
             numFmtCols.push(avgCol, smhCol);
@@ -4530,7 +4547,7 @@ function switchLineModelTab(tab) {
                 ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
                 ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
             }
-            const stdUph = getLineStandardUph();
+           const stdUph = getLineUphByName(a.line);
             const numFmtCols = [];
             for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
             numFmtCols.push(avgCol, ctgCol);
