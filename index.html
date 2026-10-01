@@ -2070,15 +2070,16 @@ processBtn.disabled = false;
             const c = document.getElementById('lineListContainer'); if (!c) return;
             if (lineList.length === 0) { c.innerHTML = `<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.<br><span class="text-[10px] text-blue-600">Klik "🔄 Refresh dari Firebase"</span></div>`; return; }
             c.innerHTML = lineList.map(l => {
-    const safeName = encodeURIComponent(l.name);
-    return `
-    <div class="lm-row ...">
-        <button onclick="selectLineTemp(decodeURIComponent('${safeName}'))" ...>${tempSelectedLine === l.name ? '✅ ' : ''}${escapeHtml(l.name)}</button>
-        <span ...>${l.uph} UPH</span>
-        <button onclick="openEditLineModal(decodeURIComponent('${safeName}'))" ...>✏️</button>
-        <button onclick="deleteLineFromModal(decodeURIComponent('${safeName}'))" ...>🗑️</button>
-    </div>`;
-}).join('');
+                const safeName = encodeURIComponent(l.name);
+                const sel = tempSelectedLine === l.name;
+                return `
+                <div class="lm-row flex items-center gap-2 rounded-lg border-2 ${sel ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white'}">
+                    <button type="button" onclick="selectLineTemp(decodeURIComponent('${safeName}'))" class="flex-1 min-w-0 text-left font-bold text-gray-800 truncate">${sel ? '✅ ' : ''}${escapeHtml(l.name)}</button>
+                    <span class="lm-uph shrink-0 bg-indigo-100 text-indigo-700 font-bold rounded-full whitespace-nowrap">${l.uph} UPH</span>
+                    <button type="button" onclick="openEditLineModal(decodeURIComponent('${safeName}'))" class="shrink-0 rounded hover:bg-gray-100">✏️</button>
+                    <button type="button" onclick="deleteLineFromModal(decodeURIComponent('${safeName}'))" class="shrink-0 rounded hover:bg-red-50">🗑️</button>
+                </div>`;
+            }).join('');
         }
         function selectLineTemp(n) { 
     tempSelectedLine = n; 
@@ -2233,14 +2234,15 @@ function switchLineModelTab(tab) {
         // ============================================================
         function renderModelList() {
     const c = document.getElementById('modelListContainer'); if (!c) return;
-    if (modelList.length === 0) { c.innerHTML = '...'; return; }
+    if (modelList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada model. Tambahkan di bawah.</div>'; return; }
     c.innerHTML = modelList.map(m => {
         const safeName = encodeURIComponent(m.name);
+        const sel = tempSelectedModel === m.name;
         return `
-        <div class="lm-row ...">
-            <button onclick="selectModelTemp(decodeURIComponent('${safeName}'))" ...>${tempSelectedModel === m.name ? '✅ ' : ''}${escapeHtml(m.name)}</button>
-            <button onclick="openEditModelModal(decodeURIComponent('${safeName}'))" ...>✏️</button>
-            <button onclick="deleteModelFromModal(decodeURIComponent('${safeName}'))" ...>🗑️</button>
+        <div class="lm-row flex items-center gap-2 rounded-lg border-2 ${sel ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 bg-white'}">
+            <button type="button" onclick="selectModelTemp(decodeURIComponent('${safeName}'))" class="flex-1 min-w-0 text-left font-bold text-gray-800 truncate">${sel ? '✅ ' : ''}${escapeHtml(m.name)}</button>
+            <button type="button" onclick="openEditModelModal(decodeURIComponent('${safeName}'))" class="shrink-0 rounded hover:bg-gray-100">✏️</button>
+            <button type="button" onclick="deleteModelFromModal(decodeURIComponent('${safeName}'))" class="shrink-0 rounded hover:bg-red-50">🗑️</button>
         </div>`;
     }).join('');
 }
