@@ -1364,8 +1364,6 @@ processBtn.disabled = false;
         let tempSelectedModel = '';
         let editingModelOldName = '';
         let archiveList = [];
-let preinstallTempSelected = new Set();     // ← TAMBAH INI
-let preinstallTempOperators = 1;            // ← TAMBAH INI
 
         // === PENDING SYNC (untuk mode offline) ===
         let pendingSync = lsLoad('timeStudy_pendingSync', { master: false, machines: false, lines: false, elemen: false, siklus: false, models: false, archive: false });
@@ -1657,8 +1655,6 @@ let preinstallTempOperators = 1;            // ← TAMBAH INI
     currentMode = mode;
     // Simpan semua mode termasuk 'bom'
     lsSave(LS_KEY_MODE, mode);
-    masterData = [];
-    // ...
 
             const mm = document.getElementById('modeModal');
             const mc = mm ? mm.querySelector(`button[onclick="selectMode('${mode}')"]`) : null;
