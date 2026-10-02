@@ -119,9 +119,15 @@
 
             <div class="p-4 sm:p-6 flex-1 flex flex-col justify-between">
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Nama / Item SOP *</label>
-                        <input type="text" id="input-sop-name" placeholder="Contoh: Pengecekan battery cover" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    <div class="flex gap-3">
+                        <div class="w-24 flex-shrink-0">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">No. SOP</label>
+                            <input type="text" id="input-sop-no" placeholder="4-1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-slate-100 font-semibold text-base text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Nama / Item SOP *</label>
+                            <input type="text" id="input-sop-name" placeholder="Contoh: Pengecekan battery cover" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
                     </div>
 
                     <div>
@@ -625,6 +631,7 @@
             sanitizeRecord(record) {
                 if (!record || typeof record !== 'object') record = {};
                 const sanitized = {
+                    no: this.safeString(record.no, ''),
                     name: this.safeString(record.name, 'Tanpa Nama SOP'),
                     sop_check: this.normalizeCheck(record.sop_check),
                     fixture: this.normalizeCheck(record.fixture),
@@ -846,6 +853,7 @@
                     }
 
                     const el = (id) => document.getElementById(id);
+                    if (el('input-sop-no')) el('input-sop-no').value = trial.no || '';
                     if (el('input-sop-name')) el('input-sop-name').value = trial.name || '';
                     if (el('input-problem')) el('input-problem').value = trial.problem || '';
                     if (el('input-solution')) el('input-solution').value = trial.solution || '';
@@ -876,6 +884,7 @@
 
             clearForm() {
                 const el = (id) => document.getElementById(id);
+                if (el('input-sop-no')) el('input-sop-no').value = '';
                 if (el('input-sop-name')) el('input-sop-name').value = '';
                 if (el('input-problem')) el('input-problem').value = '';
                 if (el('input-solution')) el('input-solution').value = '';
@@ -978,6 +987,7 @@
                     const trial = this.getCurrentTrial();
                     if (!trial) return;
                     const el = (id) => document.getElementById(id);
+                    if (el('input-sop-no')) trial.no = el('input-sop-no').value.trim();
                     if (el('input-sop-name')) trial.name = el('input-sop-name').value;
                     if (el('input-problem')) trial.problem = el('input-problem').value;
                     if (el('input-solution')) trial.solution = el('input-solution').value;
@@ -1118,6 +1128,7 @@
                     if (!source) { this.showToast('Tidak ada SOP untuk diduplikat.', 'error'); return; }
                     this.saveToStorage(false);
                     const copy = this.sanitizeRecord({
+                        no: source.no,
                         name: `${source.name} (Copy)`,
                         sop_check: source.sop_check, fixture: source.fixture, parameter: source.parameter,
                         equipment: source.equipment, machine: source.machine, layout: source.layout,
@@ -1222,7 +1233,7 @@
                             btn.className = `w-full text-left px-3.5 py-3 rounded-xl border transition flex items-center justify-between ${idx === this.currentIndex ? 'border-indigo-500 bg-indigo-950/40' : 'border-slate-800 bg-slate-900 hover:bg-slate-800'}`;
                             btn.innerHTML = `
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-xs text-slate-400">#${idx + 1}</span>
+                                    <span class="font-bold text-xs text-slate-400">#${this.escapeHtml(t.no || String(idx + 1))}</span>
                                     <div>
                                         <p class="font-semibold text-sm text-slate-200">${this.escapeHtml(t.name || 'Tanpa Nama SOP')}</p>
                                         <p class="text-[11px] text-slate-400">PIC: ${this.escapeHtml(t.pic || '-')}</p>
@@ -1377,7 +1388,7 @@
                         const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
                         const aoa = [headers];
                         (f.trials || []).forEach((t, idx) => {
-                            aoa.push([idx + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
+                            aoa.push([t.no || idx + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
                         });
                         const ws = XLSX.utils.aoa_to_sheet(aoa);
                         const range = XLSX.utils.decode_range(ws['!ref']);
@@ -1472,7 +1483,7 @@
                 const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
                 const aoa = [headers.slice()];
                 trials.forEach((t, i) => {
-                    aoa.push([i + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
+                    aoa.push([t.no || i + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
                 });
                 const ws = XLSX.utils.aoa_to_sheet(aoa);
                 const colWidths = headers.map((h, idx) => {
@@ -1591,13 +1602,27 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
-                        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                        let json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
                         if (!json || json.length === 0) {
                             this.showToast('File Excel kosong.', 'error'); input.value = ''; return;
                         }
-                        const firstRow = json[0];
-                        const headers = Object.keys(firstRow);
-                        const hasNameColumn = headers.some(h => ['SOP Item', 'Nama SOP', 'Item SOP', 'Item', 'SOP'].includes(h));
+                        let firstRow = json[0];
+                        let headers = Object.keys(firstRow);
+                        let hasNameColumn = headers.some(h => ['SOP Item', 'Nama SOP', 'Item SOP', 'Item', 'SOP'].includes(h));
+                        // Fallback: file tanpa baris header (mis. hasil export Time Study: kolom A = No, kolom B = nama SOP)
+                        if (!hasNameColumn) {
+                            const raw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+                            const rowsRaw = raw.filter(r => r.some(c => String(c).trim() !== ''));
+                            const looksNoHeader = rowsRaw.length > 0 && rowsRaw.every(r => r.length >= 2) &&
+                                rowsRaw.filter(r => String(r[1]).trim() !== '').length > 0;
+                            if (looksNoHeader) {
+                                json = rowsRaw
+                                    .filter(r => String(r[1]).trim() !== '')
+                                    .map(r => ({ 'No': String(r[0]).trim(), 'SOP Item': String(r[1]).trim() }));
+                                headers = ['SOP Item'];
+                                hasNameColumn = true;
+                            }
+                        }
                         if (!hasNameColumn) {
                             this.showToast('Format file tidak sesuai. Kolom "SOP Item" tidak ditemukan.', 'error');
                             input.value = ''; return;
@@ -1605,7 +1630,9 @@
                         const imported = json.map(row => {
                             const rawName = row['SOP Item'] || row['Nama SOP'] || row['Item SOP'] || row['Item'] || row['SOP'] || '';
                             const rawStatus = row['Status'] || row['status'] || 'PENDING';
+                            const rawNo = row['No'] !== undefined ? row['No'] : (row['No.'] !== undefined ? row['No.'] : (row['No SOP'] !== undefined ? row['No SOP'] : (row['No. SOP'] !== undefined ? row['No. SOP'] : '')));
                             return this.sanitizeRecord({
+                                no: rawNo,
                                 name: rawName ? rawName.toString() : '',
                                 sop_check: row['SOP'] !== undefined ? row['SOP'] : (row['sop_check'] || '√'),
                                 fixture: row['Fixture'] !== undefined ? row['Fixture'] : (row['fixture'] || '-'),
@@ -1667,7 +1694,7 @@
                         div.className = 'bg-slate-800/60 border border-slate-700 rounded-lg p-2 flex items-center justify-between gap-2';
                         div.innerHTML = `
                             <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-slate-200 truncate">#${i + 1} — ${this.escapeHtml(r.name)}</p>
+                                <p class="text-xs font-semibold text-slate-200 truncate">#${this.escapeHtml(r.no || String(i + 1))} — ${this.escapeHtml(r.name)}</p>
                                 <p class="text-[10px] text-slate-400 truncate">PIC: ${this.escapeHtml(r.pic || '-')}</p>
                             </div>
                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${statusClass}">${r.status}</span>
