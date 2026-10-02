@@ -108,10 +108,8 @@
         .laps-scroll::-webkit-scrollbar { width: 6px; }
         .laps-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        body { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
-@media (max-width: 640px) {
-    body { padding-bottom: calc(125px + env(safe-area-inset-bottom, 0px)); }
-}
+        body { padding-bottom: 24px; }
+        #tab-input { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
         .modal-bg.active { display: flex; }
         .modal-content { background: white; border-radius: 16px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
@@ -730,6 +728,18 @@
             </div>
         </div>
 
+        <div class="bottom-controls">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex gap-2">
+                    <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
+                    <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
+                    <button id="mobileStopBtn" onclick="handleStopReset()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP / 🔄 RESET</button>
+                </div>
+                <div class="text-center text-[10px] text-gray-400 mt-1.5"><span id="mobileStatus">Idle</span></div>
+            </div>
+        </div>
+        </div>
+
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
@@ -926,16 +936,6 @@
             </div>
         </div>
 
-        <div class="bottom-controls">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex gap-2">
-                    <button id="mobileStartBtn" onclick="toggleTimer()" class="bottom-controls-btn bg-green-600">▶️ START</button>
-                    <button id="mobileLapBtn" onclick="recordLap()" disabled class="bottom-controls-btn bg-blue-600">⏱️ LAP</button>
-                    <button id="mobileStopBtn" onclick="handleStopReset()" disabled class="bottom-controls-btn bg-red-600">⏹️ STOP / 🔄 RESET</button>
-                </div>
-                <div class="text-center text-[10px] text-gray-400 mt-1.5"><span id="mobileStatus">Idle</span></div>
-            </div>
-        </div>
     </div>
 
     <div id="cardViewPage">
@@ -4159,6 +4159,36 @@ function switchLineModelTab(tab) {
         // ============================================================
         // EXCEL STYLING
         // ============================================================
+        // Kelompokkan baris berurutan (sama seperti tabel di web) agar bisa di-merge saat export
+        function groupRowsForExport(arr, keyFn, noFn) {
+            const map = {}; const order = [];
+            arr.forEach(it => { const k = keyFn(it); if (!map[k]) { map[k] = []; order.push(k); } map[k].push(it); });
+            order.sort((a, b) => String(noFn(map[a][0]) || '').localeCompare(String(noFn(map[b][0]) || ''), undefined, { numeric: true }));
+            const rows = []; const groups = [];
+            order.forEach(k => { groups.push({ start: rows.length, count: map[k].length }); map[k].forEach(r => rows.push(r)); });
+            return { rows, groups };
+        }
+        // Merge sel per grup (rowspan) pada kolom tertentu. Baris data pertama = baris indeks 1 (header di indeks 0)
+        function mergeGroupCols(ws, groups, cols, centerCols) {
+            if (!ws['!merges']) ws['!merges'] = [];
+            groups.forEach(g => {
+                if (g.count < 1) return;
+                const r0 = g.start + 1, r1 = g.start + g.count;
+                cols.forEach(c => {
+                    const topAddr = XLSX.utils.encode_cell({ r: r0, c });
+                    if (ws[topAddr]) {
+                        if (!ws[topAddr].s) ws[topAddr].s = {};
+                        ws[topAddr].s.alignment = { ...(ws[topAddr].s.alignment || {}), vertical: 'center', horizontal: (centerCols || []).includes(c) ? 'center' : 'left', wrapText: true };
+                    }
+                    if (g.count < 2) return;
+                    for (let r = r0 + 1; r <= r1; r++) {
+                        const a = XLSX.utils.encode_cell({ r, c });
+                        if (ws[a] && !ws[a].f) { ws[a].t = 's'; ws[a].v = ''; }
+                    }
+                    ws['!merges'].push({ s: { r: r0, c }, e: { r: r1, c } });
+                });
+            });
+        }
         function applySheetStyle(ws, opts) {
             const { headerFill = 'C6E0B4', headerFont = '000000', columnStyles = {}, numFmtCols = [], mL = 0, s1Col = 0, defaultBorderColor = '9CA3AF' } = opts;
             const range = XLSX.utils.decode_range(ws['!ref']);
@@ -4284,6 +4314,8 @@ function switchLineModelTab(tab) {
                 return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
             applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+            meta.forEach(m => { const oa = XLSX.utils.encode_cell({ r: m.startRow - 1, c: opCol }); if (ws[oa]) ws[oa].v = m.group.operators || 1; });
+            mergeGroupCols(ws, meta.map(m => ({ start: m.startRow - 1, count: m.endRow - m.startRow + 1 })), [0, 1, 2, 3, opCol, totalSmhCol, uphCol], [0, 1, 2, opCol, totalSmhCol, uphCol]);
             ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22},{wch:24}];
             for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
             ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10});
@@ -4292,6 +4324,8 @@ function switchLineModelTab(tab) {
         }
         function buildArchiveSiklusXLSX(items, a) {
             items = sortByNoNumeric(items);
+            const _gm = groupRowsForExport(items, i => `${i.line}||${i.model || '-'}||${i.noSop}`, i => i.noSop);
+            items = _gm.rows;
             const wb = XLSX.utils.book_new();
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line','Model','No. SOP','Nama SOP'];
@@ -4341,6 +4375,7 @@ function switchLineModelTab(tab) {
                 return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
             applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+            mergeGroupCols(ws, _gm.groups, [0, 1, 2], [0, 1, 2]);
             ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22}];
             for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
             ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:10},{wch:10});
@@ -4349,6 +4384,8 @@ function switchLineModelTab(tab) {
         }
         function buildArchiveMesinXLSX(items, a) {
             items = sortByNoNumeric(items);
+            const _gm = groupRowsForExport(items, i => `${i.line}||${i.model || '-'}||${i.no}||${i.process}`, i => i.no);
+            items = _gm.rows;
             const wb = XLSX.utils.book_new();
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line','Model','No','Nama Mesin','Sub Mesin'];
@@ -4399,6 +4436,7 @@ function switchLineModelTab(tab) {
                 return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
             applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+            mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
             ws['!cols'] = [{wch:10},{wch:12},{wch:6},{wch:18},{wch:12}];
             for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
             ws['!cols'].push({wch:10},{wch:8},{wch:10},{wch:12},{wch:12},{wch:10});
@@ -4413,8 +4451,15 @@ function switchLineModelTab(tab) {
             if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
             if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
             try {
-                const dE = getFilteredData();
+                let dE = getFilteredData();
                 if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
+                // Urutkan & kelompokkan seperti tabel di web supaya sel bisa di-merge
+                let _kf, _nf;
+                if (currentMode === 'elemen') { _kf = i => `${i.line}||${i.model || '-'}||${i.noSop}||${i.namaSop}`; _nf = i => i.noSop; }
+                else if (currentMode === 'siklus') { _kf = i => `${i.line}||${i.model || '-'}||${i.noSop}`; _nf = i => i.noSop; }
+                else { _kf = i => `${i.line}||${i.model || '-'}||${i.no}||${i.process}`; _nf = i => i.no; }
+                const _gm = groupRowsForExport(dE, _kf, _nf);
+                dE = _gm.rows;
                 const wb = XLSX.utils.book_new();
                 const wsData = [];
                 let mL = Math.max(...dE.map(i => (i.laps || []).length), 1);
@@ -4512,6 +4557,9 @@ function switchLineModelTab(tab) {
                     };
                 }
                 applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+                if (currentMode === 'siklus') mergeGroupCols(ws, _gm.groups, [0, 1, 2], [0, 1, 2]);
+                else if (currentMode === 'elemen') mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
+                else mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
                 const cols = [];
                 if (currentMode === 'elemen') {
                     cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }, { wch: 8 });
