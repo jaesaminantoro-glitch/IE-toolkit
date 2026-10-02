@@ -82,7 +82,7 @@
                 <div class="min-w-0">
                     <h1 class="font-bold text-xs sm:text-base leading-tight text-slate-900 truncate">IE Trial Tracker</h1>
                     <p class="text-[9px] sm:text-xs text-indigo-700 flex items-center gap-1 flex-wrap">
-                        <span id="save-indicator" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span> 
+                        <span id="save-indicator" class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                         <span id="save-status-text" class="hidden sm:inline">Saved</span>
                         <span class="text-slate-400">•</span>
                         <span id="connection-indicator" class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
@@ -145,7 +145,7 @@
     <!-- MAIN -->
     <main class="flex-1 max-w-4xl w-full mx-auto px-2 sm:px-4 pt-2 pb-24 sm:pb-4 flex flex-col">
 
-        <!-- INFO BAR (compact) -->
+        <!-- INFO BAR -->
         <div class="bg-slate-100/90 backdrop-blur px-2 sm:px-4 py-2 rounded-lg border border-slate-300 shadow-sm mb-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
                 <div class="flex items-center gap-2 flex-wrap text-xs">
@@ -183,7 +183,6 @@
             </div>
 
             <div class="p-2 sm:p-4 flex-1 flex flex-col gap-2 sm:gap-3">
-                <!-- No SOP + Nama SOP -->
                 <div class="flex gap-2">
                     <div class="w-16 sm:w-24 flex-shrink-0">
                         <label class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-0.5">No. SOP</label>
@@ -195,7 +194,6 @@
                     </div>
                 </div>
 
-                <!-- Checklist 3 kolom -->
                 <div>
                     <label class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">Checklist (√ / X / -)</label>
                     <div class="grid grid-cols-3 gap-1 sm:gap-2">
@@ -226,7 +224,6 @@
                     </div>
                 </div>
 
-                <!-- Status Akhir -->
                 <div>
                     <label class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">Status Akhir *</label>
                     <div class="grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -242,7 +239,6 @@
                     </p>
                 </div>
 
-                <!-- Detail Tambahan (Collapsible) -->
                 <div class="border border-slate-300 rounded-lg overflow-hidden">
                     <button type="button" onclick="app.toggleDetailSection()" class="w-full bg-slate-100 hover:bg-slate-200 px-3 py-2 flex items-center justify-between transition">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
@@ -300,7 +296,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-sm text-slate-900">Firebase Sync Status</h3>
-                        <p class="text-[10px] text-slate-500">Sync otomatis PC ↔ HP via Firebase</p>
+                        <p class="text-[10px] text-slate-500">Sync otomatis PC ↔ HP</p>
                     </div>
                 </div>
                 <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition">
@@ -526,7 +522,7 @@
                         <h4 class="font-bold text-emerald-700 text-xs mb-1 flex items-center gap-1.5">
                             <i class="fa-solid fa-file-arrow-down"></i> Export Data Lengkap
                         </h4>
-                        <p class="text-[10px] text-emerald-600/80 mb-2">Excel dengan header indigo + border tabel + kolom Status berwarna.</p>
+                        <p class="text-[10px] text-emerald-600/80 mb-2">Excel dengan header + border + kolom Status berwarna.</p>
                         <button type="button" onclick="app.exportExcel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-1.5 text-xs">
                             <i class="fa-solid fa-download"></i> Download (.xlsx)
                         </button>
@@ -626,70 +622,97 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-sm text-slate-900">Ganti Line / Model</h3>
-                        <p class="text-[10px] text-slate-500">Pilih, edit, atau hapus workspace</p>
+                        <p class="text-[10px] text-slate-500">Pilih workspace yang ingin dibuka</p>
                     </div>
                 </div>
                 <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-                <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 text-[10px] text-indigo-700">
-                    <p class="font-bold mb-0.5"><i class="fa-solid fa-circle-info"></i> Aktif Saat Ini</p>
-                    <p>Line: <b id="switch-current-line">-</b> | Model: <b id="switch-current-model">-</b></p>
-                    <p class="mt-0.5 text-[9px] text-indigo-500"><span id="switch-current-sop-count">0</span> SOP akan disimpan otomatis</p>
-                </div>
 
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                            <i class="fa-solid fa-clock-rotate-left"></i> Workspace Tersimpan
-                        </span>
-                        <button type="button" onclick="app.fetchGlobalWorkspaceList()" class="text-indigo-600 hover:text-indigo-700 text-[10px] font-semibold flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-slate-100 transition">
-                            <i class="fa-solid fa-rotate text-[9px]"></i> Refresh
-                        </button>
-                    </div>
-                    <div id="switch-workspace-list" class="space-y-1.5 max-h-60 overflow-y-auto pr-1"></div>
-                    <p id="switch-workspace-empty" class="text-[10px] text-slate-400 italic text-center py-3 hidden">
-                        Belum ada workspace tersimpan.
-                    </p>
-                </div>
-
+            <div class="px-5 py-2.5 bg-indigo-50 border-b border-indigo-100">
                 <div class="flex items-center gap-2">
-                    <div class="flex-1 h-px bg-slate-200"></div>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">atau tambah baru</span>
-                    <div class="flex-1 h-px bg-slate-200"></div>
+                    <i class="fa-solid fa-circle-check text-indigo-600 text-xs"></i>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Aktif Saat Ini</span>
                 </div>
+                <p class="text-xs font-bold text-indigo-900 mt-0.5">
+                    <span id="switch-current-line">-</span>
+                    <span class="text-indigo-400 mx-0.5">/</span>
+                    <span id="switch-current-model">-</span>
+                </p>
+                <p class="text-[10px] text-indigo-600 mt-0.5"><span id="switch-current-sop-count">0</span> SOP tersimpan</p>
+            </div>
 
-                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
-                    <div class="grid grid-cols-2 gap-2 mb-1.5">
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-0.5">
-                                <i class="fa-solid fa-industry"></i> Line
-                            </label>
-                            <input type="text" id="switch-input-line" placeholder="Line baru..." class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+            <div class="flex border-b border-slate-200 bg-slate-50">
+                <button type="button" id="switch-tab-list" onclick="app.switchSwitchTab('list')" class="flex-1 py-2.5 text-xs font-bold text-indigo-600 border-b-2 border-indigo-500 bg-white transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-folder-open text-[10px]"></i>
+                    Pilih Tersimpan
+                    <span id="switch-list-count" class="bg-indigo-100 text-indigo-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+                </button>
+                <button type="button" id="switch-tab-new" onclick="app.switchSwitchTab('new')" class="flex-1 py-2.5 text-xs font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-plus-circle text-[10px]"></i>
+                    Buat Baru
+                </button>
+            </div>
+
+            <div id="switch-tab-content-list" class="flex-1 overflow-y-auto px-5 py-3">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <i class="fa-solid fa-list-ul"></i> Daftar Workspace
+                    </span>
+                    <button type="button" onclick="app.fetchGlobalWorkspaceList()" class="text-indigo-600 hover:text-indigo-700 text-[10px] font-semibold flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-indigo-50 transition">
+                        <i class="fa-solid fa-rotate text-[9px]"></i> Refresh
+                    </button>
+                </div>
+                <div id="switch-workspace-list" class="space-y-2"></div>
+                <p id="switch-workspace-empty" class="text-center text-[11px] text-slate-400 italic py-8 hidden">
+                    <i class="fa-solid fa-folder-open text-2xl block mb-2 opacity-30"></i>
+                    Belum ada workspace tersimpan.<br>
+                    Buka tab <b>Buat Baru</b> untuk menambah.
+                </p>
+            </div>
+
+            <div id="switch-tab-content-new" class="flex-1 overflow-y-auto px-5 py-3 hidden">
+                <div class="bg-emerald-50 border-2 border-emerald-300 border-dashed rounded-xl p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="bg-emerald-500 text-white rounded-lg p-1.5">
+                            <i class="fa-solid fa-plus text-sm"></i>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-0.5">
-                                <i class="fa-solid fa-mobile-screen"></i> Model
-                            </label>
-                            <input type="text" id="switch-input-model" placeholder="Model baru..." class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-slate-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                            <p class="text-xs font-bold text-emerald-800">Buat Workspace Baru</p>
+                            <p class="text-[10px] text-emerald-600">Isi Line & Model, lalu klik Pindah</p>
                         </div>
                     </div>
-                    <p class="text-[9px] text-emerald-600 italic">
-                        <i class="fa-solid fa-info-circle"></i> Otomatis tersimpan ke Firebase
-                    </p>
-                </div>
-
-                <div id="switch-workspace-info" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-2 text-[10px] text-amber-700">
-                    <p class="font-bold mb-0.5"><i class="fa-solid fa-circle-check"></i> Workspace ditemukan</p>
-                    <p id="switch-workspace-info-text"></p>
+                    <div class="space-y-2.5">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                                <i class="fa-solid fa-industry"></i> Line Produksi <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="switch-input-line" placeholder="mis: TAC605" class="w-full bg-white border-2 border-emerald-200 rounded-lg px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                                <i class="fa-solid fa-mobile-screen"></i> Model Produk <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" id="switch-input-model" placeholder="mis: Latte L" class="w-full bg-white border-2 border-emerald-200 rounded-lg px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                        </div>
+                    </div>
+                    <div class="bg-white border border-emerald-200 rounded-lg p-2 mt-3 flex gap-2">
+                        <i class="fa-solid fa-info-circle text-emerald-600 text-xs mt-0.5"></i>
+                        <p class="text-[10px] text-emerald-700">
+                            Workspace baru akan otomatis disimpan ke Firebase dan muncul di device lain.
+                        </p>
+                    </div>
                 </div>
             </div>
-            <div class="px-5 py-3 border-t border-slate-200 flex gap-2">
-                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2 rounded-lg transition text-xs">Batal</button>
-                <button type="button" onclick="app.confirmSwitchWorkspace()" class="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-1.5 text-xs">
-                    <i class="fa-solid fa-arrows-rotate"></i> Pindah
+
+            <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-white hover:bg-slate-100 text-slate-800 font-semibold py-2.5 rounded-lg transition text-xs border border-slate-300">
+                    Batal
+                </button>
+                <button type="button" id="btn-switch-confirm" onclick="app.confirmSwitchWorkspace()" class="flex-[2] bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-lg transition shadow-lg flex items-center justify-center gap-2 text-xs">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span id="btn-switch-label">Pindah ke Workspace</span>
                 </button>
             </div>
         </div>
@@ -751,7 +774,6 @@
                 <p class="text-[10px] text-slate-500 mt-0.5">Pilih Line & Model untuk mulai trial</p>
             </div>
             <div class="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-
                 <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
                     <div class="flex items-center gap-1.5 mb-2">
                         <i class="fa-solid fa-list-ul text-indigo-600 text-xs"></i>
@@ -832,7 +854,6 @@
     </div>
 
     <script>
-        // Firebase config hardcoded
         window.FIREBASE_CONFIG = {
             apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
             authDomain: "time-study-6f689.firebaseapp.com",
@@ -1346,7 +1367,7 @@
                 if (el('switch-current-sop-count')) el('switch-current-sop-count').innerText = this.trials.length;
                 if (el('switch-input-line')) el('switch-input-line').value = '';
                 if (el('switch-input-model')) el('switch-input-model').value = '';
-                if (el('switch-workspace-info')) el('switch-workspace-info').classList.add('hidden');
+                this.switchSwitchTab('list');
                 this.renderWorkspaceList();
                 const modal = document.getElementById('modal-switch');
                 if (modal) modal.classList.remove('hidden');
@@ -1358,12 +1379,40 @@
                 }
             }
 
+            switchSwitchTab(tab) {
+                const tabList = document.getElementById('switch-tab-list');
+                const tabNew = document.getElementById('switch-tab-new');
+                const contentList = document.getElementById('switch-tab-content-list');
+                const contentNew = document.getElementById('switch-tab-content-new');
+                const btnLabel = document.getElementById('btn-switch-label');
+                if (!tabList || !tabNew || !contentList || !contentNew) return;
+                if (tab === 'list') {
+                    tabList.className = 'flex-1 py-2.5 text-xs font-bold text-indigo-600 border-b-2 border-indigo-500 bg-white transition flex items-center justify-center gap-1.5';
+                    tabNew.className = 'flex-1 py-2.5 text-xs font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition flex items-center justify-center gap-1.5';
+                    contentList.classList.remove('hidden');
+                    contentNew.classList.add('hidden');
+                    if (btnLabel) btnLabel.innerText = 'Pindah ke Workspace';
+                } else {
+                    tabNew.className = 'flex-1 py-2.5 text-xs font-bold text-emerald-600 border-b-2 border-emerald-500 bg-white transition flex items-center justify-center gap-1.5';
+                    tabList.className = 'flex-1 py-2.5 text-xs font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition flex items-center justify-center gap-1.5';
+                    contentNew.classList.remove('hidden');
+                    contentList.classList.add('hidden');
+                    if (btnLabel) btnLabel.innerText = 'Buat & Pindah';
+                    setTimeout(() => {
+                        const inp = document.getElementById('switch-input-line');
+                        if (inp) inp.focus();
+                    }, 100);
+                }
+            }
+
             renderWorkspaceList() {
                 const container = document.getElementById('switch-workspace-list');
                 const emptyMsg = document.getElementById('switch-workspace-empty');
+                const countBadge = document.getElementById('switch-list-count');
                 if (!container) return;
                 const currentKey = this.storageKey;
                 const others = this.registry.filter(w => w.key !== currentKey);
+                if (countBadge) countBadge.innerText = others.length;
                 if (others.length === 0) {
                     container.innerHTML = '';
                     if (emptyMsg) emptyMsg.classList.remove('hidden');
@@ -1372,49 +1421,63 @@
                 if (emptyMsg) emptyMsg.classList.add('hidden');
                 container.innerHTML = '';
                 others.forEach(w => {
-                    const previewText = (w.preview && w.preview.length > 0) ? w.preview.join(' • ').substring(0, 40) : '(belum ada SOP)';
-                    const div = document.createElement('div');
-                    div.className = 'bg-white border border-slate-200 rounded-lg p-2 hover:border-indigo-400 transition flex items-center gap-1.5';
-                    div.innerHTML = `
-                        <button type="button" class="flex-1 text-left min-w-0" data-action="pick">
-                            <div class="flex items-center gap-1.5 min-w-0">
-                                <i class="fa-solid fa-industry text-indigo-500 text-[10px]"></i>
-                                <div class="min-w-0 flex-1">
-                                    <p class="text-[11px] font-semibold text-slate-800 truncate">${this.escapeHtml(w.line)} <span class="text-slate-400">/</span> ${this.escapeHtml(w.model)}</p>
-                                    <p class="text-[9px] text-slate-500 truncate">${w.totalSop} SOP • ${new Date(w.lastActive).toLocaleDateString('id-ID')}</p>
-                                    <p class="text-[9px] text-slate-400 truncate italic">${this.escapeHtml(previewText)}</p>
+                    const previewText = (w.preview && w.preview.length > 0) ? w.preview.join(' • ').substring(0, 45) : 'Belum ada SOP';
+                    const isActive = (w.line === this.getLine() && w.model === this.getModel());
+                    const card = document.createElement('div');
+                    card.className = `bg-white border-2 rounded-xl overflow-hidden transition ${isActive ? 'border-indigo-400 shadow-md' : 'border-slate-200 hover:border-indigo-300'}`;
+                    card.innerHTML = `
+                        ${isActive ? '<div class="bg-indigo-500 text-white text-[9px] font-bold px-2 py-0.5 text-center uppercase tracking-wider"><i class="fa-solid fa-circle-check"></i> Sedang Aktif</div>' : ''}
+                        <div class="p-3">
+                            <div class="flex items-start gap-2 mb-2">
+                                <div class="bg-indigo-100 text-indigo-600 rounded-lg p-2 border border-indigo-200 shrink-0">
+                                    <i class="fa-solid fa-industry text-sm"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-bold text-slate-900 truncate">${this.escapeHtml(w.line)}</p>
+                                    <p class="text-xs text-slate-600 truncate"><i class="fa-solid fa-mobile-screen text-[9px]"></i> ${this.escapeHtml(w.model)}</p>
                                 </div>
                             </div>
-                        </button>
-                        <button type="button" class="shrink-0 bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 p-1.5 rounded-md transition" data-action="edit" title="Edit">
-                            <i class="fa-solid fa-pen-to-square text-[10px]"></i>
-                        </button>
-                        <button type="button" class="shrink-0 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-1.5 rounded-md transition" data-action="delete" title="Hapus">
-                            <i class="fa-solid fa-trash-can text-[10px]"></i>
-                        </button>
+                            <div class="flex items-center gap-2 text-[10px] text-slate-500 mb-2.5">
+                                <span class="bg-slate-100 px-1.5 py-0.5 rounded font-semibold">
+                                    <i class="fa-solid fa-clipboard-list text-[9px]"></i> ${w.totalSop} SOP
+                                </span>
+                                <span class="text-slate-400">•</span>
+                                <span>${new Date(w.lastActive).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
+                            </div>
+                            <p class="text-[9px] text-slate-400 italic truncate mb-2.5">"${this.escapeHtml(previewText)}"</p>
+                            <div class="flex gap-1.5">
+                                <button type="button" data-action="pick" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold py-2 rounded-lg transition shadow-sm flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i> Pilih
+                                </button>
+                                <button type="button" data-action="edit" class="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 p-2 rounded-lg transition" title="Edit nama">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                                <button type="button" data-action="delete" class="bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-2 rounded-lg transition" title="Hapus">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
                     `;
-                    div.querySelector('[data-action="pick"]').onclick = () => {
-                        const lInp = document.getElementById('switch-input-line');
-                        const mInp = document.getElementById('switch-input-model');
-                        if (lInp) lInp.value = w.line === '(tanpa line)' ? '' : w.line;
-                        if (mInp) mInp.value = w.model === '(tanpa model)' ? '' : w.model;
-                        const info = document.getElementById('switch-workspace-info');
-                        const text = document.getElementById('switch-workspace-info-text');
-                        if (info && text) {
-                            info.classList.remove('hidden');
-                            text.innerHTML = `Akan pindah ke <b>${this.escapeHtml(w.line)} / ${this.escapeHtml(w.model)}</b> (${w.totalSop} SOP)`;
+                    card.querySelector('[data-action="pick"]').onclick = () => {
+                        if (w.line && w.line !== '(tanpa line)') {
+                            const lInp = document.getElementById('switch-input-line');
+                            if (lInp) lInp.value = w.line;
                         }
-                        this.showToast(`📌 Terpilih: ${w.line} / ${w.model}`, 'info');
+                        if (w.model && w.model !== '(tanpa model)') {
+                            const mInp = document.getElementById('switch-input-model');
+                            if (mInp) mInp.value = w.model;
+                        }
+                        this.confirmSwitchWorkspace();
                     };
-                    div.querySelector('[data-action="edit"]').onclick = (ev) => {
+                    card.querySelector('[data-action="edit"]').onclick = (ev) => {
                         ev.stopPropagation();
                         this.openEditWorkspace(w.key);
                     };
-                    div.querySelector('[data-action="delete"]').onclick = (ev) => {
+                    card.querySelector('[data-action="delete"]').onclick = (ev) => {
                         ev.stopPropagation();
                         this.confirmDeleteWorkspace(w.key);
                     };
-                    container.appendChild(div);
+                    container.appendChild(card);
                 });
             }
 
@@ -1515,8 +1578,15 @@
                     const inModel = (el('switch-input-model') || {}).value || '';
                     const newLine = inLine.trim();
                     const newModel = inModel.trim();
-                    if (!newLine && !newModel) { this.showToast('Isi Line/Model baru, atau pilih dari daftar.', 'error'); return; }
+                    if (!newLine && !newModel) { this.showToast('Pilih workspace, atau isi Line/Model baru di tab "Buat Baru".', 'error'); return; }
                     if (newLine === this.getLine() && newModel === this.getModel()) { this.showToast('Workspace sama dengan saat ini.', 'info'); this.closeModals(); return; }
+                    const newKey = this.getWorkspaceKey(newLine, newModel);
+                    const existsLocal = !!localStorage.getItem(newKey);
+                    const existsRegistry = this.registry.find(w => w.line === newLine && w.model === newModel);
+                    const isNew = !existsLocal && !existsRegistry;
+                    if (isNew) {
+                        if (!confirm(`Buat workspace baru "${newLine} / ${newModel}"?\n\nData SOP akan dimulai dari default.`)) return;
+                    }
                     this.collectFormToCurrentTrial();
                     const oldKey = this.storageKey;
                     if (this.fbListeners[oldKey]) { try { this.fbListeners[oldKey].off(); } catch(e){} delete this.fbListeners[oldKey]; }
@@ -1526,8 +1596,6 @@
                     this.updateDisplayLineModel();
                     this.trials = [];
                     this.currentIndex = 0;
-                    const newKey = this.storageKey;
-                    const isExisting = !!localStorage.getItem(newKey);
                     this.loadWorkspaceData();
                     this.registerWorkspace(newLine, newModel);
                     this.saveToStorage(false);
@@ -1539,7 +1607,7 @@
                         this.pullFromFirebase(false);
                     }
                     this.showToast(
-                        isExisting ? `✅ "${newLine || '-'} / ${newModel || '-'}" dimuat (${this.trials.length} SOP).` : `✨ Workspace baru "${newLine || '-'} / ${newModel || '-'}" dibuat.`,
+                        isNew ? `✨ Workspace baru "${newLine} / ${newModel}" dibuat.` : `✅ Workspace "${newLine} / ${newModel}" dimuat (${this.trials.length} SOP).`,
                         'success'
                     );
                     this.broadcastChange('WORKSPACE_SWITCH', { newLine, newModel });
@@ -1789,10 +1857,8 @@
                     this.renderStatusBtn(trial.status);
                     this.updateAutoNgHint(trial);
 
-                    // ✅ Prev disabled hanya di SOP pertama
                     if (el('btn-prev')) el('btn-prev').disabled = this.currentIndex === 0;
 
-                    // ✅ NEXT SELALU AKTIF — label berubah di SOP terakhir
                     const isLast = this.currentIndex === total - 1;
                     const nextBtn = el('btn-next');
                     const nextLabel = el('btn-next-label');
