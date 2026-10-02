@@ -245,15 +245,19 @@
     <script>
         // Paksa hapus loadingOverlay setelah 3 detik (fallback)
         setTimeout(function () {
-            try {
-                const o = document.getElementById('loadingOverlay');
-                if (o) { o.classList.add('hidden'); if (o.parentNode) o.remove(); }
-                const sm = localStorage.getItem('timeStudy_mode_v1');
-                const mm = document.getElementById('modeModal');
-                if (mm && !sm) mm.classList.add('active');
-                document.body.style.overflow = '';
-            } catch (e) {}
-        }, 3000);
+    try {
+        const o = document.getElementById('loadingOverlay');
+        if (o) { o.classList.add('hidden'); if (o.parentNode) o.remove(); }
+        const sm = localStorage.getItem('timeStudy_mode_v1');
+        const mm = document.getElementById('modeModal');
+        // Kalau belum pernah pilih mode → tampilkan modal
+        // Kalau sudah ada → JANGAN tampil (biar JS langsung masuk mode)
+        if (mm && !sm) {
+            mm.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    } catch (e) {}
+}, 3000);
     </script>
     <div id="ieOverlay" style="display:none;position:fixed;inset:0;z-index:100;background:#0f172a;flex-direction:column;">
         <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#4F46E5;color:#fff;flex-shrink:0;padding-top:max(8px,env(safe-area-inset-top));">
