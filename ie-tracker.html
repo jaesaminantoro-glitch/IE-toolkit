@@ -317,7 +317,7 @@
                     <i class="fa-solid fa-circle-check mt-0.5"></i>
                     <div>
                         <p class="font-bold mb-1">Firebase sudah ter-hardcode</p>
-                        <p>Config Firebase sudah tertanam di aplikasi. Semua device yang buka aplikasi ini akan otomatis terhubung.</p>
+                        <p>Semua device yang buka aplikasi ini otomatis terhubung.</p>
                     </div>
                 </div>
 
@@ -333,7 +333,7 @@
                     <div>
                         <p class="font-bold mb-1">Tips:</p>
                         <ul class="list-disc ml-4 space-y-0.5">
-                            <li>Pastikan Line & Model <b>sama persis</b> di semua device</li>
+                            <li>Pilih Line & Model dari dropdown agar sama persis</li>
                             <li>Cek koneksi internet (WiFi/data)</li>
                             <li>Buka Console browser (F12) untuk lihat log sync</li>
                         </ul>
@@ -633,7 +633,7 @@
 
     <!-- MODAL SWITCH WORKSPACE -->
     <div id="modal-switch" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col max-h-[90vh]">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col max-h-[92vh]">
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div class="bg-indigo-100 rounded-xl p-2.5 border border-indigo-300">
@@ -641,7 +641,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-base text-slate-900">Ganti Line / Model</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Pilih workspace yang ingin dibuka</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Pilih dari daftar atau isi manual</p>
                     </div>
                 </div>
                 <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
@@ -652,32 +652,39 @@
                 <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-700">
                     <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Workspace Aktif</p>
                     <p>Line: <b id="switch-current-line">-</b> | Model: <b id="switch-current-model">-</b></p>
-                    <p class="mt-1 text-[10px] text-indigo-500">Data SOP saat ini (<b id="switch-current-sop-count">0</b> SOP) akan disimpan otomatis sebelum pindah.</p>
+                    <p class="mt-1 text-[10px] text-indigo-500">Data SOP saat ini (<b id="switch-current-sop-count">0</b> SOP) akan disimpan otomatis.</p>
                 </div>
-                <div id="switch-quick-pick" class="hidden">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Workspace Terakhir
-                    </p>
-                    <div id="switch-quick-pick-list" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
+                        <i class="fa-solid fa-industry"></i> Line Produksi
+                    </label>
+                    <select id="switch-line-select" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="">— Pilih Line —</option>
+                    </select>
+                    <input type="text" id="switch-input-line" placeholder="Atau ketik Line baru..." class="w-full mt-2 bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
-                <div class="border-t border-slate-200 pt-4">
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-                        <i class="fa-solid fa-pen-to-square"></i> Atau Isi Manual
-                    </p>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Line Baru</label>
-                            <input type="text" id="switch-input-line" placeholder="Contoh: Line B2" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Model Baru</label>
-                            <input type="text" id="switch-input-model" placeholder="Contoh: YZ-2025" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-                        </div>
-                    </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
+                        <i class="fa-solid fa-mobile-screen"></i> Model Produk
+                    </label>
+                    <select id="switch-model-select" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="">— Pilih Model —</option>
+                    </select>
+                    <input type="text" id="switch-input-model" placeholder="Atau ketik Model baru..." class="w-full mt-2 bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
+
                 <div id="switch-workspace-info" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-700">
                     <p class="font-bold mb-1"><i class="fa-solid fa-circle-check"></i> Workspace ditemukan</p>
                     <p id="switch-workspace-info-text"></p>
+                </div>
+
+                <div id="switch-quick-pick" class="hidden border-t border-slate-200 pt-3">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Workspace Terakhir (klik cepat)
+                    </p>
+                    <div id="switch-quick-pick-list" class="space-y-1.5 max-h-44 overflow-y-auto pr-1"></div>
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-slate-200 flex gap-2">
@@ -732,30 +739,36 @@
 
     <!-- MODAL SETUP AWAL -->
     <div id="modal-setup" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col max-h-[92vh]">
             <div class="px-6 py-5 border-b border-slate-200 text-center">
                 <div class="bg-indigo-100 rounded-2xl p-4 border border-indigo-300 inline-block mb-3">
                     <i class="fa-solid fa-industry text-indigo-600 text-3xl"></i>
                 </div>
                 <h3 class="font-bold text-lg text-slate-900">Selamat Datang</h3>
-                <p class="text-xs text-slate-500 mt-1">Isi Line & Model untuk memulai trial</p>
+                <p class="text-xs text-slate-500 mt-1">Pilih atau isi Line & Model untuk memulai trial</p>
             </div>
-            <div class="px-6 py-5 space-y-4">
+            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
                         <i class="fa-solid fa-industry"></i> Line Produksi *
                     </label>
-                    <input type="text" id="setup-line" placeholder="Contoh: Tac602" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <select id="setup-line-select" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <option value="">— Pilih Line —</option>
+                    </select>
+                    <input type="text" id="setup-line" placeholder="Atau ketik Line baru..." class="w-full mt-2 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
                         <i class="fa-solid fa-mobile-screen"></i> Model Produk *
                     </label>
-                    <input type="text" id="setup-model" placeholder="Contoh: Latte M" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <select id="setup-model-select" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <option value="">— Pilih Model —</option>
+                    </select>
+                    <input type="text" id="setup-model" placeholder="Atau ketik Model baru..." class="w-full mt-2 bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
                 <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
                     <i class="fa-solid fa-circle-info mt-0.5"></i>
-                    <span>Isi Line & Model <b>sama persis</b> di PC & HP agar data tersinkron via Firebase.</span>
+                    <span>Pilih dari dropdown agar <b>sama persis</b> di PC & HP. Ketik manual hanya untuk Line/Model baru.</span>
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-slate-200">
@@ -807,9 +820,6 @@
 
         window.IETrialApp = class IETrialApp {
             constructor() {
-                // ============================================================
-                // SESSION ID
-                // ============================================================
                 this.sessionId = sessionStorage.getItem('ie_session_id');
                 if (!this.sessionId) {
                     this.sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
@@ -826,9 +836,7 @@
 
                 this.legacyStorageKey = 'ie_trial_tracker_final_v1';
 
-                // ============================================================
-                // FIREBASE — HARDCODED
-                // ============================================================
+                // Firebase — HARDCODED
                 this.fbConfigKey = `${this.baseKey}_firebase_config`;
                 this.fbRootKey = `${this.baseKey}_firebase_root`;
                 this.defaultFbConfig = window.FIREBASE_CONFIG;
@@ -859,6 +867,7 @@
                     this.updateDisplayLineModel();
                     this.render();
                     this.initFirebase();
+                    // Auto-open setup kalau belum ada line/model
                     if (!this.getLine() && !this.getModel()) {
                         this.openSetupModal();
                     }
@@ -870,11 +879,10 @@
             }
 
             // ============================================================
-            // FIREBASE INTEGRATION (HARDCODED CONFIG)
+            // FIREBASE INTEGRATION
             // ============================================================
             initFirebase() {
                 try {
-                    // Pakai config dari localStorage kalau ada, kalau tidak pakai hardcoded
                     const saved = localStorage.getItem(this.fbConfigKey);
                     if (saved) {
                         try {
@@ -908,9 +916,11 @@
                     this.fbDb.ref('.info/connected').on('value', (snap) => {
                         const connected = snap.val() === true;
                         if (connected) {
-                            this.updateFirebaseUI('connected', `Terhubung ke Firebase (project: ${this.fbConfig.projectId})`);
+                            this.updateFirebaseUI('connected', `Terhubung (project: ${this.fbConfig.projectId})`);
                             this.attachFirebaseListener();
                             this.pullFromFirebase(false);
+                            // Fetch daftar workspace global setelah konek
+                            setTimeout(() => this.fetchGlobalWorkspaceList(), 500);
                         } else {
                             this.updateFirebaseUI('offline', 'Firebase offline — akan sync saat online.');
                         }
@@ -1102,9 +1112,96 @@
                 this.showToast('✅ Data berhasil di-push ke Firebase.', 'success');
             }
 
+            // ============================================================
+            // FETCH GLOBAL WORKSPACE LIST (untuk dropdown)
+            // ============================================================
+            async fetchGlobalWorkspaceList() {
+                if (!this.fbConnected || !this.fbDb) return;
+                try {
+                    const snap = await this.fbDb.ref(`${this.fbRootPath}/workspaces`).once('value');
+                    const data = snap.val();
+                    if (!data) {
+                        console.log('📋 No workspaces in Firebase yet');
+                        this.populateWorkspaceDropdowns();
+                        return;
+                    }
+                    let count = 0;
+                    Object.keys(data).forEach(key => {
+                        const ws = data[key];
+                        if (!ws || !ws.line || !ws.model) return;
+                        count++;
+                        const existingIdx = this.registry.findIndex(r => 
+                            r.line === ws.line && r.model === ws.model
+                        );
+                        const entry = {
+                            key: this.getWorkspaceKey(ws.line, ws.model),
+                            line: ws.line,
+                            model: ws.model,
+                            sessionId: ws.sessionId || 'unknown',
+                            lastActive: ws.updatedAtISO || new Date().toISOString(),
+                            totalSop: (ws.trials || []).length,
+                            preview: (ws.trials || []).slice(0, 2).map(t => t.name).filter(Boolean)
+                        };
+                        if (existingIdx >= 0) {
+                            this.registry[existingIdx] = entry;
+                        } else {
+                            this.registry.push(entry);
+                        }
+                    });
+                    this.saveRegistry();
+                    this.populateWorkspaceDropdowns();
+                    console.log(`🌐 Global workspace list loaded: ${count} entries`);
+                } catch (e) {
+                    console.warn('Fetch global workspace list error:', e);
+                    this.populateWorkspaceDropdowns();
+                }
+            }
+
+            // ============================================================
+            // POPULATE DROPDOWN LINE & MODEL
+            // ============================================================
+            populateWorkspaceDropdowns() {
+                const linesSet = new Set();
+                const modelsSet = new Set();
+                // Dari registry
+                this.registry.forEach(w => {
+                    if (w.line && w.line !== '(tanpa line)') linesSet.add(w.line);
+                    if (w.model && w.model !== '(tanpa model)') modelsSet.add(w.model);
+                });
+                // Dari workspace aktif
+                const currentLine = this.getLine();
+                const currentModel = this.getModel();
+                if (currentLine) linesSet.add(currentLine);
+                if (currentModel) modelsSet.add(currentModel);
+
+                const lines = Array.from(linesSet).sort();
+                const models = Array.from(modelsSet).sort();
+
+                this._fillSelect('setup-line-select', lines, 'Line');
+                this._fillSelect('setup-model-select', models, 'Model');
+                this._fillSelect('switch-line-select', lines, 'Line');
+                this._fillSelect('switch-model-select', models, 'Model');
+
+                console.log(`📋 Dropdown: ${lines.length} Line, ${models.length} Model`);
+            }
+
+            _fillSelect(id, items, label) {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const currentVal = sel.value;
+                sel.innerHTML = `<option value="">— Pilih ${label} —</option>`;
+                items.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item;
+                    opt.textContent = item;
+                    sel.appendChild(opt);
+                });
+                if (currentVal && items.includes(currentVal)) sel.value = currentVal;
+            }
+
             openFirebaseSettings() {
                 if (this.fbConnected) {
-                    this.updateFirebaseUI('connected', `Terhubung ke Firebase (project: ${this.fbConfig.projectId})`);
+                    this.updateFirebaseUI('connected', `Terhubung (project: ${this.fbConfig.projectId})`);
                 } else {
                     this.updateFirebaseUI('disconnected', 'Menghubungkan...');
                 }
@@ -1118,7 +1215,7 @@
             getWorkspaceKey(line, model) {
                 const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
                 const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
-                return `${this.baseKey}_ws_${l}_${m}`;
+                return `${this.baseKey}_ws_${l}__${m}`;
             }
 
             get storageKey() {
@@ -1159,7 +1256,7 @@
                 };
                 if (existing >= 0) this.registry[existing] = entry;
                 else this.registry.unshift(entry);
-                if (this.registry.length > 20) this.registry = this.registry.slice(0, 20);
+                if (this.registry.length > 30) this.registry = this.registry.slice(0, 30);
                 this.saveRegistry();
             }
 
@@ -1189,7 +1286,6 @@
                     }
                 };
                 window.addEventListener('storage', this._storageListener);
-
                 window.addEventListener('beforeunload', () => {
                     if (this._broadcastChannel) {
                         try { this._broadcastChannel.close(); } catch (e) {}
@@ -1246,6 +1342,9 @@
             setLine(v) { localStorage.setItem(this.lineKey, v); }
             setModel(v) { localStorage.setItem(this.modelKey, v); }
 
+            // ============================================================
+            // SETUP MODAL
+            // ============================================================
             openSetupModal() {
                 const modal = document.getElementById('modal-setup');
                 if (modal) modal.classList.remove('hidden');
@@ -1253,17 +1352,24 @@
                 if (l) l.value = this.getLine();
                 const m = document.getElementById('setup-model');
                 if (m) m.value = this.getModel();
-                setTimeout(() => {
-                    const inp = this.getLine() ? document.getElementById('setup-model') : document.getElementById('setup-line');
-                    if (inp) inp.focus();
-                }, 100);
+                // Populate dropdown dulu
+                this.populateWorkspaceDropdowns();
+                const lSel = document.getElementById('setup-line-select');
+                const mSel = document.getElementById('setup-model-select');
+                if (lSel && this.getLine()) lSel.value = this.getLine();
+                if (mSel && this.getModel()) mSel.value = this.getModel();
+                // Fetch dari Firebase
+                if (this.fbConnected) this.fetchGlobalWorkspaceList();
             }
 
             confirmSetup() {
-                const l = (document.getElementById('setup-line') || {}).value || '';
-                const m = (document.getElementById('setup-model') || {}).value || '';
-                const line = l.trim();
-                const model = m.trim();
+                const el = (id) => document.getElementById(id);
+                const selLine = (el('setup-line-select') || {}).value || '';
+                const selModel = (el('setup-model-select') || {}).value || '';
+                const inLine = (el('setup-line') || {}).value || '';
+                const inModel = (el('setup-model') || {}).value || '';
+                const line = (selLine || inLine).trim();
+                const model = (selModel || inModel).trim();
                 if (!line || !model) {
                     this.showToast('Line & Model wajib diisi.', 'error');
                     return;
@@ -1286,6 +1392,9 @@
                 }
             }
 
+            // ============================================================
+            // SWITCH WORKSPACE MODAL
+            // ============================================================
             switchWorkspace() {
                 this.collectFormToCurrentTrial();
                 this.saveToStorage(false);
@@ -1297,10 +1406,20 @@
                 if (el('switch-input-model')) el('switch-input-model').value = '';
                 if (el('switch-workspace-info')) el('switch-workspace-info').classList.add('hidden');
 
+                this.populateWorkspaceDropdowns();
                 this.renderQuickPick();
                 const modal = document.getElementById('modal-switch');
                 if (modal) modal.classList.remove('hidden');
 
+                if (this.fbConnected) this.fetchGlobalWorkspaceList();
+
+                const updateFromSelect = () => {
+                    const lSel = (el('switch-line-select') || {}).value || '';
+                    const mSel = (el('switch-model-select') || {}).value || '';
+                    if (lSel && el('switch-input-line')) el('switch-input-line').value = lSel;
+                    if (mSel && el('switch-input-model')) el('switch-input-model').value = mSel;
+                    updatePreview();
+                };
                 const updatePreview = () => {
                     const l = (el('switch-input-line') || {}).value || '';
                     const m = (el('switch-input-model') || {}).value || '';
@@ -1310,13 +1429,17 @@
                     const text = el('switch-workspace-info-text');
                     if (found && info && text) {
                         info.classList.remove('hidden');
-                        text.innerHTML = `Workspace <b>${this.escapeHtml(found.line)} / ${this.escapeHtml(found.model)}</b> sudah pernah dibuka (${found.totalSop} SOP).`;
+                        text.innerHTML = `Workspace <b>${this.escapeHtml(found.line)} / ${this.escapeHtml(found.model)}</b> (${found.totalSop} SOP).`;
                     } else if (info) {
                         info.classList.add('hidden');
                     }
                 };
+                const lSel = el('switch-line-select');
+                const mSel = el('switch-model-select');
                 const lInp = el('switch-input-line');
                 const mInp = el('switch-input-model');
+                if (lSel) lSel.onchange = updateFromSelect;
+                if (mSel) mSel.onchange = updateFromSelect;
                 if (lInp) lInp.oninput = updatePreview;
                 if (mInp) mInp.oninput = updatePreview;
             }
@@ -1362,6 +1485,10 @@
                         const mInp = document.getElementById('switch-input-model');
                         if (lInp) lInp.value = w.line === '(tanpa line)' ? '' : w.line;
                         if (mInp) mInp.value = w.model === '(tanpa model)' ? '' : w.model;
+                        const lSel = document.getElementById('switch-line-select');
+                        const mSel = document.getElementById('switch-model-select');
+                        if (lSel) lSel.value = w.line === '(tanpa line)' ? '' : w.line;
+                        if (mSel) mSel.value = w.model === '(tanpa model)' ? '' : w.model;
                         if (lInp && lInp.oninput) lInp.oninput();
                     };
                     div.querySelector('[data-action="edit"]').onclick = (ev) => {
@@ -1444,10 +1571,13 @@
 
             confirmSwitchWorkspace() {
                 try {
-                    const l = (document.getElementById('switch-input-line') || {}).value || '';
-                    const m = (document.getElementById('switch-input-model') || {}).value || '';
-                    const newLine = l.trim();
-                    const newModel = m.trim();
+                    const el = (id) => document.getElementById(id);
+                    const selLine = (el('switch-line-select') || {}).value || '';
+                    const selModel = (el('switch-model-select') || {}).value || '';
+                    const inLine = (el('switch-input-line') || {}).value || '';
+                    const inModel = (el('switch-input-model') || {}).value || '';
+                    const newLine = (selLine || inLine).trim();
+                    const newModel = (selModel || inModel).trim();
                     if (!newLine && !newModel) {
                         this.showToast('Isi minimal salah satu (Line atau Model).', 'error');
                         return;
@@ -1656,6 +1786,7 @@
                     return;
                 }
                 await this.pullFromFirebase(true);
+                await this.fetchGlobalWorkspaceList();
             }
 
             normalizeCheck(val) {
