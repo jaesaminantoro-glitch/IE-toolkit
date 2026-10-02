@@ -12,55 +12,69 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
-                }
-            }
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
         }
     </script>
     <style>
-        .fa-solid{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;flex-shrink:0;background-color:currentColor;
-            -webkit-mask:var(--fa) center/contain no-repeat;mask:var(--fa) center/contain no-repeat;font-style:normal}
-        .fa-xmark{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M18%206L6%2018M6%206l12%2012'/%3E%3C/svg%3E")}
-        .fa-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20%206%209%2017l-5-5'/%3E%3C/svg%3E")}
-        .fa-arrow-left{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M19%2012H5M12%2019l-7-7%207-7'/%3E%3C/svg%3E")}
-        .fa-arrow-right{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M5%2012h14M12%205l7%207-7%207'/%3E%3C/svg%3E")}
-        .fa-chevron-right{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m9%2018%206-6-6-6'/%3E%3C/svg%3E")}
-        .fa-plus{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M5%2012h14M12%205v14'/%3E%3C/svg%3E")}
-        .fa-plus-circle{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='M8%2012h8M12%208v8'/%3E%3C/svg%3E")}
-        .fa-circle-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='m9%2012%202%202%204-4'/%3E%3C/svg%3E")}
-        .fa-circle-xmark{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='m15%209-6%206M9%209l6%206'/%3E%3C/svg%3E")}
-        .fa-circle-exclamation{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='M12%208v4M12%2016h.01'/%3E%3C/svg%3E")}
-        .fa-circle-info{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='M12%2016v-4M12%208h.01'/%3E%3C/svg%3E")}
-        .fa-triangle-exclamation{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m21.73%2018-8-14a2%202%200%200%200-3.48%200l-8%2014A2%202%200%200%200%204%2021h16a2%202%200%200%200%201.73-3M12%209v4M12%2017h.01'/%3E%3C/svg%3E")}
-        .fa-trash-can{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%206h18M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2M10%2011v6M14%2011v6'/%3E%3C/svg%3E")}
-        .fa-download{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4M7%2010l5%205%205-5M12%2015V3'/%3E%3C/svg%3E")}
-        .fa-upload{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4M17%208l-5-5-5%205M12%203v12'/%3E%3C/svg%3E")}
-        .fa-file-arrow-down{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14.5%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7.5L14.5%202z'/%3E%3Cpath%20d='M14%202v6h6M12%2012v6M9%2015l3%203%203-3'/%3E%3C/svg%3E")}
-        .fa-file-circle-plus{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14.5%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7.5L14.5%202z'/%3E%3Cpath%20d='M14%202v6h6M12%2012v6M9%2015h6'/%3E%3C/svg%3E")}
-        .fa-file-excel{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14.5%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7.5L14.5%202z'/%3E%3Cpath%20d='M14%202v6h6M8%2013l4%205M12%2013l-4%205'/%3E%3C/svg%3E")}
-        .fa-folder-open{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%2014%201.5-2.9A2%202%200%200%201%209.24%2010H20a2%202%200%200%201%201.94%202.5l-1.54%206a2%202%200%200%201-1.95%201.5H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h3.9a2%202%200%200%201%201.69.9l.81%201.2a2%202%200%200%200%201.67.9H18a2%202%200%200%201%202%202v2'/%3E%3C/svg%3E")}
-        .fa-list-ol{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M10%206h11M10%2012h11M10%2018h11M4%206h1v4M4%2010h2M6%2018H4c0-1%202-2%202-3s-1-1.5-2-1'/%3E%3C/svg%3E")}
-        .fa-industry{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M2%2020a2%202%200%200%200%202%202h16a2%202%200%200%200%202-2V8l-7%205V8l-7%205V4a2%202%200%200%200-2-2H4a2%202%200%200%200-2%202Z'/%3E%3Cpath%20d='M17%2018h1M12%2018h1M7%2018h1'/%3E%3C/svg%3E")}
-        .fa-mobile-screen{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='5'%20y='2'%20width='14'%20height='20'%20rx='2'/%3E%3Cpath%20d='M12%2018h.01'/%3E%3C/svg%3E")}
-        .fa-cloud-arrow-up{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%2014.899A7%207%200%201%201%2015.71%208h1.79a4.5%204.5%200%200%201%202.5%208.242M12%2012v9M16%2016l-4-4-4%204'/%3E%3C/svg%3E")}
-        .fa-wifi{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M5%2012.55a11%2011%200%200%201%2014.08%200M1.42%209a16%2016%200%200%201%2021.16%200M8.53%2016.11a6%206%200%200%201%206.95%200M12%2020h.01'/%3E%3C/svg%3E")}
-        .fa-wifi-slash{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%2020h.01M8.5%2016.429a5%205%200%200%201%207%200M5%2012.859a10%2010%200%200%201%205.17-2.69M19%2012.859a10%2010%200%200%200-2.007-1.523M2%208.82a15%2015%200%200%201%204.177-2.643M22%208.82a15%2015%200%200%200-11.288-3.764M2%202l20%2020'/%3E%3C/svg%3E")}
-        .fa-rotate{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%2012a9%209%200%200%201%209-9%209.75%209.75%200%200%201%206.74%202.74L21%208M21%203v5h-5M21%2012a9%209%200%200%201-9%209%209.75%209.75%200%200%201-6.74-2.74L3%2016M8%2016H3v5'/%3E%3C/svg%3E")}
-        .fa-pen-to-square{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%203H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h14a2%202%200%200%200%202-2v-7M18.375%202.625a1%201%200%200%201%203%203l-9.013%209.014a2%202%200%200%201-.853.505l-2.873.84a.5.5%200%200%201-.62-.62l.84-2.873a2%202%200%200%201%20.506-.852z'/%3E%3C/svg%3E")}
-        .fa-layer-group{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m12.83%202.18a2%202%200%200%200-1.66%200L2.6%206.08a1%201%200%200%200%200%201.83l8.58%203.91a2%202%200%200%200%201.66%200l8.58-3.9a1%201%200%200%200%200-1.83Z'/%3E%3Cpath%20d='m22%2012.65-9.17%204.16a2%202%200%200%201-1.66%200L2%2012.65'/%3E%3Cpath%20d='m22%2017.65-9.17%204.16a2%202%200%200%201-1.66%200L2%2017.65'/%3E%3C/svg%3E")}
-        .fa-copy{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='8'%20width='14'%20height='14'%20rx='2'/%3E%3Cpath%20d='M4%2016c-1.1%200-2-.9-2-2V4c0-1.1.9-2%202-2h10c1.1%200%202%20.9%202%202'/%3E%3C/svg%3E")}
-        .fa-clipboard-list{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='2'%20width='8'%20height='4'%20rx='1'/%3E%3Cpath%20d='M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2M12%2011h4M12%2016h4M8%2011h.01M8%2016h.01'/%3E%3C/svg%3E")}
-        .fa-clipboard-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='2'%20width='8'%20height='4'%20rx='1'/%3E%3Cpath%20d='M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2'/%3E%3Cpath%20d='m9%2014%202%202%204-4'/%3E%3C/svg%3E")}
-        .fa-chart-simple{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M18%2020V10M12%2020V4M6%2020v-6'/%3E%3C/svg%3E")}
-        .fa-user-shield{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20%2013c0%205-8%209-8%209s-8-4-8-9V6l8-3%208%203z'/%3E%3Ccircle%20cx='12'%20cy='10'%20r='2'/%3E%3Cpath%20d='M8%2018c1-1.5%202.5-2%204-2s3%20.5%204%202'/%3E%3C/svg%3E")}
-        .fa-arrows-rotate{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2012a9%209%200%200%200-9-9%209.75%209.75%200%200%200-6.74%202.74L3%208M3%203v5h5M3%2012a9%209%200%200%200%209%209%209.75%209.75%200%200%200%206.74-2.74L21%2016M16%2016h5v5'/%3E%3C/svg%3E")}
-        .pulse-ring { animation: pulse-ring 1.5s infinite; }
-        @keyframes pulse-ring {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+        /* ============================================================
+           ICON SET — pakai mask-image (lebih stabil di semua browser)
+           ============================================================ */
+        .fa-solid {
+            display: inline-block;
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.125em;
+            flex-shrink: 0;
+            background-color: currentColor;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            font-style: normal;
         }
+        .fa-xmark{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6L6 18M6 6l12 12'/></svg>")}
+        .fa-check{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>")}
+        .fa-arrow-left{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>")}
+        .fa-arrow-right{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14M12 5l7 7-7 7'/></svg>")}
+        .fa-chevron-right{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m9 18 6-6-6-6'/></svg>")}
+        .fa-plus{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12h14M12 5v14'/></svg>")}
+        .fa-plus-circle{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M8 12h8M12 8v8'/></svg>")}
+        .fa-circle-check{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='m9 12 2 2 4-4'/></svg>")}
+        .fa-circle-xmark{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='m15 9-6 6M9 9l6 6'/></svg>")}
+        .fa-circle-exclamation{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M12 8v4M12 16h.01'/></svg>")}
+        .fa-circle-info{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><path d='M12 16v-4M12 8h.01'/></svg>")}
+        .fa-triangle-exclamation{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01'/></svg>")}
+        .fa-trash-can{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6'/></svg>")}
+        .fa-download{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3'/></svg>")}
+        .fa-upload{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12'/></svg>")}
+        .fa-file-arrow-down{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/><path d='M14 2v6h6M12 12v6M9 15l3 3 3-3'/></svg>")}
+        .fa-file-circle-plus{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/><path d='M14 2v6h6M12 12v6M9 15h6'/></svg>")}
+        .fa-file-excel{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/><path d='M14 2v6h6M8 13l4 5M12 13l-4 5'/></svg>")}
+        .fa-folder-open{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2'/></svg>")}
+        .fa-list-ol{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3s-1-1.5-2-1'/></svg>")}
+        .fa-industry{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z'/><path d='M17 18h1M12 18h1M7 18h1'/></svg>")}
+        .fa-mobile-screen{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='5' y='2' width='14' height='20' rx='2'/><path d='M12 18h.01'/></svg>")}
+        .fa-cloud-arrow-up{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9M16 16l-4-4-4 4'/></svg>")}
+        .fa-wifi{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01'/></svg>")}
+        .fa-wifi-slash{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 20h.01M8.5 16.429a5 5 0 0 1 7 0M5 12.859a10 10 0 0 1 5.17-2.69M19 12.859a10 10 0 0 0-2.007-1.523M2 8.82a15 15 0 0 1 4.177-2.643M22 8.82a15 15 0 0 0-11.288-3.764M2 2l20 20'/></svg>")}
+        .fa-rotate{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5'/></svg>")}
+        .fa-pen-to-square{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z'/></svg>")}
+        .fa-layer-group{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z'/><path d='m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65'/><path d='m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65'/></svg>")}
+        .fa-copy{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='8' y='8' width='14' height='14' rx='2'/><path d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/></svg>")}
+        .fa-clipboard-list{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='8' y='2' width='8' height='4' rx='1'/><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01'/></svg>")}
+        .fa-clipboard-check{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='8' y='2' width='8' height='4' rx='1'/><path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/><path d='m9 14 2 2 4-4'/></svg>")}
+        .fa-chart-simple{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 20V10M12 20V4M6 20v-6'/></svg>")}
+        .fa-user-shield{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 13c0 5-8 9-8 9s-8-4-8-9V6l8-3 8 3z'/><circle cx='12' cy='10' r='2'/><path d='M8 18c1-1.5 2.5-2 4-2s3 .5 4 2'/></svg>")}
+        .fa-arrows-rotate{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M16 16h5v5'/></svg>")}
+        .fa-clock-rotate-left{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 1 0 3-6.7L3 8'/><path d='M3 3v5h5M12 7v5l4 2'/></svg>")}
+        .fa-lock{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>")}
+        /* mask pakai var --fa */
+        [class*="fa-"]::before { content: none; }
+        .fa-solid { -webkit-mask-image: var(--fa); mask-image: var(--fa); }
+        .pulse-ring { animation: pulse-ring 1.5s infinite; }
+        @keyframes pulse-ring { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     </style>
 </head>
 <body class="h-full bg-white text-slate-900 font-sans antialiased flex flex-col">
@@ -89,7 +103,6 @@
                     </p>
                 </div>
             </div>
-
             <div class="flex items-center gap-2 w-full sm:w-auto">
                 <button type="button" onclick="app.openFilesModal()" class="flex-1 sm:flex-none justify-center bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-400 relative">
                     <i class="fa-solid fa-folder-open text-amber-600"></i> <span>File</span>
@@ -109,7 +122,6 @@
         <div class="w-full bg-slate-200 h-1.5">
             <div id="progress-bar" class="bg-indigo-500 h-1.5 transition-all duration-300" style="width: 0%"></div>
         </div>
-        <!-- SESSION BAR -->
         <div class="bg-indigo-50 border-t border-indigo-200 px-4 py-1.5 text-[10px] text-indigo-700 flex items-center justify-between gap-2 flex-wrap">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-user-shield"></i>
@@ -129,14 +141,12 @@
         </div>
     </header>
 
-    <!-- OFFLINE BANNER -->
     <div id="offline-banner" class="hidden bg-amber-100 border-b border-amber-400 px-4 py-2 text-center text-xs text-amber-800 font-semibold">
         <i class="fa-solid fa-wifi-slash"></i> Mode Offline — Data disimpan lokal, akan disinkron otomatis saat online kembali.
     </div>
 
     <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-4 flex flex-col justify-between">
         
-        <!-- LINE & MODEL BAR — READ-ONLY (hanya tampilan) -->
         <div class="bg-slate-100/80 backdrop-blur px-4 py-3 rounded-xl border border-slate-300 shadow-sm mb-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
@@ -174,7 +184,6 @@
             </div>
         </div>
 
-        <!-- CARD SOP -->
         <div class="bg-slate-50 rounded-2xl shadow-xl border border-slate-300 mb-4 flex-1 flex flex-col overflow-hidden">
             <div class="bg-slate-100 border-b border-slate-300 px-4 sm:px-6 py-3 flex justify-between items-center gap-3">
                 <div class="flex items-center gap-2 min-w-0">
@@ -270,7 +279,6 @@
             </div>
         </div>
 
-        <!-- NAV -->
         <div class="flex items-center justify-between gap-3">
             <button type="button" onclick="app.prevSop()" id="btn-prev" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-3.5 px-4 rounded-xl border border-slate-300 shadow-sm transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-30 disabled:cursor-not-allowed">
                 <i class="fa-solid fa-arrow-left"></i> Sebelumnya
@@ -561,7 +569,7 @@
         </div>
     </div>
 
-    <!-- MODAL SWITCH WORKSPACE (LINE & MODEL) -->
+    <!-- MODAL SWITCH WORKSPACE -->
     <div id="modal-switch" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
@@ -579,22 +587,19 @@
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                <!-- Info workspace saat ini -->
                 <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-700">
                     <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Workspace Aktif</p>
                     <p>Line: <b id="switch-current-line">-</b> | Model: <b id="switch-current-model">-</b></p>
                     <p class="mt-1 text-[10px] text-indigo-500">Data SOP saat ini (<b id="switch-current-sop-count">0</b> SOP) akan disimpan otomatis sebelum pindah.</p>
                 </div>
 
-                <!-- Quick pick dari registry -->
                 <div id="switch-quick-pick" class="hidden">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                         <i class="fa-solid fa-clock-rotate-left"></i> Workspace Terakhir
                     </p>
-                    <div id="switch-quick-pick-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+                    <div id="switch-quick-pick-list" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- Input manual -->
                 <div class="border-t border-slate-200 pt-4">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
                         <i class="fa-solid fa-pen-to-square"></i> Atau Isi Manual
@@ -611,7 +616,6 @@
                     </div>
                 </div>
 
-                <!-- Info workspace ditemukan -->
                 <div id="switch-workspace-info" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-700">
                     <p class="font-bold mb-1"><i class="fa-solid fa-circle-check"></i> Workspace ditemukan</p>
                     <p id="switch-workspace-info-text"></p>
@@ -626,7 +630,48 @@
         </div>
     </div>
 
-    <!-- MODAL SETUP AWAL (jika belum ada line/model) -->
+    <!-- MODAL EDIT WORKSPACE -->
+    <div id="modal-edit-ws" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-amber-300 flex flex-col">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-100 rounded-xl p-2.5 border border-amber-300">
+                        <i class="fa-solid fa-pen-to-square text-amber-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900">Edit Workspace</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Ubah Line / Model yang tersimpan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="px-6 py-4 space-y-3">
+                <input type="hidden" id="edit-ws-old-key">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Line</label>
+                    <input type="text" id="edit-ws-line" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Model</label>
+                    <input type="text" id="edit-ws-model" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                </div>
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <span>Mengubah Line/Model akan memindahkan data ke key baru. Key lama akan dihapus.</span>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
+                <button type="button" onclick="app.confirmEditWorkspace()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SETUP AWAL -->
     <div id="modal-setup" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col">
             <div class="px-6 py-5 border-b border-slate-200 text-center">
@@ -679,88 +724,48 @@
                 font: { bold: true, color: { rgb: "000000" }, sz: 14, name: "Calibri" },
                 fill: { patternType: "solid", fgColor: { rgb: "00B050" } },
                 alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                border: {
-                    top:    { style: "thin", color: { rgb: "000000" } },
-                    bottom: { style: "thin", color: { rgb: "000000" } },
-                    left:   { style: "thin", color: { rgb: "000000" } },
-                    right:  { style: "thin", color: { rgb: "000000" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"000000"}}, bottom:{style:"thin",color:{rgb:"000000"}}, left:{style:"thin",color:{rgb:"000000"}}, right:{style:"thin",color:{rgb:"000000"}} }
             },
             header: {
                 font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11, name: "Calibri" },
                 fill: { patternType: "solid", fgColor: { rgb: "4F46E5" } },
                 alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                border: {
-                    top:    { style: "thin", color: { rgb: "312E81" } },
-                    bottom: { style: "thin", color: { rgb: "312E81" } },
-                    left:   { style: "thin", color: { rgb: "312E81" } },
-                    right:  { style: "thin", color: { rgb: "312E81" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"312E81"}}, bottom:{style:"thin",color:{rgb:"312E81"}}, left:{style:"thin",color:{rgb:"312E81"}}, right:{style:"thin",color:{rgb:"312E81"}} }
             },
             cellBase: {
                 font: { sz: 10, name: "Calibri", color: { rgb: "1E293B" } },
                 alignment: { vertical: "center", wrapText: true },
-                border: {
-                    top:    { style: "thin", color: { rgb: "CBD5E1" } },
-                    bottom: { style: "thin", color: { rgb: "CBD5E1" } },
-                    left:   { style: "thin", color: { rgb: "CBD5E1" } },
-                    right:  { style: "thin", color: { rgb: "CBD5E1" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"CBD5E1"}}, bottom:{style:"thin",color:{rgb:"CBD5E1"}}, left:{style:"thin",color:{rgb:"CBD5E1"}}, right:{style:"thin",color:{rgb:"CBD5E1"}} }
             },
             statusOK: {
                 font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
                 fill: { patternType: "solid", fgColor: { rgb: "059669" } },
                 alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top:    { style: "thin", color: { rgb: "047857" } },
-                    bottom: { style: "thin", color: { rgb: "047857" } },
-                    left:   { style: "thin", color: { rgb: "047857" } },
-                    right:  { style: "thin", color: { rgb: "047857" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"047857"}}, bottom:{style:"thin",color:{rgb:"047857"}}, left:{style:"thin",color:{rgb:"047857"}}, right:{style:"thin",color:{rgb:"047857"}} }
             },
             statusNG: {
                 font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
                 fill: { patternType: "solid", fgColor: { rgb: "DC2626" } },
                 alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top:    { style: "thin", color: { rgb: "B91C1C" } },
-                    bottom: { style: "thin", color: { rgb: "B91C1C" } },
-                    left:   { style: "thin", color: { rgb: "B91C1C" } },
-                    right:  { style: "thin", color: { rgb: "B91C1C" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"B91C1C"}}, bottom:{style:"thin",color:{rgb:"B91C1C"}}, left:{style:"thin",color:{rgb:"B91C1C"}}, right:{style:"thin",color:{rgb:"B91C1C"}} }
             },
             statusPENDING: {
                 font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
                 fill: { patternType: "solid", fgColor: { rgb: "64748B" } },
                 alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top:    { style: "thin", color: { rgb: "475569" } },
-                    bottom: { style: "thin", color: { rgb: "475569" } },
-                    left:   { style: "thin", color: { rgb: "475569" } },
-                    right:  { style: "thin", color: { rgb: "475569" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"475569"}}, bottom:{style:"thin",color:{rgb:"475569"}}, left:{style:"thin",color:{rgb:"475569"}}, right:{style:"thin",color:{rgb:"475569"}} }
             },
             cellX: {
                 font: { bold: true, sz: 10, name: "Calibri", color: { rgb: "C00000" } },
                 fill: { patternType: "solid", fgColor: { rgb: "FFC7CE" } },
                 alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top:    { style: "thin", color: { rgb: "CBD5E1" } },
-                    bottom: { style: "thin", color: { rgb: "CBD5E1" } },
-                    left:   { style: "thin", color: { rgb: "CBD5E1" } },
-                    right:  { style: "thin", color: { rgb: "CBD5E1" } }
-                }
+                border: { top:{style:"thin",color:{rgb:"CBD5E1"}}, bottom:{style:"thin",color:{rgb:"CBD5E1"}}, left:{style:"thin",color:{rgb:"CBD5E1"}}, right:{style:"thin",color:{rgb:"CBD5E1"}} }
             },
-            centerCell: {
-                alignment: { horizontal: "center", vertical: "center" }
-            }
+            centerCell: { alignment: { horizontal: "center", vertical: "center" } }
         };
 
         window.IETrialApp = class IETrialApp {
             constructor() {
-                // ============================================================
-                // MULTI-USER SAFE STORAGE
-                // ============================================================
                 this.sessionId = sessionStorage.getItem('ie_session_id');
                 if (!this.sessionId) {
                     this.sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
@@ -798,7 +803,6 @@
                     this.updateSessionBar();
                     this.updateDisplayLineModel();
                     this.render();
-                    // Cek apakah perlu setup awal
                     if (!this.getLine() && !this.getModel()) {
                         this.openSetupModal();
                     }
@@ -809,9 +813,6 @@
                 }
             }
 
-            // ============================================================
-            // STORAGE KEY — COMPOSITE (Line + Model)
-            // ============================================================
             getWorkspaceKey(line, model) {
                 const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
                 const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
@@ -822,9 +823,6 @@
                 return this.getWorkspaceKey(this.getLine(), this.getModel());
             }
 
-            // ============================================================
-            // REGISTRY WORKSPACE
-            // ============================================================
             loadRegistry() {
                 try {
                     const raw = localStorage.getItem(this.workspaceRegistryKey);
@@ -854,7 +852,9 @@
                     model: m || '(tanpa model)',
                     sessionId: this.sessionId,
                     lastActive: new Date().toISOString(),
-                    totalSop: this.trials.length
+                    totalSop: this.trials.length,
+                    // ✅ Simpan preview isi SOP biar user tahu isinya beda
+                    preview: this.trials.slice(0, 2).map(t => t.name).filter(Boolean)
                 };
                 if (existing >= 0) this.registry[existing] = entry;
                 else this.registry.unshift(entry);
@@ -862,9 +862,6 @@
                 this.saveRegistry();
             }
 
-            // ============================================================
-            // MULTI-TAB SYNC
-            // ============================================================
             setupMultiTabSync() {
                 if ('BroadcastChannel' in window) {
                     try {
@@ -926,21 +923,14 @@
                 if (this._broadcastChannel) {
                     try {
                         this._broadcastChannel.postMessage({
-                            type,
-                            sessionId: this.sessionId,
-                            key: this.storageKey,
-                            line: this.getLine(),
-                            model: this.getModel(),
-                            timestamp: new Date().toISOString(),
-                            ...extra
+                            type, sessionId: this.sessionId, key: this.storageKey,
+                            line: this.getLine(), model: this.getModel(),
+                            timestamp: new Date().toISOString(), ...extra
                         });
                     } catch (e) { console.warn('Broadcast send error:', e); }
                 }
             }
 
-            // ============================================================
-            // SESSION BAR + DISPLAY LINE/MODEL
-            // ============================================================
             updateSessionBar() {
                 const sid = document.getElementById('session-id-display');
                 const lineEl = document.getElementById('session-line-display');
@@ -958,17 +948,11 @@
                 this.updateSessionBar();
             }
 
-            // ============================================================
-            // LINE & MODEL — session-scoped
-            // ============================================================
             getLine() { return localStorage.getItem(this.lineKey) || ''; }
             getModel() { return localStorage.getItem(this.modelKey) || ''; }
             setLine(v) { localStorage.setItem(this.lineKey, v); }
             setModel(v) { localStorage.setItem(this.modelKey, v); }
 
-            // ============================================================
-            // SETUP AWAL (jika belum ada line/model)
-            // ============================================================
             openSetupModal() {
                 const modal = document.getElementById('modal-setup');
                 if (modal) modal.classList.remove('hidden');
@@ -1005,30 +989,21 @@
                 this.showToast(`✅ Workspace ${line} / ${model} siap.`, 'success');
             }
 
-            // ============================================================
-            // SWITCH WORKSPACE MODAL
-            // ============================================================
             switchWorkspace() {
                 this.collectFormToCurrentTrial();
                 this.saveToStorage(false);
                 const el = (id) => document.getElementById(id);
-                // Info workspace saat ini
                 if (el('switch-current-line')) el('switch-current-line').innerText = this.getLine() || '(belum diisi)';
                 if (el('switch-current-model')) el('switch-current-model').innerText = this.getModel() || '(belum diisi)';
                 if (el('switch-current-sop-count')) el('switch-current-sop-count').innerText = this.trials.length;
-
-                // Reset input
                 if (el('switch-input-line')) el('switch-input-line').value = '';
                 if (el('switch-input-model')) el('switch-input-model').value = '';
                 if (el('switch-workspace-info')) el('switch-workspace-info').classList.add('hidden');
 
-                // Render quick pick dari registry (kecuali workspace saat ini)
                 this.renderQuickPick();
-
                 const modal = document.getElementById('modal-switch');
                 if (modal) modal.classList.remove('hidden');
 
-                // Live preview
                 const updatePreview = () => {
                     const l = (el('switch-input-line') || {}).value || '';
                     const m = (el('switch-input-model') || {}).value || '';
@@ -1054,7 +1029,7 @@
                 const list = document.getElementById('switch-quick-pick-list');
                 if (!container || !list) return;
                 const currentKey = this.storageKey;
-                const others = this.registry.filter(w => w.key !== currentKey).slice(0, 5);
+                const others = this.registry.filter(w => w.key !== currentKey).slice(0, 10);
                 if (others.length === 0) {
                     container.classList.add('hidden');
                     return;
@@ -1062,29 +1037,118 @@
                 container.classList.remove('hidden');
                 list.innerHTML = '';
                 others.forEach(w => {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'w-full text-left px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-400 transition flex items-center justify-between gap-2';
-                    btn.innerHTML = `
-                        <div class="flex items-center gap-2 min-w-0">
-                            <i class="fa-solid fa-industry text-indigo-500 text-xs"></i>
-                            <div class="min-w-0">
-                                <p class="text-xs font-semibold text-slate-800 truncate">${this.escapeHtml(w.line)} / ${this.escapeHtml(w.model)}</p>
-                                <p class="text-[10px] text-slate-500">${w.totalSop} SOP • ${new Date(w.lastActive).toLocaleDateString('id-ID')}</p>
+                    const previewText = (w.preview && w.preview.length > 0) 
+                        ? w.preview.join(' • ').substring(0, 50) 
+                        : '(belum ada SOP)';
+                    const div = document.createElement('div');
+                    div.className = 'bg-white border border-slate-200 rounded-lg p-2 hover:border-indigo-400 transition flex items-center gap-2';
+                    div.innerHTML = `
+                        <button type="button" class="flex-1 text-left min-w-0" data-action="pick">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fa-solid fa-industry text-indigo-500 text-xs"></i>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-slate-800 truncate">${this.escapeHtml(w.line)} / ${this.escapeHtml(w.model)}</p>
+                                    <p class="text-[10px] text-slate-500 truncate">${w.totalSop} SOP • ${new Date(w.lastActive).toLocaleDateString('id-ID')}</p>
+                                    <p class="text-[9px] text-slate-400 truncate italic">${this.escapeHtml(previewText)}</p>
+                                </div>
                             </div>
-                        </div>
-                        <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+                        </button>
+                        <button type="button" class="shrink-0 bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 p-1.5 rounded-md transition" data-action="edit" title="Edit">
+                            <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                        </button>
+                        <button type="button" class="shrink-0 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-1.5 rounded-md transition" data-action="delete" title="Hapus">
+                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                        </button>
                     `;
-                    btn.onclick = () => {
+                    div.querySelector('[data-action="pick"]').onclick = () => {
                         const lInp = document.getElementById('switch-input-line');
                         const mInp = document.getElementById('switch-input-model');
                         if (lInp) lInp.value = w.line === '(tanpa line)' ? '' : w.line;
                         if (mInp) mInp.value = w.model === '(tanpa model)' ? '' : w.model;
-                        // Trigger preview
                         if (lInp && lInp.oninput) lInp.oninput();
                     };
-                    list.appendChild(btn);
+                    div.querySelector('[data-action="edit"]').onclick = (ev) => {
+                        ev.stopPropagation();
+                        this.openEditWorkspace(w.key);
+                    };
+                    div.querySelector('[data-action="delete"]').onclick = (ev) => {
+                        ev.stopPropagation();
+                        this.confirmDeleteWorkspace(w.key);
+                    };
+                    list.appendChild(div);
                 });
+            }
+
+            // ============================================================
+            // EDIT WORKSPACE
+            // ============================================================
+            openEditWorkspace(key) {
+                const w = this.registry.find(x => x.key === key);
+                if (!w) { this.showToast('Workspace tidak ditemukan.', 'error'); return; }
+                const el = (id) => document.getElementById(id);
+                if (el('edit-ws-old-key')) el('edit-ws-old-key').value = key;
+                if (el('edit-ws-line')) el('edit-ws-line').value = w.line === '(tanpa line)' ? '' : w.line;
+                if (el('edit-ws-model')) el('edit-ws-model').value = w.model === '(tanpa model)' ? '' : w.model;
+                const modal = document.getElementById('modal-edit-ws');
+                if (modal) modal.classList.remove('hidden');
+            }
+
+            confirmEditWorkspace() {
+                const el = (id) => document.getElementById(id);
+                const oldKey = el('edit-ws-old-key').value;
+                const newLine = (el('edit-ws-line').value || '').trim();
+                const newModel = (el('edit-ws-model').value || '').trim();
+                if (!newLine && !newModel) {
+                    this.showToast('Line & Model tidak boleh kosong keduanya.', 'error');
+                    return;
+                }
+                const newKey = this.getWorkspaceKey(newLine, newModel);
+                if (oldKey === newKey) {
+                    this.showToast('Tidak ada perubahan.', 'info');
+                    this.closeModals();
+                    return;
+                }
+                // Cek konflik
+                if (localStorage.getItem(newKey)) {
+                    if (!confirm(`Workspace "${newLine} / ${newModel}" sudah ada.\n\nTimpa data lama?`)) return;
+                }
+                try {
+                    // Pindahkan data dari oldKey ke newKey
+                    const data = localStorage.getItem(oldKey);
+                    if (data) localStorage.setItem(newKey, data);
+                    localStorage.removeItem(oldKey);
+                    // Update registry
+                    const idx = this.registry.findIndex(x => x.key === oldKey);
+                    if (idx >= 0) {
+                        this.registry[idx].key = newKey;
+                        this.registry[idx].line = newLine || '(tanpa line)';
+                        this.registry[idx].model = newModel || '(tanpa model)';
+                        this.registry[idx].lastActive = new Date().toISOString();
+                        this.saveRegistry();
+                    }
+                    this.showToast(`✅ Workspace diubah menjadi ${newLine} / ${newModel}`, 'success');
+                    this.closeModals();
+                    this.switchWorkspace(); // refresh
+                } catch (e) {
+                    console.error('Edit workspace error:', e);
+                    this.showToast('Gagal edit workspace: ' + e.message, 'error');
+                }
+            }
+
+            confirmDeleteWorkspace(key) {
+                const w = this.registry.find(x => x.key === key);
+                if (!w) return;
+                if (!confirm(`Hapus workspace "${w.line} / ${w.model}"?\n\n${w.totalSop} SOP akan hilang permanen.`)) return;
+                try {
+                    localStorage.removeItem(key);
+                    this.registry = this.registry.filter(x => x.key !== key);
+                    this.saveRegistry();
+                    this.showToast(`Workspace "${w.line} / ${w.model}" dihapus.`, 'success');
+                    this.renderQuickPick();
+                } catch (e) {
+                    console.error('Delete workspace error:', e);
+                    this.showToast('Gagal hapus: ' + e.message, 'error');
+                }
             }
 
             confirmSwitchWorkspace() {
@@ -1103,22 +1167,26 @@
                         return;
                     }
 
-                    // 1. Simpan data workspace LAMA
                     this.collectFormToCurrentTrial();
                     const oldKey = this.storageKey;
                     this.saveToStorage(false);
                     console.log(`💾 Saved old: ${oldKey}`);
 
-                    // 2. Pindah
+                    // ✅ Set line/model baru DULU
                     this.setLine(newLine);
                     this.setModel(newModel);
                     this.updateDisplayLineModel();
 
-                    // 3. RESET EKSPLISIT
+                    // ✅ RESET trials + currentIndex — WAJIB!
                     this.trials = [];
                     this.currentIndex = 0;
 
-                    // 4. Load workspace baru
+                    // ✅ Cek apakah workspace baru sudah ada data
+                    const newKey = this.storageKey;
+                    const existingData = localStorage.getItem(newKey);
+                    const isExisting = !!existingData;
+
+                    // ✅ Load — jika kosong akan load default (workspace baru)
                     this.loadWorkspaceData();
                     this.registerWorkspace(newLine, newModel);
                     this.saveToStorage(false);
@@ -1126,10 +1194,14 @@
                     this.closeModals();
                     this.updateFilesBadge();
 
-                    const newKey = this.storageKey;
                     const sopCount = this.trials.length;
-                    console.log(`✅ Switched: ${oldKey} → ${newKey} (${sopCount} SOP)`);
-                    this.showToast(`✅ Pindah ke ${newLine || '-'} / ${newModel || '-'} (${sopCount} SOP)`, 'success');
+                    console.log(`✅ Switched: ${oldKey} → ${newKey} (${sopCount} SOP, existing: ${isExisting})`);
+                    this.showToast(
+                        isExisting 
+                            ? `✅ Workspace "${newLine || '-'} / ${newModel || '-'}" dimuat (${sopCount} SOP).`
+                            : `✨ Workspace baru "${newLine || '-'} / ${newModel || '-'}" dibuat (${sopCount} SOP default).`,
+                        'success'
+                    );
                     this.broadcastChange('WORKSPACE_SWITCH', { newLine, newModel });
                 } catch (e) {
                     console.error('Switch error:', e);
@@ -1137,9 +1209,6 @@
                 }
             }
 
-            // ============================================================
-            // LOAD / SAVE
-            // ============================================================
             loadWorkspaceData() {
                 const key = this.storageKey;
                 let loaded = false;
@@ -1155,7 +1224,6 @@
                     }
                 } catch (e) { console.warn('Load error:', e); }
 
-                // Fallback legacy HANYA untuk workspace default pertama kali
                 if (!loaded) {
                     const legacyMigrated = localStorage.getItem('ie_trial_legacy_migrated_v1');
                     const isDefaultWorkspace = !this.getLine() && !this.getModel();
@@ -1177,7 +1245,23 @@
                 }
 
                 if (!loaded) {
-                    this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
+                    // ✅ Workspace baru — buat data default DENGAN nama yang mencerminkan line/model
+                    const lineName = this.getLine() || 'Tanpa Line';
+                    const modelName = this.getModel() || 'Tanpa Model';
+                    this.trials = [
+                        this.sanitizeRecord({
+                            no: '1',
+                            name: `[${lineName}/${modelName}] SOP #1 — silakan edit`,
+                            sop_check: '√', fixture: '-', parameter: '-', equipment: '√', machine: '-', layout: '√',
+                            status: 'OK', problem: '', solution: '', pic: '', duedate: ''
+                        }),
+                        this.sanitizeRecord({
+                            no: '2',
+                            name: `[${lineName}/${modelName}] SOP #2 — silakan edit`,
+                            sop_check: '-', fixture: '-', parameter: '-', equipment: '-', machine: '-', layout: '-',
+                            status: 'PENDING', problem: '', solution: '', pic: '', duedate: ''
+                        })
+                    ];
                     console.log(`✨ New workspace: ${key}`);
                     this.saveToStorage(false);
                 }
@@ -1236,7 +1320,6 @@
                 return this.trials[this.currentIndex];
             }
 
-            // ========== NETWORK / SYNC ==========
             setupNetworkListeners() {
                 this.updateConnectionUI();
                 window.addEventListener('online', () => {
@@ -1329,7 +1412,6 @@
                 }
             }
 
-            // ========== VALIDATION ==========
             normalizeCheck(val) {
                 if (val === '√' || val === 'X') return val;
                 if (val === null || val === undefined) return '-';
@@ -1394,7 +1476,6 @@
                 ];
             }
 
-            // ========== RENDER ==========
             render() {
                 try {
                     const trial = this.getCurrentTrial();
@@ -1505,7 +1586,6 @@
                 } catch (e) { console.warn(e); }
             }
 
-            // ========== ACTIONS ==========
             toggleCheck(field) {
                 try {
                     const trial = this.getCurrentTrial();
@@ -1608,13 +1688,7 @@
                     const fileEntry = {
                         id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
                         name: `Trial_${line}_${model}_${dateStr}`,
-                        line: line,
-                        model: model,
-                        date: dateStr,
-                        time: timeStr,
-                        total: total,
-                        ok: ok,
-                        ng: ng,
+                        line, model, date: dateStr, time: timeStr, total, ok, ng,
                         trials: JSON.parse(JSON.stringify(this.trials)),
                         createdAt: now.toISOString(),
                         sessionId: this.sessionId,
@@ -1655,7 +1729,6 @@
                 } catch (e) { console.error(e); }
             }
 
-            // ========== MODAL ADD ==========
             openAddModal() {
                 try {
                     this.collectFormToCurrentTrial();
@@ -1737,7 +1810,6 @@
                 } catch (e) { console.error(e); }
             }
 
-            // ========== MODAL DELETE ==========
             openDeleteModal() {
                 try {
                     if (this.trials.length <= 1) {
@@ -1779,7 +1851,6 @@
                 } catch (e) { console.error(e); }
             }
 
-            // ========== JUMP MODAL ==========
             openJumpModal() {
                 try {
                     this.collectFormToCurrentTrial();
@@ -1821,7 +1892,6 @@
                 } catch (e) { console.error(e); }
             }
 
-            // ========== FILE MANAGER ==========
             updateFilesBadge() {
                 const badge = document.getElementById('files-count-badge');
                 if (!badge) return;
@@ -1933,7 +2003,6 @@
                 const f = this.files.find(x => x.id === id);
                 if (!f) return;
                 if (!confirm(`Muat file "${f.name}" ke editor?\n\nData SOP saat ini akan diganti.`)) return;
-                // Set line/model dulu
                 if (f.line) this.setLine(f.line);
                 if (f.model) this.setModel(f.model);
                 this.updateDisplayLineModel();
@@ -1975,7 +2044,6 @@
                 }
             }
 
-            // ========== EXCEL EXPORT/IMPORT ==========
             openExcelModal() {
                 try {
                     this.collectFormToCurrentTrial();
@@ -1990,7 +2058,7 @@
 
             closeModals() {
                 try {
-                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files', 'modal-switch'].forEach(id => {
+                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files', 'modal-switch', 'modal-edit-ws'].forEach(id => {
                         const m = document.getElementById(id);
                         if (m) m.classList.add('hidden');
                     });
@@ -2342,7 +2410,6 @@
                 } catch (e) { console.error(e); this.showToast('Gagal import: ' + e.message, 'error'); }
             }
 
-            // ========== UTILS ==========
             escapeHtml(str) {
                 if (str === null || str === undefined) return '';
                 return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
