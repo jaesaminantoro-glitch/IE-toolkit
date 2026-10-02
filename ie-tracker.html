@@ -20,7 +20,6 @@
         }
     </script>
     <style>
-        /* Ikon bawaan (tanpa Font Awesome / internet): kelas lama .fa-solid .fa-xxx tetap dipakai */
         .fa-solid{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;flex-shrink:0;background-color:currentColor;
             -webkit-mask:var(--fa) center/contain no-repeat;mask:var(--fa) center/contain no-repeat;font-style:normal}
         .fa-xmark{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M18%206L6%2018M6%206l12%2012'/%3E%3C/svg%3E")}
@@ -55,6 +54,13 @@
         .fa-clipboard-list{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='2'%20width='8'%20height='4'%20rx='1'/%3E%3Cpath%20d='M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2M12%2011h4M12%2016h4M8%2011h.01M8%2016h.01'/%3E%3C/svg%3E")}
         .fa-clipboard-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='2'%20width='8'%20height='4'%20rx='1'/%3E%3Cpath%20d='M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2'/%3E%3Cpath%20d='m9%2014%202%202%204-4'/%3E%3C/svg%3E")}
         .fa-chart-simple{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M18%2020V10M12%2020V4M6%2020v-6'/%3E%3C/svg%3E")}
+        .fa-user-shield{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20%2013c0%205-8%209-8%209s-8-4-8-9V6l8-3%208%203z'/%3E%3Ccircle%20cx='12'%20cy='10'%20r='2'/%3E%3Cpath%20d='M8%2018c1-1.5%202.5-2%204-2s3%20.5%204%202'/%3E%3C/svg%3E")}
+        .fa-arrows-rotate{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2012a9%209%200%200%200-9-9%209.75%209.75%200%200%200-6.74%202.74L3%208M3%203v5h5M3%2012a9%209%200%200%200%209%209%209.75%209.75%200%200%200%206.74-2.74L21%2016M16%2016h5v5'/%3E%3C/svg%3E")}
+        .pulse-ring { animation: pulse-ring 1.5s infinite; }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
     </style>
 </head>
 <body class="h-full bg-white text-slate-900 font-sans antialiased flex flex-col">
@@ -103,6 +109,24 @@
         <div class="w-full bg-slate-200 h-1.5">
             <div id="progress-bar" class="bg-indigo-500 h-1.5 transition-all duration-300" style="width: 0%"></div>
         </div>
+        <!-- SESSION BAR -->
+        <div class="bg-indigo-50 border-t border-indigo-200 px-4 py-1.5 text-[10px] text-indigo-700 flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-user-shield"></i>
+                <span class="font-semibold">Sesi:</span>
+                <code id="session-id-display" class="bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono">-</code>
+                <span class="text-indigo-400">|</span>
+                <span class="font-semibold">Line:</span>
+                <span id="session-line-display" class="font-bold text-indigo-900">-</span>
+                <span class="text-indigo-400">|</span>
+                <span class="font-semibold">Model:</span>
+                <span id="session-model-display" class="font-bold text-indigo-900">-</span>
+            </div>
+            <div id="multitab-warning" class="hidden items-center gap-1 bg-amber-100 text-amber-700 border border-amber-300 px-2 py-0.5 rounded font-bold pulse-ring">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Tab lain aktif</span>
+            </div>
+        </div>
     </header>
 
     <!-- OFFLINE BANNER -->
@@ -130,13 +154,18 @@
                         class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
             </div>
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2.5">
+            <div class="flex justify-between items-center flex-wrap gap-2">
+                <div class="flex items-center gap-2.5 flex-wrap">
                     <span id="badge-counter" class="bg-indigo-100 text-indigo-700 border border-indigo-300 font-bold text-xs md:text-sm px-3 py-1 rounded-lg">SOP 1 / 1</span>
                     <span id="badge-status" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-200 text-slate-700">PENDING</span>
                 </div>
-                <div class="text-xs text-slate-500 font-medium">
-                    Total: <span id="total-count" class="font-bold text-slate-800">0</span> SOP
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="app.switchWorkspace()" class="bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-300 hover:border-indigo-500 px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i> Ganti Workspace
+                    </button>
+                    <div class="text-xs text-slate-500 font-medium">
+                        Total: <span id="total-count" class="font-bold text-slate-800">0</span> SOP
+                    </div>
                 </div>
             </div>
         </div>
@@ -528,6 +557,50 @@
         </div>
     </div>
 
+    <!-- MODAL SWITCH WORKSPACE -->
+    <div id="modal-switch" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-100 rounded-xl p-2.5 border border-indigo-300">
+                        <i class="fa-solid fa-arrows-rotate text-indigo-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900">Ganti Workspace</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Pindah ke Line/Model lain (data tetap aman)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <span>Data SOP saat ini akan disimpan dulu ke workspace <b id="switch-current-key">-</b> sebelum pindah.</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Line Baru</label>
+                    <input type="text" id="switch-input-line" placeholder="Contoh: Line B2" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Model Baru</label>
+                    <input type="text" id="switch-input-model" placeholder="Contoh: YZ-2025" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+                <div id="switch-workspace-info" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-700">
+                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Workspace ditemukan</p>
+                    <p id="switch-workspace-info-text"></p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
+                <button type="button" onclick="app.confirmSwitchWorkspace()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrows-rotate"></i> Pindah
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST -->
     <div id="notification-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
         <div id="toast-content" class="bg-slate-50 text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-medium border border-slate-300">
@@ -624,13 +697,34 @@
 
         window.IETrialApp = class IETrialApp {
             constructor() {
-                this.storageKey = 'ie_trial_tracker_final_v1';
-                this.filesKey = 'ie_trial_files_v1';
-                this.pendingKey = 'ie_trial_pending_v1';
-                this.lineKey = 'ie_trial_line_v1';
-                this.modelKey = 'ie_trial_model_v1';
-                this.syncUrlKey = 'ie_trial_sync_url_v1';
+                // ============================================================
+                // MULTI-USER SAFE STORAGE — SESSION ID + COMPOSITE KEY
+                // ============================================================
+                // 1) Session ID unik per tab (isolasi antar tab)
+                this.sessionId = sessionStorage.getItem('ie_session_id');
+                if (!this.sessionId) {
+                    this.sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                    sessionStorage.setItem('ie_session_id', this.sessionId);
+                }
+
+                // 2) Base key + key per sesi
+                this.baseKey = 'ie_trial';
+                this.lineKey = `${this.baseKey}_line_${this.sessionId}`;
+                this.modelKey = `${this.baseKey}_model_${this.sessionId}`;
+                this.filesKey = `${this.baseKey}_files_${this.sessionId}`;
+                this.pendingKey = `${this.baseKey}_pending_${this.sessionId}`;
+
+                // 3) Registry semua workspace (untuk jump antar workspace)
+                this.workspaceRegistryKey = `${this.baseKey}_workspaces`;
+                this.registry = this.loadRegistry();
+
+                // 4) Key lama (backward compat) — hanya dibaca sekali jika belum ada sesi
+                this.legacyStorageKey = 'ie_trial_tracker_final_v1';
+                this.legacyFilesKey = 'ie_trial_files_v1';
+
+                this.syncUrlKey = `${this.baseKey}_sync_url_v1`;
                 this.syncEndpoint = localStorage.getItem(this.syncUrlKey) || '';
+
                 this.trials = [];
                 this.files = [];
                 this.pendingSync = JSON.parse(localStorage.getItem(this.pendingKey) || '{"count":0,"lastAttempt":null}');
@@ -638,9 +732,17 @@
                 this._toastTimer = null;
                 this._pendingImport = null;
                 this._pendingFileName = '';
+                this._broadcastChannel = null;
+                this._storageListener = null;
+                this._lastLocalWrite = 0;
+
                 try {
                     this.loadData();
                     this.setupNetworkListeners();
+                    this.setupMultiTabSync();
+                    this.updateSessionBar();
+                    this.bindLineModel();
+                    this.setupLineModelListeners();
                 } catch (e) {
                     console.error('Init error:', e);
                     this.trials = this.getDefaultData();
@@ -648,13 +750,472 @@
                 }
             }
 
-            getDefaultData() {
-                return [
-                    { name: "Pengecekan battery cover", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
-                    { name: "Pasang lensa kamera belakang", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
-                    { name: "Pressing lensa", sop_check: "√", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.", solution: "Tambahkan perlengkapan cleansed & update SOP", pic: "Ahmad", duedate: new Date().toISOString().split('T')[0] },
-                    { name: "Pre-instalasi Kamera", sop_check: "X", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.\n- Jumlah PC aktual 2\n- Cancel material C board", solution: "Revisi SOP sesuai aktual", pic: "Budi", duedate: new Date().toISOString().split('T')[0] }
-                ];
+            // ============================================================
+            // STORAGE KEY — COMPOSITE (Session + Line + Model)
+            // ============================================================
+            getWorkspaceKey(line, model) {
+                const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
+                const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
+                return `${this.baseKey}_ws_${l}_${m}`;
+            }
+
+            get storageKey() {
+                return this.getWorkspaceKey(this.getLine(), this.getModel());
+            }
+
+            // ============================================================
+            // REGISTRY WORKSPACE (untuk jump antar Line/Model)
+            // ============================================================
+            loadRegistry() {
+                try {
+                    const raw = localStorage.getItem(this.workspaceRegistryKey);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed)) return parsed;
+                    }
+                } catch (e) { console.warn('Registry load error:', e); }
+                return [];
+            }
+
+            saveRegistry() {
+                try {
+                    localStorage.setItem(this.workspaceRegistryKey, JSON.stringify(this.registry));
+                } catch (e) { console.warn('Registry save error:', e); }
+            }
+
+            registerWorkspace(line, model) {
+                const l = (line || '').trim();
+                const m = (model || '').trim();
+                if (!l && !m) return;
+                const key = this.getWorkspaceKey(l, m);
+                const existing = this.registry.findIndex(w => w.key === key);
+                const entry = {
+                    key,
+                    line: l || '(tanpa line)',
+                    model: m || '(tanpa model)',
+                    sessionId: this.sessionId,
+                    lastActive: new Date().toISOString(),
+                    totalSop: this.trials.length
+                };
+                if (existing >= 0) this.registry[existing] = entry;
+                else this.registry.unshift(entry);
+                // Batasi registry max 20
+                if (this.registry.length > 20) this.registry = this.registry.slice(0, 20);
+                this.saveRegistry();
+            }
+
+            // ============================================================
+            // MULTI-TAB SYNC — Broadcast Channel + Storage Event
+            // ============================================================
+            setupMultiTabSync() {
+                // Broadcast Channel (modern browsers)
+                if ('BroadcastChannel' in window) {
+                    try {
+                        this._broadcastChannel = new BroadcastChannel('ie_trial_channel');
+                        this._broadcastChannel.onmessage = (e) => {
+                            if (!e.data || e.data.sessionId === this.sessionId) return;
+                            this.handleRemoteChange(e.data);
+                        };
+                    } catch (e) { console.warn('BroadcastChannel error:', e); }
+                }
+
+                // Storage Event (fallback — deteksi perubahan dari tab lain)
+                this._storageListener = (e) => {
+                    if (!e.key || !e.newValue) return;
+                    // Abaikan perubahan dari key sesi sendiri
+                    if (e.key.includes(this.sessionId)) return;
+                    // Hanya reaksi untuk key trial/workspace
+                    if (e.key.startsWith(this.baseKey)) {
+                        // Debounce agar tidak spam
+                        clearTimeout(this._storageDebounce);
+                        this._storageDebounce = setTimeout(() => {
+                            const isWorkspaceKey = e.key.includes('_ws_');
+                            this.handleRemoteChange({
+                                type: isWorkspaceKey ? 'WORKSPACE_UPDATED' : 'DATA_UPDATED',
+                                key: e.key,
+                                sessionId: '(external-tab)'
+                            });
+                        }, 500);
+                    }
+                };
+                window.addEventListener('storage', this._storageListener);
+
+                // Cleanup saat unload
+                window.addEventListener('beforeunload', () => {
+                    if (this._broadcastChannel) {
+                        try { this._broadcastChannel.close(); } catch (e) {}
+                    }
+                    if (this._storageListener) {
+                        window.removeEventListener('storage', this._storageListener);
+                    }
+                });
+            }
+
+            handleRemoteChange(data) {
+                // Tampilkan warning di session bar
+                const warn = document.getElementById('multitab-warning');
+                if (warn) {
+                    warn.classList.remove('hidden');
+                    warn.classList.add('flex');
+                    setTimeout(() => {
+                        warn.classList.add('hidden');
+                        warn.classList.remove('flex');
+                    }, 5000);
+                }
+
+                // Cek apakah perubahan menyentuh workspace aktif kita
+                const currentKey = this.storageKey;
+                if (data.key === currentKey) {
+                    this.showToast('⚠️ Tab lain mengubah workspace ini. Reload disarankan.', 'warning');
+                } else if (data.type === 'WORKSPACE_UPDATED') {
+                    this.showToast('ℹ️ Tab lain memperbarui workspace lain. Data Anda aman.', 'info');
+                }
+            }
+
+            broadcastChange(type, extra = {}) {
+                if (this._broadcastChannel) {
+                    try {
+                        this._broadcastChannel.postMessage({
+                            type,
+                            sessionId: this.sessionId,
+                            key: this.storageKey,
+                            line: this.getLine(),
+                            model: this.getModel(),
+                            timestamp: new Date().toISOString(),
+                            ...extra
+                        });
+                    } catch (e) { console.warn('Broadcast send error:', e); }
+                }
+            }
+
+            // ============================================================
+            // SESSION BAR UI
+            // ============================================================
+            updateSessionBar() {
+                const sid = document.getElementById('session-id-display');
+                const lineEl = document.getElementById('session-line-display');
+                const modelEl = document.getElementById('session-model-display');
+                if (sid) sid.innerText = this.sessionId.replace('sess_', '').substring(0, 12);
+                if (lineEl) lineEl.innerText = this.getLine() || '(belum diisi)';
+                if (modelEl) modelEl.innerText = this.getModel() || '(belum diisi)';
+            }
+
+            // ============================================================
+            // LINE & MODEL — session-scoped
+            // ============================================================
+            getLine() { return localStorage.getItem(this.lineKey) || ''; }
+            getModel() { return localStorage.getItem(this.modelKey) || ''; }
+            setLine(v) { localStorage.setItem(this.lineKey, v); this.updateSessionBar(); }
+            setModel(v) { localStorage.setItem(this.modelKey, v); this.updateSessionBar(); }
+
+            bindLineModel() {
+                const l = document.getElementById('input-line');
+                const m = document.getElementById('input-model');
+                if (l) l.value = this.getLine();
+                if (m) m.value = this.getModel();
+            }
+
+            setupLineModelListeners() {
+                const l = document.getElementById('input-line');
+                const m = document.getElementById('input-model');
+                if (l) {
+                    l.addEventListener('change', () => this.onWorkspaceFieldChange());
+                    l.addEventListener('blur', () => this.onWorkspaceFieldChange());
+                }
+                if (m) {
+                    m.addEventListener('change', () => this.onWorkspaceFieldChange());
+                    m.addEventListener('blur', () => this.onWorkspaceFieldChange());
+                }
+            }
+
+            onWorkspaceFieldChange() {
+                const l = document.getElementById('input-line');
+                const m = document.getElementById('input-model');
+                const newLine = l ? l.value.trim() : '';
+                const newModel = m ? m.value.trim() : '';
+                const oldLine = this.getLine();
+                const oldModel = this.getModel();
+                if (newLine === oldLine && newModel === oldModel) return;
+
+                // Simpan workspace lama dulu
+                if (oldLine || oldModel) {
+                    this.saveToStorage(false);
+                }
+
+                // Set baru
+                this.setLine(newLine);
+                this.setModel(newModel);
+
+                // Load data workspace baru
+                this.trials = [];
+                this.currentIndex = 0;
+                this.loadWorkspaceData();
+                this.registerWorkspace(newLine, newModel);
+                this.render();
+                this.showToast(`Workspace: ${newLine || '-'} / ${newModel || '-'}`, 'info');
+            }
+
+            // ============================================================
+            // WORKSPACE SWITCH MODAL
+            // ============================================================
+            switchWorkspace() {
+                this.collectFormToCurrentTrial();
+                this.saveToStorage(false);
+                const el = (id) => document.getElementById(id);
+                if (el('switch-input-line')) el('switch-input-line').value = this.getLine();
+                if (el('switch-input-model')) el('switch-input-model').value = this.getModel();
+                if (el('switch-current-key')) el('switch-current-key').innerText = this.storageKey;
+                if (el('switch-workspace-info')) el('switch-workspace-info').classList.add('hidden');
+                const modal = document.getElementById('modal-switch');
+                if (modal) modal.classList.remove('hidden');
+
+                // Live preview saat user ketik
+                const updatePreview = () => {
+                    const l = (el('switch-input-line') || {}).value || '';
+                    const m = (el('switch-input-model') || {}).value || '';
+                    const key = this.getWorkspaceKey(l, m);
+                    const found = this.registry.find(w => w.key === key);
+                    const info = el('switch-workspace-info');
+                    const text = el('switch-workspace-info-text');
+                    if (found && info && text) {
+                        info.classList.remove('hidden');
+                        text.innerHTML = `Workspace <b>${found.line} / ${found.model}</b> sudah pernah dibuka (${found.totalSop} SOP, terakhir: ${new Date(found.lastActive).toLocaleString('id-ID')}).`;
+                    } else if (info) {
+                        info.classList.add('hidden');
+                    }
+                };
+                const lInp = el('switch-input-line');
+                const mInp = el('switch-input-model');
+                if (lInp) lInp.oninput = updatePreview;
+                if (mInp) mInp.oninput = updatePreview;
+                updatePreview();
+            }
+
+            confirmSwitchWorkspace() {
+                const l = (document.getElementById('switch-input-line') || {}).value || '';
+                const m = (document.getElementById('switch-input-model') || {}).value || '';
+                const newLine = l.trim();
+                const newModel = m.trim();
+                if (!newLine && !newModel) {
+                    this.showToast('Isi minimal salah satu (Line atau Model).', 'error');
+                    return;
+                }
+                if (newLine === this.getLine() && newModel === this.getModel()) {
+                    this.showToast('Workspace sama dengan saat ini.', 'info');
+                    this.closeModals();
+                    return;
+                }
+                // Save current dulu
+                this.collectFormToCurrentTrial();
+                this.saveToStorage(false);
+                // Pindah
+                this.setLine(newLine);
+                this.setModel(newModel);
+                this.bindLineModel();
+                this.trials = [];
+                this.currentIndex = 0;
+                this.loadWorkspaceData();
+                this.registerWorkspace(newLine, newModel);
+                this.saveToStorage(false);
+                this.render();
+                this.closeModals();
+                this.updateFilesBadge();
+                this.showToast(`✅ Pindah ke workspace ${newLine || '-'} / ${newModel || '-'}`, 'success');
+                this.broadcastChange('WORKSPACE_SWITCH', { newLine, newModel });
+            }
+
+            // ============================================================
+            // LOAD / SAVE — workspace-scoped
+            // ============================================================
+            loadWorkspaceData() {
+                const key = this.storageKey;
+                let loaded = false;
+                try {
+                    const saved = localStorage.getItem(key);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            this.trials = parsed.map(r => this.sanitizeRecord(r));
+                            loaded = true;
+                        }
+                    }
+                } catch (e) { console.warn('Load workspace error:', e); }
+
+                // Fallback: legacy key (hanya jika workspace benar-benar kosong)
+                if (!loaded) {
+                    try {
+                        const legacy = localStorage.getItem(this.legacyStorageKey);
+                        if (legacy) {
+                            const parsed = JSON.parse(legacy);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                this.trials = parsed.map(r => this.sanitizeRecord(r));
+                                loaded = true;
+                                console.log('📦 Migrasi data legacy ke workspace baru');
+                                this.saveToStorage(false);
+                            }
+                        }
+                    } catch (e) { console.warn('Legacy load error:', e); }
+                }
+
+                if (!loaded) {
+                    this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
+                    this.saveToStorage(false);
+                }
+            }
+
+            loadData() {
+                // Load files (session-scoped)
+                try {
+                    const savedFiles = localStorage.getItem(this.filesKey);
+                    if (savedFiles) {
+                        const pf = JSON.parse(savedFiles);
+                        if (Array.isArray(pf)) this.files = pf;
+                    }
+                } catch (e) { console.warn(e); }
+
+                // Load trials (workspace-scoped)
+                this.loadWorkspaceData();
+
+                // Register workspace saat ini
+                if (this.getLine() || this.getModel()) {
+                    this.registerWorkspace(this.getLine(), this.getModel());
+                }
+
+                this.render();
+                this.updateFilesBadge();
+            }
+
+            saveToStorage(showNotification = true) {
+                try {
+                    this.trials = this.trials.map(r => this.sanitizeRecord(r));
+                    const key = this.storageKey;
+                    this._lastLocalWrite = Date.now();
+                    localStorage.setItem(key, JSON.stringify(this.trials));
+                    if (showNotification) this.triggerSaveAnimation();
+                    this.markPending();
+                    // Update registry
+                    this.registerWorkspace(this.getLine(), this.getModel());
+                    // Broadcast ke tab lain
+                    this.broadcastChange('DATA_UPDATED', { totalSop: this.trials.length });
+                } catch (e) { console.error('Storage error:', e); }
+            }
+
+            saveFiles() {
+                try { localStorage.setItem(this.filesKey, JSON.stringify(this.files)); } catch (e) { console.warn(e); }
+            }
+
+            triggerSaveAnimation() {
+                try {
+                    const indicator = document.getElementById('save-indicator');
+                    const text = document.getElementById('save-status-text');
+                    if (!indicator || !text) return;
+                    indicator.className = 'inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                    text.innerText = 'Menyimpan...';
+                    setTimeout(() => {
+                        indicator.className = 'inline-block w-2 h-2 rounded-full bg-emerald-400';
+                        text.innerText = 'Tersimpan';
+                    }, 500);
+                } catch (e) { console.warn(e); }
+            }
+
+            getCurrentTrial() {
+                if (this.trials.length === 0) return null;
+                if (this.currentIndex >= this.trials.length) this.currentIndex = this.trials.length - 1;
+                if (this.currentIndex < 0) this.currentIndex = 0;
+                return this.trials[this.currentIndex];
+            }
+
+            // ========== NETWORK / SYNC ==========
+            setupNetworkListeners() {
+                this.updateConnectionUI();
+                window.addEventListener('online', () => {
+                    this.updateConnectionUI();
+                    this.showToast('🌐 Internet tersambung. Sinkronisasi...', 'success');
+                    setTimeout(() => this.syncNow(true), 800);
+                });
+                window.addEventListener('offline', () => {
+                    this.updateConnectionUI();
+                    this.showToast('📵 Mode Offline. Data disimpan di HP.', 'warning');
+                });
+                setInterval(() => { if (navigator.onLine) this.syncNow(false); }, 30000);
+            }
+
+            updateConnectionUI() {
+                const ind = document.getElementById('connection-indicator');
+                const txt = document.getElementById('connection-text');
+                const banner = document.getElementById('offline-banner');
+                const pendBadge = document.getElementById('pending-badge');
+                const pendCount = document.getElementById('pending-count');
+
+                if (navigator.onLine) {
+                    if (ind) ind.className = 'inline-flex items-center gap-1 text-emerald-600 font-semibold';
+                    if (txt) txt.innerText = 'Online';
+                    if (banner) banner.classList.add('hidden');
+                } else {
+                    if (ind) ind.className = 'inline-flex items-center gap-1 text-rose-600 font-semibold';
+                    if (txt) txt.innerText = 'Offline';
+                    if (banner) banner.classList.remove('hidden');
+                }
+                const pc = this.pendingSync.count || 0;
+                if (pendBadge && pendCount) {
+                    if (pc > 0) { pendBadge.classList.remove('hidden'); pendCount.innerText = pc; }
+                    else pendBadge.classList.add('hidden');
+                }
+            }
+
+            markPending() {
+                if (navigator.onLine) return;
+                this.pendingSync.count = (this.pendingSync.count || 0) + 1;
+                this.pendingSync.lastAttempt = new Date().toISOString();
+                localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                this.updateConnectionUI();
+            }
+
+            async syncNow(showNotif = true) {
+                if (!navigator.onLine) {
+                    if (showNotif) this.showToast('📵 Tidak ada internet. Data tersimpan lokal.', 'warning');
+                    return;
+                }
+                if (!this.syncEndpoint) {
+                    if (this.pendingSync.count > 0) {
+                        this.pendingSync.count = 0;
+                        this.pendingSync.lastAttempt = new Date().toISOString();
+                        localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                        this.updateConnectionUI();
+                        const info = document.getElementById('files-info-text');
+                        if (info) info.innerText = '✅ Data lokal tersinkron.';
+                        if (showNotif) this.showToast('✅ Sinkronisasi selesai.', 'success');
+                    } else if (showNotif) {
+                        this.showToast('✅ Semua data sudah tersinkron.', 'info');
+                    }
+                    return;
+                }
+                try {
+                    const payload = {
+                        sessionId: this.sessionId,
+                        workspaceKey: this.storageKey,
+                        trials: this.trials,
+                        files: this.files,
+                        line: this.getLine(),
+                        model: this.getModel(),
+                        timestamp: new Date().toISOString()
+                    };
+                    const res = await fetch(this.syncEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    this.pendingSync.count = 0;
+                    this.pendingSync.lastAttempt = new Date().toISOString();
+                    localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                    this.updateConnectionUI();
+                    const info = document.getElementById('files-info-text');
+                    if (info) info.innerText = '✅ Tersinkron ke server pada ' + new Date().toLocaleTimeString('id-ID');
+                    if (showNotif) this.showToast('✅ Sinkronisasi berhasil.', 'success');
+                } catch (e) {
+                    if (showNotif) this.showToast('⚠️ Sinkronisasi gagal: ' + e.message, 'error');
+                }
             }
 
             // ========== VALIDATION ==========
@@ -713,178 +1274,13 @@
                 return s.length > 0 ? s : fallback;
             }
 
-            // ========== LINE & MODEL ==========
-            getLine() { return localStorage.getItem(this.lineKey) || ''; }
-            getModel() { return localStorage.getItem(this.modelKey) || ''; }
-            setLine(v) { localStorage.setItem(this.lineKey, v); }
-            setModel(v) { localStorage.setItem(this.modelKey, v); }
-
-            bindLineModel() {
-                const l = document.getElementById('input-line');
-                const m = document.getElementById('input-model');
-                if (l) {
-                    l.value = this.getLine();
-                    l.addEventListener('input', () => { this.setLine(l.value.trim()); this.markPending(); });
-                }
-                if (m) {
-                    m.value = this.getModel();
-                    m.addEventListener('input', () => { this.setModel(m.value.trim()); this.markPending(); });
-                }
-            }
-
-            // ========== NETWORK / SYNC ==========
-            setupNetworkListeners() {
-                this.updateConnectionUI();
-                window.addEventListener('online', () => {
-                    this.updateConnectionUI();
-                    this.showToast('🌐 Internet tersambung. Sinkronisasi...', 'success');
-                    setTimeout(() => this.syncNow(true), 800);
-                });
-                window.addEventListener('offline', () => {
-                    this.updateConnectionUI();
-                    this.showToast('📵 Mode Offline. Data disimpan di HP.', 'warning');
-                });
-                setInterval(() => { if (navigator.onLine) this.syncNow(false); }, 30000);
-            }
-
-            updateConnectionUI() {
-                const ind = document.getElementById('connection-indicator');
-                const txt = document.getElementById('connection-text');
-                const banner = document.getElementById('offline-banner');
-                const pendBadge = document.getElementById('pending-badge');
-                const pendCount = document.getElementById('pending-count');
-
-                if (navigator.onLine) {
-                    if (ind) ind.className = 'inline-flex items-center gap-1 text-emerald-600 font-semibold';
-                    if (txt) txt.innerText = 'Online';
-                    if (banner) banner.classList.add('hidden');
-                } else {
-                    if (ind) ind.className = 'inline-flex items-center gap-1 text-rose-600 font-semibold';
-                    if (txt) txt.innerText = 'Offline';
-                    if (banner) banner.classList.remove('hidden');
-                }
-                const pc = this.pendingSync.count || 0;
-                if (pendBadge && pendCount) {
-                    if (pc > 0) { pendBadge.classList.remove('hidden'); pendCount.innerText = pc; }
-                    else pendBadge.classList.add('hidden');
-                }
-            }
-
-            markPending() {
-                if (navigator.onLine) return;
-                this.pendingSync.count = (this.pendingSync.count || 0) + 1;
-                this.pendingSync.lastAttempt = new Date().toISOString();
-                localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
-                this.updateConnectionUI();
-            }
-
-            async syncNow(showNotif = true) {
-                if (!navigator.onLine) {
-                    if (showNotif) this.showToast('📵 Tidak ada internet. Data tersimpan lokal.', 'warning');
-                    return;
-                }
-                if (!this.syncEndpoint) {
-                    // Mode tanpa endpoint — sync "virtual" (hanya clear pending)
-                    if (this.pendingSync.count > 0) {
-                        this.pendingSync.count = 0;
-                        this.pendingSync.lastAttempt = new Date().toISOString();
-                        localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
-                        this.updateConnectionUI();
-                        const info = document.getElementById('files-info-text');
-                        if (info) info.innerText = '✅ Data lokal tersinkron.';
-                        if (showNotif) this.showToast('✅ Sinkronisasi selesai.', 'success');
-                    } else if (showNotif) {
-                        this.showToast('✅ Semua data sudah tersinkron.', 'info');
-                    }
-                    return;
-                }
-                try {
-                    const payload = {
-                        trials: this.trials,
-                        files: this.files,
-                        line: this.getLine(),
-                        model: this.getModel(),
-                        timestamp: new Date().toISOString()
-                    };
-                    const res = await fetch(this.syncEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    this.pendingSync.count = 0;
-                    this.pendingSync.lastAttempt = new Date().toISOString();
-                    localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
-                    this.updateConnectionUI();
-                    const info = document.getElementById('files-info-text');
-                    if (info) info.innerText = '✅ Tersinkron ke server pada ' + new Date().toLocaleTimeString('id-ID');
-                    if (showNotif) this.showToast('✅ Sinkronisasi berhasil.', 'success');
-                } catch (e) {
-                    if (showNotif) this.showToast('⚠️ Sinkronisasi gagal: ' + e.message, 'error');
-                }
-            }
-
-            // ========== LOAD/SAVE ==========
-            loadData() {
-                try {
-                    const saved = localStorage.getItem(this.storageKey);
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        if (Array.isArray(parsed) && parsed.length > 0) {
-                            this.trials = parsed.map(r => this.sanitizeRecord(r));
-                        }
-                    }
-                } catch (e) { console.warn(e); }
-
-                try {
-                    const savedFiles = localStorage.getItem(this.filesKey);
-                    if (savedFiles) {
-                        const pf = JSON.parse(savedFiles);
-                        if (Array.isArray(pf)) this.files = pf;
-                    }
-                } catch (e) { console.warn(e); }
-
-                if (!this.trials || this.trials.length === 0) {
-                    this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
-                    this.saveToStorage(false);
-                }
-                this.bindLineModel();
-                this.render();
-                this.updateFilesBadge();
-            }
-
-            saveToStorage(showNotification = true) {
-                try {
-                    this.trials = this.trials.map(r => this.sanitizeRecord(r));
-                    localStorage.setItem(this.storageKey, JSON.stringify(this.trials));
-                    if (showNotification) this.triggerSaveAnimation();
-                    this.markPending();
-                } catch (e) { console.error('Storage error:', e); }
-            }
-
-            saveFiles() {
-                try { localStorage.setItem(this.filesKey, JSON.stringify(this.files)); } catch (e) { console.warn(e); }
-            }
-
-            triggerSaveAnimation() {
-                try {
-                    const indicator = document.getElementById('save-indicator');
-                    const text = document.getElementById('save-status-text');
-                    if (!indicator || !text) return;
-                    indicator.className = 'inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-                    text.innerText = 'Menyimpan...';
-                    setTimeout(() => {
-                        indicator.className = 'inline-block w-2 h-2 rounded-full bg-emerald-400';
-                        text.innerText = 'Tersimpan';
-                    }, 500);
-                } catch (e) { console.warn(e); }
-            }
-
-            getCurrentTrial() {
-                if (this.trials.length === 0) return null;
-                if (this.currentIndex >= this.trials.length) this.currentIndex = this.trials.length - 1;
-                if (this.currentIndex < 0) this.currentIndex = 0;
-                return this.trials[this.currentIndex];
+            getDefaultData() {
+                return [
+                    { name: "Pengecekan battery cover", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
+                    { name: "Pasang lensa kamera belakang", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
+                    { name: "Pressing lensa", sop_check: "√", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.", solution: "Tambahkan perlengkapan cleansed & update SOP", pic: "Ahmad", duedate: new Date().toISOString().split('T')[0] },
+                    { name: "Pre-instalasi Kamera", sop_check: "X", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.\n- Jumlah PC aktual 2\n- Cancel material C board", solution: "Revisi SOP sesuai aktual", pic: "Budi", duedate: new Date().toISOString().split('T')[0] }
+                ];
             }
 
             // ========== RENDER ==========
@@ -1081,7 +1477,6 @@
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         this.showToast('Tersimpan. Lanjut ke SOP berikutnya.', 'success');
                     } else {
-                        // ✅ SEMUA SOP SUDAH DI-SUBMIT → AUTO-SAVE KE FILE MANAGER
                         this.showToast('✅ Semua SOP selesai! Menyimpan ke File...', 'success');
                         setTimeout(() => this.autoSaveToFileManager(), 500);
                     }
@@ -1111,11 +1506,13 @@
                         ng: ng,
                         trials: JSON.parse(JSON.stringify(this.trials)),
                         createdAt: now.toISOString(),
+                        sessionId: this.sessionId,
+                        workspaceKey: this.storageKey,
                         synced: false
                     };
 
                     const exists = this.files.findIndex(f => 
-                        f.line === line && f.model === model && f.date === dateStr
+                        f.line === line && f.model === model && f.date === dateStr && f.sessionId === this.sessionId
                     );
                     if (exists >= 0) {
                         this.files[exists] = fileEntry;
@@ -1127,7 +1524,6 @@
                     this.markPending();
                     this.syncNow(false);
 
-                    // Reset ke SOP 1 untuk trial baru
                     setTimeout(() => {
                         if (confirm('✅ Trial sudah tersimpan sebagai file.\n\nMulai trial baru? (SOP akan direset ke default)')) {
                             this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
@@ -1356,6 +1752,10 @@
                     const syncBadge = f.synced
                         ? '<span class="text-[9px] bg-emerald-100 text-emerald-600 border border-emerald-300 px-1.5 py-0.5 rounded font-bold">✅ SINKRON</span>'
                         : '<span class="text-[9px] bg-amber-100 text-amber-600 border border-amber-300 px-1.5 py-0.5 rounded font-bold">⏳ PENDING</span>';
+                    const isCurrentSession = f.sessionId === this.sessionId;
+                    const sessionBadge = isCurrentSession
+                        ? '<span class="text-[9px] bg-indigo-100 text-indigo-600 border border-indigo-300 px-1.5 py-0.5 rounded font-bold">📌 SESI INI</span>'
+                        : '<span class="text-[9px] bg-slate-100 text-slate-600 border border-slate-300 px-1.5 py-0.5 rounded font-bold">📂 SESI LAIN</span>';
                     return `
                         <div class="bg-slate-50 border border-slate-300 rounded-xl p-3 hover:border-indigo-500 transition">
                             <div class="flex items-start justify-between gap-3 mb-2">
@@ -1367,6 +1767,7 @@
                                         <span class="bg-emerald-100 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">
                                             <i class="fa-solid fa-mobile-screen"></i> ${this.escapeHtml(f.model)}
                                         </span>
+                                        ${sessionBadge}
                                         ${syncBadge}
                                     </div>
                                     <p class="text-sm font-semibold text-slate-900 truncate">${this.escapeHtml(f.name)}</p>
@@ -1428,6 +1829,7 @@
                 this.currentIndex = 0;
                 if (f.line) { this.setLine(f.line); const l = document.getElementById('input-line'); if (l) l.value = f.line; }
                 if (f.model) { this.setModel(f.model); const m = document.getElementById('input-model'); if (m) m.value = f.model; }
+                this.registerWorkspace(f.line, f.model);
                 this.saveToStorage(true);
                 this.render();
                 this.closeModals();
@@ -1478,7 +1880,7 @@
 
             closeModals() {
                 try {
-                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files'].forEach(id => {
+                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files', 'modal-switch'].forEach(id => {
                         const m = document.getElementById(id);
                         if (m) m.classList.add('hidden');
                     });
@@ -1662,7 +2064,6 @@
                             this.showToast('File Excel kosong.', 'error'); input.value = ''; return;
                         }
                         let json = [];
-                        // 1) Cari baris header (di 10 baris pertama) yang punya kolom nama SOP
                         let headerIdx = -1;
                         for (let i = 0; i < Math.min(gridRows.length, 10); i++) {
                             if (gridRows[i].some(c => NAME_ALIASES.includes(norm(c)) && String(c).trim() !== '')) { headerIdx = i; break; }
@@ -1674,7 +2075,6 @@
                                 hdr.forEach((h, ci) => { if (h) o[h] = r[ci] === undefined ? '' : r[ci]; });
                                 return o;
                             });
-                            // samakan nama kolom ke bentuk standar (abaikan huruf besar/kecil & spasi)
                             const canon = { sopitem: 'SOP Item', namasop: 'Nama SOP', itemsop: 'Item SOP', item: 'Item', no: 'No', nosop: 'No', status: 'Status',
                                 fixture: 'Fixture', parameter: 'Parameter', equipment: 'Equipment', machine: 'Machine', layout: 'Layout',
                                 problemfinding: 'Problem finding', problem: 'Problem finding', solution: 'Solution', pic: 'PIC', duedate: 'Due Date', sop: 'SOP' };
@@ -1684,7 +2084,6 @@
                                 return n;
                             });
                         } else {
-                            // 2) Tanpa header (mis. export Time Study: kolom No + kolom nama SOP)
                             const maxCols = Math.max(...gridRows.map(r => r.length));
                             const hasLetters = (v) => /[A-Za-z]/.test(String(v));
                             let nameCol = -1, best = 0;
@@ -1819,7 +2218,7 @@
                         finalTrials = [...this.trials, ...this._pendingImport];
                         msg = `Berhasil menambahkan ${this._pendingImport.length} SOP.`;
                     } else {
-                        if (!confirm(`Mode REPLACE akan MENGGANTI semua ${this.trials.length} SOP dengan ${this._pendingImport.length} SOP baru.\n\nLanjutkan?`)) return;
+                        if (!confirm(`Mode REPLACE akan MENGGANTI semua ${this.trials.length} SOP di workspace ini dengan ${this._pendingImport.length} SOP baru.\n\nWorkspace lain TIDAK terpengaruh.\n\nLanjutkan?`)) return;
                         finalTrials = [...this._pendingImport];
                         msg = `Berhasil mengganti data dengan ${this._pendingImport.length} SOP.`;
                     }
@@ -1848,6 +2247,7 @@
                     text.innerText = message;
                     if (type === 'success') icon.className = 'fa-solid fa-circle-check text-emerald-600';
                     else if (type === 'error') icon.className = 'fa-solid fa-circle-exclamation text-rose-600';
+                    else if (type === 'warning') icon.className = 'fa-solid fa-triangle-exclamation text-amber-600';
                     else icon.className = 'fa-solid fa-circle-info text-indigo-600';
                     toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
                     if (this._toastTimer) clearTimeout(this._toastTimer);
@@ -1864,6 +2264,8 @@
                 else console.log('✅ SheetJS version:', XLSX.version);
                 window.app = new window.IETrialApp();
                 console.log('✅ IE Trial App berhasil diinisialisasi.');
+                console.log('🆔 Session ID:', window.app.sessionId);
+                console.log('🔑 Workspace key:', window.app.storageKey);
             } catch (e) {
                 console.error('❌ Gagal inisialisasi:', e);
                 alert('Terjadi error saat memuat aplikasi.\n\nDetail: ' + e.message);
