@@ -505,6 +505,17 @@
         // EXCEL STYLES
         // ============================================================
         const EXCEL_STYLES = {
+            title: {
+                font: { bold: true, color: { rgb: "000000" }, sz: 14, name: "Calibri" },
+                fill: { patternType: "solid", fgColor: { rgb: "00B050" } },
+                alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                border: {
+                    top:    { style: "thin", color: { rgb: "000000" } },
+                    bottom: { style: "thin", color: { rgb: "000000" } },
+                    left:   { style: "thin", color: { rgb: "000000" } },
+                    right:  { style: "thin", color: { rgb: "000000" } }
+                }
+            },
             header: {
                 font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11, name: "Calibri" },
                 fill: { patternType: "solid", fgColor: { rgb: "4F46E5" } },
@@ -557,6 +568,17 @@
                     bottom: { style: "thin", color: { rgb: "475569" } },
                     left:   { style: "thin", color: { rgb: "475569" } },
                     right:  { style: "thin", color: { rgb: "475569" } }
+                }
+            },
+            cellX: {
+                font: { bold: true, sz: 10, name: "Calibri", color: { rgb: "C00000" } },
+                fill: { patternType: "solid", fgColor: { rgb: "FFC7CE" } },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top:    { style: "thin", color: { rgb: "CBD5E1" } },
+                    bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+                    left:   { style: "thin", color: { rgb: "CBD5E1" } },
+                    right:  { style: "thin", color: { rgb: "CBD5E1" } }
                 }
             },
             centerCell: {
@@ -1111,7 +1133,7 @@
                     this.saveToStorage(false);
                     const newRecord = this.sanitizeRecord({
                         name: `SOP Baru ${this.trials.length + 1}`,
-                        sop_check: '√', fixture: '-', parameter: '-',
+                        sop_check: '-', fixture: '-', parameter: '-',
                         equipment: '√', machine: '-', layout: '√',
                         status: 'PENDING', problem: '', solution: '', pic: '', duedate: ''
                     });
@@ -1161,7 +1183,7 @@
                     for (let i = 0; i < count; i++) {
                         this.trials.push(this.sanitizeRecord({
                             name: `SOP Baru ${startNum + i}`,
-                            sop_check: '√', fixture: '-', parameter: '-',
+                            sop_check: '-', fixture: '-', parameter: '-',
                             equipment: '√', machine: '-', layout: '√',
                             status: 'PENDING', problem: '', solution: '', pic: '', duedate: ''
                         }));
@@ -1389,33 +1411,7 @@
                 try {
                     const wb = XLSX.utils.book_new();
                     this.files.forEach((f, i) => {
-                        const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
-                        const aoa = [headers];
-                        (f.trials || []).forEach((t, idx) => {
-                            aoa.push([t.no || idx + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
-                        });
-                        const ws = XLSX.utils.aoa_to_sheet(aoa);
-                        const range = XLSX.utils.decode_range(ws['!ref']);
-                        for (let R = range.s.r; R <= range.e.r; R++) {
-                            for (let C = range.s.c; C <= range.e.c; C++) {
-                                const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-                                if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
-                                const cell = ws[cellRef];
-                                if (R === 0) cell.s = EXCEL_STYLES.header;
-                                else if (C === 8) {
-                                    const sv = String(cell.v || 'PENDING').toUpperCase();
-                                    if (sv === 'OK') cell.s = EXCEL_STYLES.statusOK;
-                                    else if (sv === 'NG') cell.s = EXCEL_STYLES.statusNG;
-                                    else cell.s = EXCEL_STYLES.statusPENDING;
-                                } else if (C === 0 || (C >= 2 && C <= 7)) {
-                                    cell.s = Object.assign({}, EXCEL_STYLES.cellBase, EXCEL_STYLES.centerCell);
-                                } else {
-                                    cell.s = EXCEL_STYLES.cellBase;
-                                }
-                            }
-                        }
-                        const colWidths = [5, 30, 8, 10, 10, 12, 10, 8, 12, 30, 30, 12, 12].map(w => ({ wch: w }));
-                        ws['!cols'] = colWidths;
+                        const ws = this._buildStyledWorksheet(f.trials || [], f.line, f.model);
                         let sheetName = (f.line + '-' + f.model).substring(0, 28).replace(/[\/\\\?\*\[\]:]/g, '_');
                         if (!sheetName.trim()) sheetName = 'Trial_' + (i + 1);
                         let finalName = sheetName;
@@ -1483,9 +1479,20 @@
                 if (el('export-stat-ng')) el('export-stat-ng').innerText = ng;
             }
 
-            _buildStyledWorksheet(trials) {
+            _buildTitle(line, model) {
+                const l = (line || '').trim();
+                const m = (model || '').trim();
+                let t = 'Trial Result & Problem Finding';
+                if (m && l) t += ` ${m} (${l})`;
+                else if (m) t += ` ${m}`;
+                else if (l) t += ` (${l})`;
+                return t;
+            }
+
+            _buildStyledWorksheet(trials, line, model) {
                 const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
-                const aoa = [headers.slice()];
+                const titleRow = headers.map((h, i) => i === 0 ? this._buildTitle(line, model) : '');
+                const aoa = [titleRow, headers.slice()];
                 trials.forEach((t, i) => {
                     aoa.push([t.no || i + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
                 });
@@ -1493,7 +1500,7 @@
                 const colWidths = headers.map((h, idx) => {
                     let maxLen = h.length;
                     aoa.forEach((row, rowIdx) => {
-                        if (rowIdx === 0) return;
+                        if (rowIdx < 2) return;
                         const v = row[idx];
                         if (v !== null && v !== undefined) {
                             String(v).split('\n').forEach(line => { if (line.length > maxLen) maxLen = line.length; });
@@ -1503,19 +1510,24 @@
                     return { wch: Math.min(Math.max(maxLen + 2, minW), 45) };
                 });
                 ws['!cols'] = colWidths;
-                ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+                ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+                ws['!rows'] = [{ hpt: 30 }];
+                ws['!freeze'] = { xSplit: 0, ySplit: 2 };
                 const range = XLSX.utils.decode_range(ws['!ref']);
                 for (let R = range.s.r; R <= range.e.r; R++) {
                     for (let C = range.s.c; C <= range.e.c; C++) {
                         const ref = XLSX.utils.encode_cell({ r: R, c: C });
                         if (!ws[ref]) ws[ref] = { t: 's', v: '' };
                         const cell = ws[ref];
-                        if (R === 0) cell.s = EXCEL_STYLES.header;
+                        if (R === 0) cell.s = EXCEL_STYLES.title;
+                        else if (R === 1) cell.s = EXCEL_STYLES.header;
                         else if (C === 8) {
                             const sv = String(cell.v || 'PENDING').toUpperCase();
                             if (sv === 'OK') cell.s = EXCEL_STYLES.statusOK;
                             else if (sv === 'NG') cell.s = EXCEL_STYLES.statusNG;
                             else cell.s = EXCEL_STYLES.statusPENDING;
+                        } else if (C >= 2 && C <= 7 && String(cell.v).trim().toUpperCase() === 'X') {
+                            cell.s = EXCEL_STYLES.cellX;
                         } else if (C === 0 || (C >= 2 && C <= 7)) {
                             cell.s = Object.assign({}, EXCEL_STYLES.cellBase, EXCEL_STYLES.centerCell);
                         } else {
@@ -1530,7 +1542,7 @@
                 try {
                     if (!trials || trials.length === 0) { this.showToast('Tidak ada data untuk diexport.', 'error'); return; }
                     if (typeof XLSX === 'undefined') { this.showToast('Library Excel belum siap.', 'error'); return; }
-                    const ws = this._buildStyledWorksheet(trials);
+                    const ws = this._buildStyledWorksheet(trials, line, model);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Trial Result');
                     const now = new Date();
@@ -1666,7 +1678,7 @@
                             return this.sanitizeRecord({
                                 no: rawNo,
                                 name: rawName ? rawName.toString() : '',
-                                sop_check: row['SOP'] !== undefined ? row['SOP'] : (row['sop_check'] || '√'),
+                                sop_check: row['SOP'] !== undefined ? row['SOP'] : (row['sop_check'] || '-'),
                                 fixture: row['Fixture'] !== undefined ? row['Fixture'] : (row['fixture'] || '-'),
                                 parameter: row['Parameter'] !== undefined ? row['Parameter'] : (row['parameter'] || '-'),
                                 equipment: row['Equipment'] !== undefined ? row['Equipment'] : (row['equipment'] || '-'),
