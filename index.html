@@ -110,7 +110,7 @@
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
         body { padding-bottom: 130px; }
 @media (max-width: 640px) {
-    body { padding-bottom: 140px; }
+    body { padding-bottom: 180px; }
 }
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
         .modal-bg.active { display: flex; }
@@ -515,7 +515,7 @@
             </div>
         </nav>
 
-                        <div id="tab-input" class="tab-content" style="padding-bottom: 110px;">
+                        <div id="tab-input" class="tab-content" style="padding-bottom: 160px;">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-3">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
                     <!-- Header: Input Data + Timer Status -->
@@ -2589,7 +2589,13 @@ function switchLineModelTab(tab) {
             document.getElementById('inputNo').value = no;
             document.getElementById('inputProcess').value = currentElemenNama;
             document.getElementById('elemenActiveInfo').classList.remove('hidden');
-            updateElemenActiveInfo(); updateLapButtonLabel(); renderSopDropdownList();
+                        updateElemenActiveInfo(); updateLapButtonLabel(); renderSopDropdownList();
+            
+            // Auto-scroll ke tombol Simpan setelah pilih SOP (mode elemen)
+            setTimeout(() => {
+                const cb = document.getElementById('commitBtn');
+                if (cb) cb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
         }
         function updateElemenActiveInfo() {
             const n = document.getElementById('elemenActiveName');
@@ -2709,7 +2715,13 @@ function switchLineModelTab(tab) {
             document.getElementById('inputProcess').value = currentSiklusNama;
             document.getElementById('siklusActiveInfo').classList.remove('hidden');
             const ne = document.getElementById('siklusActiveName'); if (ne) ne.innerText = `${no} · ${currentSiklusNama}`;
-            updateLapButtonLabel(); renderSiklusDropdownList();
+                        updateLapButtonLabel(); renderSiklusDropdownList();
+            
+            // Auto-scroll ke tombol Simpan setelah pilih SOP (mode siklus)
+            setTimeout(() => {
+                const cb = document.getElementById('commitBtn');
+                if (cb) cb.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
         }
 
         // ============================================================
