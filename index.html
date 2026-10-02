@@ -4336,397 +4336,154 @@ function switchLineModelTab(tab) {
         // EXPORT MASTER DATA
         // ============================================================
         function exportToExcelXLSX() {
-    if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
-    if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
-    try {
-        const dE = getFilteredData();
-        if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
-        const wb = XLSX.utils.book_new();
-        const wsData = [];
-        let mL = Math.max(...dE.map(i => (i.laps || []).length), 1);
-        let hd = [];
-
-        // 1. Tentukan Header
-        if (currentMode === 'elemen') {
-            hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus'];
-            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Average','Allowance','Std. Time','Total Std. Time','Operator','UPH');
-        } else if (currentMode === 'siklus') {
-            hd = ['Line','Model','No. SOP','Nama SOP','Siklus'];
-            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Average','Allowance','Std. Time','Total Std. Time','Operator','UPH');
-        } else {
-            hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus'];
-            for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas');
-        }
-        wsData.push(hd);
-
-        // 2. Susun Data & Grouping
-        const merges = [];
-        const groupInfo = []; // Info baris awal & akhir setiap grup
-        let currentRow = 2;
-
-        // ==================== MODE MESIN ====================
-        if (currentMode === 'mesin') {
-            const gr = {};
-            const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [] }; go.push(k); }
-                gr[k].rows.push(i);
-            });
-            go.sort((a,b) => {
-                const l = String(gr[a].line||'').localeCompare(String(gr[b].line||''), undefined, {numeric:true});
-                if (l !== 0) return l;
-                return String(gr[a].no||'').localeCompare(String(gr[b].no||''), undefined, {numeric:true});
-            });
-
-            go.forEach(k => {
-                const g = gr[k];
-                const startRow = currentRow;
-                g.rows.forEach((i, idx) => {
-                    const row = [];
-                    if (idx === 0) row.push(i.line, i.model || '-', i.no, i.process);
-                    else row.push('', '', '', '');
-                    row.push(i.subMachine || '', (i.laps||[]).length);
-                    for (let x = 0; x < mL; x++) {
-                        const lv = i.laps[x];
-                        if (lv !== undefined && lv !== null) {
-                            const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                            row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                        } else row.push('');
-                    }
-                    row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1, null);
-                    wsData.push(row);
-                    currentRow++;
-                });
-                const endRow = currentRow - 1;
-                if (g.rows.length > 1) {
-                    merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } }); // Line
-                    merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } }); // Model
-                    merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } }); // No
-                    merges.push({ s: { r: startRow - 1, c: 3 }, e: { r: endRow - 1, c: 3 } }); // Nama Mesin
-                }
-                groupInfo.push({ startRow, endRow, group: g });
-            });
-        }
-        // ==================== MODE ELEMEN ====================
-        else if (currentMode === 'elemen') {
-            const gr = {};
-            const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [] }; go.push(k); }
-                gr[k].rows.push(i);
-            });
-            go.sort((a,b) => String(gr[a].noSop||'').localeCompare(String(gr[b].noSop||''), undefined, {numeric:true}));
-
-            go.forEach(k => {
-                const g = gr[k];
-                const startRow = currentRow;
-                g.rows.forEach((i, idx) => {
-                    const row = [];
-                    if (idx === 0) row.push(i.line, i.model || '-', i.noSop, i.namaSop);
-                    else row.push('', '', '', '');
-                    row.push(i.elemen, (i.laps||[]).length);
-                    for (let x = 0; x < mL; x++) {
-                        const lv = i.laps[x];
-                        if (lv !== undefined && lv !== null) {
-                            const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                            row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                        } else row.push('');
-                    }
-                    row.push(null, 0.1, null, null, i.operators || 1, null);
-                    wsData.push(row);
-                    currentRow++;
-                });
-                const endRow = currentRow - 1;
-                if (g.rows.length > 1) {
-                    merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });
-                    merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } });
-                    merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } });
-                    merges.push({ s: { r: startRow - 1, c: 3 }, e: { r: endRow - 1, c: 3 } });
-                }
-                groupInfo.push({ startRow, endRow, group: g });
-            });
-        }
-        // ==================== MODE SIKLUS ====================
-        else {
-            const gr = {};
-            const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [] }; go.push(k); }
-                gr[k].rows.push(i);
-            });
-            go.sort((a,b) => String(gr[a].noSop||'').localeCompare(String(gr[b].noSop||''), undefined, {numeric:true}));
-
-            go.forEach(k => {
-                const g = gr[k];
-                const startRow = currentRow;
-                g.rows.forEach((i, idx) => {
-                    const row = [];
-                    if (idx === 0) row.push(i.line, i.model || '-', i.noSop);
-                    else row.push('', '', '');
-                    row.push(i.namaSop, (i.laps||[]).length);
-                    for (let x = 0; x < mL; x++) {
-                        const lv = i.laps[x];
-                        if (lv !== undefined && lv !== null) {
-                            const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                            row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                        } else row.push('');
-                    }
-                    row.push(null, 0.1, null, null, i.operators || 1, null);
-                    wsData.push(row);
-                    currentRow++;
-                });
-                const endRow = currentRow - 1;
-                if (g.rows.length > 1) {
-                    merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });
-                    merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } });
-                    merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } });
-                }
-                groupInfo.push({ startRow, endRow, group: g });
-            });
-        }
-
-        // 3. Buat Worksheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        if (merges.length > 0) ws['!merges'] = merges;
-
-        // 4. Hitung Formula
-        let s1Col, avgCol, allowCol, smhCol, totalSmhCol, opCol, uphCol;
-        if (currentMode === 'elemen') { s1Col = 6; avgCol = 6 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; totalSmhCol = smhCol + 1; opCol = totalSmhCol + 1; uphCol = opCol + 1; }
-        else if (currentMode === 'siklus') { s1Col = 5; avgCol = 5 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; totalSmhCol = smhCol + 1; opCol = totalSmhCol + 1; uphCol = opCol + 1; }
-        else { s1Col = 6; avgCol = 6 + mL; }
-
-        const cl = (n) => XLSX.utils.encode_col(n);
-        const s1L = cl(s1Col);
-        const sLastL = cl(s1Col + mL - 1);
-        const avgL = cl(avgCol);
-
-        // Isi formula per grup
-        groupInfo.forEach(info => {
-            const { startRow, endRow, group } = info;
-            let groupTotalSmh = 0;
-            let groupTotalCap = 0;
-
-            group.rows.forEach((rowItem, idx) => {
-                const r = startRow + idx;
-                const st = getRowStats(rowItem);
-
-                // Average (setiap baris)
-                ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
-
-                if (currentMode === 'elemen' || currentMode === 'siklus') {
-                    const allowL = cl(allowCol);
-                    const smhL = cl(smhCol);
-                    ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
-                    ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
-                    if (opCol) ws[`${cl(opCol)}${r}`] = { t: 'n', v: rowItem.operators || 1 };
-                    groupTotalSmh += st.smh;
+            if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+            try {
+                const dE = getFilteredData();
+                if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
+                const wb = XLSX.utils.book_new();
+                const wsData = [];
+                let mL = Math.max(...dE.map(i => (i.laps || []).length), 1);
+                let hd = [];
+                if (currentMode === 'elemen') {
+                    hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus'];
+                    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+                    hd.push('Average','Allowance','Std. Time','UPH');
+                } else if (currentMode === 'siklus') {
+                    hd = ['Line','Model','No. SOP','Nama SOP','Siklus'];
+                    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+                    hd.push('Average','Allowance','Std. Time','UPH');
                 } else {
-                    const ngL = cl(avgCol + 1);
-                    const gerL = cl(avgCol + 2);
-                    const ctgL = cl(avgCol + 3);
-                    const capL = cl(avgCol + 4);
-                    const jmlL = cl(avgCol + 5);
-                    const totCapL = cl(avgCol + 6);
-                    
-                    ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
-                    ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
-                    groupTotalCap += st.capacity;
+                    hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus'];
+                    for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
+                    hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin');
                 }
-            });
-
-            // Total per grup (hanya di baris pertama)
-            if (currentMode === 'elemen' || currentMode === 'siklus') {
-                const totalSmhL = cl(totalSmhCol);
-                const uphL = cl(uphCol);
-                ws[`${totalSmhL}${startRow}`] = { t: 'n', f: `SUM(${cl(smhCol)}${startRow}:${cl(smhCol)}${endRow})`, v: parseFloat(groupTotalSmh.toFixed(4)) };
-                ws[`${uphL}${startRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${startRow},0)`, v: Math.round(3600 / groupTotalSmh) };
-            } else {
-                const totCapL = cl(avgCol + 6);
-                ws[`${totCapL}${startRow}`] = { t: 'n', f: `SUM(${cl(avgCol + 4)}${startRow}:${cl(avgCol + 4)}${endRow})`, v: groupTotalCap };
-            }
-        });
-
-        // 5. Styling
-        const stdUph = getLineStandardUph();
-        const numFmtCols = [];
-        for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
-        if (currentMode === 'elemen' || currentMode === 'siklus') numFmtCols.push(avgCol, smhCol);
-        else numFmtCols.push(avgCol, avgCol + 2, avgCol + 3);
-
-        const columnStyles = {};
-        if (currentMode === 'elemen' || currentMode === 'siklus') {
-            columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-            columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
-            columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
-            columnStyles[opCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-            columnStyles[totalSmhCol] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true } };
-            columnStyles[uphCol] = (val) => {
-                const v = parseFloat(val);
-                if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-                return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
-            };
-        } else {
-            columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-            columnStyles[avgCol + 1] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-            columnStyles[avgCol + 2] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
-            columnStyles[avgCol + 3] = { fill: 'FFE699', alignment: { horizontal: 'center' }, font: { bold: true } };
-            columnStyles[avgCol + 5] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
-            columnStyles[avgCol + 4] = (val) => {
-                const v = parseFloat(val);
-                if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
-                return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
-            };
-            columnStyles[avgCol + 6] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, font: { bold: true } };
+                wsData.push(hd);
+                dE.forEach(i => {
+                    const lapsCount = (i.laps || []).length;
+                    const row = [];
+                    if (currentMode === 'elemen') {
+                        row.push(i.line, i.model || '-', i.noSop, i.namaSop, i.elemen, lapsCount);
+                        for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
+                        row.push(null, 0.1, null, null);
+                    } else if (currentMode === 'siklus') {
+                        row.push(i.line, i.model || '-', i.noSop, i.namaSop, lapsCount);
+                        for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
+                        row.push(null, 0.1, null, null);
+                    } else {
+                        row.push(i.line, i.model || '-', i.no, i.process, i.subMachine, lapsCount);
+                        for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
+                        row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1);
+                    }
+                    wsData.push(row);
+                });
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                const firstDataRow = 2;
+                const lastDataRow = firstDataRow + dE.length - 1;
+                let s1Col, avgCol, allowCol, smhCol, uphCol;
+                if (currentMode === 'elemen') { s1Col = 6; avgCol = 6 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; uphCol = smhCol + 1; }
+                else if (currentMode === 'siklus') { s1Col = 5; avgCol = 5 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; uphCol = smhCol + 1; }
+                else { s1Col = 6; avgCol = 6 + mL; }
+                const colLetter = (n) => XLSX.utils.encode_col(n);
+                for (let r = firstDataRow; r <= lastDataRow; r++) {
+                    const rowData = dE[r - firstDataRow];
+                    const st = getRowStats(rowData);
+                    const s1L = colLetter(s1Col);
+                    const sLastL = colLetter(s1Col + mL - 1);
+                    const avgL = colLetter(avgCol);
+                    const allowL = colLetter(allowCol);
+                    const smhL = colLetter(smhCol);
+                    const uphL = colLetter(uphCol);
+                    if (currentMode === 'elemen' || currentMode === 'siklus') {
+                        ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
+                        ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
+                        ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
+                        ws[`${uphL}${r}`] = { t: 'n', f: `ROUND(3600/${smhL}${r},0)`, v: st.uph };
+                    } else {
+                        const ngL = colLetter(avgCol + 1);
+                        const gerL = colLetter(avgCol + 2);
+                        const ctgL = colLetter(avgCol + 3);
+                        const capL = colLetter(avgCol + 4);
+                        const jmlL = colLetter(avgCol + 5);
+                        ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
+                        ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
+                        ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
+                    }
+                }
+                const stdUph = getLineStandardUph();
+                const numFmtCols = [];
+                for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
+                if (currentMode === 'elemen' || currentMode === 'siklus') numFmtCols.push(avgCol, smhCol);
+                else numFmtCols.push(avgCol, avgCol + 2, avgCol + 3);
+                const columnStyles = {};
+                if (currentMode === 'elemen' || currentMode === 'siklus') {
+                    columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+                    columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
+                    columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
+                    columnStyles[uphCol] = (val) => {
+                        const v = parseFloat(val);
+                        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
+                        return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+                    };
+                } else {
+                    columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+                    columnStyles[avgCol + 1] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
+                    columnStyles[avgCol + 2] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
+                    columnStyles[avgCol + 3] = { fill: 'FFE699', alignment: { horizontal: 'center' }, font: { bold: true } };
+                    columnStyles[avgCol + 5] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
+                    columnStyles[avgCol + 4] = (val) => {
+                        const v = parseFloat(val);
+                        if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
+                        return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
+                    };
+                }
+                applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
+                const cols = [];
+                if (currentMode === 'elemen') {
+                    cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }, { wch: 8 });
+                    for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
+                    cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 });
+                } else if (currentMode === 'siklus') {
+                    cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 8 });
+                    for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
+                    cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 });
+                } else {
+                    cols.push({ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 8 });
+                    for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
+                    cols.push({ wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 });
+                }
+                ws['!cols'] = cols;
+                XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const { lineName, modelName, dateStr } = getExportNameParts();
+                const filename = `Time_Study_${currentMode}_${lineName}_${modelName}_${dateStr}.xlsx`;
+                if (downloadBlob(blob, filename)) showToast('📥 Excel diunduh', 'success');
+            } catch (err) { console.error(err); showToast('❌ Gagal export.', 'error'); }
         }
-
-        applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-
-        const cols = [];
-        if (currentMode === 'elemen') {
-            cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }, { wch: 8 });
-            for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
-            cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 });
-        } else if (currentMode === 'siklus') {
-            cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 8 });
-            for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
-            cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 });
-        } else {
-            cols.push({ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 8 });
-            for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
-            cols.push({ wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 12 });
-        }
-        ws['!cols'] = cols;
-
-        XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const { lineName, modelName, dateStr } = getExportNameParts();
-        const filename = `Time_Study_${currentMode}_${lineName}_${modelName}_${dateStr}.xlsx`;
-        if (downloadBlob(blob, filename)) showToast('📥 Excel diunduh', 'success');
-    } catch (err) { console.error(err); showToast('❌ Gagal export.', 'error'); }
-}
         function exportToCSV() {
-    if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
-    const dE = getFilteredData();
-    if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
-    
-    const esc = (v) => { 
-        const s = String(v == null ? '' : v); 
-        return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; 
-    };
-
-    let hd = [];
-    if (currentMode === 'elemen') hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus','Laps','Average','Std. Time','UPH'];
-    else if (currentMode === 'siklus') hd = ['Line','Model','No. SOP','Nama SOP','Siklus','Laps','Average','Std. Time','UPH'];
-    else hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus','Laps','Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas'];
-    
-    const rows = [hd];
-
-    if (currentMode === 'elemen') {
-        const gr = {};
-        const go = [];
-        dE.forEach(i => {
-            const k = `${i.line}||${i.model||'-'}||${i.noSop}||${i.namaSop}`;
-            if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, namaSop: i.namaSop, rows: [] }; go.push(k); }
-            gr[k].rows.push(i);
-        });
-        go.sort((a,b) => String(gr[a].noSop||'').localeCompare(String(gr[b].noSop||''), undefined, {numeric:true}));
-
-        go.forEach(k => {
-            const g = gr[k];
-            let totalSmh = 0;
-            const groupLaps = [];
-            g.rows.forEach(r => {
-                const st = getRowStats(r);
-                totalSmh += st.smh;
-                groupLaps.push(`${r.elemen}: ${(r.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | ')}`);
+            if (masterData.length === 0) { showToast('Belum ada data!', 'error'); return; }
+            const dE = getFilteredData();
+            if (dE.length === 0) { showToast('Tidak ada data!', 'error'); return; }
+            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s; };
+            let hd = [];
+            if (currentMode === 'elemen') hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus','Laps','Average','Std. Time','UPH'];
+            else if (currentMode === 'siklus') hd = ['Line','Model','No. SOP','Nama SOP','Siklus','Laps','Average','Std. Time','UPH'];
+            else hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus','Laps','Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas'];
+            const rows = [hd];
+            dE.forEach(i => {
+                const st = getRowStats(i);
+                const laps = (i.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | ');
+                if (currentMode === 'elemen') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, i.elemen, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                else if (currentMode === 'siklus') rows.push([i.line, i.model||'-', i.noSop, i.namaSop, (i.laps||[]).length, laps, st.avg.toFixed(2), st.smh.toFixed(2), st.uph]);
+                else rows.push([i.line, i.model||'-', i.no, i.process, i.subMachine, (i.laps||[]).length, laps, st.avg.toFixed(2), i.ngRate||0, st.gerakan.toFixed(2), st.ctPlusG.toFixed(2), st.capacity, st.actualMachine, '']);
             });
-            const totalUph = totalSmh > 0 ? Math.round(3600 / totalSmh) : 0;
-            rows.push([
-                g.line, g.model, g.noSop, g.namaSop,
-                g.rows.map(r => r.elemen).join(' | '),
-                g.rows.reduce((sum, r) => sum + (r.laps||[]).length, 0),
-                groupLaps.join(' ; '),
-                '', '', totalUph
-            ]);
-        });
-    } else if (currentMode === 'siklus') {
-        const gr = {};
-        const go = [];
-        dE.forEach(i => {
-            const k = `${i.line}||${i.model||'-'}||${i.noSop}`;
-            if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', noSop: i.noSop, rows: [] }; go.push(k); }
-            gr[k].rows.push(i);
-        });
-        go.sort((a,b) => String(gr[a].noSop||'').localeCompare(String(gr[b].noSop||''), undefined, {numeric:true}));
-
-        go.forEach(k => {
-            const g = gr[k];
-            let totalSmh = 0;
-            const groupLaps = [];
-            const namaSops = [];
-            g.rows.forEach(r => {
-                const st = getRowStats(r);
-                totalSmh += st.smh;
-                namaSops.push(r.namaSop);
-                groupLaps.push((r.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | '));
-            });
-            const totalUph = totalSmh > 0 ? Math.round(3600 / totalSmh) : 0;
-            rows.push([
-                g.line, g.model, g.noSop, namaSops.join(' + '),
-                g.rows.reduce((sum, r) => sum + (r.laps||[]).length, 0),
-                groupLaps.join(' ; '),
-                '', '', totalUph
-            ]);
-        });
-    } else {
-        const gr = {};
-        const go = [];
-        dE.forEach(i => {
-            const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
-            if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [] }; go.push(k); }
-            gr[k].rows.push(i);
-        });
-        go.sort((a,b) => String(gr[a].no||'').localeCompare(String(gr[b].no||''), undefined, {numeric:true}));
-
-        go.forEach(k => {
-            const g = gr[k];
-            let totalCap = 0;
-            const groupLaps = [];
-            const subMachines = [];
-            g.rows.forEach(r => {
-                const st = getRowStats(r);
-                totalCap += st.capacity;
-                subMachines.push(r.subMachine);
-                groupLaps.push((r.laps||[]).map(l => typeof l === 'object' ? l.dur : l).join(' | '));
-            });
-            rows.push([
-                g.line, g.model, g.no, g.process,
-                subMachines.join(' + '),
-                g.rows.reduce((sum, r) => sum + (r.laps||[]).length, 0),
-                groupLaps.join(' ; '),
-                '',
-                g.rows[0].ngRate || 0,
-                g.rows[0].gerakan || 0,
-                '', '',
-                g.rows.reduce((sum, r) => sum + (r.actualMachine||1), 0),
-                totalCap
-            ]);
-        });
-    }
-
-    const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
-    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    const { lineName, modelName, dateStr } = getExportNameParts();
-    const filename = `Time_Study_${currentMode}_${lineName}_${modelName}_${dateStr}.csv`;
-    if (downloadBlob(blob, filename)) showToast('📄 CSV diunduh', 'success');
-}
+            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const { lineName, modelName, dateStr } = getExportNameParts();
+            const filename = `Time_Study_${currentMode}_${lineName}_${modelName}_${dateStr}.csv`;
+            if (downloadBlob(blob, filename)) showToast('📄 CSV diunduh', 'success');
+        }
 
         // ============================================================
         // BACKUP
