@@ -1665,7 +1665,7 @@ processBtn.disabled = false;
         function openIeTracker() {
             const mm = document.getElementById('modeModal'); if (mm) mm.classList.remove('active');
             const fr = document.getElementById('ieFrame');
-            if (!fr.getAttribute('src')) fr.setAttribute('src', 'ie-tracker.html');
+            if (!fr.getAttribute('src')) fr.setAttribute('src', 'ie-tracker.html?v=' + Date.now());
             document.getElementById('ieOverlay').style.display = 'flex';
             document.body.style.overflow = 'hidden';
         }

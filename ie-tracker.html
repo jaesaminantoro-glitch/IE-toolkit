@@ -426,7 +426,7 @@
                     <div id="import-picker" class="bg-slate-800/60 border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-indigo-500 transition">
                         <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2"></i>
                         <p class="text-sm font-semibold text-slate-200 mb-1">Pilih File Excel untuk diimport</p>
-                        <p class="text-xs text-slate-400 mb-3">Format: .xlsx, .xls (maks 10 MB)</p>
+                        <p class="text-xs text-slate-400 mb-3">Format: .xlsx, .xls (maks 10 MB) • importer v3</p>
                         <label class="inline-flex bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-sm items-center justify-center gap-2 cursor-pointer">
                             <i class="fa-solid fa-folder-open"></i> Pilih File
                             <input type="file" id="excel-file-input" accept=".xlsx, .xls" onchange="app.handleFileSelect(event)" class="hidden">
@@ -1602,27 +1602,55 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
-                        let json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-                        if (!json || json.length === 0) {
+                        const NAME_ALIASES = ['sopitem', 'namasop', 'itemsop', 'item', 'sop', 'namaitemsop', 'namaitem'];
+                        const norm = (v) => String(v === null || v === undefined ? '' : v).toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const grid = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false, blankrows: false });
+                        const gridRows = grid.filter(r => Array.isArray(r) && r.some(c => String(c).trim() !== ''));
+                        if (gridRows.length === 0) {
                             this.showToast('File Excel kosong.', 'error'); input.value = ''; return;
                         }
-                        let firstRow = json[0];
-                        let headers = Object.keys(firstRow);
-                        let hasNameColumn = headers.some(h => ['SOP Item', 'Nama SOP', 'Item SOP', 'Item', 'SOP'].includes(h));
-                        // Fallback: file tanpa baris header (mis. hasil export Time Study: kolom A = No, kolom B = nama SOP)
-                        if (!hasNameColumn) {
-                            const raw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-                            const rowsRaw = raw.filter(r => r.some(c => String(c).trim() !== ''));
-                            const looksNoHeader = rowsRaw.length > 0 && rowsRaw.every(r => r.length >= 2) &&
-                                rowsRaw.filter(r => String(r[1]).trim() !== '').length > 0;
-                            if (looksNoHeader) {
-                                json = rowsRaw
-                                    .filter(r => String(r[1]).trim() !== '')
-                                    .map(r => ({ 'No': String(r[0]).trim(), 'SOP Item': String(r[1]).trim() }));
-                                headers = ['SOP Item'];
-                                hasNameColumn = true;
+                        let json = [];
+                        // 1) Cari baris header (di 10 baris pertama) yang punya kolom nama SOP
+                        let headerIdx = -1;
+                        for (let i = 0; i < Math.min(gridRows.length, 10); i++) {
+                            if (gridRows[i].some(c => NAME_ALIASES.includes(norm(c)) && String(c).trim() !== '')) { headerIdx = i; break; }
+                        }
+                        if (headerIdx >= 0) {
+                            const hdr = gridRows[headerIdx].map(c => String(c).trim());
+                            json = gridRows.slice(headerIdx + 1).map(r => {
+                                const o = {};
+                                hdr.forEach((h, ci) => { if (h) o[h] = r[ci] === undefined ? '' : r[ci]; });
+                                return o;
+                            });
+                            // samakan nama kolom ke bentuk standar (abaikan huruf besar/kecil & spasi)
+                            const canon = { sopitem: 'SOP Item', namasop: 'Nama SOP', itemsop: 'Item SOP', item: 'Item', no: 'No', nosop: 'No', status: 'Status',
+                                fixture: 'Fixture', parameter: 'Parameter', equipment: 'Equipment', machine: 'Machine', layout: 'Layout',
+                                problemfinding: 'Problem finding', problem: 'Problem finding', solution: 'Solution', pic: 'PIC', duedate: 'Due Date', sop: 'SOP' };
+                            json = json.map(o => {
+                                const n = {};
+                                Object.keys(o).forEach(k => { n[canon[norm(k)] || k] = o[k]; });
+                                return n;
+                            });
+                        } else {
+                            // 2) Tanpa header (mis. export Time Study: kolom No + kolom nama SOP)
+                            const maxCols = Math.max(...gridRows.map(r => r.length));
+                            const hasLetters = (v) => /[A-Za-z]/.test(String(v));
+                            let nameCol = -1, best = 0;
+                            for (let c = 0; c < maxCols; c++) {
+                                const cnt = gridRows.filter(r => hasLetters(r[c] === undefined ? '' : r[c])).length;
+                                if (cnt > best) { best = cnt; nameCol = c; }
+                            }
+                            if (nameCol >= 0) {
+                                const noCol = nameCol > 0 ? nameCol - 1 : -1;
+                                json = gridRows
+                                    .filter(r => hasLetters(r[nameCol] === undefined ? '' : r[nameCol]))
+                                    .map(r => ({
+                                        'No': noCol >= 0 && r[noCol] !== undefined ? String(r[noCol]).trim() : '',
+                                        'SOP Item': String(r[nameCol]).trim()
+                                    }));
                             }
                         }
+                        const hasNameColumn = json.length > 0;
                         if (!hasNameColumn) {
                             this.showToast('Format file tidak sesuai. Kolom "SOP Item" tidak ditemukan.', 'error');
                             input.value = ''; return;
