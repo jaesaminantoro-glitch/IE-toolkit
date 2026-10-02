@@ -136,22 +136,26 @@
 
     <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-4 flex flex-col justify-between">
         
-        <!-- LINE & MODEL BAR -->
+        <!-- LINE & MODEL BAR — READ-ONLY (hanya tampilan) -->
         <div class="bg-slate-100/80 backdrop-blur px-4 py-3 rounded-xl border border-slate-300 shadow-sm mb-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">
                         <i class="fa-solid fa-industry"></i> Line Produksi
                     </label>
-                    <input type="text" id="input-line" placeholder="Contoh: Line A1" 
-                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    <div class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-slate-400 text-xs"></i>
+                        <span id="display-line" class="flex-1">(belum diisi)</span>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">
                         <i class="fa-solid fa-mobile-screen"></i> Model Produk
                     </label>
-                    <input type="text" id="input-model" placeholder="Contoh: XR-2024" 
-                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    <div class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-slate-400 text-xs"></i>
+                        <span id="display-model" class="flex-1">(belum diisi)</span>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-between items-center flex-wrap gap-2">
@@ -160,8 +164,8 @@
                     <span id="badge-status" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-200 text-slate-700">PENDING</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" onclick="app.switchWorkspace()" class="bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-300 hover:border-indigo-500 px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-arrows-rotate"></i> Ganti Workspace
+                    <button type="button" onclick="app.switchWorkspace()" class="bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-700 px-3 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-arrows-rotate"></i> Ganti Line / Model
                     </button>
                     <div class="text-xs text-slate-500 font-medium">
                         Total: <span id="total-count" class="font-bold text-slate-800">0</span> SOP
@@ -557,7 +561,7 @@
         </div>
     </div>
 
-    <!-- MODAL SWITCH WORKSPACE -->
+    <!-- MODAL SWITCH WORKSPACE (LINE & MODEL) -->
     <div id="modal-switch" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
@@ -566,8 +570,8 @@
                         <i class="fa-solid fa-arrows-rotate text-indigo-600 text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-base text-slate-900">Ganti Workspace</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Pindah ke Line/Model lain (data tetap aman)</p>
+                        <h3 class="font-bold text-base text-slate-900">Ganti Line / Model</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Pilih workspace yang ingin dibuka</p>
                     </div>
                 </div>
                 <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
@@ -575,20 +579,41 @@
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
-                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                    <span>Data SOP saat ini akan disimpan dulu ke workspace <b id="switch-current-key">-</b> sebelum pindah.</span>
+                <!-- Info workspace saat ini -->
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-700">
+                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Workspace Aktif</p>
+                    <p>Line: <b id="switch-current-line">-</b> | Model: <b id="switch-current-model">-</b></p>
+                    <p class="mt-1 text-[10px] text-indigo-500">Data SOP saat ini (<b id="switch-current-sop-count">0</b> SOP) akan disimpan otomatis sebelum pindah.</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Line Baru</label>
-                    <input type="text" id="switch-input-line" placeholder="Contoh: Line B2" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+
+                <!-- Quick pick dari registry -->
+                <div id="switch-quick-pick" class="hidden">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Workspace Terakhir
+                    </p>
+                    <div id="switch-quick-pick-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Model Baru</label>
-                    <input type="text" id="switch-input-model" placeholder="Contoh: YZ-2025" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+
+                <!-- Input manual -->
+                <div class="border-t border-slate-200 pt-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                        <i class="fa-solid fa-pen-to-square"></i> Atau Isi Manual
+                    </p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Line Baru</label>
+                            <input type="text" id="switch-input-line" placeholder="Contoh: Line B2" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Model Baru</label>
+                            <input type="text" id="switch-input-model" placeholder="Contoh: YZ-2025" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Info workspace ditemukan -->
                 <div id="switch-workspace-info" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-700">
-                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Workspace ditemukan</p>
+                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-check"></i> Workspace ditemukan</p>
                     <p id="switch-workspace-info-text"></p>
                 </div>
             </div>
@@ -596,6 +621,42 @@
                 <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
                 <button type="button" onclick="app.confirmSwitchWorkspace()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                     <i class="fa-solid fa-arrows-rotate"></i> Pindah
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SETUP AWAL (jika belum ada line/model) -->
+    <div id="modal-setup" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-indigo-300 flex flex-col">
+            <div class="px-6 py-5 border-b border-slate-200 text-center">
+                <div class="bg-indigo-100 rounded-2xl p-4 border border-indigo-300 inline-block mb-3">
+                    <i class="fa-solid fa-industry text-indigo-600 text-3xl"></i>
+                </div>
+                <h3 class="font-bold text-lg text-slate-900">Selamat Datang</h3>
+                <p class="text-xs text-slate-500 mt-1">Isi Line & Model untuk memulai trial</p>
+            </div>
+            <div class="px-6 py-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
+                        <i class="fa-solid fa-industry"></i> Line Produksi *
+                    </label>
+                    <input type="text" id="setup-line" placeholder="Contoh: TAC602" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
+                        <i class="fa-solid fa-mobile-screen"></i> Model Produk *
+                    </label>
+                    <input type="text" id="setup-model" placeholder="Contoh: latte M" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                </div>
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
+                    <i class="fa-solid fa-circle-info mt-0.5"></i>
+                    <span>Line & Model hanya bisa diganti melalui tombol <b>"Ganti Line / Model"</b> untuk mencegah konflik data.</span>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200">
+                <button type="button" onclick="app.confirmSetup()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-200 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-check"></i> Mulai Trial
                 </button>
             </div>
         </div>
@@ -698,27 +759,22 @@
         window.IETrialApp = class IETrialApp {
             constructor() {
                 // ============================================================
-                // MULTI-USER SAFE STORAGE — SESSION ID + COMPOSITE KEY
+                // MULTI-USER SAFE STORAGE
                 // ============================================================
-                // 1) Session ID unik per tab (isolasi antar tab)
                 this.sessionId = sessionStorage.getItem('ie_session_id');
                 if (!this.sessionId) {
                     this.sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
                     sessionStorage.setItem('ie_session_id', this.sessionId);
                 }
 
-                // 2) Base key + key per sesi
                 this.baseKey = 'ie_trial';
                 this.lineKey = `${this.baseKey}_line_${this.sessionId}`;
                 this.modelKey = `${this.baseKey}_model_${this.sessionId}`;
                 this.filesKey = `${this.baseKey}_files_${this.sessionId}`;
                 this.pendingKey = `${this.baseKey}_pending_${this.sessionId}`;
-
-                // 3) Registry semua workspace (untuk jump antar workspace)
                 this.workspaceRegistryKey = `${this.baseKey}_workspaces`;
                 this.registry = this.loadRegistry();
 
-                // 4) Key lama (backward compat) — hanya dibaca sekali jika belum ada sesi
                 this.legacyStorageKey = 'ie_trial_tracker_final_v1';
                 this.legacyFilesKey = 'ie_trial_files_v1';
 
@@ -734,15 +790,18 @@
                 this._pendingFileName = '';
                 this._broadcastChannel = null;
                 this._storageListener = null;
-                this._lastLocalWrite = 0;
 
                 try {
                     this.loadData();
                     this.setupNetworkListeners();
                     this.setupMultiTabSync();
                     this.updateSessionBar();
-                    this.bindLineModel();
-                    this.setupLineModelListeners();
+                    this.updateDisplayLineModel();
+                    this.render();
+                    // Cek apakah perlu setup awal
+                    if (!this.getLine() && !this.getModel()) {
+                        this.openSetupModal();
+                    }
                 } catch (e) {
                     console.error('Init error:', e);
                     this.trials = this.getDefaultData();
@@ -751,7 +810,7 @@
             }
 
             // ============================================================
-            // STORAGE KEY — COMPOSITE (Session + Line + Model)
+            // STORAGE KEY — COMPOSITE (Line + Model)
             // ============================================================
             getWorkspaceKey(line, model) {
                 const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
@@ -764,7 +823,7 @@
             }
 
             // ============================================================
-            // REGISTRY WORKSPACE (untuk jump antar Line/Model)
+            // REGISTRY WORKSPACE
             // ============================================================
             loadRegistry() {
                 try {
@@ -799,16 +858,14 @@
                 };
                 if (existing >= 0) this.registry[existing] = entry;
                 else this.registry.unshift(entry);
-                // Batasi registry max 20
                 if (this.registry.length > 20) this.registry = this.registry.slice(0, 20);
                 this.saveRegistry();
             }
 
             // ============================================================
-            // MULTI-TAB SYNC — Broadcast Channel + Storage Event
+            // MULTI-TAB SYNC
             // ============================================================
             setupMultiTabSync() {
-                // Broadcast Channel (modern browsers)
                 if ('BroadcastChannel' in window) {
                     try {
                         this._broadcastChannel = new BroadcastChannel('ie_trial_channel');
@@ -819,14 +876,10 @@
                     } catch (e) { console.warn('BroadcastChannel error:', e); }
                 }
 
-                // Storage Event (fallback — deteksi perubahan dari tab lain)
                 this._storageListener = (e) => {
                     if (!e.key || !e.newValue) return;
-                    // Abaikan perubahan dari key sesi sendiri
                     if (e.key.includes(this.sessionId)) return;
-                    // Hanya reaksi untuk key trial/workspace
                     if (e.key.startsWith(this.baseKey)) {
-                        // Debounce agar tidak spam
                         clearTimeout(this._storageDebounce);
                         this._storageDebounce = setTimeout(() => {
                             const isWorkspaceKey = e.key.includes('_ws_');
@@ -840,7 +893,6 @@
                 };
                 window.addEventListener('storage', this._storageListener);
 
-                // Cleanup saat unload
                 window.addEventListener('beforeunload', () => {
                     if (this._broadcastChannel) {
                         try { this._broadcastChannel.close(); } catch (e) {}
@@ -852,7 +904,6 @@
             }
 
             handleRemoteChange(data) {
-                // Tampilkan warning di session bar
                 const warn = document.getElementById('multitab-warning');
                 if (warn) {
                     warn.classList.remove('hidden');
@@ -863,7 +914,6 @@
                     }, 5000);
                 }
 
-                // Cek apakah perubahan menyentuh workspace aktif kita
                 const currentKey = this.storageKey;
                 if (data.key === currentKey) {
                     this.showToast('⚠️ Tab lain mengubah workspace ini. Reload disarankan.', 'warning');
@@ -889,7 +939,7 @@
             }
 
             // ============================================================
-            // SESSION BAR UI
+            // SESSION BAR + DISPLAY LINE/MODEL
             // ============================================================
             updateSessionBar() {
                 const sid = document.getElementById('session-id-display');
@@ -900,76 +950,85 @@
                 if (modelEl) modelEl.innerText = this.getModel() || '(belum diisi)';
             }
 
+            updateDisplayLineModel() {
+                const l = document.getElementById('display-line');
+                const m = document.getElementById('display-model');
+                if (l) l.innerText = this.getLine() || '(belum diisi)';
+                if (m) m.innerText = this.getModel() || '(belum diisi)';
+                this.updateSessionBar();
+            }
+
             // ============================================================
             // LINE & MODEL — session-scoped
             // ============================================================
             getLine() { return localStorage.getItem(this.lineKey) || ''; }
             getModel() { return localStorage.getItem(this.modelKey) || ''; }
-            setLine(v) { localStorage.setItem(this.lineKey, v); this.updateSessionBar(); }
-            setModel(v) { localStorage.setItem(this.modelKey, v); this.updateSessionBar(); }
+            setLine(v) { localStorage.setItem(this.lineKey, v); }
+            setModel(v) { localStorage.setItem(this.modelKey, v); }
 
-            bindLineModel() {
-                const l = document.getElementById('input-line');
-                const m = document.getElementById('input-model');
+            // ============================================================
+            // SETUP AWAL (jika belum ada line/model)
+            // ============================================================
+            openSetupModal() {
+                const modal = document.getElementById('modal-setup');
+                if (modal) modal.classList.remove('hidden');
+                const l = document.getElementById('setup-line');
                 if (l) l.value = this.getLine();
+                const m = document.getElementById('setup-model');
                 if (m) m.value = this.getModel();
+                setTimeout(() => {
+                    const inp = this.getLine() ? document.getElementById('setup-model') : document.getElementById('setup-line');
+                    if (inp) inp.focus();
+                }, 100);
             }
 
-            setupLineModelListeners() {
-                const l = document.getElementById('input-line');
-                const m = document.getElementById('input-model');
-                if (l) {
-                    l.addEventListener('change', () => this.onWorkspaceFieldChange());
-                    l.addEventListener('blur', () => this.onWorkspaceFieldChange());
+            confirmSetup() {
+                const l = (document.getElementById('setup-line') || {}).value || '';
+                const m = (document.getElementById('setup-model') || {}).value || '';
+                const line = l.trim();
+                const model = m.trim();
+                if (!line || !model) {
+                    this.showToast('Line & Model wajib diisi.', 'error');
+                    return;
                 }
-                if (m) {
-                    m.addEventListener('change', () => this.onWorkspaceFieldChange());
-                    m.addEventListener('blur', () => this.onWorkspaceFieldChange());
-                }
-            }
-
-            onWorkspaceFieldChange() {
-                const l = document.getElementById('input-line');
-                const m = document.getElementById('input-model');
-                const newLine = l ? l.value.trim() : '';
-                const newModel = m ? m.value.trim() : '';
-                const oldLine = this.getLine();
-                const oldModel = this.getModel();
-                if (newLine === oldLine && newModel === oldModel) return;
-
-                // Simpan workspace lama dulu
-                if (oldLine || oldModel) {
-                    this.saveToStorage(false);
-                }
-
-                // Set baru
-                this.setLine(newLine);
-                this.setModel(newModel);
-
-                // Load data workspace baru
+                this.setLine(line);
+                this.setModel(model);
+                this.updateDisplayLineModel();
                 this.trials = [];
                 this.currentIndex = 0;
                 this.loadWorkspaceData();
-                this.registerWorkspace(newLine, newModel);
+                this.registerWorkspace(line, model);
+                this.saveToStorage(false);
                 this.render();
-                this.showToast(`Workspace: ${newLine || '-'} / ${newModel || '-'}`, 'info');
+                const modal = document.getElementById('modal-setup');
+                if (modal) modal.classList.add('hidden');
+                this.showToast(`✅ Workspace ${line} / ${model} siap.`, 'success');
             }
 
             // ============================================================
-            // WORKSPACE SWITCH MODAL
+            // SWITCH WORKSPACE MODAL
             // ============================================================
             switchWorkspace() {
                 this.collectFormToCurrentTrial();
                 this.saveToStorage(false);
                 const el = (id) => document.getElementById(id);
-                if (el('switch-input-line')) el('switch-input-line').value = this.getLine();
-                if (el('switch-input-model')) el('switch-input-model').value = this.getModel();
-                if (el('switch-current-key')) el('switch-current-key').innerText = this.storageKey;
+                // Info workspace saat ini
+                if (el('switch-current-line')) el('switch-current-line').innerText = this.getLine() || '(belum diisi)';
+                if (el('switch-current-model')) el('switch-current-model').innerText = this.getModel() || '(belum diisi)';
+                if (el('switch-current-sop-count')) el('switch-current-sop-count').innerText = this.trials.length;
+
+                // Reset input
+                if (el('switch-input-line')) el('switch-input-line').value = '';
+                if (el('switch-input-model')) el('switch-input-model').value = '';
                 if (el('switch-workspace-info')) el('switch-workspace-info').classList.add('hidden');
+
+                // Render quick pick dari registry (kecuali workspace saat ini)
+                this.renderQuickPick();
+
                 const modal = document.getElementById('modal-switch');
                 if (modal) modal.classList.remove('hidden');
 
-                // Live preview saat user ketik
+                // Live preview
                 const updatePreview = () => {
                     const l = (el('switch-input-line') || {}).value || '';
                     const m = (el('switch-input-model') || {}).value || '';
@@ -979,7 +1038,7 @@
                     const text = el('switch-workspace-info-text');
                     if (found && info && text) {
                         info.classList.remove('hidden');
-                        text.innerHTML = `Workspace <b>${found.line} / ${found.model}</b> sudah pernah dibuka (${found.totalSop} SOP, terakhir: ${new Date(found.lastActive).toLocaleString('id-ID')}).`;
+                        text.innerHTML = `Workspace <b>${this.escapeHtml(found.line)} / ${this.escapeHtml(found.model)}</b> sudah pernah dibuka (${found.totalSop} SOP, terakhir: ${new Date(found.lastActive).toLocaleString('id-ID')}).`;
                     } else if (info) {
                         info.classList.add('hidden');
                     }
@@ -988,44 +1047,98 @@
                 const mInp = el('switch-input-model');
                 if (lInp) lInp.oninput = updatePreview;
                 if (mInp) mInp.oninput = updatePreview;
-                updatePreview();
+            }
+
+            renderQuickPick() {
+                const container = document.getElementById('switch-quick-pick');
+                const list = document.getElementById('switch-quick-pick-list');
+                if (!container || !list) return;
+                const currentKey = this.storageKey;
+                const others = this.registry.filter(w => w.key !== currentKey).slice(0, 5);
+                if (others.length === 0) {
+                    container.classList.add('hidden');
+                    return;
+                }
+                container.classList.remove('hidden');
+                list.innerHTML = '';
+                others.forEach(w => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full text-left px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-indigo-50 hover:border-indigo-400 transition flex items-center justify-between gap-2';
+                    btn.innerHTML = `
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i class="fa-solid fa-industry text-indigo-500 text-xs"></i>
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold text-slate-800 truncate">${this.escapeHtml(w.line)} / ${this.escapeHtml(w.model)}</p>
+                                <p class="text-[10px] text-slate-500">${w.totalSop} SOP • ${new Date(w.lastActive).toLocaleDateString('id-ID')}</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+                    `;
+                    btn.onclick = () => {
+                        const lInp = document.getElementById('switch-input-line');
+                        const mInp = document.getElementById('switch-input-model');
+                        if (lInp) lInp.value = w.line === '(tanpa line)' ? '' : w.line;
+                        if (mInp) mInp.value = w.model === '(tanpa model)' ? '' : w.model;
+                        // Trigger preview
+                        if (lInp && lInp.oninput) lInp.oninput();
+                    };
+                    list.appendChild(btn);
+                });
             }
 
             confirmSwitchWorkspace() {
-                const l = (document.getElementById('switch-input-line') || {}).value || '';
-                const m = (document.getElementById('switch-input-model') || {}).value || '';
-                const newLine = l.trim();
-                const newModel = m.trim();
-                if (!newLine && !newModel) {
-                    this.showToast('Isi minimal salah satu (Line atau Model).', 'error');
-                    return;
-                }
-                if (newLine === this.getLine() && newModel === this.getModel()) {
-                    this.showToast('Workspace sama dengan saat ini.', 'info');
+                try {
+                    const l = (document.getElementById('switch-input-line') || {}).value || '';
+                    const m = (document.getElementById('switch-input-model') || {}).value || '';
+                    const newLine = l.trim();
+                    const newModel = m.trim();
+                    if (!newLine && !newModel) {
+                        this.showToast('Isi minimal salah satu (Line atau Model).', 'error');
+                        return;
+                    }
+                    if (newLine === this.getLine() && newModel === this.getModel()) {
+                        this.showToast('Workspace sama dengan saat ini.', 'info');
+                        this.closeModals();
+                        return;
+                    }
+
+                    // 1. Simpan data workspace LAMA
+                    this.collectFormToCurrentTrial();
+                    const oldKey = this.storageKey;
+                    this.saveToStorage(false);
+                    console.log(`💾 Saved old: ${oldKey}`);
+
+                    // 2. Pindah
+                    this.setLine(newLine);
+                    this.setModel(newModel);
+                    this.updateDisplayLineModel();
+
+                    // 3. RESET EKSPLISIT
+                    this.trials = [];
+                    this.currentIndex = 0;
+
+                    // 4. Load workspace baru
+                    this.loadWorkspaceData();
+                    this.registerWorkspace(newLine, newModel);
+                    this.saveToStorage(false);
+                    this.render();
                     this.closeModals();
-                    return;
+                    this.updateFilesBadge();
+
+                    const newKey = this.storageKey;
+                    const sopCount = this.trials.length;
+                    console.log(`✅ Switched: ${oldKey} → ${newKey} (${sopCount} SOP)`);
+                    this.showToast(`✅ Pindah ke ${newLine || '-'} / ${newModel || '-'} (${sopCount} SOP)`, 'success');
+                    this.broadcastChange('WORKSPACE_SWITCH', { newLine, newModel });
+                } catch (e) {
+                    console.error('Switch error:', e);
+                    this.showToast('Gagal pindah workspace: ' + e.message, 'error');
                 }
-                // Save current dulu
-                this.collectFormToCurrentTrial();
-                this.saveToStorage(false);
-                // Pindah
-                this.setLine(newLine);
-                this.setModel(newModel);
-                this.bindLineModel();
-                this.trials = [];
-                this.currentIndex = 0;
-                this.loadWorkspaceData();
-                this.registerWorkspace(newLine, newModel);
-                this.saveToStorage(false);
-                this.render();
-                this.closeModals();
-                this.updateFilesBadge();
-                this.showToast(`✅ Pindah ke workspace ${newLine || '-'} / ${newModel || '-'}`, 'success');
-                this.broadcastChange('WORKSPACE_SWITCH', { newLine, newModel });
             }
 
             // ============================================================
-            // LOAD / SAVE — workspace-scoped
+            // LOAD / SAVE
             // ============================================================
             loadWorkspaceData() {
                 const key = this.storageKey;
@@ -1037,34 +1150,40 @@
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             this.trials = parsed.map(r => this.sanitizeRecord(r));
                             loaded = true;
+                            console.log(`📂 Loaded: ${key} (${this.trials.length} SOP)`);
                         }
                     }
-                } catch (e) { console.warn('Load workspace error:', e); }
+                } catch (e) { console.warn('Load error:', e); }
 
-                // Fallback: legacy key (hanya jika workspace benar-benar kosong)
+                // Fallback legacy HANYA untuk workspace default pertama kali
                 if (!loaded) {
-                    try {
-                        const legacy = localStorage.getItem(this.legacyStorageKey);
-                        if (legacy) {
-                            const parsed = JSON.parse(legacy);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                                this.trials = parsed.map(r => this.sanitizeRecord(r));
-                                loaded = true;
-                                console.log('📦 Migrasi data legacy ke workspace baru');
-                                this.saveToStorage(false);
+                    const legacyMigrated = localStorage.getItem('ie_trial_legacy_migrated_v1');
+                    const isDefaultWorkspace = !this.getLine() && !this.getModel();
+                    if (!legacyMigrated && isDefaultWorkspace) {
+                        try {
+                            const legacy = localStorage.getItem(this.legacyStorageKey);
+                            if (legacy) {
+                                const parsed = JSON.parse(legacy);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                    this.trials = parsed.map(r => this.sanitizeRecord(r));
+                                    loaded = true;
+                                    localStorage.setItem('ie_trial_legacy_migrated_v1', '1');
+                                    console.log('📦 Migrasi legacy');
+                                    this.saveToStorage(false);
+                                }
                             }
-                        }
-                    } catch (e) { console.warn('Legacy load error:', e); }
+                        } catch (e) { console.warn('Legacy error:', e); }
+                    }
                 }
 
                 if (!loaded) {
                     this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
+                    console.log(`✨ New workspace: ${key}`);
                     this.saveToStorage(false);
                 }
             }
 
             loadData() {
-                // Load files (session-scoped)
                 try {
                     const savedFiles = localStorage.getItem(this.filesKey);
                     if (savedFiles) {
@@ -1073,31 +1192,23 @@
                     }
                 } catch (e) { console.warn(e); }
 
-                // Load trials (workspace-scoped)
                 this.loadWorkspaceData();
 
-                // Register workspace saat ini
                 if (this.getLine() || this.getModel()) {
                     this.registerWorkspace(this.getLine(), this.getModel());
                 }
-
-                this.render();
-                this.updateFilesBadge();
             }
 
             saveToStorage(showNotification = true) {
                 try {
                     this.trials = this.trials.map(r => this.sanitizeRecord(r));
                     const key = this.storageKey;
-                    this._lastLocalWrite = Date.now();
                     localStorage.setItem(key, JSON.stringify(this.trials));
                     if (showNotification) this.triggerSaveAnimation();
                     this.markPending();
-                    // Update registry
                     this.registerWorkspace(this.getLine(), this.getModel());
-                    // Broadcast ke tab lain
                     this.broadcastChange('DATA_UPDATED', { totalSop: this.trials.length });
-                } catch (e) { console.error('Storage error:', e); }
+                } catch (e) { console.error('Save error:', e); }
             }
 
             saveFiles() {
@@ -1514,11 +1625,8 @@
                     const exists = this.files.findIndex(f => 
                         f.line === line && f.model === model && f.date === dateStr && f.sessionId === this.sessionId
                     );
-                    if (exists >= 0) {
-                        this.files[exists] = fileEntry;
-                    } else {
-                        this.files.unshift(fileEntry);
-                    }
+                    if (exists >= 0) this.files[exists] = fileEntry;
+                    else this.files.unshift(fileEntry);
                     this.saveFiles();
                     this.updateFilesBadge();
                     this.markPending();
@@ -1532,7 +1640,7 @@
                             this.render();
                         }
                     }, 800);
-                } catch (e) { console.error('autoSaveToFileManager error:', e); }
+                } catch (e) { console.error('autoSave error:', e); }
             }
 
             prevSop() {
@@ -1825,10 +1933,12 @@
                 const f = this.files.find(x => x.id === id);
                 if (!f) return;
                 if (!confirm(`Muat file "${f.name}" ke editor?\n\nData SOP saat ini akan diganti.`)) return;
+                // Set line/model dulu
+                if (f.line) this.setLine(f.line);
+                if (f.model) this.setModel(f.model);
+                this.updateDisplayLineModel();
                 this.trials = (f.trials || []).map(r => this.sanitizeRecord(r));
                 this.currentIndex = 0;
-                if (f.line) { this.setLine(f.line); const l = document.getElementById('input-line'); if (l) l.value = f.line; }
-                if (f.model) { this.setModel(f.model); const m = document.getElementById('input-model'); if (m) m.value = f.model; }
                 this.registerWorkspace(f.line, f.model);
                 this.saveToStorage(true);
                 this.render();
