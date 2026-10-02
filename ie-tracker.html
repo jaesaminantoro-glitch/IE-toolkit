@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    <!-- Firebase SDK v9 compat (agar mudah dipakai tanpa module) -->
+    <!-- Firebase SDK v9 compat -->
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,8 +19,8 @@
     <style>
         .fa-solid{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;flex-shrink:0;background-color:currentColor;
             -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
-            -webkit-mask-size:contain;mask-size:contain;font-style:normal}
-        .fa-solid{ -webkit-mask-image: var(--fa); mask-image: var(--fa); }
+            -webkit-mask-size:contain;mask-size:contain;font-style:normal;
+            -webkit-mask-image: var(--fa); mask-image: var(--fa);}
         .fa-xmark{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6L6 18M6 6l12 12'/></svg>")}
         .fa-check{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>")}
         .fa-arrow-left{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>")}
@@ -70,7 +70,6 @@
 </head>
 <body class="h-full bg-white text-slate-900 font-sans antialiased flex flex-col">
 
-    <!-- HEADER -->
     <header class="bg-slate-50 border-b border-slate-300 shadow-lg sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div class="flex items-center space-x-3">
@@ -297,7 +296,7 @@
                         <i class="fa-solid fa-cloud text-amber-600 text-lg"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-base text-slate-900">Firebase Sync Settings</h3>
+                        <h3 class="font-bold text-base text-slate-900">Firebase Sync Status</h3>
                         <p class="text-xs text-slate-500 mt-0.5">Sync otomatis PC ↔ HP via Firebase</p>
                     </div>
                 </div>
@@ -309,61 +308,45 @@
                 <div id="fb-status-box" class="bg-slate-100 border border-slate-300 rounded-xl p-3 text-xs">
                     <div class="flex items-center gap-2 mb-1">
                         <span id="fb-status-dot" class="sync-dot offline"></span>
-                        <span class="font-bold text-slate-800" id="fb-status-title">Belum Terhubung</span>
+                        <span class="font-bold text-slate-800" id="fb-status-title">Cek koneksi...</span>
                     </div>
-                    <p class="text-slate-600" id="fb-status-desc">Isi Firebase config di bawah untuk mulai sync.</p>
+                    <p class="text-slate-600" id="fb-status-desc">Menghubungkan ke Firebase...</p>
                 </div>
 
-                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
-                    <i class="fa-solid fa-circle-info mt-0.5"></i>
+                <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-700 flex gap-2">
+                    <i class="fa-solid fa-circle-check mt-0.5"></i>
                     <div>
-                        <p class="font-bold mb-1">Cara dapat Firebase Config:</p>
-                        <ol class="list-decimal ml-4 space-y-0.5">
-                            <li>Buka <b>console.firebase.google.com</b></li>
-                            <li>Pilih project → ⚙️ Project Settings</li>
-                            <li>Tab "General" → scroll ke "Your apps"</li>
-                            <li>Pilih Web app (atau buat baru)</li>
-                            <li>Copy config object</li>
-                        </ol>
+                        <p class="font-bold mb-1">Firebase sudah ter-hardcode</p>
+                        <p>Config Firebase sudah tertanam di aplikasi. Semua device yang buka aplikasi ini akan otomatis terhubung.</p>
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
-                        Firebase Config (paste JSON)
-                    </label>
-                    <textarea id="fb-config-input" rows="8" placeholder='{
-  "apiKey": "AIza...",
-  "authDomain": "xxx.firebaseapp.com",
-  "databaseURL": "https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app",
-  "projectId": "xxx",
-  "storageBucket": "xxx.appspot.com",
-  "messagingSenderId": "123456789",
-  "appId": "1:123456789:web:abc..."
-}' class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
-                    <p class="text-[10px] text-slate-500 mt-1 italic">Config disimpan di localStorage browser. Aman karena hanya dipakai di device ini.</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
-                        Koleksi/Root Path (opsional)
-                    </label>
-                    <input type="text" id="fb-root-input" placeholder="ie_trial_tracker" value="ie_trial_tracker" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-                    <p class="text-[10px] text-slate-500 mt-1 italic">Root node di Realtime Database. Default: <code>ie_trial_tracker</code></p>
                 </div>
 
                 <div class="bg-indigo-50 border border-indigo-300 rounded-xl p-3 text-xs text-indigo-700">
-                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Info</p>
-                    <p>Setelah terhubung, semua perubahan otomatis tersync ke Firebase. HP & PC akan saling sinkron realtime.</p>
+                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Info Koneksi</p>
+                    <p class="mb-2"><b>Project:</b> <span id="fb-info-project">-</span></p>
+                    <p class="mb-2"><b>Database URL:</b> <span id="fb-info-dburl" class="break-all">-</span></p>
+                    <p><b>Root Path:</b> <span id="fb-info-root">-</span></p>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                    <div>
+                        <p class="font-bold mb-1">Tips:</p>
+                        <ul class="list-disc ml-4 space-y-0.5">
+                            <li>Pastikan Line & Model <b>sama persis</b> di semua device</li>
+                            <li>Cek koneksi internet (WiFi/data)</li>
+                            <li>Buka Console browser (F12) untuk lihat log sync</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-slate-200 flex flex-wrap gap-2">
-                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition text-sm">Batal</button>
-                <button type="button" onclick="app.disconnectFirebase()" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-xmark"></i> Putus
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition text-sm">Tutup</button>
+                <button type="button" onclick="app.pullFromFirebase(true)" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Pull
                 </button>
-                <button type="button" onclick="app.saveFirebaseConfig()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
-                    <i class="fa-solid fa-check"></i> Simpan & Connect
+                <button type="button" onclick="app.pushToFirebaseManual()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Push
                 </button>
             </div>
         </div>
@@ -671,14 +654,12 @@
                     <p>Line: <b id="switch-current-line">-</b> | Model: <b id="switch-current-model">-</b></p>
                     <p class="mt-1 text-[10px] text-indigo-500">Data SOP saat ini (<b id="switch-current-sop-count">0</b> SOP) akan disimpan otomatis sebelum pindah.</p>
                 </div>
-
                 <div id="switch-quick-pick" class="hidden">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                         <i class="fa-solid fa-clock-rotate-left"></i> Workspace Terakhir
                     </p>
                     <div id="switch-quick-pick-list" class="space-y-1.5 max-h-56 overflow-y-auto pr-1"></div>
                 </div>
-
                 <div class="border-t border-slate-200 pt-4">
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
                         <i class="fa-solid fa-pen-to-square"></i> Atau Isi Manual
@@ -694,7 +675,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="switch-workspace-info" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-700">
                     <p class="font-bold mb-1"><i class="fa-solid fa-circle-check"></i> Workspace ditemukan</p>
                     <p id="switch-workspace-info-text"></p>
@@ -765,17 +745,17 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
                         <i class="fa-solid fa-industry"></i> Line Produksi *
                     </label>
-                    <input type="text" id="setup-line" placeholder="Contoh: TAC602" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <input type="text" id="setup-line" placeholder="Contoh: Tac602" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
                         <i class="fa-solid fa-mobile-screen"></i> Model Produk *
                     </label>
-                    <input type="text" id="setup-model" placeholder="Contoh: latte M" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <input type="text" id="setup-model" placeholder="Contoh: Latte M" class="w-full bg-white border-2 border-slate-300 rounded-xl px-4 py-3 text-slate-900 text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
                 <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
                     <i class="fa-solid fa-circle-info mt-0.5"></i>
-                    <span>Line & Model hanya bisa diganti melalui tombol <b>"Ganti Line / Model"</b> untuk mencegah konflik data.</span>
+                    <span>Isi Line & Model <b>sama persis</b> di PC & HP agar data tersinkron via Firebase.</span>
                 </div>
             </div>
             <div class="px-6 py-4 border-t border-slate-200">
@@ -795,6 +775,22 @@
     </div>
 
     <script>
+        // ============================================================
+        // ✅ HARDCODED FIREBASE CONFIG
+        // Project: time-study-6f689
+        // ============================================================
+        window.FIREBASE_CONFIG = {
+            apiKey: "AIzaSyA1eUHQLXYd3PR8xYSFVNEnMWf3nPGfU98",
+            authDomain: "time-study-6f689.firebaseapp.com",
+            databaseURL: "https://time-study-6f689-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "time-study-6f689",
+            storageBucket: "time-study-6f689.firebasestorage.app",
+            messagingSenderId: "448993822556",
+            appId: "1:448993822556:web:80b3374dbf0fc78eab2399",
+            measurementId: "G-3EHX8Z3Y62"
+        };
+        window.FIREBASE_ROOT_PATH = 'ie_trial_tracker';
+
         // ============================================================
         // EXCEL STYLES
         // ============================================================
@@ -831,16 +827,17 @@
                 this.legacyStorageKey = 'ie_trial_tracker_final_v1';
 
                 // ============================================================
-                // FIREBASE CONFIG
+                // FIREBASE — HARDCODED
                 // ============================================================
                 this.fbConfigKey = `${this.baseKey}_firebase_config`;
                 this.fbRootKey = `${this.baseKey}_firebase_root`;
-                this.fbConfig = null;
-                this.fbRootPath = localStorage.getItem(this.fbRootKey) || 'ie_trial_tracker';
+                this.defaultFbConfig = window.FIREBASE_CONFIG;
+                this.fbConfig = window.FIREBASE_CONFIG;
+                this.fbRootPath = localStorage.getItem(this.fbRootKey) || window.FIREBASE_ROOT_PATH || 'ie_trial_tracker';
                 this.fbApp = null;
                 this.fbDb = null;
                 this.fbConnected = false;
-                this.fbListeners = {}; // ref per workspace
+                this.fbListeners = {};
                 this._fbSaveTimer = null;
                 this._fbPullingFromServer = false;
 
@@ -861,7 +858,6 @@
                     this.updateSessionBar();
                     this.updateDisplayLineModel();
                     this.render();
-                    // Init Firebase (dari config yang tersimpan)
                     this.initFirebase();
                     if (!this.getLine() && !this.getModel()) {
                         this.openSetupModal();
@@ -874,16 +870,21 @@
             }
 
             // ============================================================
-            // FIREBASE INTEGRATION
+            // FIREBASE INTEGRATION (HARDCODED CONFIG)
             // ============================================================
             initFirebase() {
                 try {
+                    // Pakai config dari localStorage kalau ada, kalau tidak pakai hardcoded
                     const saved = localStorage.getItem(this.fbConfigKey);
-                    if (!saved) {
-                        this.updateFirebaseUI('disconnected', 'Firebase belum di-setup. Klik ikon ⚙️ Sync.');
-                        return;
+                    if (saved) {
+                        try {
+                            this.fbConfig = JSON.parse(saved);
+                        } catch (e) {
+                            this.fbConfig = this.defaultFbConfig;
+                        }
+                    } else {
+                        this.fbConfig = this.defaultFbConfig;
                     }
-                    this.fbConfig = JSON.parse(saved);
                     if (!this.fbConfig.databaseURL) {
                         this.updateFirebaseUI('error', 'Config tidak valid: databaseURL tidak ada.');
                         return;
@@ -892,7 +893,6 @@
                         this.updateFirebaseUI('error', 'Firebase SDK belum loaded.');
                         return;
                     }
-                    // Prevent duplicate app init
                     try {
                         if (firebase.apps && firebase.apps.length > 0) {
                             this.fbApp = firebase.app();
@@ -900,27 +900,24 @@
                             this.fbApp = firebase.initializeApp(this.fbConfig);
                         }
                     } catch (e) {
-                        // Jika app sudah ada dengan nama lain, ambil yang existing
                         this.fbApp = firebase.app();
                     }
                     this.fbDb = firebase.database();
                     this.fbConnected = true;
 
-                    // Test koneksi
                     this.fbDb.ref('.info/connected').on('value', (snap) => {
                         const connected = snap.val() === true;
                         if (connected) {
-                            this.updateFirebaseUI('connected', `Terhubung ke Firebase (root: ${this.fbRootPath})`);
-                            // Attach listener untuk workspace saat ini
+                            this.updateFirebaseUI('connected', `Terhubung ke Firebase (project: ${this.fbConfig.projectId})`);
                             this.attachFirebaseListener();
-                            // Pull initial
-                            this.pullFromFirebase(true);
+                            this.pullFromFirebase(false);
                         } else {
                             this.updateFirebaseUI('offline', 'Firebase offline — akan sync saat online.');
                         }
                     });
 
-                    console.log('✅ Firebase initialized. Root:', this.fbRootPath);
+                    console.log('✅ Firebase initialized. Project:', this.fbConfig.projectId);
+                    console.log('📁 Root path:', this.fbRootPath);
                 } catch (e) {
                     console.error('Firebase init error:', e);
                     this.updateFirebaseUI('error', 'Gagal init Firebase: ' + e.message);
@@ -933,6 +930,9 @@
                 const desc = document.getElementById('fb-status-desc');
                 const ind = document.getElementById('firebase-indicator');
                 const txt = document.getElementById('firebase-text');
+                const infoProject = document.getElementById('fb-info-project');
+                const infoDburl = document.getElementById('fb-info-dburl');
+                const infoRoot = document.getElementById('fb-info-root');
 
                 const map = {
                     connected: { dot: 'online', color: 'text-emerald-600', icon: 'fa-cloud', label: 'Firebase: Online' },
@@ -953,7 +953,10 @@
                 if (ind) ind.className = 'inline-flex items-center gap-1 ' + m.color + ' font-semibold';
                 if (txt) txt.innerText = m.label;
 
-                // Update icon
+                if (infoProject) infoProject.innerText = this.fbConfig ? this.fbConfig.projectId : '-';
+                if (infoDburl) infoDburl.innerText = this.fbConfig ? this.fbConfig.databaseURL : '-';
+                if (infoRoot) infoRoot.innerText = this.fbRootPath;
+
                 const icon = ind ? ind.querySelector('i') : null;
                 if (icon) icon.className = 'fa-solid ' + m.icon + ' text-[10px]';
             }
@@ -967,7 +970,6 @@
             attachFirebaseListener() {
                 if (!this.fbConnected || !this.fbDb) return;
                 const key = this.storageKey;
-                // Detach old listener jika ada
                 if (this.fbListeners[key]) {
                     try { this.fbListeners[key].off(); } catch(e){}
                 }
@@ -976,19 +978,12 @@
                 this.fbListeners[key] = ref;
 
                 ref.on('value', (snap) => {
-                    // Jika sedang pull manual, skip auto-apply
                     if (this._fbPullingFromServer) return;
                     const data = snap.val();
                     if (!data || !data.trials) return;
-
-                    // Cek timestamp — apakah server lebih baru?
                     const serverTs = data.updatedAt || 0;
                     const localTs = parseInt(localStorage.getItem(this.storageKey + '_ts') || '0', 10);
-
-                    // Skip jika data sama (dari push sendiri)
                     if (data.sessionId === this.sessionId && serverTs <= localTs + 1000) return;
-
-                    // Cek apakah server lebih baru dari local
                     if (serverTs > localTs) {
                         console.log(`📥 Firebase update: server ts=${serverTs}, local ts=${localTs}`);
                         this.applyFirebaseData(data, true);
@@ -1000,11 +995,10 @@
             applyFirebaseData(data, showToast) {
                 try {
                     if (!data || !Array.isArray(data.trials)) return;
-                    // Cek apakah user sedang edit — jangan override form yang belum di-save
                     const dirty = this._isFormDirty();
                     if (dirty) {
-                        console.log('⚠️ Form dirty — skip apply, user perlu refresh');
-                        if (showToast) this.showToast('⚠️ Data server berbeda, tapi Anda sedang edit. Save dulu.', 'warning');
+                        console.log('⚠️ Form dirty — skip apply');
+                        if (showToast) this.showToast('⚠️ Data server berbeda, tapi Anda sedang edit.', 'warning');
                         return;
                     }
                     this.trials = data.trials.map(r => this.sanitizeRecord(r));
@@ -1013,7 +1007,7 @@
                     localStorage.setItem(this.storageKey + '_ts', String(data.updatedAt || Date.now()));
                     this.render();
                     if (showToast) {
-                        this.showToast(`📥 Data dari server dimuat (${data.trials.length} SOP, oleh ${data.sessionId ? data.sessionId.substring(5, 13) : 'unknown'}).`, 'info');
+                        this.showToast(`📥 Data dari server (${data.trials.length} SOP).`, 'info');
                     }
                 } catch (e) {
                     console.error('applyFirebaseData error:', e);
@@ -1029,7 +1023,6 @@
                     const problem = el('input-problem') ? el('input-problem').value : '';
                     const solution = el('input-solution') ? el('input-solution').value : '';
                     const pic = el('input-pic') ? el('input-pic').value : '';
-                    // Bandingkan dengan trial yang tersimpan
                     if ((trial.name || '') !== name) return true;
                     if ((trial.problem || '') !== problem) return true;
                     if ((trial.solution || '') !== solution) return true;
@@ -1064,7 +1057,6 @@
                     };
                     await this.fbDb.ref(path).set(payload);
                     localStorage.setItem(this.storageKey + '_ts', String(now));
-                    // Clear pending
                     this.pendingSync.count = 0;
                     localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
                     this.updateConnectionUI();
@@ -1103,7 +1095,7 @@
 
             async pushToFirebaseManual() {
                 if (!this.fbConnected) {
-                    this.showToast('Firebase belum terhubung. Setup dulu di ⚙️ Sync.', 'error');
+                    this.showToast('Firebase belum terhubung.', 'error');
                     return;
                 }
                 await this._doPushToFirebase();
@@ -1111,77 +1103,13 @@
             }
 
             openFirebaseSettings() {
-                const el = (id) => document.getElementById(id);
-                const saved = localStorage.getItem(this.fbConfigKey);
-                if (saved && el('fb-config-input')) {
-                    try {
-                        el('fb-config-input').value = JSON.stringify(JSON.parse(saved), null, 2);
-                    } catch(e) { el('fb-config-input').value = saved; }
-                }
-                if (el('fb-root-input')) el('fb-root-input').value = this.fbRootPath;
-                // Update status box
                 if (this.fbConnected) {
-                    this.updateFirebaseUI('connected', `Terhubung ke Firebase (root: ${this.fbRootPath})`);
+                    this.updateFirebaseUI('connected', `Terhubung ke Firebase (project: ${this.fbConfig.projectId})`);
                 } else {
-                    this.updateFirebaseUI('disconnected', 'Belum terhubung. Isi config di bawah.');
+                    this.updateFirebaseUI('disconnected', 'Menghubungkan...');
                 }
                 const modal = document.getElementById('modal-firebase');
                 if (modal) modal.classList.remove('hidden');
-            }
-
-            saveFirebaseConfig() {
-                const el = (id) => document.getElementById(id);
-                const raw = el('fb-config-input') ? el('fb-config-input').value.trim() : '';
-                const root = el('fb-root-input') ? el('fb-root-input').value.trim() : 'ie_trial_tracker';
-                if (!raw) {
-                    this.showToast('Firebase config tidak boleh kosong.', 'error');
-                    return;
-                }
-                let cfg;
-                try {
-                    cfg = JSON.parse(raw);
-                } catch (e) {
-                    this.showToast('Config bukan JSON valid: ' + e.message, 'error');
-                    return;
-                }
-                if (!cfg.databaseURL) {
-                    this.showToast('Config harus punya "databaseURL".', 'error');
-                    return;
-                }
-                if (!cfg.apiKey) {
-                    this.showToast('Config harus punya "apiKey".', 'error');
-                    return;
-                }
-                try {
-                    localStorage.setItem(this.fbConfigKey, JSON.stringify(cfg));
-                    localStorage.setItem(this.fbRootKey, root || 'ie_trial_tracker');
-                    this.fbRootPath = root || 'ie_trial_tracker';
-                    this.showToast('✅ Config disimpan. Menghubungkan...', 'success');
-                    // Reinit
-                    setTimeout(() => {
-                        location.reload();
-                    }, 800);
-                } catch (e) {
-                    this.showToast('Gagal simpan: ' + e.message, 'error');
-                }
-            }
-
-            disconnectFirebase() {
-                if (!confirm('Putuskan koneksi Firebase? Data lokal tetap ada.')) return;
-                try {
-                    if (this.fbDb) this.fbDb.ref('.info/connected').off();
-                    Object.values(this.fbListeners).forEach(ref => {
-                        try { ref.off(); } catch(e){}
-                    });
-                    this.fbListeners = {};
-                    localStorage.removeItem(this.fbConfigKey);
-                    this.fbConnected = false;
-                    this.updateFirebaseUI('disconnected', 'Firebase config dihapus.');
-                    this.showToast('Firebase diputuskan.', 'success');
-                    setTimeout(() => location.reload(), 800);
-                } catch (e) {
-                    this.showToast('Gagal putus: ' + e.message, 'error');
-                }
             }
 
             // ============================================================
@@ -1352,7 +1280,6 @@
                 const modal = document.getElementById('modal-setup');
                 if (modal) modal.classList.add('hidden');
                 this.showToast(`✅ Workspace ${line} / ${model} siap.`, 'success');
-                // Attach Firebase listener + pull
                 if (this.fbConnected) {
                     this.attachFirebaseListener();
                     this.pullFromFirebase(false);
@@ -1530,44 +1457,36 @@
                         this.closeModals();
                         return;
                     }
-
                     this.collectFormToCurrentTrial();
-                    // Detach listener workspace lama
                     const oldKey = this.storageKey;
                     if (this.fbListeners[oldKey]) {
                         try { this.fbListeners[oldKey].off(); } catch(e){}
                         delete this.fbListeners[oldKey];
                     }
                     this.saveToStorage(false);
-
                     this.setLine(newLine);
                     this.setModel(newModel);
                     this.updateDisplayLineModel();
                     this.trials = [];
                     this.currentIndex = 0;
-
                     const newKey = this.storageKey;
                     const existingData = localStorage.getItem(newKey);
                     const isExisting = !!existingData;
-
                     this.loadWorkspaceData();
                     this.registerWorkspace(newLine, newModel);
                     this.saveToStorage(false);
                     this.render();
                     this.closeModals();
                     this.updateFilesBadge();
-
-                    // Attach Firebase listener untuk workspace baru + pull
                     if (this.fbConnected) {
                         this.attachFirebaseListener();
                         this.pullFromFirebase(false);
                     }
-
                     const sopCount = this.trials.length;
                     this.showToast(
                         isExisting 
                             ? `✅ Workspace "${newLine || '-'} / ${newModel || '-'}" dimuat (${sopCount} SOP).`
-                            : `✨ Workspace baru "${newLine || '-'} / ${newModel || '-'}" dibuat (${sopCount} SOP default).`,
+                            : `✨ Workspace baru "${newLine || '-'} / ${newModel || '-'}" dibuat.`,
                         'success'
                     );
                     this.broadcastChange('WORKSPACE_SWITCH', { newLine, newModel });
@@ -1639,9 +1558,7 @@
                         if (Array.isArray(pf)) this.files = pf;
                     }
                 } catch (e) { console.warn(e); }
-
                 this.loadWorkspaceData();
-
                 if (this.getLine() || this.getModel()) {
                     this.registerWorkspace(this.getLine(), this.getModel());
                 }
@@ -1656,7 +1573,6 @@
                     this.markPending();
                     this.registerWorkspace(this.getLine(), this.getModel());
                     this.broadcastChange('DATA_UPDATED', { totalSop: this.trials.length });
-                    // ✅ Push ke Firebase (debounced)
                     if (this.fbConnected) this.pushToFirebase(true);
                 } catch (e) { console.error('Save error:', e); }
             }
@@ -1732,8 +1648,7 @@
 
             async syncNow() {
                 if (!this.fbConnected) {
-                    this.showToast('Firebase belum terhubung. Setup di ⚙️ Sync.', 'error');
-                    this.openFirebaseSettings();
+                    this.showToast('Firebase belum terhubung.', 'error');
                     return;
                 }
                 if (!navigator.onLine) {
@@ -1801,9 +1716,7 @@
             getDefaultData() {
                 return [
                     { name: "Pengecekan battery cover", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
-                    { name: "Pasang lensa kamera belakang", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
-                    { name: "Pressing lensa", sop_check: "√", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.", solution: "Tambahkan perlengkapan cleansed & update SOP", pic: "Ahmad", duedate: new Date().toISOString().split('T')[0] },
-                    { name: "Pre-instalasi Kamera", sop_check: "X", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Revisi SOP", solution: "Update", pic: "Budi", duedate: new Date().toISOString().split('T')[0] }
+                    { name: "Pasang lensa kamera belakang", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" }
                 ];
             }
 
@@ -2141,7 +2054,7 @@
             openDeleteModal() {
                 try {
                     if (this.trials.length <= 1) {
-                        this.showToast('Tidak dapat menghapus SOP terakhir. Minimal harus ada 1 SOP.', 'error');
+                        this.showToast('Tidak dapat menghapus SOP terakhir.', 'error');
                         return;
                     }
                     const trial = this.getCurrentTrial();
@@ -2337,7 +2250,7 @@
                 this.render();
                 this.closeModals();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                this.showToast(`File "${f.name}" berhasil dimuat ke editor.`, 'success');
+                this.showToast(`File "${f.name}" berhasil dimuat.`, 'success');
             }
 
             exportFileExcel(id) {
@@ -2605,7 +2518,7 @@
                         }
                         const hasNameColumn = json.length > 0;
                         if (!hasNameColumn) {
-                            this.showToast('Format file tidak sesuai. Kolom "SOP Item" tidak ditemukan.', 'error');
+                            this.showToast('Format file tidak sesuai.', 'error');
                             input.value = ''; return;
                         }
                         const imported = json.map(row => {
@@ -2720,7 +2633,7 @@
                         finalTrials = [...this.trials, ...this._pendingImport];
                         msg = `Berhasil menambahkan ${this._pendingImport.length} SOP.`;
                     } else {
-                        if (!confirm(`Mode REPLACE akan MENGGANTI semua ${this.trials.length} SOP di workspace ini dengan ${this._pendingImport.length} SOP baru.\n\nWorkspace lain TIDAK terpengaruh.\n\nLanjutkan?`)) return;
+                        if (!confirm(`Mode REPLACE akan MENGGANTI semua ${this.trials.length} SOP di workspace ini dengan ${this._pendingImport.length} SOP baru.\n\nLanjutkan?`)) return;
                         finalTrials = [...this._pendingImport];
                         msg = `Berhasil mengganti data dengan ${this._pendingImport.length} SOP.`;
                     }
@@ -2765,6 +2678,7 @@
                 if (typeof firebase === 'undefined') console.warn('Firebase SDK belum loaded.');
                 window.app = new window.IETrialApp();
                 console.log('✅ IE Trial App berhasil diinisialisasi.');
+                console.log('🆔 Session ID:', window.app.sessionId);
             } catch (e) {
                 console.error('❌ Gagal inisialisasi:', e);
                 alert('Terjadi error saat memuat aplikasi.\n\nDetail: ' + e.message);
