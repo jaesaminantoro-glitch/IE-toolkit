@@ -250,12 +250,8 @@
         if (o) { o.classList.add('hidden'); if (o.parentNode) o.remove(); }
         const sm = localStorage.getItem('timeStudy_mode_v1');
         const mm = document.getElementById('modeModal');
-        // Kalau belum pernah pilih mode → tampilkan modal
-        // Kalau sudah ada → JANGAN tampil (biar JS langsung masuk mode)
-        if (mm && !sm) {
-            mm.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+        if (mm && !sm) mm.classList.add('active');
+        document.body.style.overflow = '';
     } catch (e) {}
 }, 3000);
     </script>
