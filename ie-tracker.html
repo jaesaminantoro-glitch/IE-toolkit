@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IE Trial Result & Problem Finding Tracker</title>
+    <meta name="theme-color" content="#1e293b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 font-sans antialiased flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-slate-800 border-b border-slate-700 shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl border border-indigo-500 shadow-inner">
+                    <i class="fa-solid fa-clipboard-check text-lg text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base md:text-lg leading-tight text-white">IE Trial Result & Problem Finding</h1>
+                    <p class="text-xs text-indigo-300 flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span id="save-indicator" class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span> 
+                        <span id="save-status-text">Saved</span>
+                        <span class="text-slate-500">•</span>
+                        <span id="connection-indicator" class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                            <i class="fa-solid fa-wifi text-[10px]"></i>
+                            <span id="connection-text">Online</span>
+                        </span>
+                        <span id="pending-badge" class="hidden inline-flex items-center gap-1 bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            <i class="fa-solid fa-cloud-arrow-up text-[9px]"></i>
+                            <span id="pending-count">0</span> pending
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="app.openFilesModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-600 relative">
+                    <i class="fa-solid fa-folder-open text-amber-400"></i> <span class="hidden sm:inline">File</span>
+                    <span id="files-count-badge" class="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                </button>
+                <button type="button" onclick="app.openJumpModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-600">
+                    <i class="fa-solid fa-list-ol text-indigo-400"></i> <span class="hidden sm:inline">Jump</span>
+                </button>
+                <button type="button" onclick="app.openExcelModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
+                </button>
+                <button type="button" onclick="app.openAddModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-900/50 ring-2 ring-indigo-400/30 hover:ring-indigo-400/60">
+                    <i class="fa-solid fa-plus-circle"></i> <span>Tambah</span>
+                </button>
+            </div>
+        </div>
+        <div class="w-full bg-slate-700 h-1.5">
+            <div id="progress-bar" class="bg-indigo-500 h-1.5 transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <!-- OFFLINE BANNER -->
+    <div id="offline-banner" class="hidden bg-amber-900/60 border-b border-amber-700 px-4 py-2 text-center text-xs text-amber-200 font-semibold">
+        <i class="fa-solid fa-wifi-slash"></i> Mode Offline — Data disimpan lokal, akan disinkron otomatis saat online kembali.
+    </div>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-4 flex flex-col justify-between">
+        
+        <!-- LINE & MODEL BAR -->
+        <div class="bg-slate-800/80 backdrop-blur px-4 py-3 rounded-xl border border-slate-700 shadow-sm mb-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
+                        <i class="fa-solid fa-industry"></i> Line Produksi
+                    </label>
+                    <input type="text" id="input-line" placeholder="Contoh: Line A1" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
+                        <i class="fa-solid fa-mobile-screen"></i> Model Produk
+                    </label>
+                    <input type="text" id="input-model" placeholder="Contoh: XR-2024" 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <span id="badge-counter" class="bg-indigo-950 text-indigo-300 border border-indigo-800/60 font-bold text-xs md:text-sm px-3 py-1 rounded-lg">SOP 1 / 1</span>
+                    <span id="badge-status" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-700 text-slate-300">PENDING</span>
+                </div>
+                <div class="text-xs text-slate-400 font-medium">
+                    Total: <span id="total-count" class="font-bold text-slate-200">0</span> SOP
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD SOP -->
+        <div class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 mb-4 flex-1 flex flex-col overflow-hidden">
+            <div class="bg-slate-900/60 border-b border-slate-700 px-4 sm:px-6 py-3 flex justify-between items-center gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <i class="fa-solid fa-clipboard-list text-indigo-400"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Detail SOP</span>
+                </div>
+                <button type="button" onclick="app.openDeleteModal()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-rose-200 border border-rose-800/60 hover:border-rose-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-trash-can"></i> <span>Hapus SOP</span>
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-6 flex-1 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Nama / Item SOP *</label>
+                        <input type="text" id="input-sop-name" placeholder="Contoh: Pengecekan battery cover" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Checklist Kesesuaian (Ceklis / X)</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <div onclick="app.toggleCheck('sop_check')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-300">SOP</span>
+                                <span id="val-sop_check" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">√</span>
+                            </div>
+                            <div onclick="app.toggleCheck('fixture')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-300">Fixture</span>
+                                <span id="val-fixture" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">-</span>
+                            </div>
+                            <div onclick="app.toggleCheck('parameter')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-300">Parameter</span>
+                                <span id="val-parameter" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">-</span>
+                            </div>
+                            <div onclick="app.toggleCheck('equipment')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-300">Equipment</span>
+                                <span id="val-equipment" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">√</span>
+                            </div>
+                            <div onclick="app.toggleCheck('machine')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-300">Machine</span>
+                                <span id="val-machine" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">-</span>
+                            </div>
+                            <div onclick="app.toggleCheck('layout')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-300">Layout</span>
+                                <span id="val-layout" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">√</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1.5 italic">Ketuk kotak untuk mengganti: <span class="text-emerald-400 font-semibold">√</span>, <span class="text-rose-400 font-semibold">X</span>, atau <span class="text-slate-400 font-semibold">-</span>. <span class="text-rose-400 font-semibold">Jika ada X, status otomatis NG.</span></p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Status Akhir *</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" id="btn-status-ok" onclick="app.setStatus('OK')" class="py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 hover:border-emerald-500 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i> OK (Pass)
+                            </button>
+                            <button type="button" id="btn-status-ng" onclick="app.setStatus('NG')" class="py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 hover:border-rose-500 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-xmark text-rose-400 text-base"></i> NG (Fail)
+                            </button>
+                        </div>
+                        <p id="auto-ng-hint" class="text-[11px] text-rose-400 mt-1.5 italic hidden">
+                            <i class="fa-solid fa-circle-info"></i> Status otomatis NG karena ada checklist yang ditandai X.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Problem Finding</label>
+                            <textarea id="input-problem" rows="2" placeholder="Tuliskan temuan masalah..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Solution / Tindakan</label>
+                            <textarea id="input-solution" rows="2" placeholder="Tuliskan solusi perbaikan..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">PIC (Penanggung Jawab)</label>
+                            <input type="text" id="input-pic" placeholder="Nama PIC..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Due Date</label>
+                            <input type="date" id="input-duedate" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-700 flex justify-end">
+                    <button type="button" onclick="app.submitAndNext()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2 active:scale-98">
+                        <i class="fa-solid fa-floppy-disk"></i> Submit & Lanjut <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAV -->
+        <div class="flex items-center justify-between gap-3">
+            <button type="button" onclick="app.prevSop()" id="btn-prev" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3.5 px-4 rounded-xl border border-slate-700 shadow-sm transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-30 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-arrow-left"></i> Sebelumnya
+            </button>
+            <button type="button" onclick="app.submitAndNext()" id="btn-next" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-30 disabled:cursor-not-allowed">
+                Simpan & Selanjutnya <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- MODAL TAMBAH -->
+    <div id="modal-add" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-800 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-indigo-400"></i> Tambah SOP Baru
+                </h3>
+                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                <button type="button" onclick="app.addBlankSop()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-indigo-500 rounded-xl p-4 text-left transition group">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-indigo-950 group-hover:bg-indigo-900 rounded-lg p-2.5 border border-indigo-800 transition">
+                            <i class="fa-solid fa-file-circle-plus text-indigo-400 text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-sm text-slate-100">Tambah Kosong</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Buat 1 SOP baru dengan checklist default</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-indigo-400 transition"></i>
+                    </div>
+                </button>
+                <button type="button" onclick="app.duplicateCurrentSop()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded-xl p-4 text-left transition group">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-emerald-950 group-hover:bg-emerald-900 rounded-lg p-2.5 border border-emerald-800 transition">
+                            <i class="fa-solid fa-copy text-emerald-400 text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-sm text-slate-100">Duplikat SOP Saat Ini</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Copy semua isi SOP yang sedang aktif</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 transition"></i>
+                    </div>
+                </button>
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-amber-950 rounded-lg p-2.5 border border-amber-800">
+                            <i class="fa-solid fa-layer-group text-amber-400 text-lg"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-sm text-slate-100">Tambah Banyak Sekaligus</p>
+                            <p class="text-xs text-slate-400 mt-0.5">Generate beberapa SOP kosong</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="number" id="input-bulk-count" min="1" max="50" value="5" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                        <button type="button" onclick="app.addBulkSop()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Tambah
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-2 italic">Maksimal 50 SOP per batch</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-800">
+                <button type="button" onclick="app.closeModals()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DELETE -->
+    <div id="modal-delete" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-rose-900/50 flex flex-col">
+            <div class="px-6 py-5 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="bg-rose-950 rounded-xl p-3 border border-rose-800">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-100">Konfirmasi Hapus SOP</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-5">
+                <p class="text-sm text-slate-300 mb-3">Anda akan menghapus SOP berikut:</p>
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-3">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Nama SOP</p>
+                    <p id="delete-sop-name" class="font-semibold text-slate-100 text-sm break-words">-</p>
+                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Status:</span>
+                        <span id="delete-sop-status" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-slate-800 text-slate-400 border-slate-700">-</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-2">Posisi:</span>
+                        <span id="delete-sop-position" class="text-[10px] text-slate-300 font-semibold">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-800 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Batal</button>
+                <button type="button" onclick="app.confirmDeleteSop()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl transition shadow-lg shadow-rose-900/40 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL JUMP -->
+    <div id="modal-jump" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-800 flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-indigo-400"></i> Lompat ke SOP
+                </h3>
+                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="jump-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+            <div class="mt-4 pt-3 border-t border-slate-800">
+                <button type="button" onclick="app.closeModals()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FILE MANAGER -->
+    <div id="modal-files" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-800 flex flex-col max-h-[92vh]">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open text-amber-400"></i> File Trial Tersimpan
+                </h3>
+                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="px-6 py-3 bg-slate-800/40 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2 text-slate-400">
+                    <i class="fa-solid fa-circle-info text-indigo-400"></i>
+                    <span id="files-info-text">Semua file sudah tersinkron.</span>
+                </div>
+                <button type="button" onclick="app.syncNow()" class="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-rotate"></i> Sync Now
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4">
+                <div id="files-container" class="space-y-2"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-800 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Tutup</button>
+                <button type="button" onclick="app.exportAllFiles()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Export Semua
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EXCEL -->
+    <div id="modal-excel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-800 flex flex-col max-h-[92vh]">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
+                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-file-excel text-emerald-400"></i> Excel Import & Export
+                </h3>
+                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex border-b border-slate-800">
+                <button type="button" id="tab-export" onclick="app.switchExcelTab('export')" class="flex-1 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-500 bg-slate-800/40 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Export
+                </button>
+                <button type="button" id="tab-import" onclick="app.switchExcelTab('import')" class="flex-1 py-3 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-upload"></i> Import
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4">
+                <div id="excel-tab-export" class="space-y-4">
+                    <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                        <h4 class="font-bold text-slate-100 text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-simple text-emerald-400"></i> Ringkasan Data
+                        </h4>
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-slate-900 rounded-lg py-2 border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider">Total</p>
+                                <p id="export-stat-total" class="text-xl font-bold text-slate-100">0</p>
+                            </div>
+                            <div class="bg-emerald-950/50 rounded-lg py-2 border border-emerald-800/60">
+                                <p class="text-[10px] text-emerald-400 uppercase tracking-wider">OK</p>
+                                <p id="export-stat-ok" class="text-xl font-bold text-emerald-300">0</p>
+                            </div>
+                            <div class="bg-rose-950/50 rounded-lg py-2 border border-rose-800/60">
+                                <p class="text-[10px] text-rose-400 uppercase tracking-wider">NG</p>
+                                <p id="export-stat-ng" class="text-xl font-bold text-rose-300">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-emerald-950/30 border border-emerald-800/50 rounded-xl p-4">
+                        <h4 class="font-bold text-emerald-300 text-sm mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-file-arrow-down"></i> Export Data Lengkap
+                        </h4>
+                        <p class="text-xs text-emerald-400/80 mb-3">Excel dengan header indigo + border tabel + kolom Status berwarna (hijau OK / merah NG).</p>
+                        <button type="button" onclick="app.exportExcel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Download Excel (.xlsx)
+                        </button>
+                    </div>
+                    <div class="bg-indigo-950/30 border border-indigo-800/50 rounded-xl p-4">
+                        <h4 class="font-bold text-indigo-300 text-sm mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-file-circle-plus"></i> Export Template Kosong
+                        </h4>
+                        <p class="text-xs text-indigo-400/80 mb-3">Template kosong untuk input manual lalu diimport kembali.</p>
+                        <button type="button" onclick="app.exportTemplate()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-excel"></i> Download Template (.xlsx)
+                        </button>
+                    </div>
+                </div>
+                <div id="excel-tab-import" class="space-y-4 hidden">
+                    <div id="import-picker" class="bg-slate-800/60 border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-indigo-500 transition">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-200 mb-1">Pilih File Excel untuk diimport</p>
+                        <p class="text-xs text-slate-400 mb-3">Format: .xlsx, .xls (maks 10 MB)</p>
+                        <label class="inline-flex bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-sm items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-folder-open"></i> Pilih File
+                            <input type="file" id="excel-file-input" accept=".xlsx, .xls" onchange="app.handleFileSelect(event)" class="hidden">
+                        </label>
+                    </div>
+                    <div id="import-preview" class="hidden space-y-3">
+                        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 flex items-center gap-3">
+                            <div class="bg-emerald-950 rounded-lg p-2 border border-emerald-800">
+                                <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p id="import-file-name" class="text-sm font-semibold text-slate-100 truncate">-</p>
+                                <p id="import-file-info" class="text-[11px] text-slate-400">-</p>
+                            </div>
+                            <button type="button" onclick="app.resetImport()" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-slate-800/60 rounded-lg py-2 border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider">Total Baris</p>
+                                <p id="import-stat-total" class="text-lg font-bold text-slate-100">0</p>
+                            </div>
+                            <div class="bg-emerald-950/50 rounded-lg py-2 border border-emerald-800/60">
+                                <p class="text-[10px] text-emerald-400 uppercase tracking-wider">OK</p>
+                                <p id="import-stat-ok" class="text-lg font-bold text-emerald-300">0</p>
+                            </div>
+                            <div class="bg-rose-950/50 rounded-lg py-2 border border-rose-800/60">
+                                <p class="text-[10px] text-rose-400 uppercase tracking-wider">NG</p>
+                                <p id="import-stat-ng" class="text-lg font-bold text-rose-300">0</p>
+                            </div>
+                        </div>
+                        <div id="import-warning" class="hidden bg-amber-950/40 border border-amber-800/60 rounded-xl p-3 text-xs text-amber-300 flex gap-2">
+                            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                            <span id="import-warning-text"></span>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Preview 5 Baris Pertama</p>
+                            <div id="import-preview-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Mode Import</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="import-mode" value="replace" checked class="peer hidden">
+                                    <div class="bg-slate-800 border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-950/40 rounded-xl p-3 transition">
+                                        <p class="text-xs font-bold text-slate-200">Replace</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Ganti semua data</p>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="import-mode" value="append" class="peer hidden">
+                                    <div class="bg-slate-800 border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-950/40 rounded-xl p-3 transition">
+                                        <p class="text-xs font-bold text-slate-200">Append</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Tambah ke data existing</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-800 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Tutup</button>
+                <button type="button" id="btn-import-confirm" onclick="app.confirmImport()" class="hidden flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check"></i> Konfirmasi Import
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="notification-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toast-content" class="bg-slate-800 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-medium border border-slate-700">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+            <span id="toast-text">Notifikasi</span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // EXCEL STYLES
+        // ============================================================
+        const EXCEL_STYLES = {
+            header: {
+                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11, name: "Calibri" },
+                fill: { patternType: "solid", fgColor: { rgb: "4F46E5" } },
+                alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                border: {
+                    top:    { style: "thin", color: { rgb: "312E81" } },
+                    bottom: { style: "thin", color: { rgb: "312E81" } },
+                    left:   { style: "thin", color: { rgb: "312E81" } },
+                    right:  { style: "thin", color: { rgb: "312E81" } }
+                }
+            },
+            cellBase: {
+                font: { sz: 10, name: "Calibri", color: { rgb: "1E293B" } },
+                alignment: { vertical: "center", wrapText: true },
+                border: {
+                    top:    { style: "thin", color: { rgb: "CBD5E1" } },
+                    bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+                    left:   { style: "thin", color: { rgb: "CBD5E1" } },
+                    right:  { style: "thin", color: { rgb: "CBD5E1" } }
+                }
+            },
+            statusOK: {
+                font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
+                fill: { patternType: "solid", fgColor: { rgb: "059669" } },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top:    { style: "thin", color: { rgb: "047857" } },
+                    bottom: { style: "thin", color: { rgb: "047857" } },
+                    left:   { style: "thin", color: { rgb: "047857" } },
+                    right:  { style: "thin", color: { rgb: "047857" } }
+                }
+            },
+            statusNG: {
+                font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
+                fill: { patternType: "solid", fgColor: { rgb: "DC2626" } },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top:    { style: "thin", color: { rgb: "B91C1C" } },
+                    bottom: { style: "thin", color: { rgb: "B91C1C" } },
+                    left:   { style: "thin", color: { rgb: "B91C1C" } },
+                    right:  { style: "thin", color: { rgb: "B91C1C" } }
+                }
+            },
+            statusPENDING: {
+                font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
+                fill: { patternType: "solid", fgColor: { rgb: "64748B" } },
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top:    { style: "thin", color: { rgb: "475569" } },
+                    bottom: { style: "thin", color: { rgb: "475569" } },
+                    left:   { style: "thin", color: { rgb: "475569" } },
+                    right:  { style: "thin", color: { rgb: "475569" } }
+                }
+            },
+            centerCell: {
+                alignment: { horizontal: "center", vertical: "center" }
+            }
+        };
+
+        window.IETrialApp = class IETrialApp {
+            constructor() {
+                this.storageKey = 'ie_trial_tracker_final_v1';
+                this.filesKey = 'ie_trial_files_v1';
+                this.pendingKey = 'ie_trial_pending_v1';
+                this.lineKey = 'ie_trial_line_v1';
+                this.modelKey = 'ie_trial_model_v1';
+                this.syncUrlKey = 'ie_trial_sync_url_v1';
+                this.syncEndpoint = localStorage.getItem(this.syncUrlKey) || '';
+                this.trials = [];
+                this.files = [];
+                this.pendingSync = JSON.parse(localStorage.getItem(this.pendingKey) || '{"count":0,"lastAttempt":null}');
+                this.currentIndex = 0;
+                this._toastTimer = null;
+                this._pendingImport = null;
+                this._pendingFileName = '';
+                try {
+                    this.loadData();
+                    this.setupNetworkListeners();
+                } catch (e) {
+                    console.error('Init error:', e);
+                    this.trials = this.getDefaultData();
+                    this.render();
+                }
+            }
+
+            getDefaultData() {
+                return [
+                    { name: "Pengecekan battery cover", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
+                    { name: "Pasang lensa kamera belakang", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
+                    { name: "Pressing lensa", sop_check: "√", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.", solution: "Tambahkan perlengkapan cleansed & update SOP", pic: "Ahmad", duedate: new Date().toISOString().split('T')[0] },
+                    { name: "Pre-instalasi Kamera", sop_check: "X", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.\n- Jumlah PC aktual 2\n- Cancel material C board", solution: "Revisi SOP sesuai aktual", pic: "Budi", duedate: new Date().toISOString().split('T')[0] }
+                ];
+            }
+
+            // ========== VALIDATION ==========
+            normalizeCheck(val) {
+                if (val === '√' || val === 'X') return val;
+                if (val === null || val === undefined) return '-';
+                const s = String(val).trim().toLowerCase();
+                if (['v', '√', 'ok', 'ya', 'y', 'true', 'sesuai', 'pass'].includes(s)) return '√';
+                if (['x', 'no', 'n', 'false', 'tidak', 'ng', 'fail', 'tidak sesuai'].includes(s)) return 'X';
+                return '-';
+            }
+
+            normalizeStatus(val) {
+                const s = (val === null || val === undefined) ? 'PENDING' : String(val).trim().toUpperCase();
+                if (s === 'OK' || s === 'PASS' || s === 'LULUS') return 'OK';
+                if (s === 'NG' || s === 'FAIL' || s === 'GAGAL') return 'NG';
+                return 'PENDING';
+            }
+
+            hasAnyX(record) {
+                if (!record) return false;
+                const fields = ['sop_check', 'fixture', 'parameter', 'equipment', 'machine', 'layout'];
+                return fields.some(f => this.normalizeCheck(record[f]) === 'X');
+            }
+
+            sanitizeRecord(record) {
+                if (!record || typeof record !== 'object') record = {};
+                const sanitized = {
+                    name: this.safeString(record.name, 'Tanpa Nama SOP'),
+                    sop_check: this.normalizeCheck(record.sop_check),
+                    fixture: this.normalizeCheck(record.fixture),
+                    parameter: this.normalizeCheck(record.parameter),
+                    equipment: this.normalizeCheck(record.equipment),
+                    machine: this.normalizeCheck(record.machine),
+                    layout: this.normalizeCheck(record.layout),
+                    status: this.normalizeStatus(record.status),
+                    problem: this.safeString(record.problem, ''),
+                    solution: this.safeString(record.solution, ''),
+                    pic: this.safeString(record.pic, ''),
+                    duedate: this.safeString(record.duedate, '')
+                };
+                if (this.hasAnyX(sanitized)) sanitized.status = 'NG';
+                return sanitized;
+            }
+
+            safeString(val, fallback) {
+                if (val === null || val === undefined) return fallback;
+                const s = String(val).trim();
+                return s.length > 0 ? s : fallback;
+            }
+
+            // ========== LINE & MODEL ==========
+            getLine() { return localStorage.getItem(this.lineKey) || ''; }
+            getModel() { return localStorage.getItem(this.modelKey) || ''; }
+            setLine(v) { localStorage.setItem(this.lineKey, v); }
+            setModel(v) { localStorage.setItem(this.modelKey, v); }
+
+            bindLineModel() {
+                const l = document.getElementById('input-line');
+                const m = document.getElementById('input-model');
+                if (l) {
+                    l.value = this.getLine();
+                    l.addEventListener('input', () => { this.setLine(l.value.trim()); this.markPending(); });
+                }
+                if (m) {
+                    m.value = this.getModel();
+                    m.addEventListener('input', () => { this.setModel(m.value.trim()); this.markPending(); });
+                }
+            }
+
+            // ========== NETWORK / SYNC ==========
+            setupNetworkListeners() {
+                this.updateConnectionUI();
+                window.addEventListener('online', () => {
+                    this.updateConnectionUI();
+                    this.showToast('🌐 Internet tersambung. Sinkronisasi...', 'success');
+                    setTimeout(() => this.syncNow(true), 800);
+                });
+                window.addEventListener('offline', () => {
+                    this.updateConnectionUI();
+                    this.showToast('📵 Mode Offline. Data disimpan di HP.', 'warning');
+                });
+                setInterval(() => { if (navigator.onLine) this.syncNow(false); }, 30000);
+            }
+
+            updateConnectionUI() {
+                const ind = document.getElementById('connection-indicator');
+                const txt = document.getElementById('connection-text');
+                const banner = document.getElementById('offline-banner');
+                const pendBadge = document.getElementById('pending-badge');
+                const pendCount = document.getElementById('pending-count');
+
+                if (navigator.onLine) {
+                    if (ind) ind.className = 'inline-flex items-center gap-1 text-emerald-400 font-semibold';
+                    if (txt) txt.innerText = 'Online';
+                    if (banner) banner.classList.add('hidden');
+                } else {
+                    if (ind) ind.className = 'inline-flex items-center gap-1 text-rose-400 font-semibold';
+                    if (txt) txt.innerText = 'Offline';
+                    if (banner) banner.classList.remove('hidden');
+                }
+                const pc = this.pendingSync.count || 0;
+                if (pendBadge && pendCount) {
+                    if (pc > 0) { pendBadge.classList.remove('hidden'); pendCount.innerText = pc; }
+                    else pendBadge.classList.add('hidden');
+                }
+            }
+
+            markPending() {
+                if (navigator.onLine) return;
+                this.pendingSync.count = (this.pendingSync.count || 0) + 1;
+                this.pendingSync.lastAttempt = new Date().toISOString();
+                localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                this.updateConnectionUI();
+            }
+
+            async syncNow(showNotif = true) {
+                if (!navigator.onLine) {
+                    if (showNotif) this.showToast('📵 Tidak ada internet. Data tersimpan lokal.', 'warning');
+                    return;
+                }
+                if (!this.syncEndpoint) {
+                    // Mode tanpa endpoint — sync "virtual" (hanya clear pending)
+                    if (this.pendingSync.count > 0) {
+                        this.pendingSync.count = 0;
+                        this.pendingSync.lastAttempt = new Date().toISOString();
+                        localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                        this.updateConnectionUI();
+                        const info = document.getElementById('files-info-text');
+                        if (info) info.innerText = '✅ Data lokal tersinkron.';
+                        if (showNotif) this.showToast('✅ Sinkronisasi selesai.', 'success');
+                    } else if (showNotif) {
+                        this.showToast('✅ Semua data sudah tersinkron.', 'info');
+                    }
+                    return;
+                }
+                try {
+                    const payload = {
+                        trials: this.trials,
+                        files: this.files,
+                        line: this.getLine(),
+                        model: this.getModel(),
+                        timestamp: new Date().toISOString()
+                    };
+                    const res = await fetch(this.syncEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    this.pendingSync.count = 0;
+                    this.pendingSync.lastAttempt = new Date().toISOString();
+                    localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                    this.updateConnectionUI();
+                    const info = document.getElementById('files-info-text');
+                    if (info) info.innerText = '✅ Tersinkron ke server pada ' + new Date().toLocaleTimeString('id-ID');
+                    if (showNotif) this.showToast('✅ Sinkronisasi berhasil.', 'success');
+                } catch (e) {
+                    if (showNotif) this.showToast('⚠️ Sinkronisasi gagal: ' + e.message, 'error');
+                }
+            }
+
+            // ========== LOAD/SAVE ==========
+            loadData() {
+                try {
+                    const saved = localStorage.getItem(this.storageKey);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            this.trials = parsed.map(r => this.sanitizeRecord(r));
+                        }
+                    }
+                } catch (e) { console.warn(e); }
+
+                try {
+                    const savedFiles = localStorage.getItem(this.filesKey);
+                    if (savedFiles) {
+                        const pf = JSON.parse(savedFiles);
+                        if (Array.isArray(pf)) this.files = pf;
+                    }
+                } catch (e) { console.warn(e); }
+
+                if (!this.trials || this.trials.length === 0) {
+                    this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
+                    this.saveToStorage(false);
+                }
+                this.bindLineModel();
+                this.render();
+                this.updateFilesBadge();
+            }
+
+            saveToStorage(showNotification = true) {
+                try {
+                    this.trials = this.trials.map(r => this.sanitizeRecord(r));
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.trials));
+                    if (showNotification) this.triggerSaveAnimation();
+                    this.markPending();
+                } catch (e) { console.error('Storage error:', e); }
+            }
+
+            saveFiles() {
+                try { localStorage.setItem(this.filesKey, JSON.stringify(this.files)); } catch (e) { console.warn(e); }
+            }
+
+            triggerSaveAnimation() {
+                try {
+                    const indicator = document.getElementById('save-indicator');
+                    const text = document.getElementById('save-status-text');
+                    if (!indicator || !text) return;
+                    indicator.className = 'inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                    text.innerText = 'Menyimpan...';
+                    setTimeout(() => {
+                        indicator.className = 'inline-block w-2 h-2 rounded-full bg-emerald-400';
+                        text.innerText = 'Tersimpan';
+                    }, 500);
+                } catch (e) { console.warn(e); }
+            }
+
+            getCurrentTrial() {
+                if (this.trials.length === 0) return null;
+                if (this.currentIndex >= this.trials.length) this.currentIndex = this.trials.length - 1;
+                if (this.currentIndex < 0) this.currentIndex = 0;
+                return this.trials[this.currentIndex];
+            }
+
+            // ========== RENDER ==========
+            render() {
+                try {
+                    const trial = this.getCurrentTrial();
+                    const total = this.trials.length;
+                    const progress = total > 0 ? ((this.currentIndex + 1) / total) * 100 : 0;
+                    const pb = document.getElementById('progress-bar');
+                    const bc = document.getElementById('badge-counter');
+                    const tc = document.getElementById('total-count');
+                    if (pb) pb.style.width = `${progress}%`;
+                    if (bc) bc.innerText = `SOP ${total > 0 ? this.currentIndex + 1 : 0} / ${total}`;
+                    if (tc) tc.innerText = total;
+
+                    if (!trial) {
+                        this.clearForm();
+                        this.renderStatusBtn('PENDING');
+                        const bp = document.getElementById('btn-prev');
+                        const bn = document.getElementById('btn-next');
+                        if (bp) bp.disabled = true;
+                        if (bn) bn.disabled = true;
+                        return;
+                    }
+
+                    const el = (id) => document.getElementById(id);
+                    if (el('input-sop-name')) el('input-sop-name').value = trial.name || '';
+                    if (el('input-problem')) el('input-problem').value = trial.problem || '';
+                    if (el('input-solution')) el('input-solution').value = trial.solution || '';
+                    if (el('input-pic')) el('input-pic').value = trial.pic || '';
+                    if (el('input-duedate')) el('input-duedate').value = trial.duedate || '';
+
+                    this.renderCheckVal('sop_check', trial.sop_check);
+                    this.renderCheckVal('fixture', trial.fixture);
+                    this.renderCheckVal('parameter', trial.parameter);
+                    this.renderCheckVal('equipment', trial.equipment);
+                    this.renderCheckVal('machine', trial.machine);
+                    this.renderCheckVal('layout', trial.layout);
+
+                    this.renderStatusBtn(trial.status);
+                    this.updateAutoNgHint(trial);
+
+                    if (el('btn-prev')) el('btn-prev').disabled = this.currentIndex === 0;
+                    if (el('btn-next')) el('btn-next').disabled = this.currentIndex === total - 1;
+                } catch (e) { console.error('Render error:', e); }
+            }
+
+            updateAutoNgHint(trial) {
+                const hint = document.getElementById('auto-ng-hint');
+                if (!hint) return;
+                if (this.hasAnyX(trial)) hint.classList.remove('hidden');
+                else hint.classList.add('hidden');
+            }
+
+            clearForm() {
+                const el = (id) => document.getElementById(id);
+                if (el('input-sop-name')) el('input-sop-name').value = '';
+                if (el('input-problem')) el('input-problem').value = '';
+                if (el('input-solution')) el('input-solution').value = '';
+                if (el('input-pic')) el('input-pic').value = '';
+                if (el('input-duedate')) el('input-duedate').value = '';
+                ['sop_check','fixture','parameter','equipment','machine','layout'].forEach(f => {
+                    this.renderCheckVal(f, '-');
+                });
+                const hint = document.getElementById('auto-ng-hint');
+                if (hint) hint.classList.add('hidden');
+            }
+
+            renderCheckVal(field, val) {
+                try {
+                    const span = document.getElementById(`val-${field}`);
+                    if (!span) return;
+                    val = this.normalizeCheck(val);
+                    span.innerText = val;
+                    if (val === '√') {
+                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-emerald-950 text-emerald-400 border border-emerald-800';
+                    } else if (val === 'X') {
+                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-rose-950 text-rose-400 border border-rose-800';
+                    } else {
+                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700';
+                    }
+                } catch (e) { console.warn(e); }
+            }
+
+            renderStatusBtn(status) {
+                try {
+                    const okBtn = document.getElementById('btn-status-ok');
+                    const ngBtn = document.getElementById('btn-status-ng');
+                    const badge = document.getElementById('badge-status');
+                    if (!okBtn || !ngBtn || !badge) return;
+                    status = this.normalizeStatus(status);
+
+                    if (status === 'OK') {
+                        okBtn.className = "py-3 px-4 rounded-xl font-bold border-2 border-emerald-500 text-emerald-300 bg-emerald-950/40 transition flex items-center justify-center gap-2";
+                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
+                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-800";
+                        badge.innerText = "STATUS: OK";
+                    } else if (status === 'NG') {
+                        okBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
+                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border-2 border-rose-500 text-rose-300 bg-rose-950/40 transition flex items-center justify-center gap-2";
+                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-rose-950 text-rose-400 border border-rose-800";
+                        badge.innerText = "STATUS: NG";
+                    } else {
+                        okBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
+                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
+                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700";
+                        badge.innerText = "STATUS: PENDING";
+                    }
+                } catch (e) { console.warn(e); }
+            }
+
+            // ========== ACTIONS ==========
+            toggleCheck(field) {
+                try {
+                    const trial = this.getCurrentTrial();
+                    if (!trial) return;
+                    const current = this.normalizeCheck(trial[field]);
+                    let next = '-';
+                    if (current === '-') next = '√';
+                    else if (current === '√') next = 'X';
+                    else if (current === 'X') next = '-';
+                    trial[field] = next;
+
+                    if (this.hasAnyX(trial)) trial.status = 'NG';
+                    else if (trial.status === 'NG') {
+                        const fields = ['sop_check', 'fixture', 'parameter', 'equipment', 'machine', 'layout'];
+                        const hasCheck = fields.some(f => this.normalizeCheck(trial[f]) === '√');
+                        if (hasCheck) trial.status = 'OK';
+                    }
+
+                    this.renderCheckVal(field, next);
+                    this.renderStatusBtn(trial.status);
+                    this.updateAutoNgHint(trial);
+                    this.saveToStorage(true);
+                    if (next === 'X') this.showToast('Checklist ditandai X — status otomatis NG.', 'error');
+                } catch (e) { console.error(e); }
+            }
+
+            setStatus(status) {
+                try {
+                    const trial = this.getCurrentTrial();
+                    if (!trial) return;
+                    const newStatus = this.normalizeStatus(status);
+                    if (newStatus === 'OK' && this.hasAnyX(trial)) {
+                        this.showToast('Tidak bisa set OK — masih ada checklist X.', 'error');
+                        return;
+                    }
+                    trial.status = newStatus;
+                    this.renderStatusBtn(trial.status);
+                    this.saveToStorage(true);
+                } catch (e) { console.error(e); }
+            }
+
+            collectFormToCurrentTrial() {
+                try {
+                    const trial = this.getCurrentTrial();
+                    if (!trial) return;
+                    const el = (id) => document.getElementById(id);
+                    if (el('input-sop-name')) trial.name = el('input-sop-name').value;
+                    if (el('input-problem')) trial.problem = el('input-problem').value;
+                    if (el('input-solution')) trial.solution = el('input-solution').value;
+                    if (el('input-pic')) trial.pic = el('input-pic').value;
+                    if (el('input-duedate')) trial.duedate = el('input-duedate').value;
+                } catch (e) { console.warn(e); }
+            }
+
+            submitAndNext() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    const trial = this.getCurrentTrial();
+                    if (!trial) return;
+
+                    if (!trial.name || !trial.name.trim()) {
+                        this.showToast('Nama SOP tidak boleh kosong.', 'error');
+                        const inp = document.getElementById('input-sop-name');
+                        if (inp) inp.focus();
+                        return;
+                    }
+                    if (this.hasAnyX(trial)) trial.status = 'NG';
+
+                    this.saveToStorage(true);
+                    this.render();
+
+                    if (this.currentIndex < this.trials.length - 1) {
+                        this.currentIndex++;
+                        this.render();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        this.showToast('Tersimpan. Lanjut ke SOP berikutnya.', 'success');
+                    } else {
+                        // ✅ SEMUA SOP SUDAH DI-SUBMIT → AUTO-SAVE KE FILE MANAGER
+                        this.showToast('✅ Semua SOP selesai! Menyimpan ke File...', 'success');
+                        setTimeout(() => this.autoSaveToFileManager(), 500);
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            autoSaveToFileManager() {
+                try {
+                    const line = this.getLine() || 'Tanpa-Line';
+                    const model = this.getModel() || 'Tanpa-Model';
+                    const now = new Date();
+                    const dateStr = now.toISOString().split('T')[0];
+                    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                    const total = this.trials.length;
+                    const ok = this.trials.filter(t => t.status === 'OK').length;
+                    const ng = this.trials.filter(t => t.status === 'NG').length;
+
+                    const fileEntry = {
+                        id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                        name: `Trial_${line}_${model}_${dateStr}`,
+                        line: line,
+                        model: model,
+                        date: dateStr,
+                        time: timeStr,
+                        total: total,
+                        ok: ok,
+                        ng: ng,
+                        trials: JSON.parse(JSON.stringify(this.trials)),
+                        createdAt: now.toISOString(),
+                        synced: false
+                    };
+
+                    const exists = this.files.findIndex(f => 
+                        f.line === line && f.model === model && f.date === dateStr
+                    );
+                    if (exists >= 0) {
+                        this.files[exists] = fileEntry;
+                    } else {
+                        this.files.unshift(fileEntry);
+                    }
+                    this.saveFiles();
+                    this.updateFilesBadge();
+                    this.markPending();
+                    this.syncNow(false);
+
+                    // Reset ke SOP 1 untuk trial baru
+                    setTimeout(() => {
+                        if (confirm('✅ Trial sudah tersimpan sebagai file.\n\nMulai trial baru? (SOP akan direset ke default)')) {
+                            this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
+                            this.currentIndex = 0;
+                            this.saveToStorage(true);
+                            this.render();
+                        }
+                    }, 800);
+                } catch (e) { console.error('autoSaveToFileManager error:', e); }
+            }
+
+            prevSop() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    if (this.currentIndex > 0) {
+                        this.currentIndex--;
+                        this.render();
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            // ========== MODAL ADD ==========
+            openAddModal() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    const modal = document.getElementById('modal-add');
+                    if (modal) modal.classList.remove('hidden');
+                    const inp = document.getElementById('input-bulk-count');
+                    if (inp) inp.value = 5;
+                } catch (e) { console.error(e); }
+            }
+
+            addBlankSop() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    const newRecord = this.sanitizeRecord({
+                        name: `SOP Baru ${this.trials.length + 1}`,
+                        sop_check: '√', fixture: '-', parameter: '-',
+                        equipment: '√', machine: '-', layout: '√',
+                        status: 'PENDING', problem: '', solution: '', pic: '', duedate: ''
+                    });
+                    this.trials.push(newRecord);
+                    this.currentIndex = this.trials.length - 1;
+                    this.saveToStorage(true);
+                    this.render();
+                    this.closeModals();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.showToast('SOP baru ditambahkan.', 'success');
+                } catch (e) { console.error(e); }
+            }
+
+            duplicateCurrentSop() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    const source = this.getCurrentTrial();
+                    if (!source) { this.showToast('Tidak ada SOP untuk diduplikat.', 'error'); return; }
+                    this.saveToStorage(false);
+                    const copy = this.sanitizeRecord({
+                        name: `${source.name} (Copy)`,
+                        sop_check: source.sop_check, fixture: source.fixture, parameter: source.parameter,
+                        equipment: source.equipment, machine: source.machine, layout: source.layout,
+                        status: source.status, problem: source.problem, solution: source.solution,
+                        pic: source.pic, duedate: source.duedate
+                    });
+                    this.trials.push(copy);
+                    this.currentIndex = this.trials.length - 1;
+                    this.saveToStorage(true);
+                    this.render();
+                    this.closeModals();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.showToast('SOP berhasil diduplikat.', 'success');
+                } catch (e) { console.error(e); }
+            }
+
+            addBulkSop() {
+                try {
+                    const inp = document.getElementById('input-bulk-count');
+                    let count = parseInt(inp ? inp.value : '1', 10);
+                    if (isNaN(count) || count < 1) { this.showToast('Jumlah harus angka minimal 1.', 'error'); return; }
+                    if (count > 50) { this.showToast('Maksimal 50 SOP per batch.', 'error'); return; }
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    const startNum = this.trials.length + 1;
+                    for (let i = 0; i < count; i++) {
+                        this.trials.push(this.sanitizeRecord({
+                            name: `SOP Baru ${startNum + i}`,
+                            sop_check: '√', fixture: '-', parameter: '-',
+                            equipment: '√', machine: '-', layout: '√',
+                            status: 'PENDING', problem: '', solution: '', pic: '', duedate: ''
+                        }));
+                    }
+                    this.currentIndex = this.trials.length - count;
+                    this.saveToStorage(true);
+                    this.render();
+                    this.closeModals();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.showToast(`Berhasil menambahkan ${count} SOP sekaligus.`, 'success');
+                } catch (e) { console.error(e); }
+            }
+
+            // ========== MODAL DELETE ==========
+            openDeleteModal() {
+                try {
+                    if (this.trials.length <= 1) {
+                        this.showToast('Tidak dapat menghapus SOP terakhir. Minimal harus ada 1 SOP.', 'error');
+                        return;
+                    }
+                    const trial = this.getCurrentTrial();
+                    if (!trial) return;
+                    const el = (id) => document.getElementById(id);
+                    if (el('delete-sop-name')) el('delete-sop-name').innerText = trial.name || 'Tanpa Nama SOP';
+                    const status = this.normalizeStatus(trial.status);
+                    const statusEl = el('delete-sop-status');
+                    if (statusEl) {
+                        statusEl.innerText = status;
+                        if (status === 'OK') statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-emerald-950 text-emerald-400 border-emerald-800';
+                        else if (status === 'NG') statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-rose-950 text-rose-400 border-rose-800';
+                        else statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-slate-800 text-slate-400 border-slate-700';
+                    }
+                    if (el('delete-sop-position')) el('delete-sop-position').innerText = `${this.currentIndex + 1} dari ${this.trials.length}`;
+                    const modal = document.getElementById('modal-delete');
+                    if (modal) modal.classList.remove('hidden');
+                } catch (e) { console.error(e); }
+            }
+
+            confirmDeleteSop() {
+                try {
+                    if (this.trials.length <= 1) {
+                        this.showToast('Tidak dapat menghapus SOP terakhir.', 'error');
+                        this.closeModals();
+                        return;
+                    }
+                    const removedName = (this.getCurrentTrial() || {}).name || 'SOP';
+                    this.trials.splice(this.currentIndex, 1);
+                    if (this.currentIndex >= this.trials.length) this.currentIndex = this.trials.length - 1;
+                    this.saveToStorage(true);
+                    this.render();
+                    this.closeModals();
+                    this.showToast(`SOP "${removedName}" berhasil dihapus.`, 'success');
+                } catch (e) { console.error(e); }
+            }
+
+            // ========== JUMP MODAL ==========
+            openJumpModal() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    const container = document.getElementById('jump-container');
+                    if (!container) return;
+                    container.innerHTML = '';
+                    if (this.trials.length === 0) {
+                        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Belum ada SOP.</p>';
+                    } else {
+                        this.trials.forEach((t, idx) => {
+                            const status = this.normalizeStatus(t.status);
+                            const statusClass = status === 'OK' ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                                : (status === 'NG' ? 'bg-rose-950 text-rose-400 border-rose-800' : 'bg-slate-800 text-slate-400 border-slate-700');
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.className = `w-full text-left px-3.5 py-3 rounded-xl border transition flex items-center justify-between ${idx === this.currentIndex ? 'border-indigo-500 bg-indigo-950/40' : 'border-slate-800 bg-slate-900 hover:bg-slate-800'}`;
+                            btn.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-xs text-slate-400">#${idx + 1}</span>
+                                    <div>
+                                        <p class="font-semibold text-sm text-slate-200">${this.escapeHtml(t.name || 'Tanpa Nama SOP')}</p>
+                                        <p class="text-[11px] text-slate-400">PIC: ${this.escapeHtml(t.pic || '-')}</p>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase border ${statusClass}">${status}</span>
+                            `;
+                            btn.onclick = () => {
+                                this.currentIndex = idx;
+                                this.render();
+                                this.closeModals();
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            };
+                            container.appendChild(btn);
+                        });
+                    }
+                    const modal = document.getElementById('modal-jump');
+                    if (modal) modal.classList.remove('hidden');
+                } catch (e) { console.error(e); }
+            }
+
+            // ========== FILE MANAGER ==========
+            updateFilesBadge() {
+                const badge = document.getElementById('files-count-badge');
+                if (!badge) return;
+                const n = this.files.length;
+                if (n > 0) { badge.innerText = n; badge.classList.remove('hidden'); }
+                else badge.classList.add('hidden');
+            }
+
+            openFilesModal() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    this.renderFilesList();
+                    const modal = document.getElementById('modal-files');
+                    if (modal) modal.classList.remove('hidden');
+                } catch (e) { console.error(e); }
+            }
+
+            renderFilesList() {
+                const c = document.getElementById('files-container');
+                if (!c) return;
+                if (this.files.length === 0) {
+                    c.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="text-5xl mb-3 opacity-50">📁</div>
+                            <p class="text-sm font-semibold text-slate-300 mb-1">Belum ada file tersimpan</p>
+                            <p class="text-xs text-slate-500">File akan otomatis tersimpan setelah semua SOP di-submit.</p>
+                        </div>`;
+                    const info = document.getElementById('files-info-text');
+                    if (info) info.innerText = 'Belum ada file.';
+                    return;
+                }
+                c.innerHTML = this.files.map(f => {
+                    const dateObj = new Date(f.createdAt);
+                    const dateStr = dateObj.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const syncBadge = f.synced
+                        ? '<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded font-bold">✅ SINKRON</span>'
+                        : '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-bold">⏳ PENDING</span>';
+                    return `
+                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 hover:border-indigo-500 transition">
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        <span class="bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded text-[10px] font-bold">
+                                            <i class="fa-solid fa-industry"></i> ${this.escapeHtml(f.line)}
+                                        </span>
+                                        <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">
+                                            <i class="fa-solid fa-mobile-screen"></i> ${this.escapeHtml(f.model)}
+                                        </span>
+                                        ${syncBadge}
+                                    </div>
+                                    <p class="text-sm font-semibold text-slate-100 truncate">${this.escapeHtml(f.name)}</p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">${dateStr}</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 mb-2">
+                                <div class="bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center">
+                                    <p class="text-[9px] text-slate-500 uppercase font-bold">Total</p>
+                                    <p class="text-sm font-bold text-slate-200">${f.total}</p>
+                                </div>
+                                <div class="bg-emerald-950/40 border border-emerald-800/60 rounded-lg py-1.5 text-center">
+                                    <p class="text-[9px] text-emerald-400 uppercase font-bold">OK</p>
+                                    <p class="text-sm font-bold text-emerald-300">${f.ok}</p>
+                                </div>
+                                <div class="bg-rose-950/40 border border-rose-800/60 rounded-lg py-1.5 text-center">
+                                    <p class="text-[9px] text-rose-400 uppercase font-bold">NG</p>
+                                    <p class="text-sm font-bold text-rose-300">${f.ng}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="app.exportFileExcel('${f.id}')" class="flex-1 bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] font-bold py-1.5 rounded-lg transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-download"></i> Excel
+                                </button>
+                                <button type="button" onclick="app.loadFileToEditor('${f.id}')" class="flex-1 bg-indigo-700 hover:bg-indigo-600 text-white text-[10px] font-bold py-1.5 rounded-lg transition flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                                </button>
+                                <button type="button" onclick="app.deleteFile('${f.id}')" class="bg-rose-800 hover:bg-rose-700 text-white text-[10px] font-bold py-1.5 px-2.5 rounded-lg transition flex items-center justify-center">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                const info = document.getElementById('files-info-text');
+                if (info) {
+                    const pending = this.files.filter(f => !f.synced).length;
+                    info.innerText = pending > 0 ? `${pending} file menunggu sinkronisasi.` : `Semua ${this.files.length} file sudah tersinkron.`;
+                }
+            }
+
+            deleteFile(id) {
+                const f = this.files.find(x => x.id === id);
+                if (!f) return;
+                if (!confirm(`Hapus file "${f.name}"?`)) return;
+                this.files = this.files.filter(x => x.id !== id);
+                this.saveFiles();
+                this.updateFilesBadge();
+                this.renderFilesList();
+                this.markPending();
+                this.showToast('File dihapus.', 'success');
+            }
+
+            loadFileToEditor(id) {
+                const f = this.files.find(x => x.id === id);
+                if (!f) return;
+                if (!confirm(`Muat file "${f.name}" ke editor?\n\nData SOP saat ini akan diganti.`)) return;
+                this.trials = (f.trials || []).map(r => this.sanitizeRecord(r));
+                this.currentIndex = 0;
+                if (f.line) { this.setLine(f.line); const l = document.getElementById('input-line'); if (l) l.value = f.line; }
+                if (f.model) { this.setModel(f.model); const m = document.getElementById('input-model'); if (m) m.value = f.model; }
+                this.saveToStorage(true);
+                this.render();
+                this.closeModals();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.showToast(`File "${f.name}" berhasil dimuat ke editor.`, 'success');
+            }
+
+            exportFileExcel(id) {
+                const f = this.files.find(x => x.id === id);
+                if (!f) { this.showToast('File tidak ditemukan.', 'error'); return; }
+                this._exportTrialsToExcel(f.trials, f.line, f.model, f.name);
+            }
+
+            exportAllFiles() {
+                if (this.files.length === 0) { this.showToast('Belum ada file untuk diexport.', 'error'); return; }
+                if (this.files.length === 1) { this.exportFileExcel(this.files[0].id); return; }
+                try {
+                    const wb = XLSX.utils.book_new();
+                    this.files.forEach((f, i) => {
+                        const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
+                        const aoa = [headers];
+                        (f.trials || []).forEach((t, idx) => {
+                            aoa.push([idx + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
+                        });
+                        const ws = XLSX.utils.aoa_to_sheet(aoa);
+                        const range = XLSX.utils.decode_range(ws['!ref']);
+                        for (let R = range.s.r; R <= range.e.r; R++) {
+                            for (let C = range.s.c; C <= range.e.c; C++) {
+                                const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                                if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
+                                const cell = ws[cellRef];
+                                if (R === 0) cell.s = EXCEL_STYLES.header;
+                                else if (C === 8) {
+                                    const sv = String(cell.v || 'PENDING').toUpperCase();
+                                    if (sv === 'OK') cell.s = EXCEL_STYLES.statusOK;
+                                    else if (sv === 'NG') cell.s = EXCEL_STYLES.statusNG;
+                                    else cell.s = EXCEL_STYLES.statusPENDING;
+                                } else if (C === 0 || (C >= 2 && C <= 7)) {
+                                    cell.s = Object.assign({}, EXCEL_STYLES.cellBase, EXCEL_STYLES.centerCell);
+                                } else {
+                                    cell.s = EXCEL_STYLES.cellBase;
+                                }
+                            }
+                        }
+                        const colWidths = [5, 30, 8, 10, 10, 12, 10, 8, 12, 30, 30, 12, 12].map(w => ({ wch: w }));
+                        ws['!cols'] = colWidths;
+                        let sheetName = (f.line + '-' + f.model).substring(0, 28).replace(/[\/\\\?\*\[\]:]/g, '_');
+                        if (!sheetName.trim()) sheetName = 'Trial_' + (i + 1);
+                        let finalName = sheetName;
+                        let counter = 1;
+                        while (wb.SheetNames.includes(finalName)) { finalName = sheetName + '_' + (counter++); }
+                        XLSX.utils.book_append_sheet(wb, ws, finalName);
+                    });
+                    XLSX.writeFile(wb, `Semua_Trial_${new Date().toISOString().split('T')[0]}.xlsx`);
+                    this.showToast(`Berhasil export ${this.files.length} file!`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    this.showToast('Gagal export: ' + e.message, 'error');
+                }
+            }
+
+            // ========== EXCEL EXPORT/IMPORT ==========
+            openExcelModal() {
+                try {
+                    this.collectFormToCurrentTrial();
+                    this.saveToStorage(false);
+                    this.switchExcelTab('export');
+                    this.resetImport();
+                    this.updateExportStats();
+                    const modal = document.getElementById('modal-excel');
+                    if (modal) modal.classList.remove('hidden');
+                } catch (e) { console.error(e); }
+            }
+
+            closeModals() {
+                try {
+                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files'].forEach(id => {
+                        const m = document.getElementById(id);
+                        if (m) m.classList.add('hidden');
+                    });
+                } catch (e) { console.warn(e); }
+            }
+
+            switchExcelTab(tab) {
+                const tabExport = document.getElementById('tab-export');
+                const tabImport = document.getElementById('tab-import');
+                const panelExport = document.getElementById('excel-tab-export');
+                const panelImport = document.getElementById('excel-tab-import');
+                if (!tabExport || !tabImport || !panelExport || !panelImport) return;
+                if (tab === 'export') {
+                    tabExport.className = 'flex-1 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-500 bg-slate-800/40 transition flex items-center justify-center gap-2';
+                    tabImport.className = 'flex-1 py-3 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition flex items-center justify-center gap-2';
+                    panelExport.classList.remove('hidden');
+                    panelImport.classList.add('hidden');
+                    this.updateExportStats();
+                } else {
+                    tabImport.className = 'flex-1 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-500 bg-slate-800/40 transition flex items-center justify-center gap-2';
+                    tabExport.className = 'flex-1 py-3 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition flex items-center justify-center gap-2';
+                    panelImport.classList.remove('hidden');
+                    panelExport.classList.add('hidden');
+                }
+            }
+
+            updateExportStats() {
+                const total = this.trials.length;
+                const ok = this.trials.filter(t => t.status === 'OK').length;
+                const ng = this.trials.filter(t => t.status === 'NG').length;
+                const el = (id) => document.getElementById(id);
+                if (el('export-stat-total')) el('export-stat-total').innerText = total;
+                if (el('export-stat-ok')) el('export-stat-ok').innerText = ok;
+                if (el('export-stat-ng')) el('export-stat-ng').innerText = ng;
+            }
+
+            _buildStyledWorksheet(trials) {
+                const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
+                const aoa = [headers.slice()];
+                trials.forEach((t, i) => {
+                    aoa.push([i + 1, t.name || '', t.sop_check || '-', t.fixture || '-', t.parameter || '-', t.equipment || '-', t.machine || '-', t.layout || '-', t.status || 'PENDING', t.problem || '', t.solution || '', t.pic || '', t.duedate || '']);
+                });
+                const ws = XLSX.utils.aoa_to_sheet(aoa);
+                const colWidths = headers.map((h, idx) => {
+                    let maxLen = h.length;
+                    aoa.forEach((row, rowIdx) => {
+                        if (rowIdx === 0) return;
+                        const v = row[idx];
+                        if (v !== null && v !== undefined) {
+                            String(v).split('\n').forEach(line => { if (line.length > maxLen) maxLen = line.length; });
+                        }
+                    });
+                    const minW = [5, 28, 8, 10, 10, 12, 10, 8, 12, 30, 30, 12, 12][idx] || 10;
+                    return { wch: Math.min(Math.max(maxLen + 2, minW), 45) };
+                });
+                ws['!cols'] = colWidths;
+                ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let R = range.s.r; R <= range.e.r; R++) {
+                    for (let C = range.s.c; C <= range.e.c; C++) {
+                        const ref = XLSX.utils.encode_cell({ r: R, c: C });
+                        if (!ws[ref]) ws[ref] = { t: 's', v: '' };
+                        const cell = ws[ref];
+                        if (R === 0) cell.s = EXCEL_STYLES.header;
+                        else if (C === 8) {
+                            const sv = String(cell.v || 'PENDING').toUpperCase();
+                            if (sv === 'OK') cell.s = EXCEL_STYLES.statusOK;
+                            else if (sv === 'NG') cell.s = EXCEL_STYLES.statusNG;
+                            else cell.s = EXCEL_STYLES.statusPENDING;
+                        } else if (C === 0 || (C >= 2 && C <= 7)) {
+                            cell.s = Object.assign({}, EXCEL_STYLES.cellBase, EXCEL_STYLES.centerCell);
+                        } else {
+                            cell.s = EXCEL_STYLES.cellBase;
+                        }
+                    }
+                }
+                return ws;
+            }
+
+            _exportTrialsToExcel(trials, line, model, baseName) {
+                try {
+                    if (!trials || trials.length === 0) { this.showToast('Tidak ada data untuk diexport.', 'error'); return; }
+                    if (typeof XLSX === 'undefined') { this.showToast('Library Excel belum siap.', 'error'); return; }
+                    const ws = this._buildStyledWorksheet(trials);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Trial Result');
+                    const now = new Date();
+                    const dateStr = now.toISOString().split('T')[0];
+                    const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+                    const safeLine = (line || 'Tanpa-Line').replace(/[\/\\:*?"<>|]/g, '_');
+                    const safeModel = (model || 'Tanpa-Model').replace(/[\/\\:*?"<>|]/g, '_');
+                    const fname = baseName ? `${baseName}_${dateStr}_${timeStr}.xlsx` : `Trial_${safeLine}_${safeModel}_${dateStr}_${timeStr}.xlsx`;
+                    XLSX.writeFile(wb, fname);
+                    this.showToast(`Berhasil export ${trials.length} SOP!`, 'success');
+                } catch (e) { console.error(e); this.showToast('Gagal export: ' + e.message, 'error'); }
+            }
+
+            exportExcel() {
+                try {
+                    if (!this.trials || this.trials.length === 0) { this.showToast('Tidak ada data untuk diexport.', 'error'); return; }
+                    if (typeof XLSX === 'undefined') { this.showToast('Library Excel belum siap.', 'error'); return; }
+                    const line = this.getLine() || '';
+                    const model = this.getModel() || '';
+                    this._exportTrialsToExcel(this.trials, line, model, '');
+                } catch (e) { console.error(e); }
+            }
+
+            exportTemplate() {
+                try {
+                    if (typeof XLSX === 'undefined') { this.showToast('Library Excel belum siap.', 'error'); return; }
+                    const headers = ['No', 'SOP Item', 'SOP', 'Fixture', 'Parameter', 'Equipment', 'Machine', 'Layout', 'Status', 'Problem finding', 'Solution', 'PIC', 'Due Date'];
+                    const sampleRow = [1, 'Contoh: Pengecekan battery cover', '√', '-', '-', '√', '-', '√', 'OK', '', '', '', new Date().toISOString().split('T')[0]];
+                    const aoa = [headers, sampleRow];
+                    const ws = XLSX.utils.aoa_to_sheet(aoa);
+                    const range = XLSX.utils.decode_range(ws['!ref']);
+                    for (let C = range.s.c; C <= range.e.c; C++) {
+                        const ref = XLSX.utils.encode_cell({ r: 0, c: C });
+                        if (ws[ref]) ws[ref].s = EXCEL_STYLES.header;
+                    }
+                    for (let C = range.s.c; C <= range.e.c; C++) {
+                        const ref = XLSX.utils.encode_cell({ r: 1, c: C });
+                        if (!ws[ref]) continue;
+                        if (C === 8) ws[ref].s = EXCEL_STYLES.statusOK;
+                        else if (C === 0 || (C >= 2 && C <= 7)) ws[ref].s = Object.assign({}, EXCEL_STYLES.cellBase, EXCEL_STYLES.centerCell);
+                        else ws[ref].s = EXCEL_STYLES.cellBase;
+                    }
+                    const colWidths = [5, 30, 8, 10, 10, 12, 10, 8, 12, 30, 30, 12, 12].map(w => ({ wch: w }));
+                    ws['!cols'] = colWidths;
+                    ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+                    XLSX.writeFile(wb, 'Template_Trial_Result.xlsx');
+                    this.showToast('Template berhasil didownload.', 'success');
+                } catch (e) { console.error(e); this.showToast('Gagal download: ' + e.message, 'error'); }
+            }
+
+            handleFileSelect(event) {
+                const input = event.target;
+                const file = input.files && input.files[0];
+                if (!file) return;
+                if (typeof XLSX === 'undefined') { this.showToast('Library Excel belum siap.', 'error'); input.value = ''; return; }
+                const nameLower = file.name.toLowerCase();
+                if (!nameLower.endsWith('.xlsx') && !nameLower.endsWith('.xls')) {
+                    this.showToast('Format file harus .xlsx atau .xls', 'error');
+                    input.value = ''; return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    this.showToast('Ukuran file terlalu besar (maks 10 MB).', 'error');
+                    input.value = ''; return;
+                }
+                this._pendingFileName = file.name;
+                const fileSizeKB = (file.size / 1024).toFixed(1);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                        if (!json || json.length === 0) {
+                            this.showToast('File Excel kosong.', 'error'); input.value = ''; return;
+                        }
+                        const firstRow = json[0];
+                        const headers = Object.keys(firstRow);
+                        const hasNameColumn = headers.some(h => ['SOP Item', 'Nama SOP', 'Item SOP', 'Item', 'SOP'].includes(h));
+                        if (!hasNameColumn) {
+                            this.showToast('Format file tidak sesuai. Kolom "SOP Item" tidak ditemukan.', 'error');
+                            input.value = ''; return;
+                        }
+                        const imported = json.map(row => {
+                            const rawName = row['SOP Item'] || row['Nama SOP'] || row['Item SOP'] || row['Item'] || row['SOP'] || '';
+                            const rawStatus = row['Status'] || row['status'] || 'PENDING';
+                            return this.sanitizeRecord({
+                                name: rawName ? rawName.toString() : '',
+                                sop_check: row['SOP'] !== undefined ? row['SOP'] : (row['sop_check'] || '√'),
+                                fixture: row['Fixture'] !== undefined ? row['Fixture'] : (row['fixture'] || '-'),
+                                parameter: row['Parameter'] !== undefined ? row['Parameter'] : (row['parameter'] || '-'),
+                                equipment: row['Equipment'] !== undefined ? row['Equipment'] : (row['equipment'] || '-'),
+                                machine: row['Machine'] !== undefined ? row['Machine'] : (row['machine'] || '-'),
+                                layout: row['Layout'] !== undefined ? row['Layout'] : (row['layout'] || '-'),
+                                status: rawStatus,
+                                problem: row['Problem finding'] || row['Problem'] || row['problem'] || '',
+                                solution: row['Solution'] || row['solution'] || '',
+                                pic: row['PIC'] || row['pic'] || '',
+                                duedate: row['Due Date'] || row['duedate'] || ''
+                            });
+                        });
+                        const validRows = imported.filter(r => r.name && r.name.trim() !== '');
+                        if (validRows.length === 0) { this.showToast('Tidak ada baris data valid.', 'error'); input.value = ''; return; }
+                        this._pendingImport = validRows;
+                        this.renderImportPreview(file.name, fileSizeKB, validRows);
+                    } catch (err) {
+                        console.error(err);
+                        this.showToast('Gagal baca Excel: ' + err.message, 'error');
+                        input.value = '';
+                    }
+                    input.value = '';
+                };
+                reader.onerror = () => { this.showToast('Gagal membaca file.', 'error'); input.value = ''; };
+                reader.readAsArrayBuffer(file);
+            }
+
+            renderImportPreview(fileName, fileSizeKB, rows) {
+                const el = (id) => document.getElementById(id);
+                if (el('import-picker')) el('import-picker').classList.add('hidden');
+                if (el('import-preview')) el('import-preview').classList.remove('hidden');
+                if (el('btn-import-confirm')) el('btn-import-confirm').classList.remove('hidden');
+                if (el('import-file-name')) el('import-file-name').innerText = fileName;
+                if (el('import-file-info')) el('import-file-info').innerText = `${fileSizeKB} KB • ${rows.length} baris`;
+                const total = rows.length;
+                const ok = rows.filter(r => r.status === 'OK').length;
+                const ng = rows.filter(r => r.status === 'NG').length;
+                if (el('import-stat-total')) el('import-stat-total').innerText = total;
+                if (el('import-stat-ok')) el('import-stat-ok').innerText = ok;
+                if (el('import-stat-ng')) el('import-stat-ng').innerText = ng;
+                const autoNg = rows.filter(r => ['sop_check','fixture','parameter','equipment','machine','layout'].some(f => r[f] === 'X')).length;
+                const warnBox = el('import-warning');
+                const warnText = el('import-warning-text');
+                if (autoNg > 0) {
+                    if (warnBox) warnBox.classList.remove('hidden');
+                    if (warnText) warnText.innerText = `${autoNg} baris otomatis di-set NG karena ada X.`;
+                } else {
+                    if (warnBox) warnBox.classList.add('hidden');
+                }
+                const list = el('import-preview-list');
+                if (list) {
+                    list.innerHTML = '';
+                    rows.slice(0, 5).forEach((r, i) => {
+                        const statusClass = r.status === 'OK' ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                            : (r.status === 'NG' ? 'bg-rose-950 text-rose-400 border-rose-800' : 'bg-slate-800 text-slate-400 border-slate-700');
+                        const div = document.createElement('div');
+                        div.className = 'bg-slate-800/60 border border-slate-700 rounded-lg p-2 flex items-center justify-between gap-2';
+                        div.innerHTML = `
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-slate-200 truncate">#${i + 1} — ${this.escapeHtml(r.name)}</p>
+                                <p class="text-[10px] text-slate-400 truncate">PIC: ${this.escapeHtml(r.pic || '-')}</p>
+                            </div>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${statusClass}">${r.status}</span>
+                        `;
+                        list.appendChild(div);
+                    });
+                    if (rows.length > 5) {
+                        const more = document.createElement('p');
+                        more.className = 'text-[10px] text-slate-500 text-center italic pt-1';
+                        more.innerText = `+ ${rows.length - 5} baris lainnya...`;
+                        list.appendChild(more);
+                    }
+                }
+            }
+
+            resetImport() {
+                this._pendingImport = null;
+                this._pendingFileName = '';
+                const el = (id) => document.getElementById(id);
+                if (el('import-picker')) el('import-picker').classList.remove('hidden');
+                if (el('import-preview')) el('import-preview').classList.add('hidden');
+                if (el('btn-import-confirm')) el('btn-import-confirm').classList.add('hidden');
+                if (el('import-warning')) el('import-warning').classList.add('hidden');
+                const fileInput = el('excel-file-input');
+                if (fileInput) fileInput.value = '';
+                const radios = document.querySelectorAll('input[name="import-mode"]');
+                radios.forEach((r, i) => { if (i === 0) r.checked = true; });
+            }
+
+            confirmImport() {
+                try {
+                    if (!this._pendingImport || this._pendingImport.length === 0) {
+                        this.showToast('Tidak ada data untuk diimport.', 'error'); return;
+                    }
+                    let mode = 'replace';
+                    const radios = document.querySelectorAll('input[name="import-mode"]');
+                    radios.forEach(r => { if (r.checked) mode = r.value; });
+                    let finalTrials;
+                    let msg;
+                    if (mode === 'append') {
+                        this.collectFormToCurrentTrial();
+                        finalTrials = [...this.trials, ...this._pendingImport];
+                        msg = `Berhasil menambahkan ${this._pendingImport.length} SOP.`;
+                    } else {
+                        if (!confirm(`Mode REPLACE akan MENGGANTI semua ${this.trials.length} SOP dengan ${this._pendingImport.length} SOP baru.\n\nLanjutkan?`)) return;
+                        finalTrials = [...this._pendingImport];
+                        msg = `Berhasil mengganti data dengan ${this._pendingImport.length} SOP.`;
+                    }
+                    this.trials = finalTrials.map(r => this.sanitizeRecord(r));
+                    this.currentIndex = 0;
+                    this.saveToStorage(true);
+                    this.render();
+                    this.closeModals();
+                    this.showToast(msg, 'success');
+                    this.resetImport();
+                } catch (e) { console.error(e); this.showToast('Gagal import: ' + e.message, 'error'); }
+            }
+
+            // ========== UTILS ==========
+            escapeHtml(str) {
+                if (str === null || str === undefined) return '';
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
+
+            showToast(message, type = 'success') {
+                try {
+                    const toast = document.getElementById('notification-toast');
+                    const text = document.getElementById('toast-text');
+                    const icon = document.getElementById('toast-icon');
+                    if (!toast || !text || !icon) return;
+                    text.innerText = message;
+                    if (type === 'success') icon.className = 'fa-solid fa-circle-check text-emerald-400';
+                    else if (type === 'error') icon.className = 'fa-solid fa-circle-exclamation text-rose-400';
+                    else icon.className = 'fa-solid fa-circle-info text-indigo-400';
+                    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                    if (this._toastTimer) clearTimeout(this._toastTimer);
+                    this._toastTimer = setTimeout(() => {
+                        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                    }, 3000);
+                } catch (e) { console.warn(e); }
+            }
+        };
+
+        function initApp() {
+            try {
+                if (typeof XLSX === 'undefined') console.warn('SheetJS belum loaded.');
+                else console.log('✅ SheetJS version:', XLSX.version);
+                window.app = new window.IETrialApp();
+                console.log('✅ IE Trial App berhasil diinisialisasi.');
+            } catch (e) {
+                console.error('❌ Gagal inisialisasi:', e);
+                alert('Terjadi error saat memuat aplikasi.\n\nDetail: ' + e.message);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
