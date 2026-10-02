@@ -108,7 +108,10 @@
         .laps-scroll::-webkit-scrollbar { width: 6px; }
         .laps-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        body { padding-bottom: 110px; }
+        body { padding-bottom: 130px; }
+@media (max-width: 640px) {
+    body { padding-bottom: 140px; }
+}
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
         .modal-bg.active { display: flex; }
         .modal-content { background: white; border-radius: 16px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
@@ -512,7 +515,7 @@
             </div>
         </nav>
 
-                        <div id="tab-input" class="tab-content">
+                        <div id="tab-input" class="tab-content" style="padding-bottom: 110px;">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-3">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
                     <!-- Header: Input Data + Timer Status -->
@@ -697,16 +700,11 @@
                             </div>
                         </div>
 
-                        <!-- FIELD GRID ELEMEN -->
-                        <div id="elemenFieldGrid" class="hidden">
-                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-2 text-[10px] md:text-xs text-purple-800"><b>Allowance:</b> 10% (statis) — otomatis diterapkan di rumus Std. Time</div>
-                        </div>
+                                                <!-- FIELD GRID ELEMEN (kosong, allowance dihapus) -->
+                        <div id="elemenFieldGrid" class="hidden"></div>
 
-                        <!-- FIELD GRID SIKLUS -->
-                        <div id="siklusFieldGrid" class="hidden">
-                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-2 text-[10px] md:text-xs text-purple-800"><b>Allowance:</b> 10% (statis) — otomatis diterapkan di rumus Std. Time</div>
-                        </div>
-                    </div>
+                        <!-- FIELD GRID SIKLUS (kosong, allowance dihapus) -->
+                        <div id="siklusFieldGrid" class="hidden"></div>
 
                     <!-- TIMER DISPLAY (BESAR seperti lama) -->
                     <div class="mt-3 bg-gray-900 rounded-xl p-3 text-center text-white shadow-inner border border-gray-800">
@@ -1546,7 +1544,7 @@
             document.getElementById('timerDisplay').innerText = '00:00.00';
             document.getElementById('modeModal').classList.add('active');
         }
-        function applyModeToUI() {
+                function applyModeToUI() {
             try {
                 const titles = { 'mesin': '⏱️ Time Study Mesin', 'elemen': '⏱️ Time Study Elemen', 'siklus': '⏱️ Time Study Siklus' };
                 const tEl = document.getElementById('appTitle'); if (tEl) tEl.innerText = titles[currentMode] || '⏱️ Time Study';
@@ -1561,23 +1559,33 @@
                 const sfg = document.getElementById('siklusFieldGrid');
                 const eai = document.getElementById('elemenActiveInfo');
                 const sai = document.getElementById('siklusActiveInfo');
+                const smi = document.getElementById('selectedMachineInfo');      // 🔥 BARU
+                const cmw = document.getElementById('customMachineWrapper');     // 🔥 BARU
+                
                 if (currentMode === 'mesin') {
                     if(mw) mw.classList.remove('hidden'); if(ew) ew.classList.add('hidden'); if(sw) sw.classList.add('hidden');
                     if(tM) tM.classList.remove('hidden'); if(tE) tE.classList.add('hidden'); if(tS) tS.classList.add('hidden');
                     if(mfg) mfg.classList.remove('hidden'); if(efg) efg.classList.add('hidden'); if(sfg) sfg.classList.add('hidden');
                     if(eai) eai.classList.add('hidden'); if(sai) sai.classList.add('hidden');
+                    // sub mesin hanya tampil di mode mesin (via logic di selectMachine)
                      switchTab('input');
                 } else if (currentMode === 'elemen') {
                     if(mw) mw.classList.add('hidden'); if(ew) ew.classList.remove('hidden'); if(sw) sw.classList.add('hidden');
                     if(tM) tM.classList.add('hidden'); if(tE) tE.classList.remove('hidden'); if(tS) tS.classList.add('hidden');
                     if(mfg) mfg.classList.add('hidden'); if(efg) efg.classList.remove('hidden'); if(sfg) sfg.classList.add('hidden');
                     if(eai) eai.classList.remove('hidden'); if(sai) sai.classList.add('hidden');
+                    // 🔥 Sembunyikan sub mesin di mode elemen
+                    if(smi) smi.classList.add('hidden');
+                    if(cmw) cmw.classList.add('hidden');
                      switchTab('input');
                 } else if (currentMode === 'siklus') {
                     if(mw) mw.classList.add('hidden'); if(ew) ew.classList.add('hidden'); if(sw) sw.classList.remove('hidden');
                     if(tM) tM.classList.add('hidden'); if(tE) tE.classList.add('hidden'); if(tS) tS.classList.remove('hidden');
                     if(mfg) mfg.classList.add('hidden'); if(efg) efg.classList.add('hidden'); if(sfg) sfg.classList.remove('hidden');
                     if(eai) eai.classList.add('hidden'); if(sai) sai.classList.remove('hidden');
+                    // 🔥 Sembunyikan sub mesin di mode siklus
+                    if(smi) smi.classList.add('hidden');
+                    if(cmw) cmw.classList.add('hidden');
                      switchTab('input');
                 }
                 preinstallActive = false; preinstallSelectedKeys.clear(); preinstallActiveSops = []; preinstallOperatorCount = 1;
