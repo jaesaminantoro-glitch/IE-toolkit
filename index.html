@@ -108,9 +108,9 @@
         .laps-scroll::-webkit-scrollbar { width: 6px; }
         .laps-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .laps-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        body { padding-bottom: 130px; }
+        body { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
 @media (max-width: 640px) {
-    body { padding-bottom: 180px; }
+    body { padding-bottom: calc(125px + env(safe-area-inset-bottom, 0px)); }
 }
         .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
         .modal-bg.active { display: flex; }
@@ -515,7 +515,7 @@
             </div>
         </nav>
 
-                        <div id="tab-input" class="tab-content" style="padding-bottom: 160px;">
+                        <div id="tab-input" class="tab-content">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-3">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4">
                     <!-- Header: Input Data + Timer Status -->
@@ -2555,7 +2555,7 @@ function switchLineModelTab(tab) {
             const p = document.getElementById('sopDropdownPanel'); const b = document.getElementById('sopDropdownBtn');
             if (!p || !b) return;
             if (p.classList.contains('open')) { p.classList.remove('open'); b.classList.remove('open'); }
-            else { b.scrollIntoView({ behavior: 'smooth', block: 'end' }); setTimeout(() => { p.classList.add('open'); b.classList.add('open'); document.getElementById('sopSearchInput')?.focus(); renderSopDropdownList(); }, 250); }
+            else { p.classList.add('open'); b.classList.add('open'); document.getElementById('sopSearchInput')?.focus({ preventScroll: true }); renderSopDropdownList(); }
         }
         function closeSopDropdown() { document.getElementById('sopDropdownPanel')?.classList.remove('open'); document.getElementById('sopDropdownBtn')?.classList.remove('open'); const si = document.getElementById('sopSearchInput'); if (si) si.value = ''; }
         function renderSopDropdownList() {
@@ -2591,11 +2591,6 @@ function switchLineModelTab(tab) {
             document.getElementById('elemenActiveInfo').classList.remove('hidden');
                         updateElemenActiveInfo(); updateLapButtonLabel(); renderSopDropdownList();
             
-            // Auto-scroll ke tombol Simpan setelah pilih SOP (mode elemen)
-            setTimeout(() => {
-                const cb = document.getElementById('commitBtn');
-                if (cb) cb.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 400);
         }
         function updateElemenActiveInfo() {
             const n = document.getElementById('elemenActiveName');
@@ -3131,11 +3126,13 @@ function switchLineModelTab(tab) {
                 } else { dv = lap; }
                 return `<div class="flex items-center gap-1 ${cls} px-2 py-1 rounded-md font-mono text-xs md:text-sm font-bold border"><span>C${i + 1}: ${dv.toFixed(2)}s${lb}</span><button onclick="removeLap(${i})" class="text-blue-400 hover:text-red-600 font-bold ml-0.5 px-0.5 text-sm">×</button></div>`;
             }).join('');
-            setTimeout(() => {
-                const lc = c.lastElementChild;
-                if (lc && lc.scrollIntoView) { lc.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); setTimeout(() => { c.scrollTop += 8; }, 200); }
-                else c.scrollTop = c.scrollHeight;
-            }, 100);
+            if (typeof currentMode === 'undefined' || currentMode !== 'elemen') {
+                setTimeout(() => {
+                    const lc = c.lastElementChild;
+                    if (lc && lc.scrollIntoView) { lc.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); setTimeout(() => { c.scrollTop += 8; }, 200); }
+                    else c.scrollTop = c.scrollHeight;
+                }, 100);
+            }
         }
 
         // ============================================================
