@@ -9,31 +9,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <!-- Firebase SDK v9 compat (agar mudah dipakai tanpa module) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
-        tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
-        }
+        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
     </script>
     <style>
-        /* ============================================================
-           ICON SET — pakai mask-image (lebih stabil di semua browser)
-           ============================================================ */
-        .fa-solid {
-            display: inline-block;
-            width: 1em;
-            height: 1em;
-            vertical-align: -0.125em;
-            flex-shrink: 0;
-            background-color: currentColor;
-            -webkit-mask-repeat: no-repeat;
-            mask-repeat: no-repeat;
-            -webkit-mask-position: center;
-            mask-position: center;
-            -webkit-mask-size: contain;
-            mask-size: contain;
-            font-style: normal;
-        }
+        .fa-solid{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;flex-shrink:0;background-color:currentColor;
+            -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
+            -webkit-mask-size:contain;mask-size:contain;font-style:normal}
+        .fa-solid{ -webkit-mask-image: var(--fa); mask-image: var(--fa); }
         .fa-xmark{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M18 6L6 18M6 6l12 12'/></svg>")}
         .fa-check{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>")}
         .fa-arrow-left{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>")}
@@ -57,6 +44,7 @@
         .fa-industry{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z'/><path d='M17 18h1M12 18h1M7 18h1'/></svg>")}
         .fa-mobile-screen{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='5' y='2' width='14' height='20' rx='2'/><path d='M12 18h.01'/></svg>")}
         .fa-cloud-arrow-up{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9M16 16l-4-4-4 4'/></svg>")}
+        .fa-cloud-arrow-down{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242M12 12v9M8 17l4 4 4-4'/></svg>")}
         .fa-wifi{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01'/></svg>")}
         .fa-wifi-slash{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 20h.01M8.5 16.429a5 5 0 0 1 7 0M5 12.859a10 10 0 0 1 5.17-2.69M19 12.859a10 10 0 0 0-2.007-1.523M2 8.82a15 15 0 0 1 4.177-2.643M22 8.82a15 15 0 0 0-11.288-3.764M2 2l20 20'/></svg>")}
         .fa-rotate{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5'/></svg>")}
@@ -70,11 +58,14 @@
         .fa-arrows-rotate{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16M16 16h5v5'/></svg>")}
         .fa-clock-rotate-left{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 12a9 9 0 1 0 3-6.7L3 8'/><path d='M3 3v5h5M12 7v5l4 2'/></svg>")}
         .fa-lock{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>")}
-        /* mask pakai var --fa */
-        [class*="fa-"]::before { content: none; }
-        .fa-solid { -webkit-mask-image: var(--fa); mask-image: var(--fa); }
+        .fa-gear{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>")}
+        .fa-cloud{--fa:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z'/></svg>")}
         .pulse-ring { animation: pulse-ring 1.5s infinite; }
         @keyframes pulse-ring { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .sync-dot { display:inline-block; width:8px; height:8px; border-radius:9999px; }
+        .sync-dot.online { background-color: #10b981; }
+        .sync-dot.offline { background-color: #f59e0b; }
+        .sync-dot.error { background-color: #ef4444; }
     </style>
 </head>
 <body class="h-full bg-white text-slate-900 font-sans antialiased flex flex-col">
@@ -96,6 +87,11 @@
                             <i class="fa-solid fa-wifi text-[10px]"></i>
                             <span id="connection-text">Online</span>
                         </span>
+                        <span class="text-slate-500">•</span>
+                        <span id="firebase-indicator" class="inline-flex items-center gap-1 text-slate-500 font-semibold">
+                            <i class="fa-solid fa-cloud text-[10px]"></i>
+                            <span id="firebase-text">Firebase: cek...</span>
+                        </span>
                         <span id="pending-badge" class="hidden inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
                             <i class="fa-solid fa-cloud-arrow-up text-[9px]"></i>
                             <span id="pending-count">0</span> pending
@@ -103,7 +99,10 @@
                     </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
+            <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+                <button type="button" onclick="app.openFirebaseSettings()" class="flex-1 sm:flex-none justify-center bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-400">
+                    <i class="fa-solid fa-gear text-slate-600"></i> <span class="hidden sm:inline">Sync</span>
+                </button>
                 <button type="button" onclick="app.openFilesModal()" class="flex-1 sm:flex-none justify-center bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-400 relative">
                     <i class="fa-solid fa-folder-open text-amber-600"></i> <span>File</span>
                     <span id="files-count-badge" class="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
@@ -288,6 +287,87 @@
             </button>
         </div>
     </main>
+
+    <!-- MODAL FIREBASE SETTINGS -->
+    <div id="modal-firebase" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-100 rounded-xl p-2.5 border border-amber-300">
+                        <i class="fa-solid fa-cloud text-amber-600 text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base text-slate-900">Firebase Sync Settings</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Sync otomatis PC ↔ HP via Firebase</p>
+                    </div>
+                </div>
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                <div id="fb-status-box" class="bg-slate-100 border border-slate-300 rounded-xl p-3 text-xs">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="fb-status-dot" class="sync-dot offline"></span>
+                        <span class="font-bold text-slate-800" id="fb-status-title">Belum Terhubung</span>
+                    </div>
+                    <p class="text-slate-600" id="fb-status-desc">Isi Firebase config di bawah untuk mulai sync.</p>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
+                    <i class="fa-solid fa-circle-info mt-0.5"></i>
+                    <div>
+                        <p class="font-bold mb-1">Cara dapat Firebase Config:</p>
+                        <ol class="list-decimal ml-4 space-y-0.5">
+                            <li>Buka <b>console.firebase.google.com</b></li>
+                            <li>Pilih project → ⚙️ Project Settings</li>
+                            <li>Tab "General" → scroll ke "Your apps"</li>
+                            <li>Pilih Web app (atau buat baru)</li>
+                            <li>Copy config object</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
+                        Firebase Config (paste JSON)
+                    </label>
+                    <textarea id="fb-config-input" rows="8" placeholder='{
+  "apiKey": "AIza...",
+  "authDomain": "xxx.firebaseapp.com",
+  "databaseURL": "https://xxx-default-rtdb.asia-southeast1.firebasedatabase.app",
+  "projectId": "xxx",
+  "storageBucket": "xxx.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abc..."
+}' class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
+                    <p class="text-[10px] text-slate-500 mt-1 italic">Config disimpan di localStorage browser. Aman karena hanya dipakai di device ini.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">
+                        Koleksi/Root Path (opsional)
+                    </label>
+                    <input type="text" id="fb-root-input" placeholder="ie_trial_tracker" value="ie_trial_tracker" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    <p class="text-[10px] text-slate-500 mt-1 italic">Root node di Realtime Database. Default: <code>ie_trial_tracker</code></p>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-300 rounded-xl p-3 text-xs text-indigo-700">
+                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info"></i> Info</p>
+                    <p>Setelah terhubung, semua perubahan otomatis tersync ke Firebase. HP & PC akan saling sinkron realtime.</p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 flex flex-wrap gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition text-sm">Batal</button>
+                <button type="button" onclick="app.disconnectFirebase()" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-xmark"></i> Putus
+                </button>
+                <button type="button" onclick="app.saveFirebaseConfig()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-check"></i> Simpan & Connect
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL TAMBAH -->
     <div id="modal-add" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -478,7 +558,7 @@
                         <h4 class="font-bold text-emerald-700 text-sm mb-1 flex items-center gap-2">
                             <i class="fa-solid fa-file-arrow-down"></i> Export Data Lengkap
                         </h4>
-                        <p class="text-xs text-emerald-600/80 mb-3">Excel dengan header indigo + border tabel + kolom Status berwarna (hijau OK / merah NG).</p>
+                        <p class="text-xs text-emerald-600/80 mb-3">Excel dengan header indigo + border tabel + kolom Status berwarna.</p>
                         <button type="button" onclick="app.exportExcel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-download"></i> Download Excel (.xlsx)
                         </button>
@@ -487,7 +567,6 @@
                         <h4 class="font-bold text-indigo-700 text-sm mb-1 flex items-center gap-2">
                             <i class="fa-solid fa-file-circle-plus"></i> Export Template Kosong
                         </h4>
-                        <p class="text-xs text-indigo-600/80 mb-3">Template kosong untuk input manual lalu diimport kembali.</p>
                         <button type="button" onclick="app.exportTemplate()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-file-excel"></i> Download Template (.xlsx)
                         </button>
@@ -497,7 +576,7 @@
                     <div id="import-picker" class="bg-slate-100 border-2 border-dashed border-slate-400 rounded-xl p-6 text-center hover:border-indigo-500 transition">
                         <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-600 mb-2"></i>
                         <p class="text-sm font-semibold text-slate-800 mb-1">Pilih File Excel untuk diimport</p>
-                        <p class="text-xs text-slate-500 mb-3">Format: .xlsx, .xls (maks 10 MB) • importer v3</p>
+                        <p class="text-xs text-slate-500 mb-3">Format: .xlsx, .xls (maks 10 MB)</p>
                         <label class="inline-flex bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-sm items-center justify-center gap-2 cursor-pointer">
                             <i class="fa-solid fa-folder-open"></i> Pilih File
                             <input type="file" id="excel-file-input" accept=".xlsx, .xls" onchange="app.handleFileSelect(event)" class="hidden">
@@ -720,52 +799,21 @@
         // EXCEL STYLES
         // ============================================================
         const EXCEL_STYLES = {
-            title: {
-                font: { bold: true, color: { rgb: "000000" }, sz: 14, name: "Calibri" },
-                fill: { patternType: "solid", fgColor: { rgb: "00B050" } },
-                alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                border: { top:{style:"thin",color:{rgb:"000000"}}, bottom:{style:"thin",color:{rgb:"000000"}}, left:{style:"thin",color:{rgb:"000000"}}, right:{style:"thin",color:{rgb:"000000"}} }
-            },
-            header: {
-                font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11, name: "Calibri" },
-                fill: { patternType: "solid", fgColor: { rgb: "4F46E5" } },
-                alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                border: { top:{style:"thin",color:{rgb:"312E81"}}, bottom:{style:"thin",color:{rgb:"312E81"}}, left:{style:"thin",color:{rgb:"312E81"}}, right:{style:"thin",color:{rgb:"312E81"}} }
-            },
-            cellBase: {
-                font: { sz: 10, name: "Calibri", color: { rgb: "1E293B" } },
-                alignment: { vertical: "center", wrapText: true },
-                border: { top:{style:"thin",color:{rgb:"CBD5E1"}}, bottom:{style:"thin",color:{rgb:"CBD5E1"}}, left:{style:"thin",color:{rgb:"CBD5E1"}}, right:{style:"thin",color:{rgb:"CBD5E1"}} }
-            },
-            statusOK: {
-                font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
-                fill: { patternType: "solid", fgColor: { rgb: "059669" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: { top:{style:"thin",color:{rgb:"047857"}}, bottom:{style:"thin",color:{rgb:"047857"}}, left:{style:"thin",color:{rgb:"047857"}}, right:{style:"thin",color:{rgb:"047857"}} }
-            },
-            statusNG: {
-                font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
-                fill: { patternType: "solid", fgColor: { rgb: "DC2626" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: { top:{style:"thin",color:{rgb:"B91C1C"}}, bottom:{style:"thin",color:{rgb:"B91C1C"}}, left:{style:"thin",color:{rgb:"B91C1C"}}, right:{style:"thin",color:{rgb:"B91C1C"}} }
-            },
-            statusPENDING: {
-                font: { bold: true, sz: 10, color: { rgb: "FFFFFF" }, name: "Calibri" },
-                fill: { patternType: "solid", fgColor: { rgb: "64748B" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: { top:{style:"thin",color:{rgb:"475569"}}, bottom:{style:"thin",color:{rgb:"475569"}}, left:{style:"thin",color:{rgb:"475569"}}, right:{style:"thin",color:{rgb:"475569"}} }
-            },
-            cellX: {
-                font: { bold: true, sz: 10, name: "Calibri", color: { rgb: "C00000" } },
-                fill: { patternType: "solid", fgColor: { rgb: "FFC7CE" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: { top:{style:"thin",color:{rgb:"CBD5E1"}}, bottom:{style:"thin",color:{rgb:"CBD5E1"}}, left:{style:"thin",color:{rgb:"CBD5E1"}}, right:{style:"thin",color:{rgb:"CBD5E1"}} }
-            },
-            centerCell: { alignment: { horizontal: "center", vertical: "center" } }
+            title: { font:{bold:true,color:{rgb:"000000"},sz:14,name:"Calibri"}, fill:{patternType:"solid",fgColor:{rgb:"00B050"}}, alignment:{horizontal:"center",vertical:"center",wrapText:true}, border:{top:{style:"thin",color:{rgb:"000000"}},bottom:{style:"thin",color:{rgb:"000000"}},left:{style:"thin",color:{rgb:"000000"}},right:{style:"thin",color:{rgb:"000000"}}} },
+            header: { font:{bold:true,color:{rgb:"FFFFFF"},sz:11,name:"Calibri"}, fill:{patternType:"solid",fgColor:{rgb:"4F46E5"}}, alignment:{horizontal:"center",vertical:"center",wrapText:true}, border:{top:{style:"thin",color:{rgb:"312E81"}},bottom:{style:"thin",color:{rgb:"312E81"}},left:{style:"thin",color:{rgb:"312E81"}},right:{style:"thin",color:{rgb:"312E81"}}} },
+            cellBase: { font:{sz:10,name:"Calibri",color:{rgb:"1E293B"}}, alignment:{vertical:"center",wrapText:true}, border:{top:{style:"thin",color:{rgb:"CBD5E1"}},bottom:{style:"thin",color:{rgb:"CBD5E1"}},left:{style:"thin",color:{rgb:"CBD5E1"}},right:{style:"thin",color:{rgb:"CBD5E1"}}} },
+            statusOK: { font:{bold:true,sz:10,color:{rgb:"FFFFFF"},name:"Calibri"}, fill:{patternType:"solid",fgColor:{rgb:"059669"}}, alignment:{horizontal:"center",vertical:"center"}, border:{top:{style:"thin",color:{rgb:"047857"}},bottom:{style:"thin",color:{rgb:"047857"}},left:{style:"thin",color:{rgb:"047857"}},right:{style:"thin",color:{rgb:"047857"}}} },
+            statusNG: { font:{bold:true,sz:10,color:{rgb:"FFFFFF"},name:"Calibri"}, fill:{patternType:"solid",fgColor:{rgb:"DC2626"}}, alignment:{horizontal:"center",vertical:"center"}, border:{top:{style:"thin",color:{rgb:"B91C1C"}},bottom:{style:"thin",color:{rgb:"B91C1C"}},left:{style:"thin",color:{rgb:"B91C1C"}},right:{style:"thin",color:{rgb:"B91C1C"}}} },
+            statusPENDING: { font:{bold:true,sz:10,color:{rgb:"FFFFFF"},name:"Calibri"}, fill:{patternType:"solid",fgColor:{rgb:"64748B"}}, alignment:{horizontal:"center",vertical:"center"}, border:{top:{style:"thin",color:{rgb:"475569"}},bottom:{style:"thin",color:{rgb:"475569"}},left:{style:"thin",color:{rgb:"475569"}},right:{style:"thin",color:{rgb:"475569"}}} },
+            cellX: { font:{bold:true,sz:10,name:"Calibri",color:{rgb:"C00000"}}, fill:{patternType:"solid",fgColor:{rgb:"FFC7CE"}}, alignment:{horizontal:"center",vertical:"center"}, border:{top:{style:"thin",color:{rgb:"CBD5E1"}},bottom:{style:"thin",color:{rgb:"CBD5E1"}},left:{style:"thin",color:{rgb:"CBD5E1"}},right:{style:"thin",color:{rgb:"CBD5E1"}}} },
+            centerCell: { alignment:{horizontal:"center",vertical:"center"} }
         };
 
         window.IETrialApp = class IETrialApp {
             constructor() {
+                // ============================================================
+                // SESSION ID
+                // ============================================================
                 this.sessionId = sessionStorage.getItem('ie_session_id');
                 if (!this.sessionId) {
                     this.sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
@@ -781,10 +829,20 @@
                 this.registry = this.loadRegistry();
 
                 this.legacyStorageKey = 'ie_trial_tracker_final_v1';
-                this.legacyFilesKey = 'ie_trial_files_v1';
 
-                this.syncUrlKey = `${this.baseKey}_sync_url_v1`;
-                this.syncEndpoint = localStorage.getItem(this.syncUrlKey) || '';
+                // ============================================================
+                // FIREBASE CONFIG
+                // ============================================================
+                this.fbConfigKey = `${this.baseKey}_firebase_config`;
+                this.fbRootKey = `${this.baseKey}_firebase_root`;
+                this.fbConfig = null;
+                this.fbRootPath = localStorage.getItem(this.fbRootKey) || 'ie_trial_tracker';
+                this.fbApp = null;
+                this.fbDb = null;
+                this.fbConnected = false;
+                this.fbListeners = {}; // ref per workspace
+                this._fbSaveTimer = null;
+                this._fbPullingFromServer = false;
 
                 this.trials = [];
                 this.files = [];
@@ -803,6 +861,8 @@
                     this.updateSessionBar();
                     this.updateDisplayLineModel();
                     this.render();
+                    // Init Firebase (dari config yang tersimpan)
+                    this.initFirebase();
                     if (!this.getLine() && !this.getModel()) {
                         this.openSetupModal();
                     }
@@ -813,6 +873,320 @@
                 }
             }
 
+            // ============================================================
+            // FIREBASE INTEGRATION
+            // ============================================================
+            initFirebase() {
+                try {
+                    const saved = localStorage.getItem(this.fbConfigKey);
+                    if (!saved) {
+                        this.updateFirebaseUI('disconnected', 'Firebase belum di-setup. Klik ikon ⚙️ Sync.');
+                        return;
+                    }
+                    this.fbConfig = JSON.parse(saved);
+                    if (!this.fbConfig.databaseURL) {
+                        this.updateFirebaseUI('error', 'Config tidak valid: databaseURL tidak ada.');
+                        return;
+                    }
+                    if (typeof firebase === 'undefined') {
+                        this.updateFirebaseUI('error', 'Firebase SDK belum loaded.');
+                        return;
+                    }
+                    // Prevent duplicate app init
+                    try {
+                        if (firebase.apps && firebase.apps.length > 0) {
+                            this.fbApp = firebase.app();
+                        } else {
+                            this.fbApp = firebase.initializeApp(this.fbConfig);
+                        }
+                    } catch (e) {
+                        // Jika app sudah ada dengan nama lain, ambil yang existing
+                        this.fbApp = firebase.app();
+                    }
+                    this.fbDb = firebase.database();
+                    this.fbConnected = true;
+
+                    // Test koneksi
+                    this.fbDb.ref('.info/connected').on('value', (snap) => {
+                        const connected = snap.val() === true;
+                        if (connected) {
+                            this.updateFirebaseUI('connected', `Terhubung ke Firebase (root: ${this.fbRootPath})`);
+                            // Attach listener untuk workspace saat ini
+                            this.attachFirebaseListener();
+                            // Pull initial
+                            this.pullFromFirebase(true);
+                        } else {
+                            this.updateFirebaseUI('offline', 'Firebase offline — akan sync saat online.');
+                        }
+                    });
+
+                    console.log('✅ Firebase initialized. Root:', this.fbRootPath);
+                } catch (e) {
+                    console.error('Firebase init error:', e);
+                    this.updateFirebaseUI('error', 'Gagal init Firebase: ' + e.message);
+                }
+            }
+
+            updateFirebaseUI(status, text) {
+                const dot = document.getElementById('fb-status-dot');
+                const title = document.getElementById('fb-status-title');
+                const desc = document.getElementById('fb-status-desc');
+                const ind = document.getElementById('firebase-indicator');
+                const txt = document.getElementById('firebase-text');
+
+                const map = {
+                    connected: { dot: 'online', color: 'text-emerald-600', icon: 'fa-cloud', label: 'Firebase: Online' },
+                    offline: { dot: 'offline', color: 'text-amber-600', icon: 'fa-cloud', label: 'Firebase: Offline' },
+                    error: { dot: 'error', color: 'text-rose-600', icon: 'fa-cloud', label: 'Firebase: Error' },
+                    disconnected: { dot: 'offline', color: 'text-slate-500', icon: 'fa-cloud', label: 'Firebase: Off' }
+                };
+                const m = map[status] || map.disconnected;
+
+                if (dot) dot.className = 'sync-dot ' + m.dot;
+                if (title) {
+                    title.innerText = status === 'connected' ? 'Terhubung' 
+                        : status === 'error' ? 'Error' 
+                        : status === 'offline' ? 'Offline' 
+                        : 'Belum Terhubung';
+                }
+                if (desc) desc.innerText = text || '';
+                if (ind) ind.className = 'inline-flex items-center gap-1 ' + m.color + ' font-semibold';
+                if (txt) txt.innerText = m.label;
+
+                // Update icon
+                const icon = ind ? ind.querySelector('i') : null;
+                if (icon) icon.className = 'fa-solid ' + m.icon + ' text-[10px]';
+            }
+
+            getFirebaseWorkspacePath(line, model) {
+                const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
+                const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
+                return `${this.fbRootPath}/workspaces/${l}__${m}`;
+            }
+
+            attachFirebaseListener() {
+                if (!this.fbConnected || !this.fbDb) return;
+                const key = this.storageKey;
+                // Detach old listener jika ada
+                if (this.fbListeners[key]) {
+                    try { this.fbListeners[key].off(); } catch(e){}
+                }
+                const path = this.getFirebaseWorkspacePath(this.getLine(), this.getModel());
+                const ref = this.fbDb.ref(path);
+                this.fbListeners[key] = ref;
+
+                ref.on('value', (snap) => {
+                    // Jika sedang pull manual, skip auto-apply
+                    if (this._fbPullingFromServer) return;
+                    const data = snap.val();
+                    if (!data || !data.trials) return;
+
+                    // Cek timestamp — apakah server lebih baru?
+                    const serverTs = data.updatedAt || 0;
+                    const localTs = parseInt(localStorage.getItem(this.storageKey + '_ts') || '0', 10);
+
+                    // Skip jika data sama (dari push sendiri)
+                    if (data.sessionId === this.sessionId && serverTs <= localTs + 1000) return;
+
+                    // Cek apakah server lebih baru dari local
+                    if (serverTs > localTs) {
+                        console.log(`📥 Firebase update: server ts=${serverTs}, local ts=${localTs}`);
+                        this.applyFirebaseData(data, true);
+                    }
+                });
+                console.log(`👂 Firebase listener attached: ${path}`);
+            }
+
+            applyFirebaseData(data, showToast) {
+                try {
+                    if (!data || !Array.isArray(data.trials)) return;
+                    // Cek apakah user sedang edit — jangan override form yang belum di-save
+                    const dirty = this._isFormDirty();
+                    if (dirty) {
+                        console.log('⚠️ Form dirty — skip apply, user perlu refresh');
+                        if (showToast) this.showToast('⚠️ Data server berbeda, tapi Anda sedang edit. Save dulu.', 'warning');
+                        return;
+                    }
+                    this.trials = data.trials.map(r => this.sanitizeRecord(r));
+                    this.currentIndex = Math.min(this.currentIndex, Math.max(0, this.trials.length - 1));
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.trials));
+                    localStorage.setItem(this.storageKey + '_ts', String(data.updatedAt || Date.now()));
+                    this.render();
+                    if (showToast) {
+                        this.showToast(`📥 Data dari server dimuat (${data.trials.length} SOP, oleh ${data.sessionId ? data.sessionId.substring(5, 13) : 'unknown'}).`, 'info');
+                    }
+                } catch (e) {
+                    console.error('applyFirebaseData error:', e);
+                }
+            }
+
+            _isFormDirty() {
+                try {
+                    const trial = this.getCurrentTrial();
+                    if (!trial) return false;
+                    const el = (id) => document.getElementById(id);
+                    const name = el('input-sop-name') ? el('input-sop-name').value : '';
+                    const problem = el('input-problem') ? el('input-problem').value : '';
+                    const solution = el('input-solution') ? el('input-solution').value : '';
+                    const pic = el('input-pic') ? el('input-pic').value : '';
+                    // Bandingkan dengan trial yang tersimpan
+                    if ((trial.name || '') !== name) return true;
+                    if ((trial.problem || '') !== problem) return true;
+                    if ((trial.solution || '') !== solution) return true;
+                    if ((trial.pic || '') !== pic) return true;
+                    return false;
+                } catch (e) { return false; }
+            }
+
+            pushToFirebase(debounced = true) {
+                if (!this.fbConnected || !this.fbDb) return;
+                if (debounced) {
+                    if (this._fbSaveTimer) clearTimeout(this._fbSaveTimer);
+                    this._fbSaveTimer = setTimeout(() => this._doPushToFirebase(), 800);
+                } else {
+                    this._doPushToFirebase();
+                }
+            }
+
+            async _doPushToFirebase() {
+                if (!this.fbConnected || !this.fbDb) return;
+                try {
+                    this.collectFormToCurrentTrial();
+                    const path = this.getFirebaseWorkspacePath(this.getLine(), this.getModel());
+                    const now = Date.now();
+                    const payload = {
+                        line: this.getLine(),
+                        model: this.getModel(),
+                        trials: this.trials,
+                        sessionId: this.sessionId,
+                        updatedAt: now,
+                        updatedAtISO: new Date(now).toISOString()
+                    };
+                    await this.fbDb.ref(path).set(payload);
+                    localStorage.setItem(this.storageKey + '_ts', String(now));
+                    // Clear pending
+                    this.pendingSync.count = 0;
+                    localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                    this.updateConnectionUI();
+                    console.log(`☁️ Pushed to Firebase: ${path} (${this.trials.length} SOP)`);
+                } catch (e) {
+                    console.error('Firebase push error:', e);
+                    this.pendingSync.count = (this.pendingSync.count || 0) + 1;
+                    localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                    this.updateConnectionUI();
+                }
+            }
+
+            async pullFromFirebase(showToast) {
+                if (!this.fbConnected || !this.fbDb) {
+                    if (showToast) this.showToast('Firebase belum terhubung.', 'error');
+                    return;
+                }
+                try {
+                    this._fbPullingFromServer = true;
+                    const path = this.getFirebaseWorkspacePath(this.getLine(), this.getModel());
+                    const snap = await this.fbDb.ref(path).once('value');
+                    const data = snap.val();
+                    this._fbPullingFromServer = false;
+                    if (!data || !data.trials) {
+                        if (showToast) this.showToast('Belum ada data di Firebase untuk workspace ini.', 'info');
+                        return;
+                    }
+                    this.applyFirebaseData(data, showToast);
+                    if (showToast) this.showToast(`✅ Data dari Firebase dimuat (${data.trials.length} SOP).`, 'success');
+                } catch (e) {
+                    this._fbPullingFromServer = false;
+                    console.error('Firebase pull error:', e);
+                    if (showToast) this.showToast('Gagal pull: ' + e.message, 'error');
+                }
+            }
+
+            async pushToFirebaseManual() {
+                if (!this.fbConnected) {
+                    this.showToast('Firebase belum terhubung. Setup dulu di ⚙️ Sync.', 'error');
+                    return;
+                }
+                await this._doPushToFirebase();
+                this.showToast('✅ Data berhasil di-push ke Firebase.', 'success');
+            }
+
+            openFirebaseSettings() {
+                const el = (id) => document.getElementById(id);
+                const saved = localStorage.getItem(this.fbConfigKey);
+                if (saved && el('fb-config-input')) {
+                    try {
+                        el('fb-config-input').value = JSON.stringify(JSON.parse(saved), null, 2);
+                    } catch(e) { el('fb-config-input').value = saved; }
+                }
+                if (el('fb-root-input')) el('fb-root-input').value = this.fbRootPath;
+                // Update status box
+                if (this.fbConnected) {
+                    this.updateFirebaseUI('connected', `Terhubung ke Firebase (root: ${this.fbRootPath})`);
+                } else {
+                    this.updateFirebaseUI('disconnected', 'Belum terhubung. Isi config di bawah.');
+                }
+                const modal = document.getElementById('modal-firebase');
+                if (modal) modal.classList.remove('hidden');
+            }
+
+            saveFirebaseConfig() {
+                const el = (id) => document.getElementById(id);
+                const raw = el('fb-config-input') ? el('fb-config-input').value.trim() : '';
+                const root = el('fb-root-input') ? el('fb-root-input').value.trim() : 'ie_trial_tracker';
+                if (!raw) {
+                    this.showToast('Firebase config tidak boleh kosong.', 'error');
+                    return;
+                }
+                let cfg;
+                try {
+                    cfg = JSON.parse(raw);
+                } catch (e) {
+                    this.showToast('Config bukan JSON valid: ' + e.message, 'error');
+                    return;
+                }
+                if (!cfg.databaseURL) {
+                    this.showToast('Config harus punya "databaseURL".', 'error');
+                    return;
+                }
+                if (!cfg.apiKey) {
+                    this.showToast('Config harus punya "apiKey".', 'error');
+                    return;
+                }
+                try {
+                    localStorage.setItem(this.fbConfigKey, JSON.stringify(cfg));
+                    localStorage.setItem(this.fbRootKey, root || 'ie_trial_tracker');
+                    this.fbRootPath = root || 'ie_trial_tracker';
+                    this.showToast('✅ Config disimpan. Menghubungkan...', 'success');
+                    // Reinit
+                    setTimeout(() => {
+                        location.reload();
+                    }, 800);
+                } catch (e) {
+                    this.showToast('Gagal simpan: ' + e.message, 'error');
+                }
+            }
+
+            disconnectFirebase() {
+                if (!confirm('Putuskan koneksi Firebase? Data lokal tetap ada.')) return;
+                try {
+                    if (this.fbDb) this.fbDb.ref('.info/connected').off();
+                    Object.values(this.fbListeners).forEach(ref => {
+                        try { ref.off(); } catch(e){}
+                    });
+                    this.fbListeners = {};
+                    localStorage.removeItem(this.fbConfigKey);
+                    this.fbConnected = false;
+                    this.updateFirebaseUI('disconnected', 'Firebase config dihapus.');
+                    this.showToast('Firebase diputuskan.', 'success');
+                    setTimeout(() => location.reload(), 800);
+                } catch (e) {
+                    this.showToast('Gagal putus: ' + e.message, 'error');
+                }
+            }
+
+            // ============================================================
+            // STORAGE KEY
+            // ============================================================
             getWorkspaceKey(line, model) {
                 const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
                 const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
@@ -853,7 +1227,6 @@
                     sessionId: this.sessionId,
                     lastActive: new Date().toISOString(),
                     totalSop: this.trials.length,
-                    // ✅ Simpan preview isi SOP biar user tahu isinya beda
                     preview: this.trials.slice(0, 2).map(t => t.name).filter(Boolean)
                 };
                 if (existing >= 0) this.registry[existing] = entry;
@@ -872,7 +1245,6 @@
                         };
                     } catch (e) { console.warn('BroadcastChannel error:', e); }
                 }
-
                 this._storageListener = (e) => {
                     if (!e.key || !e.newValue) return;
                     if (e.key.includes(this.sessionId)) return;
@@ -909,13 +1281,6 @@
                         warn.classList.add('hidden');
                         warn.classList.remove('flex');
                     }, 5000);
-                }
-
-                const currentKey = this.storageKey;
-                if (data.key === currentKey) {
-                    this.showToast('⚠️ Tab lain mengubah workspace ini. Reload disarankan.', 'warning');
-                } else if (data.type === 'WORKSPACE_UPDATED') {
-                    this.showToast('ℹ️ Tab lain memperbarui workspace lain. Data Anda aman.', 'info');
                 }
             }
 
@@ -987,6 +1352,11 @@
                 const modal = document.getElementById('modal-setup');
                 if (modal) modal.classList.add('hidden');
                 this.showToast(`✅ Workspace ${line} / ${model} siap.`, 'success');
+                // Attach Firebase listener + pull
+                if (this.fbConnected) {
+                    this.attachFirebaseListener();
+                    this.pullFromFirebase(false);
+                }
             }
 
             switchWorkspace() {
@@ -1013,7 +1383,7 @@
                     const text = el('switch-workspace-info-text');
                     if (found && info && text) {
                         info.classList.remove('hidden');
-                        text.innerHTML = `Workspace <b>${this.escapeHtml(found.line)} / ${this.escapeHtml(found.model)}</b> sudah pernah dibuka (${found.totalSop} SOP, terakhir: ${new Date(found.lastActive).toLocaleString('id-ID')}).`;
+                        text.innerHTML = `Workspace <b>${this.escapeHtml(found.line)} / ${this.escapeHtml(found.model)}</b> sudah pernah dibuka (${found.totalSop} SOP).`;
                     } else if (info) {
                         info.classList.add('hidden');
                     }
@@ -1053,10 +1423,10 @@
                                 </div>
                             </div>
                         </button>
-                        <button type="button" class="shrink-0 bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 p-1.5 rounded-md transition" data-action="edit" title="Edit">
+                        <button type="button" class="shrink-0 bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 p-1.5 rounded-md transition" data-action="edit">
                             <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                         </button>
-                        <button type="button" class="shrink-0 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-1.5 rounded-md transition" data-action="delete" title="Hapus">
+                        <button type="button" class="shrink-0 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-1.5 rounded-md transition" data-action="delete">
                             <i class="fa-solid fa-trash-can text-[10px]"></i>
                         </button>
                     `;
@@ -1079,9 +1449,6 @@
                 });
             }
 
-            // ============================================================
-            // EDIT WORKSPACE
-            // ============================================================
             openEditWorkspace(key) {
                 const w = this.registry.find(x => x.key === key);
                 if (!w) { this.showToast('Workspace tidak ditemukan.', 'error'); return; }
@@ -1108,16 +1475,13 @@
                     this.closeModals();
                     return;
                 }
-                // Cek konflik
                 if (localStorage.getItem(newKey)) {
                     if (!confirm(`Workspace "${newLine} / ${newModel}" sudah ada.\n\nTimpa data lama?`)) return;
                 }
                 try {
-                    // Pindahkan data dari oldKey ke newKey
                     const data = localStorage.getItem(oldKey);
                     if (data) localStorage.setItem(newKey, data);
                     localStorage.removeItem(oldKey);
-                    // Update registry
                     const idx = this.registry.findIndex(x => x.key === oldKey);
                     if (idx >= 0) {
                         this.registry[idx].key = newKey;
@@ -1128,7 +1492,7 @@
                     }
                     this.showToast(`✅ Workspace diubah menjadi ${newLine} / ${newModel}`, 'success');
                     this.closeModals();
-                    this.switchWorkspace(); // refresh
+                    this.switchWorkspace();
                 } catch (e) {
                     console.error('Edit workspace error:', e);
                     this.showToast('Gagal edit workspace: ' + e.message, 'error');
@@ -1168,25 +1532,24 @@
                     }
 
                     this.collectFormToCurrentTrial();
+                    // Detach listener workspace lama
                     const oldKey = this.storageKey;
+                    if (this.fbListeners[oldKey]) {
+                        try { this.fbListeners[oldKey].off(); } catch(e){}
+                        delete this.fbListeners[oldKey];
+                    }
                     this.saveToStorage(false);
-                    console.log(`💾 Saved old: ${oldKey}`);
 
-                    // ✅ Set line/model baru DULU
                     this.setLine(newLine);
                     this.setModel(newModel);
                     this.updateDisplayLineModel();
-
-                    // ✅ RESET trials + currentIndex — WAJIB!
                     this.trials = [];
                     this.currentIndex = 0;
 
-                    // ✅ Cek apakah workspace baru sudah ada data
                     const newKey = this.storageKey;
                     const existingData = localStorage.getItem(newKey);
                     const isExisting = !!existingData;
 
-                    // ✅ Load — jika kosong akan load default (workspace baru)
                     this.loadWorkspaceData();
                     this.registerWorkspace(newLine, newModel);
                     this.saveToStorage(false);
@@ -1194,8 +1557,13 @@
                     this.closeModals();
                     this.updateFilesBadge();
 
+                    // Attach Firebase listener untuk workspace baru + pull
+                    if (this.fbConnected) {
+                        this.attachFirebaseListener();
+                        this.pullFromFirebase(false);
+                    }
+
                     const sopCount = this.trials.length;
-                    console.log(`✅ Switched: ${oldKey} → ${newKey} (${sopCount} SOP, existing: ${isExisting})`);
                     this.showToast(
                         isExisting 
                             ? `✅ Workspace "${newLine || '-'} / ${newModel || '-'}" dimuat (${sopCount} SOP).`
@@ -1219,7 +1587,6 @@
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             this.trials = parsed.map(r => this.sanitizeRecord(r));
                             loaded = true;
-                            console.log(`📂 Loaded: ${key} (${this.trials.length} SOP)`);
                         }
                     }
                 } catch (e) { console.warn('Load error:', e); }
@@ -1236,7 +1603,6 @@
                                     this.trials = parsed.map(r => this.sanitizeRecord(r));
                                     loaded = true;
                                     localStorage.setItem('ie_trial_legacy_migrated_v1', '1');
-                                    console.log('📦 Migrasi legacy');
                                     this.saveToStorage(false);
                                 }
                             }
@@ -1245,7 +1611,6 @@
                 }
 
                 if (!loaded) {
-                    // ✅ Workspace baru — buat data default DENGAN nama yang mencerminkan line/model
                     const lineName = this.getLine() || 'Tanpa Line';
                     const modelName = this.getModel() || 'Tanpa Model';
                     this.trials = [
@@ -1262,7 +1627,6 @@
                             status: 'PENDING', problem: '', solution: '', pic: '', duedate: ''
                         })
                     ];
-                    console.log(`✨ New workspace: ${key}`);
                     this.saveToStorage(false);
                 }
             }
@@ -1292,6 +1656,8 @@
                     this.markPending();
                     this.registerWorkspace(this.getLine(), this.getModel());
                     this.broadcastChange('DATA_UPDATED', { totalSop: this.trials.length });
+                    // ✅ Push ke Firebase (debounced)
+                    if (this.fbConnected) this.pushToFirebase(true);
                 } catch (e) { console.error('Save error:', e); }
             }
 
@@ -1324,14 +1690,13 @@
                 this.updateConnectionUI();
                 window.addEventListener('online', () => {
                     this.updateConnectionUI();
-                    this.showToast('🌐 Internet tersambung. Sinkronisasi...', 'success');
-                    setTimeout(() => this.syncNow(true), 800);
+                    this.showToast('🌐 Internet tersambung.', 'success');
+                    if (this.fbConnected) this.pushToFirebase(false);
                 });
                 window.addEventListener('offline', () => {
                     this.updateConnectionUI();
-                    this.showToast('📵 Mode Offline. Data disimpan di HP.', 'warning');
+                    this.showToast('📵 Mode Offline.', 'warning');
                 });
-                setInterval(() => { if (navigator.onLine) this.syncNow(false); }, 30000);
             }
 
             updateConnectionUI() {
@@ -1365,51 +1730,17 @@
                 this.updateConnectionUI();
             }
 
-            async syncNow(showNotif = true) {
+            async syncNow() {
+                if (!this.fbConnected) {
+                    this.showToast('Firebase belum terhubung. Setup di ⚙️ Sync.', 'error');
+                    this.openFirebaseSettings();
+                    return;
+                }
                 if (!navigator.onLine) {
-                    if (showNotif) this.showToast('📵 Tidak ada internet. Data tersimpan lokal.', 'warning');
+                    this.showToast('📵 Tidak ada internet.', 'warning');
                     return;
                 }
-                if (!this.syncEndpoint) {
-                    if (this.pendingSync.count > 0) {
-                        this.pendingSync.count = 0;
-                        this.pendingSync.lastAttempt = new Date().toISOString();
-                        localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
-                        this.updateConnectionUI();
-                        const info = document.getElementById('files-info-text');
-                        if (info) info.innerText = '✅ Data lokal tersinkron.';
-                        if (showNotif) this.showToast('✅ Sinkronisasi selesai.', 'success');
-                    } else if (showNotif) {
-                        this.showToast('✅ Semua data sudah tersinkron.', 'info');
-                    }
-                    return;
-                }
-                try {
-                    const payload = {
-                        sessionId: this.sessionId,
-                        workspaceKey: this.storageKey,
-                        trials: this.trials,
-                        files: this.files,
-                        line: this.getLine(),
-                        model: this.getModel(),
-                        timestamp: new Date().toISOString()
-                    };
-                    const res = await fetch(this.syncEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    this.pendingSync.count = 0;
-                    this.pendingSync.lastAttempt = new Date().toISOString();
-                    localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
-                    this.updateConnectionUI();
-                    const info = document.getElementById('files-info-text');
-                    if (info) info.innerText = '✅ Tersinkron ke server pada ' + new Date().toLocaleTimeString('id-ID');
-                    if (showNotif) this.showToast('✅ Sinkronisasi berhasil.', 'success');
-                } catch (e) {
-                    if (showNotif) this.showToast('⚠️ Sinkronisasi gagal: ' + e.message, 'error');
-                }
+                await this.pullFromFirebase(true);
             }
 
             normalizeCheck(val) {
@@ -1472,7 +1803,7 @@
                     { name: "Pengecekan battery cover", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
                     { name: "Pasang lensa kamera belakang", sop_check: "√", fixture: "-", parameter: "-", equipment: "√", machine: "-", layout: "√", status: "OK", problem: "", solution: "", pic: "", duedate: "" },
                     { name: "Pressing lensa", sop_check: "√", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.", solution: "Tambahkan perlengkapan cleansed & update SOP", pic: "Ahmad", duedate: new Date().toISOString().split('T')[0] },
-                    { name: "Pre-instalasi Kamera", sop_check: "X", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Aktual SOP tidak ada perlengkapan cleansed.\n- Jumlah PC aktual 2\n- Cancel material C board", solution: "Revisi SOP sesuai aktual", pic: "Budi", duedate: new Date().toISOString().split('T')[0] }
+                    { name: "Pre-instalasi Kamera", sop_check: "X", fixture: "√", parameter: "√", equipment: "X", machine: "√", layout: "√", status: "NG", problem: "Revisi SOP", solution: "Update", pic: "Budi", duedate: new Date().toISOString().split('T')[0] }
                 ];
             }
 
@@ -1610,8 +1941,6 @@
                     this.renderStatusBtn(trial.status);
                     this.updateAutoNgHint(trial);
                     this.saveToStorage(true);
-                    if (next === 'X') this.showToast('Checklist ditandai X — status otomatis NG.', 'error');
-                    else if (autoOk) this.showToast('Semua checklist √ — status otomatis OK (Pass).', 'success');
                 } catch (e) { console.error(e); }
             }
 
@@ -1704,7 +2033,6 @@
                     this.saveFiles();
                     this.updateFilesBadge();
                     this.markPending();
-                    this.syncNow(false);
 
                     setTimeout(() => {
                         if (confirm('✅ Trial sudah tersimpan sebagai file.\n\nMulai trial baru? (SOP akan direset ke default)')) {
@@ -1927,9 +2255,6 @@
                 c.innerHTML = this.files.map(f => {
                     const dateObj = new Date(f.createdAt);
                     const dateStr = dateObj.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                    const syncBadge = f.synced
-                        ? '<span class="text-[9px] bg-emerald-100 text-emerald-600 border border-emerald-300 px-1.5 py-0.5 rounded font-bold">✅ SINKRON</span>'
-                        : '<span class="text-[9px] bg-amber-100 text-amber-600 border border-amber-300 px-1.5 py-0.5 rounded font-bold">⏳ PENDING</span>';
                     const isCurrentSession = f.sessionId === this.sessionId;
                     const sessionBadge = isCurrentSession
                         ? '<span class="text-[9px] bg-indigo-100 text-indigo-600 border border-indigo-300 px-1.5 py-0.5 rounded font-bold">📌 SESI INI</span>'
@@ -1946,7 +2271,6 @@
                                             <i class="fa-solid fa-mobile-screen"></i> ${this.escapeHtml(f.model)}
                                         </span>
                                         ${sessionBadge}
-                                        ${syncBadge}
                                     </div>
                                     <p class="text-sm font-semibold text-slate-900 truncate">${this.escapeHtml(f.name)}</p>
                                     <p class="text-[10px] text-slate-500 mt-0.5">${dateStr}</p>
@@ -2058,7 +2382,7 @@
 
             closeModals() {
                 try {
-                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files', 'modal-switch', 'modal-edit-ws'].forEach(id => {
+                    ['modal-jump', 'modal-excel', 'modal-add', 'modal-delete', 'modal-files', 'modal-switch', 'modal-edit-ws', 'modal-firebase'].forEach(id => {
                         const m = document.getElementById(id);
                         if (m) m.classList.add('hidden');
                     });
@@ -2438,11 +2762,9 @@
         function initApp() {
             try {
                 if (typeof XLSX === 'undefined') console.warn('SheetJS belum loaded.');
-                else console.log('✅ SheetJS version:', XLSX.version);
+                if (typeof firebase === 'undefined') console.warn('Firebase SDK belum loaded.');
                 window.app = new window.IETrialApp();
                 console.log('✅ IE Trial App berhasil diinisialisasi.');
-                console.log('🆔 Session ID:', window.app.sessionId);
-                console.log('🔑 Workspace key:', window.app.storageKey);
             } catch (e) {
                 console.error('❌ Gagal inisialisasi:', e);
                 alert('Terjadi error saat memuat aplikasi.\n\nDetail: ' + e.message);
