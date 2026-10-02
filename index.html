@@ -4364,9 +4364,55 @@ function switchLineModelTab(tab) {
 
         // 2. Susun Data & Grouping
         const merges = [];
+        const groupInfo = []; // Info baris awal & akhir setiap grup
         let currentRow = 2;
 
-        if (currentMode === 'elemen') {
+        // ==================== MODE MESIN ====================
+        if (currentMode === 'mesin') {
+            const gr = {};
+            const go = [];
+            dE.forEach(i => {
+                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
+                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [] }; go.push(k); }
+                gr[k].rows.push(i);
+            });
+            go.sort((a,b) => {
+                const l = String(gr[a].line||'').localeCompare(String(gr[b].line||''), undefined, {numeric:true});
+                if (l !== 0) return l;
+                return String(gr[a].no||'').localeCompare(String(gr[b].no||''), undefined, {numeric:true});
+            });
+
+            go.forEach(k => {
+                const g = gr[k];
+                const startRow = currentRow;
+                g.rows.forEach((i, idx) => {
+                    const row = [];
+                    if (idx === 0) row.push(i.line, i.model || '-', i.no, i.process);
+                    else row.push('', '', '', '');
+                    row.push(i.subMachine || '', (i.laps||[]).length);
+                    for (let x = 0; x < mL; x++) {
+                        const lv = i.laps[x];
+                        if (lv !== undefined && lv !== null) {
+                            const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
+                            row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
+                        } else row.push('');
+                    }
+                    row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1, null);
+                    wsData.push(row);
+                    currentRow++;
+                });
+                const endRow = currentRow - 1;
+                if (g.rows.length > 1) {
+                    merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } }); // Line
+                    merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } }); // Model
+                    merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } }); // No
+                    merges.push({ s: { r: startRow - 1, c: 3 }, e: { r: endRow - 1, c: 3 } }); // Nama Mesin
+                }
+                groupInfo.push({ startRow, endRow, group: g });
+            });
+        }
+        // ==================== MODE ELEMEN ====================
+        else if (currentMode === 'elemen') {
             const gr = {};
             const go = [];
             dE.forEach(i => {
@@ -4384,8 +4430,8 @@ function switchLineModelTab(tab) {
                     if (idx === 0) row.push(i.line, i.model || '-', i.noSop, i.namaSop);
                     else row.push('', '', '', '');
                     row.push(i.elemen, (i.laps||[]).length);
-                    for (let k = 0; k < mL; k++) {
-                        const lv = i.laps[k];
+                    for (let x = 0; x < mL; x++) {
+                        const lv = i.laps[x];
                         if (lv !== undefined && lv !== null) {
                             const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
                             row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
@@ -4395,15 +4441,18 @@ function switchLineModelTab(tab) {
                     wsData.push(row);
                     currentRow++;
                 });
+                const endRow = currentRow - 1;
                 if (g.rows.length > 1) {
-                    const endRow = currentRow - 1;
                     merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });
                     merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } });
                     merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } });
                     merges.push({ s: { r: startRow - 1, c: 3 }, e: { r: endRow - 1, c: 3 } });
                 }
+                groupInfo.push({ startRow, endRow, group: g });
             });
-        } else if (currentMode === 'siklus') {
+        }
+        // ==================== MODE SIKLUS ====================
+        else {
             const gr = {};
             const go = [];
             dE.forEach(i => {
@@ -4421,8 +4470,8 @@ function switchLineModelTab(tab) {
                     if (idx === 0) row.push(i.line, i.model || '-', i.noSop);
                     else row.push('', '', '');
                     row.push(i.namaSop, (i.laps||[]).length);
-                    for (let k = 0; k < mL; k++) {
-                        const lv = i.laps[k];
+                    for (let x = 0; x < mL; x++) {
+                        const lv = i.laps[x];
                         if (lv !== undefined && lv !== null) {
                             const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
                             row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
@@ -4432,49 +4481,13 @@ function switchLineModelTab(tab) {
                     wsData.push(row);
                     currentRow++;
                 });
+                const endRow = currentRow - 1;
                 if (g.rows.length > 1) {
-                    const endRow = currentRow - 1;
                     merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });
                     merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } });
                     merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } });
                 }
-            });
-        } else {
-            const gr = {};
-            const go = [];
-            dE.forEach(i => {
-                const k = `${i.line}||${i.model||'-'}||${i.no}||${i.process}`;
-                if (!gr[k]) { gr[k] = { line: i.line, model: i.model || '-', no: i.no, process: i.process, rows: [] }; go.push(k); }
-                gr[k].rows.push(i);
-            });
-            go.sort((a,b) => String(gr[a].no||'').localeCompare(String(gr[b].no||''), undefined, {numeric:true}));
-
-            go.forEach(k => {
-                const g = gr[k];
-                const startRow = currentRow;
-                g.rows.forEach((i, idx) => {
-                    const row = [];
-                    if (idx === 0) row.push(i.line, i.model || '-', i.no, i.process);
-                    else row.push('', '', '', '');
-                    row.push(i.subMachine || '', (i.laps||[]).length);
-                    for (let k = 0; k < mL; k++) {
-                        const lv = i.laps[k];
-                        if (lv !== undefined && lv !== null) {
-                            const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                            row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2)));
-                        } else row.push('');
-                    }
-                    row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1, null);
-                    wsData.push(row);
-                    currentRow++;
-                });
-                if (g.rows.length > 1) {
-                    const endRow = currentRow - 1;
-                    merges.push({ s: { r: startRow - 1, c: 0 }, e: { r: endRow - 1, c: 0 } });
-                    merges.push({ s: { r: startRow - 1, c: 1 }, e: { r: endRow - 1, c: 1 } });
-                    merges.push({ s: { r: startRow - 1, c: 2 }, e: { r: endRow - 1, c: 2 } });
-                    merges.push({ s: { r: startRow - 1, c: 3 }, e: { r: endRow - 1, c: 3 } });
-                }
+                groupInfo.push({ startRow, endRow, group: g });
             });
         }
 
@@ -4482,65 +4495,64 @@ function switchLineModelTab(tab) {
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         if (merges.length > 0) ws['!merges'] = merges;
 
-        // 4. Hitung Formula & Styling
-        const firstDataRow = 2;
-        const lastDataRow = firstDataRow + dE.length - 1;
+        // 4. Hitung Formula
         let s1Col, avgCol, allowCol, smhCol, totalSmhCol, opCol, uphCol;
-
         if (currentMode === 'elemen') { s1Col = 6; avgCol = 6 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; totalSmhCol = smhCol + 1; opCol = totalSmhCol + 1; uphCol = opCol + 1; }
         else if (currentMode === 'siklus') { s1Col = 5; avgCol = 5 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; totalSmhCol = smhCol + 1; opCol = totalSmhCol + 1; uphCol = opCol + 1; }
         else { s1Col = 6; avgCol = 6 + mL; }
 
-        const colLetter = (n) => XLSX.utils.encode_col(n);
-        const s1L = colLetter(s1Col);
-        const sLastL = colLetter(s1Col + mL - 1);
-        const avgL = colLetter(avgCol);
-        const allowL = colLetter(allowCol);
-        const smhL = colLetter(smhCol);
-        const totalSmhL = colLetter(totalSmhCol);
-        const uphL = colLetter(uphCol);
+        const cl = (n) => XLSX.utils.encode_col(n);
+        const s1L = cl(s1Col);
+        const sLastL = cl(s1Col + mL - 1);
+        const avgL = cl(avgCol);
 
-        if (currentMode === 'elemen' || currentMode === 'siklus') {
-            let groupStartRow = -1;
+        // Isi formula per grup
+        groupInfo.forEach(info => {
+            const { startRow, endRow, group } = info;
             let groupTotalSmh = 0;
-            for (let r = firstDataRow; r <= lastDataRow; r++) {
-                const rowData = dE[r - firstDataRow];
-                const st = getRowStats(rowData);
-                const isFirstRowInGroup = (wsData[r-1][0] !== '');
-                ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
-                ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
-                ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
-                ws[`${opCol ? colLetter(opCol) : 'A'}${r}`] = { t: 'n', v: rowData.operators || 1 };
-                if (isFirstRowInGroup) {
-                    if (groupStartRow !== -1) {
-                        ws[`${totalSmhL}${groupStartRow}`] = { t: 'n', f: `SUM(${smhL}${groupStartRow}:${smhL}${r-1})`, v: parseFloat(groupTotalSmh.toFixed(4)) };
-                        ws[`${uphL}${groupStartRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${groupStartRow},0)`, v: Math.round(3600/groupTotalSmh) };
-                    }
-                    groupStartRow = r;
-                    groupTotalSmh = st.smh;
-                } else {
-                    groupTotalSmh += st.smh;
-                }
-            }
-            if (groupStartRow !== -1) {
-                ws[`${totalSmhL}${groupStartRow}`] = { t: 'n', f: `SUM(${smhL}${groupStartRow}:${smhL}${lastDataRow})`, v: parseFloat(groupTotalSmh.toFixed(4)) };
-                ws[`${uphL}${groupStartRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${groupStartRow},0)`, v: Math.round(3600/groupTotalSmh) };
-            }
-        } else {
-            for (let r = firstDataRow; r <= lastDataRow; r++) {
-                const rowData = dE[r - firstDataRow];
-                const st = getRowStats(rowData);
-                const ngL = colLetter(avgCol + 1);
-                const gerL = colLetter(avgCol + 2);
-                const ctgL = colLetter(avgCol + 3);
-                const capL = colLetter(avgCol + 4);
-                const jmlL = colLetter(avgCol + 5);
-                ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
-                ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
-                ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
-            }
-        }
+            let groupTotalCap = 0;
 
+            group.rows.forEach((rowItem, idx) => {
+                const r = startRow + idx;
+                const st = getRowStats(rowItem);
+
+                // Average (setiap baris)
+                ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
+
+                if (currentMode === 'elemen' || currentMode === 'siklus') {
+                    const allowL = cl(allowCol);
+                    const smhL = cl(smhCol);
+                    ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
+                    ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
+                    if (opCol) ws[`${cl(opCol)}${r}`] = { t: 'n', v: rowItem.operators || 1 };
+                    groupTotalSmh += st.smh;
+                } else {
+                    const ngL = cl(avgCol + 1);
+                    const gerL = cl(avgCol + 2);
+                    const ctgL = cl(avgCol + 3);
+                    const capL = cl(avgCol + 4);
+                    const jmlL = cl(avgCol + 5);
+                    const totCapL = cl(avgCol + 6);
+                    
+                    ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
+                    ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
+                    groupTotalCap += st.capacity;
+                }
+            });
+
+            // Total per grup (hanya di baris pertama)
+            if (currentMode === 'elemen' || currentMode === 'siklus') {
+                const totalSmhL = cl(totalSmhCol);
+                const uphL = cl(uphCol);
+                ws[`${totalSmhL}${startRow}`] = { t: 'n', f: `SUM(${cl(smhCol)}${startRow}:${cl(smhCol)}${endRow})`, v: parseFloat(groupTotalSmh.toFixed(4)) };
+                ws[`${uphL}${startRow}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${startRow},0)`, v: Math.round(3600 / groupTotalSmh) };
+            } else {
+                const totCapL = cl(avgCol + 6);
+                ws[`${totCapL}${startRow}`] = { t: 'n', f: `SUM(${cl(avgCol + 4)}${startRow}:${cl(avgCol + 4)}${endRow})`, v: groupTotalCap };
+            }
+        });
+
+        // 5. Styling
         const stdUph = getLineStandardUph();
         const numFmtCols = [];
         for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
@@ -4570,6 +4582,7 @@ function switchLineModelTab(tab) {
                 if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
                 return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
+            columnStyles[avgCol + 6] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, font: { bold: true } };
         }
 
         applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
