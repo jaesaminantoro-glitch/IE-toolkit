@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IE Trial Result & Problem Finding Tracker</title>
-    <meta name="theme-color" content="#1e293b">
+    <meta name="theme-color" content="#ffffff">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -20,27 +19,64 @@
             }
         }
     </script>
+    <style>
+        /* Ikon bawaan (tanpa Font Awesome / internet): kelas lama .fa-solid .fa-xxx tetap dipakai */
+        .fa-solid{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;flex-shrink:0;background-color:currentColor;
+            -webkit-mask:var(--fa) center/contain no-repeat;mask:var(--fa) center/contain no-repeat;font-style:normal}
+        .fa-xmark{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M18%206L6%2018M6%206l12%2012'/%3E%3C/svg%3E")}
+        .fa-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M20%206%209%2017l-5-5'/%3E%3C/svg%3E")}
+        .fa-arrow-left{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M19%2012H5M12%2019l-7-7%207-7'/%3E%3C/svg%3E")}
+        .fa-arrow-right{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M5%2012h14M12%205l7%207-7%207'/%3E%3C/svg%3E")}
+        .fa-chevron-right{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m9%2018%206-6-6-6'/%3E%3C/svg%3E")}
+        .fa-plus{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M5%2012h14M12%205v14'/%3E%3C/svg%3E")}
+        .fa-plus-circle{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='M8%2012h8M12%208v8'/%3E%3C/svg%3E")}
+        .fa-circle-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='m9%2012%202%202%204-4'/%3E%3C/svg%3E")}
+        .fa-circle-xmark{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='m15%209-6%206M9%209l6%206'/%3E%3C/svg%3E")}
+        .fa-circle-exclamation{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='M12%208v4M12%2016h.01'/%3E%3C/svg%3E")}
+        .fa-circle-info{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='12'%20cy='12'%20r='10'/%3E%3Cpath%20d='M12%2016v-4M12%208h.01'/%3E%3C/svg%3E")}
+        .fa-triangle-exclamation{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m21.73%2018-8-14a2%202%200%200%200-3.48%200l-8%2014A2%202%200%200%200%204%2021h16a2%202%200%200%200%201.73-3M12%209v4M12%2017h.01'/%3E%3C/svg%3E")}
+        .fa-trash-can{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%206h18M19%206v14a2%202%200%200%201-2%202H7a2%202%200%200%201-2-2V6m3%200V4a2%202%200%200%201%202-2h4a2%202%200%200%201%202%202v2M10%2011v6M14%2011v6'/%3E%3C/svg%3E")}
+        .fa-download{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4M7%2010l5%205%205-5M12%2015V3'/%3E%3C/svg%3E")}
+        .fa-upload{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M21%2015v4a2%202%200%200%201-2%202H5a2%202%200%200%201-2-2v-4M17%208l-5-5-5%205M12%203v12'/%3E%3C/svg%3E")}
+        .fa-file-arrow-down{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14.5%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7.5L14.5%202z'/%3E%3Cpath%20d='M14%202v6h6M12%2012v6M9%2015l3%203%203-3'/%3E%3C/svg%3E")}
+        .fa-file-circle-plus{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14.5%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7.5L14.5%202z'/%3E%3Cpath%20d='M14%202v6h6M12%2012v6M9%2015h6'/%3E%3C/svg%3E")}
+        .fa-file-excel{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M14.5%202H6a2%202%200%200%200-2%202v16a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2V7.5L14.5%202z'/%3E%3Cpath%20d='M14%202v6h6M8%2013l4%205M12%2013l-4%205'/%3E%3C/svg%3E")}
+        .fa-folder-open{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%2014%201.5-2.9A2%202%200%200%201%209.24%2010H20a2%202%200%200%201%201.94%202.5l-1.54%206a2%202%200%200%201-1.95%201.5H4a2%202%200%200%201-2-2V5a2%202%200%200%201%202-2h3.9a2%202%200%200%201%201.69.9l.81%201.2a2%202%200%200%200%201.67.9H18a2%202%200%200%201%202%202v2'/%3E%3C/svg%3E")}
+        .fa-list-ol{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M10%206h11M10%2012h11M10%2018h11M4%206h1v4M4%2010h2M6%2018H4c0-1%202-2%202-3s-1-1.5-2-1'/%3E%3C/svg%3E")}
+        .fa-industry{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M2%2020a2%202%200%200%200%202%202h16a2%202%200%200%200%202-2V8l-7%205V8l-7%205V4a2%202%200%200%200-2-2H4a2%202%200%200%200-2%202Z'/%3E%3Cpath%20d='M17%2018h1M12%2018h1M7%2018h1'/%3E%3C/svg%3E")}
+        .fa-mobile-screen{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='5'%20y='2'%20width='14'%20height='20'%20rx='2'/%3E%3Cpath%20d='M12%2018h.01'/%3E%3C/svg%3E")}
+        .fa-cloud-arrow-up{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%2014.899A7%207%200%201%201%2015.71%208h1.79a4.5%204.5%200%200%201%202.5%208.242M12%2012v9M16%2016l-4-4-4%204'/%3E%3C/svg%3E")}
+        .fa-wifi{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M5%2012.55a11%2011%200%200%201%2014.08%200M1.42%209a16%2016%200%200%201%2021.16%200M8.53%2016.11a6%206%200%200%201%206.95%200M12%2020h.01'/%3E%3C/svg%3E")}
+        .fa-wifi-slash{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%2020h.01M8.5%2016.429a5%205%200%200%201%207%200M5%2012.859a10%2010%200%200%201%205.17-2.69M19%2012.859a10%2010%200%200%200-2.007-1.523M2%208.82a15%2015%200%200%201%204.177-2.643M22%208.82a15%2015%200%200%200-11.288-3.764M2%202l20%2020'/%3E%3C/svg%3E")}
+        .fa-rotate{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%2012a9%209%200%200%201%209-9%209.75%209.75%200%200%201%206.74%202.74L21%208M21%203v5h-5M21%2012a9%209%200%200%201-9%209%209.75%209.75%200%200%201-6.74-2.74L3%2016M8%2016H3v5'/%3E%3C/svg%3E")}
+        .fa-pen-to-square{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%203H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h14a2%202%200%200%200%202-2v-7M18.375%202.625a1%201%200%200%201%203%203l-9.013%209.014a2%202%200%200%201-.853.505l-2.873.84a.5.5%200%200%201-.62-.62l.84-2.873a2%202%200%200%201%20.506-.852z'/%3E%3C/svg%3E")}
+        .fa-layer-group{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m12.83%202.18a2%202%200%200%200-1.66%200L2.6%206.08a1%201%200%200%200%200%201.83l8.58%203.91a2%202%200%200%200%201.66%200l8.58-3.9a1%201%200%200%200%200-1.83Z'/%3E%3Cpath%20d='m22%2012.65-9.17%204.16a2%202%200%200%201-1.66%200L2%2012.65'/%3E%3Cpath%20d='m22%2017.65-9.17%204.16a2%202%200%200%201-1.66%200L2%2017.65'/%3E%3C/svg%3E")}
+        .fa-copy{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='8'%20width='14'%20height='14'%20rx='2'/%3E%3Cpath%20d='M4%2016c-1.1%200-2-.9-2-2V4c0-1.1.9-2%202-2h10c1.1%200%202%20.9%202%202'/%3E%3C/svg%3E")}
+        .fa-clipboard-list{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='2'%20width='8'%20height='4'%20rx='1'/%3E%3Cpath%20d='M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2M12%2011h4M12%2016h4M8%2011h.01M8%2016h.01'/%3E%3C/svg%3E")}
+        .fa-clipboard-check{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='8'%20y='2'%20width='8'%20height='4'%20rx='1'/%3E%3Cpath%20d='M16%204h2a2%202%200%200%201%202%202v14a2%202%200%200%201-2%202H6a2%202%200%200%201-2-2V6a2%202%200%200%201%202-2h2'/%3E%3Cpath%20d='m9%2014%202%202%204-4'/%3E%3C/svg%3E")}
+        .fa-chart-simple{--fa:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M18%2020V10M12%2020V4M6%2020v-6'/%3E%3C/svg%3E")}
+    </style>
 </head>
-<body class="h-full bg-slate-900 text-slate-100 font-sans antialiased flex flex-col">
+<body class="h-full bg-white text-slate-900 font-sans antialiased flex flex-col">
 
     <!-- HEADER -->
-    <header class="bg-slate-800 border-b border-slate-700 shadow-lg sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center gap-3">
+    <header class="bg-slate-50 border-b border-slate-300 shadow-lg sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
             <div class="flex items-center space-x-3">
                 <div class="bg-indigo-600 p-2.5 rounded-xl border border-indigo-500 shadow-inner">
                     <i class="fa-solid fa-clipboard-check text-lg text-white"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base md:text-lg leading-tight text-white">IE Trial Result & Problem Finding</h1>
-                    <p class="text-xs text-indigo-300 flex items-center gap-2 mt-0.5 flex-wrap">
+                    <h1 class="font-bold text-base md:text-lg leading-tight text-slate-900">IE Trial Result & Problem Finding</h1>
+                    <p class="text-xs text-indigo-700 flex items-center gap-2 mt-0.5 flex-wrap">
                         <span id="save-indicator" class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span> 
                         <span id="save-status-text">Saved</span>
                         <span class="text-slate-500">•</span>
-                        <span id="connection-indicator" class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                        <span id="connection-indicator" class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
                             <i class="fa-solid fa-wifi text-[10px]"></i>
                             <span id="connection-text">Online</span>
                         </span>
-                        <span id="pending-badge" class="hidden inline-flex items-center gap-1 bg-amber-950 text-amber-300 border border-amber-800 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        <span id="pending-badge" class="hidden inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
                             <i class="fa-solid fa-cloud-arrow-up text-[9px]"></i>
                             <span id="pending-count">0</span> pending
                         </span>
@@ -48,71 +84,71 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="app.openFilesModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-600 relative">
-                    <i class="fa-solid fa-folder-open text-amber-400"></i> <span class="hidden sm:inline">File</span>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="button" onclick="app.openFilesModal()" class="flex-1 sm:flex-none justify-center bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-400 relative">
+                    <i class="fa-solid fa-folder-open text-amber-600"></i> <span>File</span>
                     <span id="files-count-badge" class="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                 </button>
-                <button type="button" onclick="app.openJumpModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-600">
-                    <i class="fa-solid fa-list-ol text-indigo-400"></i> <span class="hidden sm:inline">Jump</span>
+                <button type="button" onclick="app.openJumpModal()" class="flex-1 sm:flex-none justify-center bg-slate-200 hover:bg-slate-300 text-slate-800 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 border border-slate-400">
+                    <i class="fa-solid fa-list-ol text-indigo-600"></i> <span>Jump</span>
                 </button>
-                <button type="button" onclick="app.openExcelModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
+                <button type="button" onclick="app.openExcelModal()" class="flex-1 sm:flex-none justify-center bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-excel"></i> <span>Excel</span>
                 </button>
-                <button type="button" onclick="app.openAddModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-900/50 ring-2 ring-indigo-400/30 hover:ring-indigo-400/60">
+                <button type="button" onclick="app.openAddModal()" class="flex-1 sm:flex-none justify-center bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs md:text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-200 ring-2 ring-indigo-400/30 hover:ring-indigo-400/60">
                     <i class="fa-solid fa-plus-circle"></i> <span>Tambah</span>
                 </button>
             </div>
         </div>
-        <div class="w-full bg-slate-700 h-1.5">
+        <div class="w-full bg-slate-200 h-1.5">
             <div id="progress-bar" class="bg-indigo-500 h-1.5 transition-all duration-300" style="width: 0%"></div>
         </div>
     </header>
 
     <!-- OFFLINE BANNER -->
-    <div id="offline-banner" class="hidden bg-amber-900/60 border-b border-amber-700 px-4 py-2 text-center text-xs text-amber-200 font-semibold">
+    <div id="offline-banner" class="hidden bg-amber-100 border-b border-amber-400 px-4 py-2 text-center text-xs text-amber-800 font-semibold">
         <i class="fa-solid fa-wifi-slash"></i> Mode Offline — Data disimpan lokal, akan disinkron otomatis saat online kembali.
     </div>
 
     <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-4 py-4 flex flex-col justify-between">
         
         <!-- LINE & MODEL BAR -->
-        <div class="bg-slate-800/80 backdrop-blur px-4 py-3 rounded-xl border border-slate-700 shadow-sm mb-3">
+        <div class="bg-slate-100/80 backdrop-blur px-4 py-3 rounded-xl border border-slate-300 shadow-sm mb-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">
                         <i class="fa-solid fa-industry"></i> Line Produksi
                     </label>
                     <input type="text" id="input-line" placeholder="Contoh: Line A1" 
-                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-1">
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">
                         <i class="fa-solid fa-mobile-screen"></i> Model Produk
                     </label>
                     <input type="text" id="input-model" placeholder="Contoh: XR-2024" 
-                        class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                 </div>
             </div>
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-2.5">
-                    <span id="badge-counter" class="bg-indigo-950 text-indigo-300 border border-indigo-800/60 font-bold text-xs md:text-sm px-3 py-1 rounded-lg">SOP 1 / 1</span>
-                    <span id="badge-status" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-700 text-slate-300">PENDING</span>
+                    <span id="badge-counter" class="bg-indigo-100 text-indigo-700 border border-indigo-300 font-bold text-xs md:text-sm px-3 py-1 rounded-lg">SOP 1 / 1</span>
+                    <span id="badge-status" class="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-200 text-slate-700">PENDING</span>
                 </div>
-                <div class="text-xs text-slate-400 font-medium">
-                    Total: <span id="total-count" class="font-bold text-slate-200">0</span> SOP
+                <div class="text-xs text-slate-500 font-medium">
+                    Total: <span id="total-count" class="font-bold text-slate-800">0</span> SOP
                 </div>
             </div>
         </div>
 
         <!-- CARD SOP -->
-        <div class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 mb-4 flex-1 flex flex-col overflow-hidden">
-            <div class="bg-slate-900/60 border-b border-slate-700 px-4 sm:px-6 py-3 flex justify-between items-center gap-3">
+        <div class="bg-slate-50 rounded-2xl shadow-xl border border-slate-300 mb-4 flex-1 flex flex-col overflow-hidden">
+            <div class="bg-slate-100 border-b border-slate-300 px-4 sm:px-6 py-3 flex justify-between items-center gap-3">
                 <div class="flex items-center gap-2 min-w-0">
-                    <i class="fa-solid fa-clipboard-list text-indigo-400"></i>
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Detail SOP</span>
+                    <i class="fa-solid fa-clipboard-list text-indigo-600"></i>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Detail SOP</span>
                 </div>
-                <button type="button" onclick="app.openDeleteModal()" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 hover:text-rose-200 border border-rose-800/60 hover:border-rose-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <button type="button" onclick="app.openDeleteModal()" class="bg-rose-50 hover:bg-rose-200 text-rose-700 hover:text-rose-800 border border-rose-300 hover:border-rose-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-trash-can"></i> <span>Hapus SOP</span>
                 </button>
             </div>
@@ -121,80 +157,80 @@
                 <div class="space-y-4">
                     <div class="flex gap-3">
                         <div class="w-24 flex-shrink-0">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">No. SOP</label>
-                            <input type="text" id="input-sop-no" placeholder="4-1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-slate-100 font-semibold text-base text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">No. SOP</label>
+                            <input type="text" id="input-sop-no" placeholder="4-1" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-3 text-slate-900 font-semibold text-base text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         </div>
                         <div class="flex-1 min-w-0">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Nama / Item SOP *</label>
-                            <input type="text" id="input-sop-name" placeholder="Contoh: Pengecekan battery cover" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Nama / Item SOP *</label>
+                            <input type="text" id="input-sop-name" placeholder="Contoh: Pengecekan battery cover" class="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-900 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-2">Checklist Kesesuaian (Ceklis / X)</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2">Checklist Kesesuaian (Ceklis / X)</label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                            <div onclick="app.toggleCheck('sop_check')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
-                                <span class="text-xs font-medium text-slate-300">SOP</span>
-                                <span id="val-sop_check" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">√</span>
+                            <div onclick="app.toggleCheck('sop_check')" class="bg-white border border-slate-300 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-700">SOP</span>
+                                <span id="val-sop_check" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300">√</span>
                             </div>
-                            <div onclick="app.toggleCheck('fixture')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
-                                <span class="text-xs font-medium text-slate-300">Fixture</span>
-                                <span id="val-fixture" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">-</span>
+                            <div onclick="app.toggleCheck('fixture')" class="bg-white border border-slate-300 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-700">Fixture</span>
+                                <span id="val-fixture" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300">-</span>
                             </div>
-                            <div onclick="app.toggleCheck('parameter')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
-                                <span class="text-xs font-medium text-slate-300">Parameter</span>
-                                <span id="val-parameter" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">-</span>
+                            <div onclick="app.toggleCheck('parameter')" class="bg-white border border-slate-300 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-700">Parameter</span>
+                                <span id="val-parameter" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300">-</span>
                             </div>
-                            <div onclick="app.toggleCheck('equipment')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
-                                <span class="text-xs font-medium text-slate-300">Equipment</span>
-                                <span id="val-equipment" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">√</span>
+                            <div onclick="app.toggleCheck('equipment')" class="bg-white border border-slate-300 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-700">Equipment</span>
+                                <span id="val-equipment" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300">√</span>
                             </div>
-                            <div onclick="app.toggleCheck('machine')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
-                                <span class="text-xs font-medium text-slate-300">Machine</span>
-                                <span id="val-machine" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">-</span>
+                            <div onclick="app.toggleCheck('machine')" class="bg-white border border-slate-300 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-700">Machine</span>
+                                <span id="val-machine" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300">-</span>
                             </div>
-                            <div onclick="app.toggleCheck('layout')" class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
-                                <span class="text-xs font-medium text-slate-300">Layout</span>
-                                <span id="val-layout" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700">√</span>
+                            <div onclick="app.toggleCheck('layout')" class="bg-white border border-slate-300 rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-indigo-500 transition select-none">
+                                <span class="text-xs font-medium text-slate-700">Layout</span>
+                                <span id="val-layout" class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300">√</span>
                             </div>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-1.5 italic">Ketuk kotak untuk mengganti: <span class="text-emerald-400 font-semibold">√</span>, <span class="text-rose-400 font-semibold">X</span>, atau <span class="text-slate-400 font-semibold">-</span>. <span class="text-rose-400 font-semibold">Jika ada X, status otomatis NG.</span> <span class="text-emerald-400 font-bold">Jika semua √, status otomatis OK.</span></p>
+                        <p class="text-[11px] text-slate-500 mt-1.5 italic">Ketuk kotak untuk mengganti: <span class="text-emerald-600 font-semibold">√</span>, <span class="text-rose-600 font-semibold">X</span>, atau <span class="text-slate-500 font-semibold">-</span>. <span class="text-rose-600 font-semibold">Jika ada X, status otomatis NG.</span> <span class="text-emerald-600 font-bold">Jika semua √, status otomatis OK.</span></p>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1.5">Status Akhir *</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1.5">Status Akhir *</label>
                         <div class="grid grid-cols-2 gap-3">
-                            <button type="button" id="btn-status-ok" onclick="app.setStatus('OK')" class="py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 hover:border-emerald-500 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i> OK (Pass)
+                            <button type="button" id="btn-status-ok" onclick="app.setStatus('OK')" class="py-3 px-4 rounded-xl font-bold border border-slate-300 text-slate-500 bg-white hover:border-emerald-500 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i> OK (Pass)
                             </button>
-                            <button type="button" id="btn-status-ng" onclick="app.setStatus('NG')" class="py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 hover:border-rose-500 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-circle-xmark text-rose-400 text-base"></i> NG (Fail)
+                            <button type="button" id="btn-status-ng" onclick="app.setStatus('NG')" class="py-3 px-4 rounded-xl font-bold border border-slate-300 text-slate-500 bg-white hover:border-rose-500 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-circle-xmark text-rose-600 text-base"></i> NG (Fail)
                             </button>
                         </div>
-                        <p id="auto-ng-hint" class="text-[11px] text-rose-400 mt-1.5 italic hidden">
+                        <p id="auto-ng-hint" class="text-[11px] text-rose-600 mt-1.5 italic hidden">
                             <i class="fa-solid fa-circle-info"></i> Status otomatis NG karena ada checklist yang ditandai X.
                         </p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Problem Finding</label>
-                            <textarea id="input-problem" rows="2" placeholder="Tuliskan temuan masalah..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">Problem Finding</label>
+                            <textarea id="input-problem" rows="2" placeholder="Tuliskan temuan masalah..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Solution / Tindakan</label>
-                            <textarea id="input-solution" rows="2" placeholder="Tuliskan solusi perbaikan..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">Solution / Tindakan</label>
+                            <textarea id="input-solution" rows="2" placeholder="Tuliskan solusi perbaikan..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"></textarea>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">PIC (Penanggung Jawab)</label>
-                            <input type="text" id="input-pic" placeholder="Nama PIC..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">PIC (Penanggung Jawab)</label>
+                            <input type="text" id="input-pic" placeholder="Nama PIC..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-400 mb-1">Due Date</label>
-                            <input type="date" id="input-duedate" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">Due Date</label>
+                            <input type="date" id="input-duedate" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
                         </div>
                     </div>
                 </div>
@@ -203,7 +239,7 @@
 
         <!-- NAV -->
         <div class="flex items-center justify-between gap-3">
-            <button type="button" onclick="app.prevSop()" id="btn-prev" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3.5 px-4 rounded-xl border border-slate-700 shadow-sm transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-30 disabled:cursor-not-allowed">
+            <button type="button" onclick="app.prevSop()" id="btn-prev" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-3.5 px-4 rounded-xl border border-slate-300 shadow-sm transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-30 disabled:cursor-not-allowed">
                 <i class="fa-solid fa-arrow-left"></i> Sebelumnya
             </button>
             <button type="button" onclick="app.submitAndNext()" id="btn-next" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-30 disabled:cursor-not-allowed">
@@ -213,53 +249,53 @@
     </main>
 
     <!-- MODAL TAMBAH -->
-    <div id="modal-add" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-slate-800 flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
-                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-plus-circle text-indigo-400"></i> Tambah SOP Baru
+    <div id="modal-add" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-indigo-600"></i> Tambah SOP Baru
                 </h3>
-                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-                <button type="button" onclick="app.addBlankSop()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-indigo-500 rounded-xl p-4 text-left transition group">
+                <button type="button" onclick="app.addBlankSop()" class="w-full bg-slate-50 hover:bg-slate-200 border border-slate-300 hover:border-indigo-500 rounded-xl p-4 text-left transition group">
                     <div class="flex items-center gap-3">
-                        <div class="bg-indigo-950 group-hover:bg-indigo-900 rounded-lg p-2.5 border border-indigo-800 transition">
-                            <i class="fa-solid fa-file-circle-plus text-indigo-400 text-lg"></i>
+                        <div class="bg-indigo-100 group-hover:bg-indigo-200 rounded-lg p-2.5 border border-indigo-300 transition">
+                            <i class="fa-solid fa-file-circle-plus text-indigo-600 text-lg"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-bold text-sm text-slate-100">Tambah Kosong</p>
-                            <p class="text-xs text-slate-400 mt-0.5">Buat 1 SOP baru dengan checklist default</p>
+                            <p class="font-bold text-sm text-slate-900">Tambah Kosong</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Buat 1 SOP baru dengan checklist default</p>
                         </div>
                         <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-indigo-400 transition"></i>
                     </div>
                 </button>
-                <button type="button" onclick="app.duplicateCurrentSop()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-emerald-500 rounded-xl p-4 text-left transition group">
+                <button type="button" onclick="app.duplicateCurrentSop()" class="w-full bg-slate-50 hover:bg-slate-200 border border-slate-300 hover:border-emerald-500 rounded-xl p-4 text-left transition group">
                     <div class="flex items-center gap-3">
-                        <div class="bg-emerald-950 group-hover:bg-emerald-900 rounded-lg p-2.5 border border-emerald-800 transition">
-                            <i class="fa-solid fa-copy text-emerald-400 text-lg"></i>
+                        <div class="bg-emerald-100 group-hover:bg-emerald-200 rounded-lg p-2.5 border border-emerald-300 transition">
+                            <i class="fa-solid fa-copy text-emerald-600 text-lg"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-bold text-sm text-slate-100">Duplikat SOP Saat Ini</p>
-                            <p class="text-xs text-slate-400 mt-0.5">Copy semua isi SOP yang sedang aktif</p>
+                            <p class="font-bold text-sm text-slate-900">Duplikat SOP Saat Ini</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Copy semua isi SOP yang sedang aktif</p>
                         </div>
                         <i class="fa-solid fa-chevron-right text-slate-500 group-hover:text-emerald-400 transition"></i>
                     </div>
                 </button>
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                <div class="bg-slate-50 border border-slate-300 rounded-xl p-4">
                     <div class="flex items-center gap-3 mb-3">
-                        <div class="bg-amber-950 rounded-lg p-2.5 border border-amber-800">
-                            <i class="fa-solid fa-layer-group text-amber-400 text-lg"></i>
+                        <div class="bg-amber-100 rounded-lg p-2.5 border border-amber-300">
+                            <i class="fa-solid fa-layer-group text-amber-600 text-lg"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-bold text-sm text-slate-100">Tambah Banyak Sekaligus</p>
-                            <p class="text-xs text-slate-400 mt-0.5">Generate beberapa SOP kosong</p>
+                            <p class="font-bold text-sm text-slate-900">Tambah Banyak Sekaligus</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Generate beberapa SOP kosong</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <input type="number" id="input-bulk-count" min="1" max="50" value="5" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                        <input type="number" id="input-bulk-count" min="1" max="50" value="5" class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
                         <button type="button" onclick="app.addBulkSop()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-4 py-2 rounded-lg transition shadow-sm flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i> Tambah
                         </button>
@@ -267,42 +303,42 @@
                     <p class="text-[10px] text-slate-500 mt-2 italic">Maksimal 50 SOP per batch</p>
                 </div>
             </div>
-            <div class="px-6 py-4 border-t border-slate-800">
-                <button type="button" onclick="app.closeModals()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Batal</button>
+            <div class="px-6 py-4 border-t border-slate-200">
+                <button type="button" onclick="app.closeModals()" class="w-full bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DELETE -->
-    <div id="modal-delete" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 rounded-2xl max-w-md w-full shadow-2xl border border-rose-900/50 flex flex-col">
-            <div class="px-6 py-5 border-b border-slate-800">
+    <div id="modal-delete" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-rose-300 flex flex-col">
+            <div class="px-6 py-5 border-b border-slate-200">
                 <div class="flex items-center gap-3">
-                    <div class="bg-rose-950 rounded-xl p-3 border border-rose-800">
-                        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-xl"></i>
+                    <div class="bg-rose-100 rounded-xl p-3 border border-rose-300">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-600 text-xl"></i>
                     </div>
                     <div>
-                        <h3 class="font-bold text-base text-slate-100">Konfirmasi Hapus SOP</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+                        <h3 class="font-bold text-base text-slate-900">Konfirmasi Hapus SOP</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
                     </div>
                 </div>
             </div>
             <div class="px-6 py-5">
-                <p class="text-sm text-slate-300 mb-3">Anda akan menghapus SOP berikut:</p>
-                <div class="bg-slate-800 border border-slate-700 rounded-xl p-3">
+                <p class="text-sm text-slate-700 mb-3">Anda akan menghapus SOP berikut:</p>
+                <div class="bg-slate-50 border border-slate-300 rounded-xl p-3">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Nama SOP</p>
-                    <p id="delete-sop-name" class="font-semibold text-slate-100 text-sm break-words">-</p>
-                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-700">
+                    <p id="delete-sop-name" class="font-semibold text-slate-900 text-sm break-words">-</p>
+                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-slate-300">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Status:</span>
-                        <span id="delete-sop-status" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-slate-800 text-slate-400 border-slate-700">-</span>
+                        <span id="delete-sop-status" class="text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-slate-50 text-slate-500 border-slate-300">-</span>
                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-2">Posisi:</span>
-                        <span id="delete-sop-position" class="text-[10px] text-slate-300 font-semibold">-</span>
+                        <span id="delete-sop-position" class="text-[10px] text-slate-700 font-semibold">-</span>
                     </div>
                 </div>
             </div>
-            <div class="px-6 py-4 border-t border-slate-800 flex gap-2">
-                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Batal</button>
-                <button type="button" onclick="app.confirmDeleteSop()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl transition shadow-lg shadow-rose-900/40 flex items-center justify-center gap-2">
+            <div class="px-6 py-4 border-t border-slate-200 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Batal</button>
+                <button type="button" onclick="app.confirmDeleteSop()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-xl transition shadow-lg shadow-rose-200 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-trash-can"></i> Ya, Hapus
                 </button>
             </div>
@@ -310,46 +346,46 @@
     </div>
 
     <!-- MODAL JUMP -->
-    <div id="modal-jump" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-800 flex flex-col max-h-[80vh]">
+    <div id="modal-jump" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[80vh]">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-list-ol text-indigo-400"></i> Lompat ke SOP
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-indigo-600"></i> Lompat ke SOP
                 </h3>
-                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="jump-container" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
-            <div class="mt-4 pt-3 border-t border-slate-800">
-                <button type="button" onclick="app.closeModals()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Tutup</button>
+            <div class="mt-4 pt-3 border-t border-slate-200">
+                <button type="button" onclick="app.closeModals()" class="w-full bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Tutup</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL FILE MANAGER -->
-    <div id="modal-files" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-800 flex flex-col max-h-[92vh]">
-            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
-                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-folder-open text-amber-400"></i> File Trial Tersimpan
+    <div id="modal-files" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open text-amber-600"></i> File Trial Tersimpan
                 </h3>
-                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <div class="px-6 py-3 bg-slate-800/40 border-b border-slate-800 flex items-center justify-between gap-2 text-xs">
-                <div class="flex items-center gap-2 text-slate-400">
-                    <i class="fa-solid fa-circle-info text-indigo-400"></i>
+            <div class="px-6 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2 text-xs">
+                <div class="flex items-center gap-2 text-slate-500">
+                    <i class="fa-solid fa-circle-info text-indigo-600"></i>
                     <span id="files-info-text">Semua file sudah tersinkron.</span>
                 </div>
-                <button type="button" onclick="app.syncNow()" class="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-800 transition">
+                <button type="button" onclick="app.syncNow()" class="text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-100 transition">
                     <i class="fa-solid fa-rotate"></i> Sync Now
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto px-6 py-4">
                 <div id="files-container" class="space-y-2"></div>
             </div>
-            <div class="px-6 py-4 border-t border-slate-800 flex gap-2">
-                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Tutup</button>
+            <div class="px-6 py-4 border-t border-slate-200 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Tutup</button>
                 <button type="button" onclick="app.exportAllFiles()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                     <i class="fa-solid fa-download"></i> Export Semua
                 </button>
@@ -358,124 +394,124 @@
     </div>
 
     <!-- MODAL EXCEL -->
-    <div id="modal-excel" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-800 flex flex-col max-h-[92vh]">
-            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-800">
-                <h3 class="font-bold text-base text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-file-excel text-emerald-400"></i> Excel Import & Export
+    <div id="modal-excel" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh]">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-file-excel text-emerald-600"></i> Excel Import & Export
                 </h3>
-                <button type="button" onclick="app.closeModals()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+                <button type="button" onclick="app.closeModals()" class="text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            <div class="flex border-b border-slate-800">
-                <button type="button" id="tab-export" onclick="app.switchExcelTab('export')" class="flex-1 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-500 bg-slate-800/40 transition flex items-center justify-center gap-2">
+            <div class="flex border-b border-slate-200">
+                <button type="button" id="tab-export" onclick="app.switchExcelTab('export')" class="flex-1 py-3 text-sm font-semibold text-emerald-600 border-b-2 border-emerald-500 bg-slate-100 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-download"></i> Export
                 </button>
-                <button type="button" id="tab-import" onclick="app.switchExcelTab('import')" class="flex-1 py-3 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition flex items-center justify-center gap-2">
+                <button type="button" id="tab-import" onclick="app.switchExcelTab('import')" class="flex-1 py-3 text-sm font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-900 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-upload"></i> Import
                 </button>
             </div>
             <div class="flex-1 overflow-y-auto px-6 py-4">
                 <div id="excel-tab-export" class="space-y-4">
-                    <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-4">
-                        <h4 class="font-bold text-slate-100 text-sm mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-simple text-emerald-400"></i> Ringkasan Data
+                    <div class="bg-slate-100 border border-slate-300 rounded-xl p-4">
+                        <h4 class="font-bold text-slate-900 text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-simple text-emerald-600"></i> Ringkasan Data
                         </h4>
                         <div class="grid grid-cols-3 gap-3 text-center">
-                            <div class="bg-slate-900 rounded-lg py-2 border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase tracking-wider">Total</p>
-                                <p id="export-stat-total" class="text-xl font-bold text-slate-100">0</p>
+                            <div class="bg-white rounded-lg py-2 border border-slate-300">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Total</p>
+                                <p id="export-stat-total" class="text-xl font-bold text-slate-900">0</p>
                             </div>
-                            <div class="bg-emerald-950/50 rounded-lg py-2 border border-emerald-800/60">
-                                <p class="text-[10px] text-emerald-400 uppercase tracking-wider">OK</p>
-                                <p id="export-stat-ok" class="text-xl font-bold text-emerald-300">0</p>
+                            <div class="bg-emerald-50 rounded-lg py-2 border border-emerald-300">
+                                <p class="text-[10px] text-emerald-600 uppercase tracking-wider">OK</p>
+                                <p id="export-stat-ok" class="text-xl font-bold text-emerald-700">0</p>
                             </div>
-                            <div class="bg-rose-950/50 rounded-lg py-2 border border-rose-800/60">
-                                <p class="text-[10px] text-rose-400 uppercase tracking-wider">NG</p>
-                                <p id="export-stat-ng" class="text-xl font-bold text-rose-300">0</p>
+                            <div class="bg-rose-50 rounded-lg py-2 border border-rose-300">
+                                <p class="text-[10px] text-rose-600 uppercase tracking-wider">NG</p>
+                                <p id="export-stat-ng" class="text-xl font-bold text-rose-700">0</p>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-emerald-950/30 border border-emerald-800/50 rounded-xl p-4">
-                        <h4 class="font-bold text-emerald-300 text-sm mb-1 flex items-center gap-2">
+                    <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-4">
+                        <h4 class="font-bold text-emerald-700 text-sm mb-1 flex items-center gap-2">
                             <i class="fa-solid fa-file-arrow-down"></i> Export Data Lengkap
                         </h4>
-                        <p class="text-xs text-emerald-400/80 mb-3">Excel dengan header indigo + border tabel + kolom Status berwarna (hijau OK / merah NG).</p>
+                        <p class="text-xs text-emerald-600/80 mb-3">Excel dengan header indigo + border tabel + kolom Status berwarna (hijau OK / merah NG).</p>
                         <button type="button" onclick="app.exportExcel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-download"></i> Download Excel (.xlsx)
                         </button>
                     </div>
-                    <div class="bg-indigo-950/30 border border-indigo-800/50 rounded-xl p-4">
-                        <h4 class="font-bold text-indigo-300 text-sm mb-1 flex items-center gap-2">
+                    <div class="bg-indigo-50 border border-indigo-300 rounded-xl p-4">
+                        <h4 class="font-bold text-indigo-700 text-sm mb-1 flex items-center gap-2">
                             <i class="fa-solid fa-file-circle-plus"></i> Export Template Kosong
                         </h4>
-                        <p class="text-xs text-indigo-400/80 mb-3">Template kosong untuk input manual lalu diimport kembali.</p>
+                        <p class="text-xs text-indigo-600/80 mb-3">Template kosong untuk input manual lalu diimport kembali.</p>
                         <button type="button" onclick="app.exportTemplate()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-file-excel"></i> Download Template (.xlsx)
                         </button>
                     </div>
                 </div>
                 <div id="excel-tab-import" class="space-y-4 hidden">
-                    <div id="import-picker" class="bg-slate-800/60 border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-indigo-500 transition">
-                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-2"></i>
-                        <p class="text-sm font-semibold text-slate-200 mb-1">Pilih File Excel untuk diimport</p>
-                        <p class="text-xs text-slate-400 mb-3">Format: .xlsx, .xls (maks 10 MB) • importer v3</p>
+                    <div id="import-picker" class="bg-slate-100 border-2 border-dashed border-slate-400 rounded-xl p-6 text-center hover:border-indigo-500 transition">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-600 mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-800 mb-1">Pilih File Excel untuk diimport</p>
+                        <p class="text-xs text-slate-500 mb-3">Format: .xlsx, .xls (maks 10 MB) • importer v3</p>
                         <label class="inline-flex bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-sm items-center justify-center gap-2 cursor-pointer">
                             <i class="fa-solid fa-folder-open"></i> Pilih File
                             <input type="file" id="excel-file-input" accept=".xlsx, .xls" onchange="app.handleFileSelect(event)" class="hidden">
                         </label>
                     </div>
                     <div id="import-preview" class="hidden space-y-3">
-                        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3 flex items-center gap-3">
-                            <div class="bg-emerald-950 rounded-lg p-2 border border-emerald-800">
-                                <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                        <div class="bg-slate-100 border border-slate-300 rounded-xl p-3 flex items-center gap-3">
+                            <div class="bg-emerald-100 rounded-lg p-2 border border-emerald-300">
+                                <i class="fa-solid fa-file-excel text-emerald-600"></i>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p id="import-file-name" class="text-sm font-semibold text-slate-100 truncate">-</p>
-                                <p id="import-file-info" class="text-[11px] text-slate-400">-</p>
+                                <p id="import-file-name" class="text-sm font-semibold text-slate-900 truncate">-</p>
+                                <p id="import-file-info" class="text-[11px] text-slate-500">-</p>
                             </div>
-                            <button type="button" onclick="app.resetImport()" class="text-slate-400 hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-800 transition">
+                            <button type="button" onclick="app.resetImport()" class="text-slate-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-slate-100 transition">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
                         <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="bg-slate-800/60 rounded-lg py-2 border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase tracking-wider">Total Baris</p>
-                                <p id="import-stat-total" class="text-lg font-bold text-slate-100">0</p>
+                            <div class="bg-slate-100 rounded-lg py-2 border border-slate-300">
+                                <p class="text-[10px] text-slate-500 uppercase tracking-wider">Total Baris</p>
+                                <p id="import-stat-total" class="text-lg font-bold text-slate-900">0</p>
                             </div>
-                            <div class="bg-emerald-950/50 rounded-lg py-2 border border-emerald-800/60">
-                                <p class="text-[10px] text-emerald-400 uppercase tracking-wider">OK</p>
-                                <p id="import-stat-ok" class="text-lg font-bold text-emerald-300">0</p>
+                            <div class="bg-emerald-50 rounded-lg py-2 border border-emerald-300">
+                                <p class="text-[10px] text-emerald-600 uppercase tracking-wider">OK</p>
+                                <p id="import-stat-ok" class="text-lg font-bold text-emerald-700">0</p>
                             </div>
-                            <div class="bg-rose-950/50 rounded-lg py-2 border border-rose-800/60">
-                                <p class="text-[10px] text-rose-400 uppercase tracking-wider">NG</p>
-                                <p id="import-stat-ng" class="text-lg font-bold text-rose-300">0</p>
+                            <div class="bg-rose-50 rounded-lg py-2 border border-rose-300">
+                                <p class="text-[10px] text-rose-600 uppercase tracking-wider">NG</p>
+                                <p id="import-stat-ng" class="text-lg font-bold text-rose-700">0</p>
                             </div>
                         </div>
-                        <div id="import-warning" class="hidden bg-amber-950/40 border border-amber-800/60 rounded-xl p-3 text-xs text-amber-300 flex gap-2">
+                        <div id="import-warning" class="hidden bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-700 flex gap-2">
                             <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
                             <span id="import-warning-text"></span>
                         </div>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Preview 5 Baris Pertama</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Preview 5 Baris Pertama</p>
                             <div id="import-preview-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1"></div>
                         </div>
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Mode Import</p>
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mode Import</p>
                             <div class="grid grid-cols-2 gap-2">
                                 <label class="cursor-pointer">
                                     <input type="radio" name="import-mode" value="replace" checked class="peer hidden">
-                                    <div class="bg-slate-800 border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-950/40 rounded-xl p-3 transition">
-                                        <p class="text-xs font-bold text-slate-200">Replace</p>
-                                        <p class="text-[10px] text-slate-400 mt-0.5">Ganti semua data</p>
+                                    <div class="bg-slate-50 border border-slate-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 rounded-xl p-3 transition">
+                                        <p class="text-xs font-bold text-slate-800">Replace</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">Ganti semua data</p>
                                     </div>
                                 </label>
                                 <label class="cursor-pointer">
                                     <input type="radio" name="import-mode" value="append" class="peer hidden">
-                                    <div class="bg-slate-800 border border-slate-700 peer-checked:border-indigo-500 peer-checked:bg-indigo-950/40 rounded-xl p-3 transition">
-                                        <p class="text-xs font-bold text-slate-200">Append</p>
-                                        <p class="text-[10px] text-slate-400 mt-0.5">Tambah ke data existing</p>
+                                    <div class="bg-slate-50 border border-slate-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 rounded-xl p-3 transition">
+                                        <p class="text-xs font-bold text-slate-800">Append</p>
+                                        <p class="text-[10px] text-slate-500 mt-0.5">Tambah ke data existing</p>
                                     </div>
                                 </label>
                             </div>
@@ -483,8 +519,8 @@
                     </div>
                 </div>
             </div>
-            <div class="px-6 py-4 border-t border-slate-800 flex gap-2">
-                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-xl transition">Tutup</button>
+            <div class="px-6 py-4 border-t border-slate-200 flex gap-2">
+                <button type="button" onclick="app.closeModals()" class="flex-1 bg-slate-50 hover:bg-slate-200 text-slate-800 font-semibold py-2.5 rounded-xl transition">Tutup</button>
                 <button type="button" id="btn-import-confirm" onclick="app.confirmImport()" class="hidden flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                     <i class="fa-solid fa-check"></i> Konfirmasi Import
                 </button>
@@ -494,8 +530,8 @@
 
     <!-- TOAST -->
     <div id="notification-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-        <div id="toast-content" class="bg-slate-800 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-medium border border-slate-700">
-            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <div id="toast-content" class="bg-slate-50 text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-medium border border-slate-300">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-600"></i>
             <span id="toast-text">Notifikasi</span>
         </div>
     </div>
@@ -719,11 +755,11 @@
                 const pendCount = document.getElementById('pending-count');
 
                 if (navigator.onLine) {
-                    if (ind) ind.className = 'inline-flex items-center gap-1 text-emerald-400 font-semibold';
+                    if (ind) ind.className = 'inline-flex items-center gap-1 text-emerald-600 font-semibold';
                     if (txt) txt.innerText = 'Online';
                     if (banner) banner.classList.add('hidden');
                 } else {
-                    if (ind) ind.className = 'inline-flex items-center gap-1 text-rose-400 font-semibold';
+                    if (ind) ind.className = 'inline-flex items-center gap-1 text-rose-600 font-semibold';
                     if (txt) txt.innerText = 'Offline';
                     if (banner) banner.classList.remove('hidden');
                 }
@@ -926,11 +962,11 @@
                     val = this.normalizeCheck(val);
                     span.innerText = val;
                     if (val === '√') {
-                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-emerald-950 text-emerald-400 border border-emerald-800';
+                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-emerald-100 text-emerald-600 border border-emerald-300';
                     } else if (val === 'X') {
-                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-rose-950 text-rose-400 border border-rose-800';
+                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-rose-100 text-rose-600 border border-rose-300';
                     } else {
-                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-800 text-slate-400 border border-slate-700';
+                        span.className = 'w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm bg-slate-50 text-slate-500 border border-slate-300';
                     }
                 } catch (e) { console.warn(e); }
             }
@@ -944,19 +980,19 @@
                     status = this.normalizeStatus(status);
 
                     if (status === 'OK') {
-                        okBtn.className = "py-3 px-4 rounded-xl font-bold border-2 border-emerald-500 text-emerald-300 bg-emerald-950/40 transition flex items-center justify-center gap-2";
-                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
-                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-800";
+                        okBtn.className = "py-3 px-4 rounded-xl font-bold border-2 border-emerald-500 text-emerald-700 bg-emerald-50 transition flex items-center justify-center gap-2";
+                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-300 text-slate-500 bg-white transition flex items-center justify-center gap-2";
+                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-emerald-100 text-emerald-600 border border-emerald-300";
                         badge.innerText = "STATUS: OK";
                     } else if (status === 'NG') {
-                        okBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
-                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border-2 border-rose-500 text-rose-300 bg-rose-950/40 transition flex items-center justify-center gap-2";
-                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-rose-950 text-rose-400 border border-rose-800";
+                        okBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-300 text-slate-500 bg-white transition flex items-center justify-center gap-2";
+                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border-2 border-rose-500 text-rose-700 bg-rose-50 transition flex items-center justify-center gap-2";
+                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-rose-100 text-rose-600 border border-rose-300";
                         badge.innerText = "STATUS: NG";
                     } else {
-                        okBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
-                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-700 text-slate-400 bg-slate-900 transition flex items-center justify-center gap-2";
-                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700";
+                        okBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-300 text-slate-500 bg-white transition flex items-center justify-center gap-2";
+                        ngBtn.className = "py-3 px-4 rounded-xl font-bold border border-slate-300 text-slate-500 bg-white transition flex items-center justify-center gap-2";
+                        badge.className = "text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-slate-50 text-slate-700 border border-slate-300";
                         badge.innerText = "STATUS: PENDING";
                     }
                 } catch (e) { console.warn(e); }
@@ -1212,9 +1248,9 @@
                     const statusEl = el('delete-sop-status');
                     if (statusEl) {
                         statusEl.innerText = status;
-                        if (status === 'OK') statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-emerald-950 text-emerald-400 border-emerald-800';
-                        else if (status === 'NG') statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-rose-950 text-rose-400 border-rose-800';
-                        else statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-slate-800 text-slate-400 border-slate-700';
+                        if (status === 'OK') statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-emerald-100 text-emerald-600 border-emerald-300';
+                        else if (status === 'NG') statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-rose-100 text-rose-600 border-rose-300';
+                        else statusEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded uppercase border bg-slate-50 text-slate-500 border-slate-300';
                     }
                     if (el('delete-sop-position')) el('delete-sop-position').innerText = `${this.currentIndex + 1} dari ${this.trials.length}`;
                     const modal = document.getElementById('modal-delete');
@@ -1248,21 +1284,21 @@
                     if (!container) return;
                     container.innerHTML = '';
                     if (this.trials.length === 0) {
-                        container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Belum ada SOP.</p>';
+                        container.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">Belum ada SOP.</p>';
                     } else {
                         this.trials.forEach((t, idx) => {
                             const status = this.normalizeStatus(t.status);
-                            const statusClass = status === 'OK' ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
-                                : (status === 'NG' ? 'bg-rose-950 text-rose-400 border-rose-800' : 'bg-slate-800 text-slate-400 border-slate-700');
+                            const statusClass = status === 'OK' ? 'bg-emerald-100 text-emerald-600 border-emerald-300'
+                                : (status === 'NG' ? 'bg-rose-100 text-rose-600 border-rose-300' : 'bg-slate-50 text-slate-500 border-slate-300');
                             const btn = document.createElement('button');
                             btn.type = 'button';
-                            btn.className = `w-full text-left px-3.5 py-3 rounded-xl border transition flex items-center justify-between ${idx === this.currentIndex ? 'border-indigo-500 bg-indigo-950/40' : 'border-slate-800 bg-slate-900 hover:bg-slate-800'}`;
+                            btn.className = `w-full text-left px-3.5 py-3 rounded-xl border transition flex items-center justify-between ${idx === this.currentIndex ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white hover:bg-slate-100'}`;
                             btn.innerHTML = `
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-xs text-slate-400">#${this.escapeHtml(t.no || String(idx + 1))}</span>
+                                    <span class="font-bold text-xs text-slate-500">#${this.escapeHtml(t.no || String(idx + 1))}</span>
                                     <div>
-                                        <p class="font-semibold text-sm text-slate-200">${this.escapeHtml(t.name || 'Tanpa Nama SOP')}</p>
-                                        <p class="text-[11px] text-slate-400">PIC: ${this.escapeHtml(t.pic || '-')}</p>
+                                        <p class="font-semibold text-sm text-slate-800">${this.escapeHtml(t.name || 'Tanpa Nama SOP')}</p>
+                                        <p class="text-[11px] text-slate-500">PIC: ${this.escapeHtml(t.pic || '-')}</p>
                                     </div>
                                 </div>
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-md uppercase border ${statusClass}">${status}</span>
@@ -1307,7 +1343,7 @@
                     c.innerHTML = `
                         <div class="text-center py-12">
                             <div class="text-5xl mb-3 opacity-50">📁</div>
-                            <p class="text-sm font-semibold text-slate-300 mb-1">Belum ada file tersimpan</p>
+                            <p class="text-sm font-semibold text-slate-700 mb-1">Belum ada file tersimpan</p>
                             <p class="text-xs text-slate-500">File akan otomatis tersimpan setelah semua SOP di-submit.</p>
                         </div>`;
                     const info = document.getElementById('files-info-text');
@@ -1318,37 +1354,37 @@
                     const dateObj = new Date(f.createdAt);
                     const dateStr = dateObj.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                     const syncBadge = f.synced
-                        ? '<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded font-bold">✅ SINKRON</span>'
-                        : '<span class="text-[9px] bg-amber-950 text-amber-400 border border-amber-800 px-1.5 py-0.5 rounded font-bold">⏳ PENDING</span>';
+                        ? '<span class="text-[9px] bg-emerald-100 text-emerald-600 border border-emerald-300 px-1.5 py-0.5 rounded font-bold">✅ SINKRON</span>'
+                        : '<span class="text-[9px] bg-amber-100 text-amber-600 border border-amber-300 px-1.5 py-0.5 rounded font-bold">⏳ PENDING</span>';
                     return `
-                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 hover:border-indigo-500 transition">
+                        <div class="bg-slate-50 border border-slate-300 rounded-xl p-3 hover:border-indigo-500 transition">
                             <div class="flex items-start justify-between gap-3 mb-2">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2 flex-wrap mb-1">
-                                        <span class="bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded text-[10px] font-bold">
+                                        <span class="bg-indigo-100 text-indigo-700 border border-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold">
                                             <i class="fa-solid fa-industry"></i> ${this.escapeHtml(f.line)}
                                         </span>
-                                        <span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">
+                                        <span class="bg-emerald-100 text-emerald-700 border border-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold">
                                             <i class="fa-solid fa-mobile-screen"></i> ${this.escapeHtml(f.model)}
                                         </span>
                                         ${syncBadge}
                                     </div>
-                                    <p class="text-sm font-semibold text-slate-100 truncate">${this.escapeHtml(f.name)}</p>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">${dateStr}</p>
+                                    <p class="text-sm font-semibold text-slate-900 truncate">${this.escapeHtml(f.name)}</p>
+                                    <p class="text-[10px] text-slate-500 mt-0.5">${dateStr}</p>
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 gap-2 mb-2">
-                                <div class="bg-slate-900 border border-slate-700 rounded-lg py-1.5 text-center">
+                                <div class="bg-white border border-slate-300 rounded-lg py-1.5 text-center">
                                     <p class="text-[9px] text-slate-500 uppercase font-bold">Total</p>
-                                    <p class="text-sm font-bold text-slate-200">${f.total}</p>
+                                    <p class="text-sm font-bold text-slate-800">${f.total}</p>
                                 </div>
-                                <div class="bg-emerald-950/40 border border-emerald-800/60 rounded-lg py-1.5 text-center">
-                                    <p class="text-[9px] text-emerald-400 uppercase font-bold">OK</p>
-                                    <p class="text-sm font-bold text-emerald-300">${f.ok}</p>
+                                <div class="bg-emerald-50 border border-emerald-300 rounded-lg py-1.5 text-center">
+                                    <p class="text-[9px] text-emerald-600 uppercase font-bold">OK</p>
+                                    <p class="text-sm font-bold text-emerald-700">${f.ok}</p>
                                 </div>
-                                <div class="bg-rose-950/40 border border-rose-800/60 rounded-lg py-1.5 text-center">
-                                    <p class="text-[9px] text-rose-400 uppercase font-bold">NG</p>
-                                    <p class="text-sm font-bold text-rose-300">${f.ng}</p>
+                                <div class="bg-rose-50 border border-rose-300 rounded-lg py-1.5 text-center">
+                                    <p class="text-[9px] text-rose-600 uppercase font-bold">NG</p>
+                                    <p class="text-sm font-bold text-rose-700">${f.ng}</p>
                                 </div>
                             </div>
                             <div class="flex gap-1.5">
@@ -1456,14 +1492,14 @@
                 const panelImport = document.getElementById('excel-tab-import');
                 if (!tabExport || !tabImport || !panelExport || !panelImport) return;
                 if (tab === 'export') {
-                    tabExport.className = 'flex-1 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-500 bg-slate-800/40 transition flex items-center justify-center gap-2';
-                    tabImport.className = 'flex-1 py-3 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition flex items-center justify-center gap-2';
+                    tabExport.className = 'flex-1 py-3 text-sm font-semibold text-emerald-600 border-b-2 border-emerald-500 bg-slate-100 transition flex items-center justify-center gap-2';
+                    tabImport.className = 'flex-1 py-3 text-sm font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-900 transition flex items-center justify-center gap-2';
                     panelExport.classList.remove('hidden');
                     panelImport.classList.add('hidden');
                     this.updateExportStats();
                 } else {
-                    tabImport.className = 'flex-1 py-3 text-sm font-semibold text-emerald-400 border-b-2 border-emerald-500 bg-slate-800/40 transition flex items-center justify-center gap-2';
-                    tabExport.className = 'flex-1 py-3 text-sm font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-200 transition flex items-center justify-center gap-2';
+                    tabImport.className = 'flex-1 py-3 text-sm font-semibold text-emerald-600 border-b-2 border-emerald-500 bg-slate-100 transition flex items-center justify-center gap-2';
+                    tabExport.className = 'flex-1 py-3 text-sm font-semibold text-slate-500 border-b-2 border-transparent hover:text-slate-900 transition flex items-center justify-center gap-2';
                     panelImport.classList.remove('hidden');
                     panelExport.classList.add('hidden');
                 }
@@ -1732,14 +1768,14 @@
                 if (list) {
                     list.innerHTML = '';
                     rows.slice(0, 5).forEach((r, i) => {
-                        const statusClass = r.status === 'OK' ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
-                            : (r.status === 'NG' ? 'bg-rose-950 text-rose-400 border-rose-800' : 'bg-slate-800 text-slate-400 border-slate-700');
+                        const statusClass = r.status === 'OK' ? 'bg-emerald-100 text-emerald-600 border-emerald-300'
+                            : (r.status === 'NG' ? 'bg-rose-100 text-rose-600 border-rose-300' : 'bg-slate-50 text-slate-500 border-slate-300');
                         const div = document.createElement('div');
-                        div.className = 'bg-slate-800/60 border border-slate-700 rounded-lg p-2 flex items-center justify-between gap-2';
+                        div.className = 'bg-slate-100 border border-slate-300 rounded-lg p-2 flex items-center justify-between gap-2';
                         div.innerHTML = `
                             <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-slate-200 truncate">#${this.escapeHtml(r.no || String(i + 1))} — ${this.escapeHtml(r.name)}</p>
-                                <p class="text-[10px] text-slate-400 truncate">PIC: ${this.escapeHtml(r.pic || '-')}</p>
+                                <p class="text-xs font-semibold text-slate-800 truncate">#${this.escapeHtml(r.no || String(i + 1))} — ${this.escapeHtml(r.name)}</p>
+                                <p class="text-[10px] text-slate-500 truncate">PIC: ${this.escapeHtml(r.pic || '-')}</p>
                             </div>
                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${statusClass}">${r.status}</span>
                         `;
@@ -1810,9 +1846,9 @@
                     const icon = document.getElementById('toast-icon');
                     if (!toast || !text || !icon) return;
                     text.innerText = message;
-                    if (type === 'success') icon.className = 'fa-solid fa-circle-check text-emerald-400';
-                    else if (type === 'error') icon.className = 'fa-solid fa-circle-exclamation text-rose-400';
-                    else icon.className = 'fa-solid fa-circle-info text-indigo-400';
+                    if (type === 'success') icon.className = 'fa-solid fa-circle-check text-emerald-600';
+                    else if (type === 'error') icon.className = 'fa-solid fa-circle-exclamation text-rose-600';
+                    else icon.className = 'fa-solid fa-circle-info text-indigo-600';
                     toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
                     if (this._toastTimer) clearTimeout(this._toastTimer);
                     this._toastTimer = setTimeout(() => {
