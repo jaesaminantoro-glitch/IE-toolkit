@@ -2,7 +2,7 @@
 <html lang="id" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IE Trial Result & Problem Finding Tracker</title>
     <meta name="theme-color" content="#ffffff">
     <meta name="mobile-web-app-capable" content="yes">
@@ -68,6 +68,7 @@
         .sync-dot.online { background-color: #10b981; }
         .sync-dot.offline { background-color: #f59e0b; }
         .sync-dot.error { background-color: #ef4444; }
+        @supports (-webkit-touch-callout: none) { input, textarea, select { font-size: 16px !important; } }
     </style>
 </head>
 <body class="h-full bg-white text-slate-900 font-sans antialiased flex flex-col">
@@ -899,10 +900,14 @@
                     sessionStorage.setItem('ie_session_id', this.sessionId);
                 }
                 this.baseKey = 'ie_trial';
-                this.lineKey = `${this.baseKey}_line_${this.sessionId}`;
-                this.modelKey = `${this.baseKey}_model_${this.sessionId}`;
-                this.filesKey = `${this.baseKey}_files_${this.sessionId}`;
-                this.pendingKey = `${this.baseKey}_pending_${this.sessionId}`;
+                // line/model: per-tab (sessionStorage) + "terakhir dipakai" (localStorage) agar tidak hilang saat tab ditutup
+                this.sessLineKey = `${this.baseKey}_session_line`;
+                this.sessModelKey = `${this.baseKey}_session_model`;
+                this.lastLineKey = `${this.baseKey}_last_line`;
+                this.lastModelKey = `${this.baseKey}_last_model`;
+                // file manager & antrean sync: per-perangkat (bukan per-sesi)
+                this.filesKey = `${this.baseKey}_files`;
+                this.pendingKey = `${this.baseKey}_pending`;
                 this.workspaceRegistryKey = `${this.baseKey}_workspaces`;
                 this.registry = this.loadRegistry();
                 this.legacyStorageKey = 'ie_trial_tracker_final_v1';
@@ -919,7 +924,9 @@
                 this._fbPullingFromServer = false;
                 this.trials = [];
                 this.files = [];
-                this.pendingSync = JSON.parse(localStorage.getItem(this.pendingKey) || '{"count":0,"lastAttempt":null}');
+                this.deleted = {};
+                this._forceReplace = false;
+                try { this.pendingSync = JSON.parse(localStorage.getItem(this.pendingKey) || '{"count":0,"lastAttempt":null}'); } catch (e) { this.pendingSync = { count: 0, lastAttempt: null }; }
                 this.currentIndex = 0;
                 this._toastTimer = null;
                 this._pendingImport = null;
@@ -927,12 +934,15 @@
                 this._broadcastChannel = null;
                 this._storageListener = null;
                 try {
+                    this.inheritLastWorkspace();
                     this.loadData();
                     this.setupNetworkListeners();
                     this.setupMultiTabSync();
                     this.updateSessionBar();
                     this.updateDisplayLineModel();
                     this.render();
+                    this.updateFilesBadge();
+                    this.setupAutoSave();
                     this.initFirebase();
                     if (!this.getLine() && !this.getModel()) this.openSetupModal();
                 } catch (e) {
@@ -1002,46 +1012,38 @@
             }
 
             getFirebaseWorkspacePath(line, model) {
-                const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
-                const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
-                return `${this.fbRootPath}/workspaces/${l}__${m}`;
+                return `${this.fbRootPath}/workspaces/${this._wsPart(line)}--${this._wsPart(model)}`;
             }
 
             attachFirebaseListener() {
                 if (!this.fbConnected || !this.fbDb) return;
                 const key = this.storageKey;
-                if (this.fbListeners[key]) { try { this.fbListeners[key].off(); } catch(e){} }
+                if (this.fbListeners[key]) { try { this.fbListeners[key].off(); } catch (e) {} }
                 const path = this.getFirebaseWorkspacePath(this.getLine(), this.getModel());
                 const ref = this.fbDb.ref(path);
                 this.fbListeners[key] = ref;
                 ref.on('value', (snap) => {
                     if (this._fbPullingFromServer) return;
+                    if (key !== this.storageKey) return;
                     const data = snap.val();
                     if (!data || !data.trials) return;
-                    const serverTs = data.updatedAt || 0;
-                    const localTs = parseInt(localStorage.getItem(this.storageKey + '_ts') || '0', 10);
-                    if (data.sessionId === this.sessionId && serverTs <= localTs + 1000) return;
-                    if (serverTs > localTs) {
-                        console.log(`📥 Firebase update`);
-                        this.applyFirebaseData(data, true);
-                    }
+                    this.applyFirebaseData(data, true);
                 });
                 console.log(`👂 Listener: ${path}`);
             }
 
             applyFirebaseData(data, showToast) {
                 try {
-                    if (!data || !Array.isArray(data.trials)) return;
-                    if (this._isFormDirty()) {
-                        if (showToast) this.showToast('⚠️ Data server berbeda, Anda sedang edit.', 'warning');
-                        return;
+                    if (!data) return;
+                    const res = this._mergeInto(data.trials, data.deleted);
+                    if (!res) return;
+                    if (res.changed) {
+                        this._persistLocal();
+                        this.registerWorkspace(this.getLine(), this.getModel());
+                        this.render();
+                        if (showToast && data.sessionId !== this.sessionId) this.showToast(`📥 Data server (${this.trials.length} SOP).`, 'info');
                     }
-                    this.trials = data.trials.map(r => this.sanitizeRecord(r));
-                    this.currentIndex = Math.min(this.currentIndex, Math.max(0, this.trials.length - 1));
-                    localStorage.setItem(this.storageKey, JSON.stringify(this.trials));
-                    localStorage.setItem(this.storageKey + '_ts', String(data.updatedAt || Date.now()));
-                    this.render();
-                    if (showToast) this.showToast(`📥 Data server (${data.trials.length} SOP).`, 'info');
+                    if (this._needsPush(res.merged, res.remote)) this.pushToFirebase(true);
                 } catch (e) { console.error('applyFirebaseData error:', e); }
             }
 
@@ -1050,15 +1052,8 @@
                     const trial = this.getCurrentTrial();
                     if (!trial) return false;
                     const el = (id) => document.getElementById(id);
-                    const name = el('input-sop-name') ? el('input-sop-name').value : '';
-                    const problem = el('input-problem') ? el('input-problem').value : '';
-                    const solution = el('input-solution') ? el('input-solution').value : '';
-                    const pic = el('input-pic') ? el('input-pic').value : '';
-                    if ((trial.name || '') !== name) return true;
-                    if ((trial.problem || '') !== problem) return true;
-                    if ((trial.solution || '') !== solution) return true;
-                    if ((trial.pic || '') !== pic) return true;
-                    return false;
+                    const pairs = [['input-sop-name', 'name'], ['input-problem', 'problem'], ['input-solution', 'solution'], ['input-pic', 'pic']];
+                    return pairs.some(([id, key]) => el(id) && String(trial[key] || '').trim() !== el(id).value.trim());
                 } catch (e) { return false; }
             }
 
@@ -1074,18 +1069,45 @@
                 if (!this.fbConnected || !this.fbDb) return;
                 try {
                     this.collectFormToCurrentTrial();
-                    const path = this.getFirebaseWorkspacePath(this.getLine(), this.getModel());
-                    const now = Date.now();
-                    const payload = {
-                        line: this.getLine(), model: this.getModel(), trials: this.trials,
-                        sessionId: this.sessionId, updatedAt: now, updatedAtISO: new Date(now).toISOString()
+                    const line = this.getLine(), model = this.getModel();
+                    const wsKey = this.storageKey;
+                    const path = this.getFirebaseWorkspacePath(line, model);
+                    const forceReplace = this._forceReplace;
+                    this._forceReplace = false;
+                    const localTrials = JSON.parse(JSON.stringify(this.trials.map(r => this.sanitizeRecord(r))));
+                    const localDeleted = Object.assign({}, this.deleted || {});
+                    const sessionId = this.sessionId;
+                    const build = (st) => {
+                        const now = Date.now();
+                        const out = { line, model, trials: st.trials, sessionId, updatedAt: now, updatedAtISO: new Date(now).toISOString() };
+                        if (Object.keys(st.deleted).length > 0) out.deleted = st.deleted;
+                        return out;
                     };
-                    await this.fbDb.ref(path).set(payload);
-                    localStorage.setItem(this.storageKey + '_ts', String(now));
+                    const ref = this.fbDb.ref(path);
+                    let finalVal;
+                    if (forceReplace) {
+                        const payload = build({ trials: localTrials, deleted: localDeleted });
+                        await ref.set(payload);
+                        finalVal = null;
+                    } else {
+                        // transaction: gabungkan dengan data server (tidak menimpa perubahan orang lain)
+                        const res = await ref.transaction((current) => {
+                            let st = { trials: localTrials, deleted: localDeleted };
+                            if (current && current.trials) {
+                                const remote = { trials: this.sanitizeList(current.trials), deleted: this._cleanDeleted(current.deleted) };
+                                st = this.mergeStates(st, remote);
+                            }
+                            return build(st);
+                        });
+                        if (!res.committed) throw new Error('Transaksi tidak tersimpan');
+                        finalVal = res.snapshot.val();
+                    }
                     this.pendingSync.count = 0;
                     localStorage.setItem(this.pendingKey, JSON.stringify(this.pendingSync));
+                    this._markRemote(line, model);
+                    if (wsKey === this.storageKey && finalVal) this.applyFirebaseData(finalVal, false);
                     this.updateConnectionUI();
-                    console.log(`☁️ Push: ${path}`);
+                    console.log(`☁️ Push: ${path}${forceReplace ? ' (replace)' : ''}`);
                 } catch (e) {
                     console.error('Push error:', e);
                     this.pendingSync.count = (this.pendingSync.count || 0) + 1;
@@ -1099,18 +1121,30 @@
                     if (showToast) this.showToast('Firebase belum terhubung.', 'error');
                     return;
                 }
+                const wsKey = this.storageKey;
                 try {
                     this._fbPullingFromServer = true;
-                    const path = this.getFirebaseWorkspacePath(this.getLine(), this.getModel());
-                    const snap = await this.fbDb.ref(path).once('value');
-                    const data = snap.val();
-                    this._fbPullingFromServer = false;
+                    const line = this.getLine(), model = this.getModel();
+                    const path = this.getFirebaseWorkspacePath(line, model);
+                    let data = (await this.fbDb.ref(path).once('value')).val();
+                    let fromLegacy = false;
                     if (!data || !data.trials) {
-                        if (showToast) this.showToast('Belum ada data di Firebase.', 'info');
+                        const legacyPath = this.getLegacyFirebasePath(line, model);
+                        if (legacyPath !== path) {
+                            const ld = (await this.fbDb.ref(legacyPath).once('value')).val();
+                            if (ld && ld.trials) { data = ld; fromLegacy = true; }
+                        }
+                    }
+                    this._fbPullingFromServer = false;
+                    if (wsKey !== this.storageKey) return; // workspace sudah berpindah saat menunggu
+                    if (!data || !data.trials) {
+                        if (showToast) this.showToast('Belum ada data di Firebase. Data lokal akan diunggah.', 'info');
+                        this.pushToFirebase(true);
                         return;
                     }
-                    this.applyFirebaseData(data, showToast);
-                    if (showToast) this.showToast(`✅ Dimuat (${data.trials.length} SOP).`, 'success');
+                    this.applyFirebaseData(data, false);
+                    if (fromLegacy) this.pushToFirebase(true);
+                    if (showToast) this.showToast(`✅ Dimuat (${this.trials.length} SOP).`, 'success');
                 } catch (e) {
                     this._fbPullingFromServer = false;
                     if (showToast) this.showToast('Gagal pull: ' + e.message, 'error');
@@ -1131,30 +1165,31 @@
                 }
                 try {
                     const snap = await this.fbDb.ref(`${this.fbRootPath}/workspaces`).once('value');
-                    const data = snap.val();
-                    if (!data) {
-                        console.log('📋 No workspaces in Firebase');
-                        this.populateWorkspaceDropdowns();
-                        this.renderWorkspaceList();
-                        return;
-                    }
+                    const data = snap.val() || {};
+                    const seen = new Set();
                     let count = 0;
-                    Object.keys(data).forEach(key => {
-                        const ws = data[key];
+                    Object.keys(data).forEach(k => {
+                        const ws = data[k];
                         if (!ws || !ws.line || !ws.model) return;
                         count++;
-                        const existingIdx = this.registry.findIndex(r => r.line === ws.line && r.model === ws.model);
+                        const key = this.getWorkspaceKey(ws.line, ws.model);
+                        seen.add(key);
                         const entry = {
-                            key: this.getWorkspaceKey(ws.line, ws.model),
+                            key,
                             line: ws.line, model: ws.model,
                             sessionId: ws.sessionId || 'unknown',
                             lastActive: ws.updatedAtISO || new Date().toISOString(),
-                            totalSop: (ws.trials || []).length,
-                            preview: (ws.trials || []).slice(0, 2).map(t => t.name).filter(Boolean)
+                            totalSop: this.toArray(ws.trials).length,
+                            preview: this.toArray(ws.trials).slice(0, 2).map(t => t.name).filter(Boolean),
+                            fromRemote: true
                         };
+                        const existingIdx = this.registry.findIndex(r => r.key === key);
                         if (existingIdx >= 0) this.registry[existingIdx] = entry;
                         else this.registry.push(entry);
                     });
+                    // Hapus "workspace hantu": pernah ada di server tapi sudah dihapus/di-rename dari perangkat lain
+                    const currentKey = this.storageKey;
+                    this.registry = this.registry.filter(w => !w.fromRemote || w.key === currentKey || seen.has(w.key));
                     this.saveRegistry();
                     this.populateWorkspaceDropdowns();
                     this.renderWorkspaceList();
@@ -1203,9 +1238,343 @@
             }
 
             getWorkspaceKey(line, model) {
+                return `${this.baseKey}_ws_${this._wsPart(line)}--${this._wsPart(model)}`;
+            }
+
+            // ===== Helper umum =====
+            _hash(str) {
+                let h = 5381;
+                str = String(str === null || str === undefined ? '' : str);
+                for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0;
+                return h.toString(36);
+            }
+
+            _newId() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+            _touch(trial) { if (trial) trial.updatedAt = Date.now(); }
+
+            toArray(v) {
+                if (Array.isArray(v)) return v.filter(x => x !== null && x !== undefined);
+                if (v && typeof v === 'object') {
+                    return Object.keys(v).sort((a, b) => Number(a) - Number(b)).map(k => v[k]).filter(x => x !== null && x !== undefined);
+                }
+                return [];
+            }
+
+            _ymd(y, m, d) {
+                if (!(y >= 1900 && y <= 2200 && m >= 1 && m <= 12 && d >= 1 && d <= 31)) return '';
+                const dt = new Date(Date.UTC(y, m - 1, d));
+                if (dt.getUTCMonth() !== m - 1) return '';
+                return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            }
+
+            _dateToISO(d) {
+                if (!(d instanceof Date) || isNaN(d)) return '';
+                const x = new Date(d.getTime() + 12 * 3600 * 1000);
+                return this._ymd(x.getFullYear(), x.getMonth() + 1, x.getDate());
+            }
+
+            _monthIndex(name) {
+                const map = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, mei: 5, jun: 6, jul: 7, aug: 8, agu: 8, agt: 8, sep: 9, oct: 10, okt: 10, nov: 11, dec: 12, des: 12 };
+                return map[String(name || '').toLowerCase().substring(0, 3)] || 0;
+            }
+
+            normalizeDate(v) {
+                if (v === null || v === undefined) return '';
+                if (v instanceof Date) return this._dateToISO(v);
+                if (typeof v === 'number') {
+                    if (v > 20000 && v < 80000) {
+                        const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+                        return this._ymd(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+                    }
+                    return '';
+                }
+                const s = String(v).trim();
+                if (!s) return '';
+                let m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+                if (m) return this._ymd(+m[1], +m[2], +m[3]);
+                m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+                if (m) {
+                    let a = +m[1], b = +m[2], y = +m[3];
+                    if (y < 100) y += 2000;
+                    let day = a, mon = b;
+                    if (b > 12 && a <= 12) { day = b; mon = a; }
+                    return this._ymd(y, mon, day);
+                }
+                m = s.match(/^(\d{1,2})[\s\-\/.,]*([A-Za-z]{3,})[\s\-\/.,]*(\d{2,4})$/);
+                if (m) {
+                    const mon = this._monthIndex(m[2]);
+                    let y = +m[3]; if (y < 100) y += 2000;
+                    if (mon) return this._ymd(y, mon, +m[1]);
+                }
+                m = s.match(/^([A-Za-z]{3,})[\s\-\/.,]*(\d{1,2})[\s\-\/.,]*(\d{2,4})$/);
+                if (m) {
+                    const mon = this._monthIndex(m[1]);
+                    let y = +m[3]; if (y < 100) y += 2000;
+                    if (mon) return this._ymd(y, mon, +m[2]);
+                }
+                return '';
+            }
+
+            // ===== Key workspace (anti-bentrok) =====
+            _wsPart(v) {
+                const raw = (v || '').trim();
+                if (!raw) return 'default';
+                const safe = raw.replace(/[^a-zA-Z0-9]/g, '_');
+                if (/^[a-zA-Z0-9]+$/.test(raw)) return safe;
+                return safe + '~' + this._hash(raw);
+            }
+
+            getLegacyWorkspaceKey(line, model) {
                 const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
                 const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
                 return `${this.baseKey}_ws_${l}__${m}`;
+            }
+
+            getLegacyFirebasePath(line, model) {
+                const l = (line || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
+                const m = (model || 'default').trim().replace(/[^a-zA-Z0-9]/g, '_') || 'default';
+                return `${this.fbRootPath}/workspaces/${l}__${m}`;
+            }
+
+            inheritLastWorkspace() {
+                try {
+                    if (!this.getLine() && !this.getModel()) {
+                        const oldL = localStorage.getItem(`${this.baseKey}_line_${this.sessionId}`);
+                        const oldM = localStorage.getItem(`${this.baseKey}_model_${this.sessionId}`);
+                        const l = oldL || localStorage.getItem(this.lastLineKey) || '';
+                        const m = oldM || localStorage.getItem(this.lastModelKey) || '';
+                        if (l || m) {
+                            sessionStorage.setItem(this.sessLineKey, l);
+                            sessionStorage.setItem(this.sessModelKey, m);
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            migrateLegacyStorage() {
+                try {
+                    // 1) File Manager lama (per-sesi) -> satu key global
+                    const files = new Map();
+                    const readFiles = (k) => {
+                        try {
+                            const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                            if (Array.isArray(arr)) arr.forEach(f => { if (f && f.id && !files.has(f.id)) files.set(f.id, f); });
+                        } catch (e) {}
+                    };
+                    readFiles(this.filesKey);
+                    const orphanFiles = [], orphanOther = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (!k) continue;
+                        if (k.startsWith(`${this.baseKey}_files_sess_`)) orphanFiles.push(k);
+                        else if (/^ie_trial_(line|model|pending)_sess_/.test(k)) orphanOther.push(k);
+                    }
+                    if (orphanFiles.length > 0) {
+                        orphanFiles.forEach(readFiles);
+                        const list = Array.from(files.values()).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+                        localStorage.setItem(this.filesKey, JSON.stringify(list));
+                    }
+                    orphanFiles.concat(orphanOther).forEach(k => localStorage.removeItem(k));
+
+                    // 2) Key workspace lama -> skema baru (anti-bentrok)
+                    let changed = false;
+                    this.registry.forEach(w => {
+                        const l = w.line === '(tanpa line)' ? '' : (w.line || '');
+                        const m = w.model === '(tanpa model)' ? '' : (w.model || '');
+                        const nk = this.getWorkspaceKey(l, m);
+                        if (w.key !== nk) {
+                            try {
+                                const d = localStorage.getItem(w.key);
+                                if (d && !localStorage.getItem(nk)) localStorage.setItem(nk, d);
+                                localStorage.removeItem(w.key);
+                                localStorage.removeItem(w.key + '_ts');
+                            } catch (e) {}
+                            w.key = nk;
+                            changed = true;
+                        }
+                    });
+                    if (changed) this.saveRegistry();
+                } catch (e) { console.warn('Migrasi storage gagal:', e); }
+            }
+
+            // ===== Record, merge & sinkronisasi =====
+            sanitizeList(arr) {
+                return this.toArray(arr).map((r, i) => {
+                    let rec = (r && typeof r === 'object') ? r : {};
+                    if (!rec.id) rec = Object.assign({}, rec, { id: 'legacy_' + i + '_' + this._hash(String(rec.name || '')) });
+                    return this.sanitizeRecord(rec);
+                });
+            }
+
+            newRecord(obj) {
+                return this.sanitizeRecord(Object.assign({}, obj || {}, { id: undefined, updatedAt: Date.now() }));
+            }
+
+            _blankRecord(n) {
+                return this.newRecord({ name: `SOP Baru ${n}`, sop_check: '-', fixture: '-', parameter: '-', equipment: '√', machine: '-', layout: '√', status: 'PENDING', problem: '', solution: '', pic: '', duedate: '' });
+            }
+
+            _isPlaceholder(t) {
+                return !!(t && typeof t.id === 'string' && t.id.startsWith('def_') && !t.updatedAt);
+            }
+
+            _cleanDeleted(d) {
+                const out = {};
+                const cutoff = Date.now() - 90 * 24 * 3600 * 1000;
+                if (d && typeof d === 'object') {
+                    Object.keys(d).forEach(k => {
+                        const n = Number(d[k]);
+                        if (n > cutoff) out[k] = n;
+                    });
+                }
+                return out;
+            }
+
+            mergeStates(local, remote) {
+                const deleted = Object.assign({}, remote.deleted || {});
+                Object.keys(local.deleted || {}).forEach(id => { deleted[id] = Math.max(deleted[id] || 0, local.deleted[id] || 0); });
+                const remoteHasReal = remote.trials.some(t => !this._isPlaceholder(t));
+                const map = new Map();
+                const order = [];
+                remote.trials.forEach(t => { if (!map.has(t.id)) order.push(t.id); map.set(t.id, t); });
+                local.trials.forEach(t => {
+                    if (this._isPlaceholder(t) && remoteHasReal) return;
+                    const r = map.get(t.id);
+                    if (!r) { map.set(t.id, t); order.push(t.id); }
+                    else if ((t.updatedAt || 0) > (r.updatedAt || 0)) map.set(t.id, t);
+                });
+                const trials = [];
+                order.forEach(id => {
+                    const t = map.get(id);
+                    if (!t) return;
+                    if (deleted[id] && deleted[id] >= (t.updatedAt || 0)) return;
+                    trials.push(t);
+                });
+                return { trials, deleted };
+            }
+
+            _sameTrials(a, b) {
+                if (a.length !== b.length) return false;
+                for (let i = 0; i < a.length; i++) if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return false;
+                return true;
+            }
+
+            _needsPush(merged, remote) {
+                const rmap = new Map(remote.trials.map(t => [t.id, t]));
+                for (const t of merged.trials) {
+                    const r = rmap.get(t.id);
+                    if (!r || (r.updatedAt || 0) < (t.updatedAt || 0)) return true;
+                }
+                const rdel = remote.deleted || {};
+                for (const id of Object.keys(merged.deleted)) {
+                    if ((rdel[id] || 0) < merged.deleted[id]) return true;
+                }
+                return false;
+            }
+
+            _mergeInto(remoteTrialsRaw, remoteDeletedRaw) {
+                const remoteTrials = this.sanitizeList(remoteTrialsRaw);
+                if (remoteTrials.length === 0) return null;
+                const remote = { trials: remoteTrials, deleted: this._cleanDeleted(remoteDeletedRaw) };
+                this.collectFormToCurrentTrial();
+                const currentId = (this.getCurrentTrial() || {}).id;
+                const before = this.trials.map(r => this.sanitizeRecord(r));
+                const merged = this.mergeStates({ trials: before, deleted: this.deleted || {} }, remote);
+                if (merged.trials.length === 0) merged.trials.push(this._blankRecord(1));
+                const changed = !this._sameTrials(before, merged.trials);
+                this.trials = merged.trials;
+                this.deleted = merged.deleted;
+                const idx = currentId ? this.trials.findIndex(t => t.id === currentId) : -1;
+                this.currentIndex = idx >= 0 ? idx : Math.min(this.currentIndex, this.trials.length - 1);
+                return { merged, remote, changed };
+            }
+
+            _loadDeleted(key) {
+                try { return this._cleanDeleted(JSON.parse(localStorage.getItem((key || this.storageKey) + '_deleted') || '{}')); }
+                catch (e) { return {}; }
+            }
+
+            _persistLocal() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.trials));
+                    localStorage.setItem(this.storageKey + '_deleted', JSON.stringify(this.deleted || {}));
+                    return true;
+                } catch (e) {
+                    console.error('Persist error:', e);
+                    if (!this._quotaWarned) { this._quotaWarned = true; this.showToast('Penyimpanan perangkat penuh! Data mungkin tidak tersimpan.', 'error'); }
+                    return false;
+                }
+            }
+
+            syncFromLocalStorage() {
+                try {
+                    const raw = localStorage.getItem(this.storageKey);
+                    if (!raw) return;
+                    const parsed = JSON.parse(raw);
+                    let del = {};
+                    try { del = JSON.parse(localStorage.getItem(this.storageKey + '_deleted') || '{}'); } catch (e) {}
+                    const res = this._mergeInto(parsed, del);
+                    if (!res) return;
+                    if (res.changed) { this._persistLocal(); this.render(); }
+                } catch (e) { console.warn('Sync tab error:', e); }
+            }
+
+            detachFirebaseListeners() {
+                Object.keys(this.fbListeners).forEach(k => {
+                    try { this.fbListeners[k].off(); } catch (e) {}
+                    delete this.fbListeners[k];
+                });
+            }
+
+            flushPushNow() {
+                try {
+                    if (this._fbSaveTimer) { clearTimeout(this._fbSaveTimer); this._fbSaveTimer = null; }
+                    if (this.fbConnected && this.fbDb) return this._doPushToFirebase();
+                } catch (e) {}
+                return Promise.resolve();
+            }
+
+            replaceAllTrials(newList) {
+                const now = Date.now();
+                (this.trials || []).forEach(t => { if (t && t.id) this.deleted[t.id] = now; });
+                this.trials = this.toArray(newList).map(r => this.sanitizeRecord(Object.assign({}, r, { id: undefined, updatedAt: now + 1 })));
+                this._forceReplace = true;
+            }
+
+            _markRemote(line, model) {
+                try {
+                    const key = this.getWorkspaceKey(line, model);
+                    const w = this.registry.find(x => x.key === key);
+                    if (w && !w.fromRemote) { w.fromRemote = true; this.saveRegistry(); }
+                } catch (e) {}
+            }
+
+            setupAutoSave() {
+                if (this._autoSaveReady) return;
+                this._autoSaveReady = true;
+                const handler = () => { this.collectFormToCurrentTrial(); this._scheduleLocalSave(); };
+                ['input-sop-no', 'input-sop-name', 'input-problem', 'input-solution', 'input-pic', 'input-duedate'].forEach(id => {
+                    const e = document.getElementById(id);
+                    if (e) { e.addEventListener('input', handler); e.addEventListener('change', handler); }
+                });
+                const flush = () => {
+                    try {
+                        if (this._autoTimer) { clearTimeout(this._autoTimer); this._autoTimer = null; }
+                        this.collectFormToCurrentTrial();
+                        this.saveToStorage(false);
+                    } catch (e) {}
+                };
+                document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+                window.addEventListener('pagehide', flush);
+            }
+
+            _scheduleLocalSave() {
+                if (this._autoTimer) clearTimeout(this._autoTimer);
+                this._autoTimer = setTimeout(() => {
+                    this._autoTimer = null;
+                    this.saveToStorage(true);
+                }, 500);
             }
 
             get storageKey() { return this.getWorkspaceKey(this.getLine(), this.getModel()); }
@@ -1232,7 +1601,8 @@
                     key, line: l || '(tanpa line)', model: m || '(tanpa model)',
                     sessionId: this.sessionId, lastActive: new Date().toISOString(),
                     totalSop: this.trials.length,
-                    preview: this.trials.slice(0, 2).map(t => t.name).filter(Boolean)
+                    preview: this.trials.slice(0, 2).map(t => t.name).filter(Boolean),
+                    fromRemote: existing >= 0 ? !!this.registry[existing].fromRemote : false
                 };
                 if (existing >= 0) this.registry[existing] = entry;
                 else this.registry.unshift(entry);
@@ -1251,28 +1621,34 @@
                     } catch (e) {}
                 }
                 this._storageListener = (e) => {
-                    if (!e.key || !e.newValue) return;
-                    if (e.key.includes(this.sessionId)) return;
-                    if (e.key.startsWith(this.baseKey)) {
-                        clearTimeout(this._storageDebounce);
-                        this._storageDebounce = setTimeout(() => {
-                            this.handleRemoteChange({ type: e.key.includes('_ws_') ? 'WORKSPACE_UPDATED' : 'DATA_UPDATED', key: e.key });
-                        }, 500);
+                    if (!e.key) return;
+                    if (e.key === this.filesKey) {
+                        try { const pf = JSON.parse(e.newValue || '[]'); if (Array.isArray(pf)) { this.files = pf; this.updateFilesBadge(); } } catch (err) {}
+                        return;
                     }
+                    const wsKey = this.storageKey;
+                    if (e.key !== wsKey && e.key !== wsKey + '_deleted') return;
+                    clearTimeout(this._storageDebounce);
+                    this._storageDebounce = setTimeout(() => {
+                        this.handleRemoteChange({ type: 'DATA_UPDATED', key: wsKey });
+                        this.syncFromLocalStorage();
+                    }, 300);
                 };
                 window.addEventListener('storage', this._storageListener);
                 window.addEventListener('beforeunload', () => {
-                    if (this._broadcastChannel) { try { this._broadcastChannel.close(); } catch(e) {} }
+                    if (this._broadcastChannel) { try { this._broadcastChannel.close(); } catch (e) {} }
                     if (this._storageListener) window.removeEventListener('storage', this._storageListener);
                 });
             }
 
             handleRemoteChange(data) {
+                if (data && data.key && data.key !== this.storageKey) return; // hanya jika workspace yang sama
                 const warn = document.getElementById('multitab-warning');
                 if (warn) {
                     warn.classList.remove('hidden');
                     warn.classList.add('flex');
-                    setTimeout(() => { warn.classList.add('hidden'); warn.classList.remove('flex'); }, 5000);
+                    clearTimeout(this._warnTimer);
+                    this._warnTimer = setTimeout(() => { warn.classList.add('hidden'); warn.classList.remove('flex'); }, 5000);
                 }
             }
 
@@ -1301,10 +1677,10 @@
                 this.updateSessionBar();
             }
 
-            getLine() { return localStorage.getItem(this.lineKey) || ''; }
-            getModel() { return localStorage.getItem(this.modelKey) || ''; }
-            setLine(v) { localStorage.setItem(this.lineKey, v); }
-            setModel(v) { localStorage.setItem(this.modelKey, v); }
+            getLine() { try { return sessionStorage.getItem(this.sessLineKey) || ''; } catch (e) { return ''; } }
+            getModel() { try { return sessionStorage.getItem(this.sessModelKey) || ''; } catch (e) { return ''; } }
+            setLine(v) { try { sessionStorage.setItem(this.sessLineKey, v); localStorage.setItem(this.lastLineKey, v); } catch (e) {} }
+            setModel(v) { try { sessionStorage.setItem(this.sessModelKey, v); localStorage.setItem(this.lastModelKey, v); } catch (e) {} }
 
             openSetupModal() {
                 const modal = document.getElementById('modal-setup');
@@ -1425,7 +1801,7 @@
                 const countBadge = document.getElementById('switch-list-count');
                 if (!container) return;
                 const currentKey = this.storageKey;
-                const others = this.registry.filter(w => w.key !== currentKey);
+                const others = this.registry.slice().sort((a, b) => (b.key === currentKey) - (a.key === currentKey));
                 if (countBadge) countBadge.innerText = others.length;
                 if (others.length === 0) {
                     container.innerHTML = '';
@@ -1436,7 +1812,7 @@
                 container.innerHTML = '';
                 others.forEach(w => {
                     const previewText = (w.preview && w.preview.length > 0) ? w.preview.join(' • ').substring(0, 45) : 'Belum ada SOP';
-                    const isActive = (w.line === this.getLine() && w.model === this.getModel());
+                    const isActive = (w.key === currentKey);
                     const card = document.createElement('div');
                     card.className = `bg-white border-2 rounded-xl overflow-hidden transition ${isActive ? 'border-indigo-400 shadow-md' : 'border-slate-200 hover:border-indigo-300'}`;
                     card.innerHTML = `
@@ -1466,13 +1842,16 @@
                                 <button type="button" data-action="edit" class="bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-300 p-2 rounded-lg transition" title="Edit nama">
                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                                 </button>
-                                <button type="button" data-action="delete" class="bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-2 rounded-lg transition" title="Hapus">
+                                <button type="button" data-action="delete" class="bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 p-2 rounded-lg transition ${isActive ? 'hidden' : ''}" title="Hapus">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>
                         </div>
                     `;
                     card.querySelector('[data-action="pick"]').onclick = () => {
+                        if (isActive) { this.showToast('Ini workspace yang sedang aktif.', 'info'); return; }
+                        const lInp0 = document.getElementById('switch-input-line'); if (lInp0) lInp0.value = '';
+                        const mInp0 = document.getElementById('switch-input-model'); if (mInp0) mInp0.value = '';
                         if (w.line && w.line !== '(tanpa line)') {
                             const lInp = document.getElementById('switch-input-line');
                             if (lInp) lInp.value = w.line;
@@ -1520,9 +1899,20 @@
                     if (!confirm(`Workspace "${newLine} / ${newModel}" sudah ada.\n\nTimpa data lama?`)) return;
                 }
                 try {
+                    const isCurrent = (oldKey === this.storageKey);
+                    if (isCurrent) {
+                        this.collectFormToCurrentTrial();
+                        this.saveToStorage(false);
+                        if (this._fbSaveTimer) { clearTimeout(this._fbSaveTimer); this._fbSaveTimer = null; }
+                        this.detachFirebaseListeners();
+                    }
                     const data = localStorage.getItem(oldKey);
+                    const del = localStorage.getItem(oldKey + '_deleted');
                     if (data) localStorage.setItem(newKey, data);
+                    if (del) localStorage.setItem(newKey + '_deleted', del);
                     localStorage.removeItem(oldKey);
+                    localStorage.removeItem(oldKey + '_deleted');
+                    this.registry = this.registry.filter(x => x.key !== newKey || x.key === oldKey);
                     const idx = this.registry.findIndex(x => x.key === oldKey);
                     if (idx >= 0) {
                         this.registry[idx].key = newKey;
@@ -1531,12 +1921,15 @@
                         this.registry[idx].lastActive = new Date().toISOString();
                         this.saveRegistry();
                     }
-                    if (this.fbConnected && oldWs.line && oldWs.model) {
+                    if (this.fbConnected) {
                         try {
-                            const oldPath = this.getFirebaseWorkspacePath(oldWs.line, oldWs.model);
+                            const oLine = oldWs.line === '(tanpa line)' ? '' : oldWs.line;
+                            const oModel = oldWs.model === '(tanpa model)' ? '' : oldWs.model;
+                            const oldPath = this.getFirebaseWorkspacePath(oLine, oModel);
+                            const legacyPath = this.getLegacyFirebasePath(oLine, oModel);
                             const newPath = this.getFirebaseWorkspacePath(newLine, newModel);
-                            const snap = await this.fbDb.ref(oldPath).once('value');
-                            const oldData = snap.val();
+                            let oldData = (await this.fbDb.ref(oldPath).once('value')).val();
+                            if (!oldData) oldData = (await this.fbDb.ref(legacyPath).once('value')).val();
                             if (oldData) {
                                 oldData.line = newLine;
                                 oldData.model = newModel;
@@ -1545,15 +1938,17 @@
                                 await this.fbDb.ref(newPath).set(oldData);
                             }
                             await this.fbDb.ref(oldPath).remove();
+                            if (legacyPath !== oldPath) await this.fbDb.ref(legacyPath).remove();
                             console.log(`✏️ Renamed: ${oldPath} → ${newPath}`);
                         } catch (e) { console.warn('Firebase rename error:', e); }
                     }
                     this.showToast(`✅ Diubah menjadi ${newLine} / ${newModel}`, 'success');
                     this.closeModals();
-                    if (oldWs.line === this.getLine() && oldWs.model === this.getModel()) {
+                    if (isCurrent) {
                         this.setLine(newLine);
                         this.setModel(newModel);
                         this.updateDisplayLineModel();
+                        if (this.fbConnected) { this.attachFirebaseListener(); this.pushToFirebase(true); }
                     }
                     this.switchWorkspace();
                 } catch (e) {
@@ -1565,13 +1960,19 @@
             async confirmDeleteWorkspace(key) {
                 const w = this.registry.find(x => x.key === key);
                 if (!w) return;
+                if (key === this.storageKey) { this.showToast('Workspace aktif tidak bisa dihapus. Pindah dulu ke workspace lain.', 'warning'); return; }
                 if (!confirm(`Hapus workspace "${w.line} / ${w.model}"?\n\n• ${w.totalSop} SOP akan hilang\n• Data di Firebase juga dihapus\n\nLanjutkan?`)) return;
                 try {
                     localStorage.removeItem(key);
-                    if (this.fbConnected && w.line && w.model) {
+                    localStorage.removeItem(key + '_deleted');
+                    if (this.fbConnected) {
                         try {
-                            const path = this.getFirebaseWorkspacePath(w.line, w.model);
+                            const l = w.line === '(tanpa line)' ? '' : w.line;
+                            const m = w.model === '(tanpa model)' ? '' : w.model;
+                            const path = this.getFirebaseWorkspacePath(l, m);
+                            const legacy = this.getLegacyFirebasePath(l, m);
                             await this.fbDb.ref(path).remove();
+                            if (legacy !== path) await this.fbDb.ref(legacy).remove();
                             console.log(`🗑️ Deleted: ${path}`);
                         } catch (e) { console.warn('Delete Firebase error:', e); }
                     }
@@ -1605,6 +2006,7 @@
                     const oldKey = this.storageKey;
                     if (this.fbListeners[oldKey]) { try { this.fbListeners[oldKey].off(); } catch(e){} delete this.fbListeners[oldKey]; }
                     this.saveToStorage(false);
+                    this.flushPushNow();
                     this.setLine(newLine);
                     this.setModel(newModel);
                     this.updateDisplayLineModel();
@@ -1634,12 +2036,20 @@
             loadWorkspaceData() {
                 const key = this.storageKey;
                 let loaded = false;
+                this.deleted = this._loadDeleted(key);
                 try {
-                    const saved = localStorage.getItem(key);
+                    let saved = localStorage.getItem(key);
+                    if (!saved) {
+                        const lk = this.getLegacyWorkspaceKey(this.getLine(), this.getModel());
+                        if (lk !== key) {
+                            const ls = localStorage.getItem(lk);
+                            if (ls) { saved = ls; localStorage.setItem(key, ls); localStorage.removeItem(lk); }
+                        }
+                    }
                     if (saved) {
                         const parsed = JSON.parse(saved);
                         if (Array.isArray(parsed) && parsed.length > 0) {
-                            this.trials = parsed.map(r => this.sanitizeRecord(r));
+                            this.trials = this.sanitizeList(parsed);
                             loaded = true;
                         }
                     }
@@ -1653,7 +2063,7 @@
                             if (legacy) {
                                 const parsed = JSON.parse(legacy);
                                 if (Array.isArray(parsed) && parsed.length > 0) {
-                                    this.trials = parsed.map(r => this.sanitizeRecord(r));
+                                    this.trials = this.sanitizeList(parsed);
                                     loaded = true;
                                     localStorage.setItem('ie_trial_legacy_migrated_v1', '1');
                                     this.saveToStorage(false);
@@ -1665,15 +2075,17 @@
                 if (!loaded) {
                     const lineName = this.getLine() || 'Tanpa Line';
                     const modelName = this.getModel() || 'Tanpa Model';
+                    // id "def_*" + updatedAt 0 = placeholder: tidak pernah menimpa data asli di server
                     this.trials = [
-                        this.sanitizeRecord({ no: '1', name: `[${lineName}/${modelName}] SOP #1 — silakan edit`, sop_check: '√', fixture: '-', parameter: '-', equipment: '√', machine: '-', layout: '√', status: 'OK', problem: '', solution: '', pic: '', duedate: '' }),
-                        this.sanitizeRecord({ no: '2', name: `[${lineName}/${modelName}] SOP #2 — silakan edit`, sop_check: '-', fixture: '-', parameter: '-', equipment: '-', machine: '-', layout: '-', status: 'PENDING', problem: '', solution: '', pic: '', duedate: '' })
+                        this.sanitizeRecord({ id: 'def_1', updatedAt: 0, no: '1', name: `[${lineName}/${modelName}] SOP #1 — silakan edit`, sop_check: '√', fixture: '-', parameter: '-', equipment: '√', machine: '-', layout: '√', status: 'OK', problem: '', solution: '', pic: '', duedate: '' }),
+                        this.sanitizeRecord({ id: 'def_2', updatedAt: 0, no: '2', name: `[${lineName}/${modelName}] SOP #2 — silakan edit`, sop_check: '-', fixture: '-', parameter: '-', equipment: '-', machine: '-', layout: '-', status: 'PENDING', problem: '', solution: '', pic: '', duedate: '' })
                     ];
                     this.saveToStorage(false);
                 }
             }
 
             loadData() {
+                this.migrateLegacyStorage();
                 try {
                     const savedFiles = localStorage.getItem(this.filesKey);
                     if (savedFiles) { const pf = JSON.parse(savedFiles); if (Array.isArray(pf)) this.files = pf; }
@@ -1685,7 +2097,7 @@
             saveToStorage(showNotification = true) {
                 try {
                     this.trials = this.trials.map(r => this.sanitizeRecord(r));
-                    localStorage.setItem(this.storageKey, JSON.stringify(this.trials));
+                    this._persistLocal();
                     if (showNotification) this.triggerSaveAnimation();
                     this.markPending();
                     this.registerWorkspace(this.getLine(), this.getModel());
@@ -1773,8 +2185,8 @@
                 if (val === '√' || val === 'X') return val;
                 if (val === null || val === undefined) return '-';
                 const s = String(val).trim().toLowerCase();
-                if (['v', '√', 'ok', 'ya', 'y', 'true', 'sesuai', 'pass'].includes(s)) return '√';
-                if (['x', 'no', 'n', 'false', 'tidak', 'ng', 'fail', 'tidak sesuai'].includes(s)) return 'X';
+                if (['v', '√', '✓', '✔', '☑', '✅', 'ok', 'ya', 'y', 'true', 'sesuai', 'pass'].includes(s)) return '√';
+                if (['x', '✗', '✘', '✕', '×', '❌', 'no', 'n', 'false', 'tidak', 'ng', 'fail', 'tidak sesuai'].includes(s)) return 'X';
                 return '-';
             }
 
@@ -1799,7 +2211,9 @@
 
             sanitizeRecord(record) {
                 if (!record || typeof record !== 'object') record = {};
+                const ts = Number(record.updatedAt);
                 const sanitized = {
+                    id: (typeof record.id === 'string' && /^[A-Za-z0-9_\-]{1,64}$/.test(record.id)) ? record.id : this._newId(),
                     no: this.safeString(record.no, ''),
                     name: this.safeString(record.name, 'Tanpa Nama SOP'),
                     sop_check: this.normalizeCheck(record.sop_check),
@@ -1812,7 +2226,8 @@
                     problem: this.safeString(record.problem, ''),
                     solution: this.safeString(record.solution, ''),
                     pic: this.safeString(record.pic, ''),
-                    duedate: this.safeString(record.duedate, '')
+                    duedate: this.normalizeDate(record.duedate),
+                    updatedAt: (Number.isFinite(ts) && ts > 0) ? ts : 0
                 };
                 if (this.hasAnyX(sanitized)) sanitized.status = 'NG';
                 return sanitized;
@@ -1968,6 +2383,7 @@
                 try {
                     const trial = this.getCurrentTrial();
                     if (!trial) return;
+                    this.collectFormToCurrentTrial();
                     const current = this.normalizeCheck(trial[field]);
                     let next = '-';
                     if (current === '-') next = '√';
@@ -1976,10 +2392,8 @@
                     trial[field] = next;
                     if (this.hasAnyX(trial)) trial.status = 'NG';
                     else if (this.allChecksOk(trial)) trial.status = 'OK';
-                    else if (trial.status === 'NG') {
-                        const fields = ['sop_check', 'fixture', 'parameter', 'equipment', 'machine', 'layout'];
-                        if (fields.some(f => this.normalizeCheck(trial[f]) === '√')) trial.status = 'OK';
-                    }
+                    else if (current === 'X' && trial.status === 'NG') trial.status = 'PENDING'; // X dihapus -> kembali belum selesai
+                    this._touch(trial);
                     this.renderCheckVal(field, next);
                     this.renderStatusBtn(trial.status);
                     this.updateAutoNgHint(trial);
@@ -1991,9 +2405,11 @@
                 try {
                     const trial = this.getCurrentTrial();
                     if (!trial) return;
+                    this.collectFormToCurrentTrial();
                     const newStatus = this.normalizeStatus(status);
                     if (newStatus === 'OK' && this.hasAnyX(trial)) { this.showToast('Tidak bisa OK — masih ada X.', 'error'); return; }
                     trial.status = newStatus;
+                    this._touch(trial);
                     this.renderStatusBtn(trial.status);
                     this.saveToStorage(true);
                 } catch (e) {}
@@ -2003,13 +2419,16 @@
                 try {
                     const trial = this.getCurrentTrial();
                     if (!trial) return;
-                    const el = (id) => document.getElementById(id);
-                    if (el('input-sop-no')) trial.no = el('input-sop-no').value.trim();
-                    if (el('input-sop-name')) trial.name = el('input-sop-name').value;
-                    if (el('input-problem')) trial.problem = el('input-problem').value;
-                    if (el('input-solution')) trial.solution = el('input-solution').value;
-                    if (el('input-pic')) trial.pic = el('input-pic').value;
-                    if (el('input-duedate')) trial.duedate = el('input-duedate').value;
+                    const fields = [['input-sop-no', 'no'], ['input-sop-name', 'name'], ['input-problem', 'problem'], ['input-solution', 'solution'], ['input-pic', 'pic'], ['input-duedate', 'duedate']];
+                    let changed = false;
+                    fields.forEach(([id, key]) => {
+                        const e = document.getElementById(id);
+                        if (!e) return;
+                        const v = key === 'no' ? e.value.trim() : e.value;
+                        if (String(trial[key] === null || trial[key] === undefined ? '' : trial[key]).trim() !== v.trim()) changed = true;
+                        trial[key] = v;
+                    });
+                    if (changed) this._touch(trial);
                 } catch (e) {}
             }
 
@@ -2024,8 +2443,10 @@
                         if (inp) inp.focus();
                         return;
                     }
+                    const prevStatus = trial.status;
                     if (this.hasAnyX(trial)) trial.status = 'NG';
                     else if (trial.status === 'PENDING' && this.allChecksOk(trial)) trial.status = 'OK';
+                    if (trial.status !== prevStatus) this._touch(trial);
                     this.saveToStorage(true);
                     this.render();
                     if (this.currentIndex < this.trials.length - 1) {
@@ -2063,17 +2484,17 @@
                     else this.files.unshift(fileEntry);
                     this.saveFiles();
                     this.updateFilesBadge();
-                    this.markPending();
                     setTimeout(() => {
                         const choice = confirm(
                             `✅ Trial tersimpan ke File Manager!\n\n` +
                             `Total: ${total} SOP\n` +
                             `OK: ${ok}, NG: ${ng}\n\n` +
                             `Klik OK untuk mulai trial BARU (reset default).\n` +
+                            `⚠️ Ini juga mereset data workspace ${line} / ${model} di semua perangkat yang terhubung.\n\n` +
                             `Klik Cancel untuk tetap di SOP terakhir.`
                         );
                         if (choice) {
-                            this.trials = this.getDefaultData().map(r => this.sanitizeRecord(r));
+                            this.replaceAllTrials(this.getDefaultData());
                             this.currentIndex = 0;
                             this.saveToStorage(true);
                             this.render();
@@ -2113,8 +2534,7 @@
                 try {
                     this.collectFormToCurrentTrial();
                     this.saveToStorage(false);
-                    const newRecord = this.sanitizeRecord({ name: `SOP Baru ${this.trials.length + 1}`, sop_check: '-', fixture: '-', parameter: '-', equipment: '√', machine: '-', layout: '√', status: 'PENDING', problem: '', solution: '', pic: '', duedate: '' });
-                    this.trials.push(newRecord);
+                    this.trials.push(this._blankRecord(this.trials.length + 1));
                     this.currentIndex = this.trials.length - 1;
                     this.saveToStorage(true);
                     this.render();
@@ -2130,8 +2550,8 @@
                     const source = this.getCurrentTrial();
                     if (!source) { this.showToast('Tidak ada SOP untuk diduplikat.', 'error'); return; }
                     this.saveToStorage(false);
-                    const copy = this.sanitizeRecord({
-                        no: source.no, name: `${source.name} (Copy)`,
+                    const copy = this.newRecord({
+                        no: '', name: `${source.name} (Copy)`,
                         sop_check: source.sop_check, fixture: source.fixture, parameter: source.parameter,
                         equipment: source.equipment, machine: source.machine, layout: source.layout,
                         status: source.status, problem: source.problem, solution: source.solution,
@@ -2143,7 +2563,7 @@
                     this.render();
                     this.closeModals();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                    this.showToast('SOP diduplikat.', 'success');
+                    this.showToast('SOP diduplikat (nomor dikosongkan, isi manual).', 'success');
                 } catch (e) {}
             }
 
@@ -2156,9 +2576,7 @@
                     this.collectFormToCurrentTrial();
                     this.saveToStorage(false);
                     const startNum = this.trials.length + 1;
-                    for (let i = 0; i < count; i++) {
-                        this.trials.push(this.sanitizeRecord({ name: `SOP Baru ${startNum + i}`, sop_check: '-', fixture: '-', parameter: '-', equipment: '√', machine: '-', layout: '√', status: 'PENDING', problem: '', solution: '', pic: '', duedate: '' }));
-                    }
+                    for (let i = 0; i < count; i++) this.trials.push(this._blankRecord(startNum + i));
                     this.currentIndex = this.trials.length - count;
                     this.saveToStorage(true);
                     this.render();
@@ -2192,7 +2610,8 @@
             confirmDeleteSop() {
                 try {
                     if (this.trials.length <= 1) { this.showToast('Tidak dapat hapus SOP terakhir.', 'error'); this.closeModals(); return; }
-                    const removedName = (this.getCurrentTrial() || {}).name || 'SOP';
+                    const removed = this.getCurrentTrial();
+                    if (removed && removed.id) this.deleted[removed.id] = Date.now(); // tombstone agar tidak "hidup lagi" saat sync
                     this.trials.splice(this.currentIndex, 1);
                     if (this.currentIndex >= this.trials.length) this.currentIndex = this.trials.length - 1;
                     this.saveToStorage(true);
@@ -2297,8 +2716,7 @@
                 }).join('');
                 const info = document.getElementById('files-info-text');
                 if (info) {
-                    const pending = this.files.filter(f => !f.synced).length;
-                    info.innerText = pending > 0 ? `${pending} file pending.` : `Semua ${this.files.length} file tersinkron.`;
+                    info.innerText = `${this.files.length} file tersimpan di perangkat ini (tidak disinkronkan ke Firebase).`;
                 }
             }
 
@@ -2310,23 +2728,36 @@
                 this.saveFiles();
                 this.updateFilesBadge();
                 this.renderFilesList();
-                this.markPending();
                 this.showToast('File dihapus.', 'success');
             }
 
             loadFileToEditor(id) {
                 const f = this.files.find(x => x.id === id);
                 if (!f) return;
-                if (!confirm(`Muat file "${f.name}"?\n\nData SOP saat ini akan diganti.`)) return;
+                if (!confirm(`Muat file "${f.name}"?\n\nData SOP workspace ${f.line || '-'} / ${f.model || '-'} akan diganti (termasuk di Firebase).`)) return;
+                // simpan & kirim dulu workspace yang sedang aktif, lalu lepas listener lamanya
+                this.collectFormToCurrentTrial();
+                this.saveToStorage(false);
+                this.flushPushNow();
+                this.detachFirebaseListeners();
                 if (f.line) this.setLine(f.line);
                 if (f.model) this.setModel(f.model);
                 this.updateDisplayLineModel();
-                this.trials = (f.trials || []).map(r => this.sanitizeRecord(r));
+                this.trials = [];
+                this.loadWorkspaceData();
+                this.replaceAllTrials(f.trials || []);
+                if (this.trials.length === 0) this.trials = [this._blankRecord(1)];
                 this.currentIndex = 0;
                 this.registerWorkspace(f.line, f.model);
                 this.saveToStorage(true);
                 this.render();
                 this.closeModals();
+                this.updateFilesBadge();
+                const wsKey = this.storageKey;
+                if (this.fbConnected) {
+                    // kirim data hasil replace dulu, baru pasang listener workspace baru
+                    Promise.resolve(this.flushPushNow()).then(() => { if (wsKey === this.storageKey) this.attachFirebaseListener(); });
+                }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 this.showToast(`File dimuat.`, 'success');
             }
@@ -2473,7 +2904,7 @@
                     const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
                     const safeLine = (line || 'Tanpa-Line').replace(/[\/\\:*?"<>|]/g, '_');
                     const safeModel = (model || 'Tanpa-Model').replace(/[\/\\:*?"<>|]/g, '_');
-                    const fname = baseName ? `${baseName}_${dateStr}_${timeStr}.xlsx` : `Trial_${safeLine}_${safeModel}_${dateStr}_${timeStr}.xlsx`;
+                    const fname = baseName ? `${String(baseName).replace(/[\/\\:*?"<>|]/g, '_')}_${dateStr}_${timeStr}.xlsx` : `Trial_${safeLine}_${safeModel}_${dateStr}_${timeStr}.xlsx`;
                     XLSX.writeFile(wb, fname);
                     this.showToast(`Export ${trials.length} SOP!`, 'success');
                 } catch (e) { console.error(e); this.showToast('Gagal: ' + e.message, 'error'); }
@@ -2530,12 +2961,13 @@
                 reader.onload = (e) => {
                     try {
                         const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
                         const NAME_ALIASES = ['sopitem', 'namasop', 'itemsop', 'item', 'sop', 'namaitemsop', 'namaitem'];
                         const norm = (v) => String(v === null || v === undefined ? '' : v).toLowerCase().replace(/[^a-z0-9]/g, '');
-                        const grid = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false, blankrows: false });
+                        const gridRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: true, blankrows: false });
+                        const grid = gridRaw.map(r => Array.isArray(r) ? r.map(c => c instanceof Date ? this._dateToISO(c) : c) : r);
                         const gridRows = grid.filter(r => Array.isArray(r) && r.some(c => String(c).trim() !== ''));
                         if (gridRows.length === 0) { this.showToast('File kosong.', 'error'); input.value = ''; return; }
                         let json = [];
@@ -2567,17 +2999,18 @@
                         }
                         if (json.length === 0) { this.showToast('Format tidak sesuai.', 'error'); input.value = ''; return; }
                         const imported = json.map(row => {
-                            const rawName = row['SOP Item'] || row['Nama SOP'] || row['Item SOP'] || row['Item'] || row['SOP'] || '';
+                            const hasNameKey = ['SOP Item', 'Nama SOP', 'Item SOP', 'Item'].some(k => Object.prototype.hasOwnProperty.call(row, k));
+                            const rawName = hasNameKey ? (row['SOP Item'] || row['Nama SOP'] || row['Item SOP'] || row['Item'] || '') : (row['SOP'] || '');
                             const rawStatus = row['Status'] || row['status'] || 'PENDING';
                             const rawNo = row['No'] !== undefined ? row['No'] : (row['No.'] !== undefined ? row['No.'] : '');
-                            return this.sanitizeRecord({
+                            return this.newRecord({
                                 no: rawNo, name: rawName ? rawName.toString() : '',
-                                sop_check: row['SOP'] !== undefined ? row['SOP'] : '-', fixture: row['Fixture'] || '-',
+                                sop_check: (hasNameKey && row['SOP'] !== undefined) ? row['SOP'] : '-', fixture: row['Fixture'] || '-',
                                 parameter: row['Parameter'] || '-', equipment: row['Equipment'] || '-',
                                 machine: row['Machine'] || '-', layout: row['Layout'] || '-',
                                 status: rawStatus, problem: row['Problem finding'] || row['Problem'] || '',
                                 solution: row['Solution'] || '', pic: row['PIC'] || '',
-                                duedate: row['Due Date'] || ''
+                                duedate: this.normalizeDate(row['Due Date'])
                             });
                         });
                         const validRows = imported.filter(r => r.name && r.name.trim() !== '');
@@ -2648,17 +3081,16 @@
                     if (!this._pendingImport || this._pendingImport.length === 0) { this.showToast('Tidak ada data.', 'error'); return; }
                     let mode = 'replace';
                     document.querySelectorAll('input[name="import-mode"]').forEach(r => { if (r.checked) mode = r.value; });
-                    let finalTrials, msg;
+                    let msg;
                     if (mode === 'append') {
                         this.collectFormToCurrentTrial();
-                        finalTrials = [...this.trials, ...this._pendingImport];
+                        this.trials = [...this.trials, ...this._pendingImport.map(r => this.newRecord(r))];
                         msg = `${this._pendingImport.length} SOP ditambahkan.`;
                     } else {
                         if (!confirm(`REPLACE akan MENGGANTI ${this.trials.length} SOP dengan ${this._pendingImport.length} SOP baru.\n\nLanjutkan?`)) return;
-                        finalTrials = [...this._pendingImport];
+                        this.replaceAllTrials(this._pendingImport);
                         msg = `Diganti dengan ${this._pendingImport.length} SOP.`;
                     }
-                    this.trials = finalTrials.map(r => this.sanitizeRecord(r));
                     this.currentIndex = 0;
                     this.saveToStorage(true);
                     this.render();
