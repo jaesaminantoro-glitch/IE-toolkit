@@ -4399,7 +4399,7 @@ function switchLineModelTab(tab) {
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line','Model','No','Nama Mesin','Sub Mesin'];
             for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin');
+            hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas');
             const data = [hd];
             items.forEach(it => {
                 const rd = [it.line, it.model || '-', it.no, it.process, it.subMachine || ''];
@@ -4408,7 +4408,7 @@ function switchLineModelTab(tab) {
                     if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
                     else rd.push('');
                 }
-                rd.push(null, parseFloat(it.ngRate) || 0, parseFloat(it.gerakan) || 0, null, null, parseFloat(it.actualMachine) || 1);
+                rd.push(null, parseFloat(it.ngRate) || 0, parseFloat(it.gerakan) || 0, null, null, parseFloat(it.actualMachine) || 1, null);
                 data.push(rd);
             });
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -4419,9 +4419,10 @@ function switchLineModelTab(tab) {
             const ctgCol = gerCol + 1;
             const capCol = ctgCol + 1;
             const jmlCol = capCol + 1;
+            const totalCapCol = jmlCol + 1;
             const cl = (n) => XLSX.utils.encode_col(n);
             const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
-            const avgL = cl(avgCol), ngL = cl(ngCol), gerL = cl(gerCol), ctgL = cl(ctgCol), capL = cl(capCol), jmlL = cl(jmlCol);
+            const avgL = cl(avgCol), ngL = cl(ngCol), gerL = cl(gerCol), ctgL = cl(ctgCol), capL = cl(capCol), jmlL = cl(jmlCol), totCapL = cl(totalCapCol);
             for (let r = 2; r <= items.length + 1; r++) {
                 const rowItem = items[r - 2];
                 const st = getRowStatsArchive(rowItem, 'mesin');
@@ -4429,6 +4430,12 @@ function switchLineModelTab(tab) {
                 ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
                 ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
             }
+            _gm.groups.forEach(g => {
+                const r0 = g.start + 2, r1 = g.start + g.count + 1;
+                let tot = 0;
+                for (let r = r0; r <= r1; r++) tot += getRowStatsArchive(items[r - 2], 'mesin').capacity;
+                ws[`${totCapL}${r0}`] = { t: 'n', f: `SUM(${capL}${r0}:${capL}${r1})`, v: tot };
+            });
            const stdUph = getLineUphByName(a.line);
             const numFmtCols = [];
             for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
@@ -4444,11 +4451,12 @@ function switchLineModelTab(tab) {
                 if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
                 return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
+            columnStyles[totalCapCol] = columnStyles[capCol];
             applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-            mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
+            mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3, totalCapCol], [0, 1, 2, totalCapCol]);
             ws['!cols'] = [{wch:10},{wch:12},{wch:6},{wch:18},{wch:12}];
             for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
-            ws['!cols'].push({wch:10},{wch:8},{wch:10},{wch:12},{wch:12},{wch:10});
+            ws['!cols'].push({wch:10},{wch:8},{wch:10},{wch:12},{wch:12},{wch:10},{wch:14});
             XLSX.utils.book_append_sheet(wb, ws, 'Arsip Mesin');
             return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
         }
@@ -4484,7 +4492,7 @@ function switchLineModelTab(tab) {
                 } else {
                     hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus'];
                     for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-                    hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin');
+                    hd.push('Average','NG%','Gerakan','CT+Gerakan','Kapasitas','Jml Mesin','Total Kapasitas');
                 }
                 wsData.push(hd);
                 dE.forEach(i => {
@@ -4501,7 +4509,7 @@ function switchLineModelTab(tab) {
                     } else {
                         row.push(i.line, i.model || '-', i.no, i.process, i.subMachine, lapsCount);
                         for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
-                        row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1);
+                        row.push(null, parseFloat(i.ngRate) || 0, parseFloat(i.gerakan) || 0, null, null, parseFloat(i.actualMachine) || 1, null);
                     }
                     wsData.push(row);
                 });
@@ -4537,6 +4545,15 @@ function switchLineModelTab(tab) {
                         ws[`${ctgL}${r}`] = { t: 'n', f: `${avgL}${r}+${gerL}${r}`, v: parseFloat(st.ctPlusG.toFixed(4)) };
                         ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
                     }
+                }
+                if (currentMode === 'mesin') {
+                    const _capL = colLetter(avgCol + 4), _totCapL = colLetter(avgCol + 6);
+                    _gm.groups.forEach(g => {
+                        const r0 = g.start + 2, r1 = g.start + g.count + 1;
+                        let tot = 0;
+                        for (let r = r0; r <= r1; r++) tot += getRowStats(dE[r - 2]).capacity;
+                        ws[`${_totCapL}${r0}`] = { t: 'n', f: `SUM(${_capL}${r0}:${_capL}${r1})`, v: tot };
+                    });
                 }
                 if (currentMode === 'elemen' || currentMode === 'siklus') {
                     // Total Std. Time & UPH dihitung per grup (sama seperti tabel di web), lalu di-merge
@@ -4576,11 +4593,12 @@ function switchLineModelTab(tab) {
                         if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
                         return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
                     };
+                    columnStyles[avgCol + 6] = columnStyles[avgCol + 4];
                 }
                 applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
                 if (currentMode === 'siklus') mergeGroupCols(ws, _gm.groups, [0, 1, 2, totalSmhCol, uphCol], [0, 1, 2, totalSmhCol, uphCol]);
                 else if (currentMode === 'elemen') mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3, totalSmhCol, uphCol], [0, 1, 2, totalSmhCol, uphCol]);
-                else mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
+                else mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3, avgCol + 6], [0, 1, 2, avgCol + 6]);
                 const cols = [];
                 if (currentMode === 'elemen') {
                     cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }, { wch: 8 });
@@ -4593,7 +4611,7 @@ function switchLineModelTab(tab) {
                 } else {
                     cols.push({ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 8 });
                     for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
-                    cols.push({ wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 });
+                    cols.push({ wch: 10 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 });
                 }
                 ws['!cols'] = cols;
                 XLSX.utils.book_append_sheet(wb, ws, 'Time Study');
