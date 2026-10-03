@@ -4330,7 +4330,7 @@ function switchLineModelTab(tab) {
             const mL = Math.max(...items.map(i => (i.laps||[]).length), 1);
             const hd = ['Line','Model','No. SOP','Nama SOP'];
             for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-            hd.push('Average','Allowance','Std. Time','Operator','UPH');
+            hd.push('Average','Allowance','Std. Time','Total Std. Time','Operator','UPH');
             const data = [hd];
             items.forEach(it => {
                 const rd = [it.line, it.model || '-', it.noSop, it.namaSop];
@@ -4339,7 +4339,7 @@ function switchLineModelTab(tab) {
                     if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); rd.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); }
                     else rd.push('');
                 }
-                rd.push(null, 0.1, null, it.operators || 1, null);
+                rd.push(null, 0.1, null, null, it.operators || 1, null);
                 data.push(rd);
             });
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -4347,19 +4347,26 @@ function switchLineModelTab(tab) {
             const avgCol = 4 + mL;
             const allowCol = avgCol + 1;
             const smhCol = allowCol + 1;
-            const opCol = smhCol + 1;
+            const totalSmhCol = smhCol + 1;
+            const opCol = totalSmhCol + 1;
             const uphCol = opCol + 1;
             const cl = (n) => XLSX.utils.encode_col(n);
             const s1L = cl(s1Col), sLastL = cl(s1Col + mL - 1);
-            const avgL = cl(avgCol), allowL = cl(allowCol), smhL = cl(smhCol), uphL = cl(uphCol);
+            const avgL = cl(avgCol), allowL = cl(allowCol), smhL = cl(smhCol), totalSmhL = cl(totalSmhCol), uphL = cl(uphCol);
             for (let r = 2; r <= items.length + 1; r++) {
                 const rowItem = items[r - 2];
                 const st = getRowStatsArchive(rowItem, 'siklus');
                 ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
                 ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
                 ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
-                ws[`${uphL}${r}`] = { t: 'n', f: `ROUND(3600/${smhL}${r},0)`, v: st.uph };
             }
+            _gm.groups.forEach(g => {
+                const r0 = g.start + 2, r1 = g.start + g.count + 1;
+                let tot = 0;
+                for (let r = r0; r <= r1; r++) tot += getRowStatsArchive(items[r - 2], 'siklus').smh;
+                ws[`${totalSmhL}${r0}`] = { t: 'n', f: `SUM(${smhL}${r0}:${smhL}${r1})`, v: parseFloat(tot.toFixed(4)) };
+                ws[`${uphL}${r0}`] = { t: 'n', f: `ROUND(3600/${totalSmhL}${r0},0)`, v: tot > 0 ? Math.round(3600 / tot) : 0 };
+            });
            const stdUph = getLineUphByName(a.line);
             const numFmtCols = [];
             for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
@@ -4368,17 +4375,19 @@ function switchLineModelTab(tab) {
             columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
             columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
             columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
+            columnStyles[totalSmhCol] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true } };
             columnStyles[opCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' } };
             columnStyles[uphCol] = (val) => {
                 const v = parseFloat(val);
                 if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
                 return v >= stdUph ? { fill: 'C6EFCE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '006100' } } } : { fill: 'FFC7CE', alignment: { horizontal: 'center' }, font: { bold: true, color: { rgb: '9C0006' } } };
             };
+            numFmtCols.push(totalSmhCol);
             applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-            mergeGroupCols(ws, _gm.groups, [0, 1, 2], [0, 1, 2]);
+            mergeGroupCols(ws, _gm.groups, [0, 1, 2, totalSmhCol, uphCol], [0, 1, 2, totalSmhCol, uphCol]);
             ws['!cols'] = [{wch:10},{wch:12},{wch:10},{wch:22}];
             for (let i = 0; i < mL; i++) ws['!cols'].push({wch:8});
-            ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:10},{wch:10});
+            ws['!cols'].push({wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:10});
             XLSX.utils.book_append_sheet(wb, ws, 'Arsip Siklus');
             return XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
         }
@@ -4467,11 +4476,11 @@ function switchLineModelTab(tab) {
                 if (currentMode === 'elemen') {
                     hd = ['Line','Model','No. SOP','Nama SOP','Elemen','Siklus'];
                     for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-                    hd.push('Average','Allowance','Std. Time','UPH');
+                    hd.push('Average','Allowance','Std. Time','Total Std. Time','UPH');
                 } else if (currentMode === 'siklus') {
                     hd = ['Line','Model','No. SOP','Nama SOP','Siklus'];
                     for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
-                    hd.push('Average','Allowance','Std. Time','UPH');
+                    hd.push('Average','Allowance','Std. Time','Total Std. Time','UPH');
                 } else {
                     hd = ['Line','Model','No','Nama Mesin','Sub Mesin','Siklus'];
                     for (let i = 1; i <= mL; i++) hd.push(`S${i}`);
@@ -4484,11 +4493,11 @@ function switchLineModelTab(tab) {
                     if (currentMode === 'elemen') {
                         row.push(i.line, i.model || '-', i.noSop, i.namaSop, i.elemen, lapsCount);
                         for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
-                        row.push(null, 0.1, null, null);
+                        row.push(null, 0.1, null, null, null);
                     } else if (currentMode === 'siklus') {
                         row.push(i.line, i.model || '-', i.noSop, i.namaSop, lapsCount);
                         for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
-                        row.push(null, 0.1, null, null);
+                        row.push(null, 0.1, null, null, null);
                     } else {
                         row.push(i.line, i.model || '-', i.no, i.process, i.subMachine, lapsCount);
                         for (let k = 0; k < mL; k++) { const lv = i.laps[k]; if (lv !== undefined && lv !== null) { const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv); row.push(isNaN(v) ? '' : parseFloat(v.toFixed(2))); } else row.push(''); }
@@ -4500,8 +4509,9 @@ function switchLineModelTab(tab) {
                 const firstDataRow = 2;
                 const lastDataRow = firstDataRow + dE.length - 1;
                 let s1Col, avgCol, allowCol, smhCol, uphCol;
-                if (currentMode === 'elemen') { s1Col = 6; avgCol = 6 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; uphCol = smhCol + 1; }
-                else if (currentMode === 'siklus') { s1Col = 5; avgCol = 5 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; uphCol = smhCol + 1; }
+                let totalSmhCol;
+                if (currentMode === 'elemen') { s1Col = 6; avgCol = 6 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; totalSmhCol = smhCol + 1; uphCol = totalSmhCol + 1; }
+                else if (currentMode === 'siklus') { s1Col = 5; avgCol = 5 + mL; allowCol = avgCol + 1; smhCol = allowCol + 1; totalSmhCol = smhCol + 1; uphCol = totalSmhCol + 1; }
                 else { s1Col = 6; avgCol = 6 + mL; }
                 const colLetter = (n) => XLSX.utils.encode_col(n);
                 for (let r = firstDataRow; r <= lastDataRow; r++) {
@@ -4517,7 +4527,6 @@ function switchLineModelTab(tab) {
                         ws[`${avgL}${r}`] = { t: 'n', f: `AVERAGE(${s1L}${r}:${sLastL}${r})`, v: parseFloat(st.avg.toFixed(4)) };
                         ws[`${allowL}${r}`] = { t: 'n', v: 0.1, f: '0.1' };
                         ws[`${smhL}${r}`] = { t: 'n', f: `${avgL}${r}*(1+${allowL}${r})`, v: parseFloat(st.smh.toFixed(4)) };
-                        ws[`${uphL}${r}`] = { t: 'n', f: `ROUND(3600/${smhL}${r},0)`, v: st.uph };
                     } else {
                         const ngL = colLetter(avgCol + 1);
                         const gerL = colLetter(avgCol + 2);
@@ -4529,16 +4538,28 @@ function switchLineModelTab(tab) {
                         ws[`${capL}${r}`] = { t: 'n', f: `ROUND((3600/${ctgL}${r})*${jmlL}${r}*(1-${ngL}${r}/100),0)`, v: st.capacity };
                     }
                 }
+                if (currentMode === 'elemen' || currentMode === 'siklus') {
+                    // Total Std. Time & UPH dihitung per grup (sama seperti tabel di web), lalu di-merge
+                    const _smhL = colLetter(smhCol), _totL = colLetter(totalSmhCol), _uphL = colLetter(uphCol);
+                    _gm.groups.forEach(g => {
+                        const r0 = g.start + 2, r1 = g.start + g.count + 1;
+                        let tot = 0;
+                        for (let r = r0; r <= r1; r++) tot += getRowStats(dE[r - 2]).smh;
+                        ws[`${_totL}${r0}`] = { t: 'n', f: `SUM(${_smhL}${r0}:${_smhL}${r1})`, v: parseFloat(tot.toFixed(4)) };
+                        ws[`${_uphL}${r0}`] = { t: 'n', f: `ROUND(3600/${_totL}${r0},0)`, v: tot > 0 ? Math.round(3600 / tot) : 0 };
+                    });
+                }
                 const stdUph = getLineStandardUph();
                 const numFmtCols = [];
                 for (let i = s1Col; i < s1Col + mL; i++) numFmtCols.push(i);
-                if (currentMode === 'elemen' || currentMode === 'siklus') numFmtCols.push(avgCol, smhCol);
+                if (currentMode === 'elemen' || currentMode === 'siklus') numFmtCols.push(avgCol, smhCol, totalSmhCol);
                 else numFmtCols.push(avgCol, avgCol + 2, avgCol + 3);
                 const columnStyles = {};
                 if (currentMode === 'elemen' || currentMode === 'siklus') {
                     columnStyles[avgCol] = { fill: 'FFF2CC', alignment: { horizontal: 'center' } };
                     columnStyles[allowCol] = { fill: 'FFFFFF', alignment: { horizontal: 'center' }, numFmt: '0.00' };
                     columnStyles[smhCol] = { fill: 'FFE699', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true, italic: true } };
+                    columnStyles[totalSmhCol] = { fill: 'F8CBAD', alignment: { horizontal: 'center' }, numFmt: '0.00', font: { bold: true } };
                     columnStyles[uphCol] = (val) => {
                         const v = parseFloat(val);
                         if (isNaN(v) || stdUph <= 0) return { fill: 'FFFFFF', alignment: { horizontal: 'center' }, font: { bold: true } };
@@ -4557,18 +4578,18 @@ function switchLineModelTab(tab) {
                     };
                 }
                 applySheetStyle(ws, { headerFill: 'C6E0B4', columnStyles, numFmtCols, mL, s1Col });
-                if (currentMode === 'siklus') mergeGroupCols(ws, _gm.groups, [0, 1, 2], [0, 1, 2]);
-                else if (currentMode === 'elemen') mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
+                if (currentMode === 'siklus') mergeGroupCols(ws, _gm.groups, [0, 1, 2, totalSmhCol, uphCol], [0, 1, 2, totalSmhCol, uphCol]);
+                else if (currentMode === 'elemen') mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3, totalSmhCol, uphCol], [0, 1, 2, totalSmhCol, uphCol]);
                 else mergeGroupCols(ws, _gm.groups, [0, 1, 2, 3], [0, 1, 2]);
                 const cols = [];
                 if (currentMode === 'elemen') {
                     cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 24 }, { wch: 8 });
                     for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
-                    cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 });
+                    cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 });
                 } else if (currentMode === 'siklus') {
                     cols.push({ wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 22 }, { wch: 8 });
                     for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
-                    cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 });
+                    cols.push({ wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 });
                 } else {
                     cols.push({ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 18 }, { wch: 12 }, { wch: 8 });
                     for (let i = 0; i < mL; i++) cols.push({ wch: 8 });
