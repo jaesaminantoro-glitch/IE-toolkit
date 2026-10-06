@@ -18,66 +18,66 @@
         <h1 class="text-base md:text-lg font-bold">🔧 Compare BOM</h1>
     </header>
 
-        <div id="tab-bom">
-            <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
-                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h2 class="text-sm md:text-base font-semibold text-gray-800">🔧 Compare BOM Multi-Sheet</h2>
-                            <p class="text-[10px] md:text-xs text-gray-500 mt-1">Bandingkan 2 sheet pertama dari setiap file BOM. Hasil muncul di tab terpisah.</p>
-                        </div>
-                        <div class="flex gap-2 w-full md:w-auto">
-                            <button onclick="processBOMFiles()" id="bomProcessBtn" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">🔍 Bandingkan</button>
-                            <button onclick="exportBOMToExcel()" id="bomExportBtn" class="hidden flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Export Excel</button>
-                        </div>
+    <div id="tab-bom">
+        <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-sm md:text-base font-semibold text-gray-800">🔧 Compare BOM Multi-Sheet</h2>
+                        <p class="text-[10px] md:text-xs text-gray-500 mt-1">Bandingkan 2 sheet pertama dari setiap file BOM. Hasil muncul di tab terpisah.</p>
                     </div>
-
-                    <label for="bomFiles" class="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
-                        <div class="flex flex-col items-center justify-center px-4 text-center">
-                            <div class="text-2xl mb-1">📁</div>
-                            <p class="text-sm text-slate-600"><span class="font-semibold text-indigo-600">Klik untuk upload</span> atau seret file BOM</p>
-                            <p class="text-xs text-slate-400">Format: .xlsx, .xls (bisa multiple)</p>
-                        </div>
-                        <input type="file" id="bomFiles" multiple accept=".xlsx, .xls" class="hidden" onchange="handleBOMFileSelect(event)"/>
-                    </label>
-                    <div id="bomFileListPreview" class="mt-3 flex flex-wrap gap-1.5"></div>
-                    <p id="bomStatusMsg" class="text-xs text-slate-500 mt-2"></p>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button onclick="processBOMFiles()" id="bomProcessBtn" class="flex-1 md:flex-none bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">🔍 Bandingkan</button>
+                        <button onclick="exportBOMToExcel()" id="bomExportBtn" class="hidden flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Export Excel</button>
+                    </div>
                 </div>
 
-                <div id="bomTableContainer" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="p-3 border-b border-gray-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-2">
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <div id="bomSheetTabs" class="flex bg-slate-200 p-1 rounded-lg flex-wrap gap-1">
-    <button onclick="switchBOMTab(0)" id="bomTabBtn0" class="px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm">Sheet 1</button>
-    <button onclick="switchBOMTab(1)" id="bomTabBtn1" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 2</button>
-    <button onclick="switchBOMTab(2)" id="bomTabBtn2" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 3</button>
-    <button onclick="switchBOMTab(3)" id="bomTabBtn3" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 4</button>
-</div>
-                            <span id="bomSummaryCount" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-bold"></span>
+                <label for="bomFiles" class="flex flex-col items-center justify-center w-full h-28 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <div class="flex flex-col items-center justify-center px-4 text-center">
+                        <div class="text-2xl mb-1">📁</div>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-indigo-600">Klik untuk upload</span> atau seret file BOM</p>
+                        <p class="text-xs text-slate-400">Format: .xlsx, .xls (bisa multiple)</p>
+                    </div>
+                    <input type="file" id="bomFiles" multiple accept=".xlsx, .xls" class="hidden" onchange="handleBOMFileSelect(event)"/>
+                </label>
+                <div id="bomFileListPreview" class="mt-3 flex flex-wrap gap-1.5"></div>
+                <p id="bomStatusMsg" class="text-xs text-slate-500 mt-2"></p>
+            </div>
+
+            <div id="bomTableContainer" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-3 border-b border-gray-200 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-2">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div id="bomSheetTabs" class="flex bg-slate-200 p-1 rounded-lg flex-wrap gap-1">
+                            <button onclick="switchBOMTab(0)" id="bomTabBtn0" class="px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm">Sheet 1</button>
+                            <button onclick="switchBOMTab(1)" id="bomTabBtn1" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 2</button>
+                            <button onclick="switchBOMTab(2)" id="bomTabBtn2" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 3</button>
+                            <button onclick="switchBOMTab(3)" id="bomTabBtn3" class="px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600">Sheet 4</button>
                         </div>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <input type="text" id="bomSearchInput" onkeyup="filterBOMTable()" placeholder="🔍 Cari..." class="w-full sm:w-56 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <select id="bomFilterType" onchange="filterBOMTable()" class="px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs">
-                                <option value="all">Semua</option>
-                                <option value="diff">Berbeda/Unik</option>
-                                <option value="common">Universal</option>
-                            </select>
-                        </div>
+                        <span id="bomSummaryCount" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full font-bold"></span>
                     </div>
-                    <div class="overflow-x-auto max-h-[600px]">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead id="bomTableHead" class="bg-slate-100 sticky top-0 z-20 text-slate-700"></thead>
-                            <tbody id="bomTableBody" class="divide-y divide-slate-200"></tbody>
-                        </table>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="bomSearchInput" onkeyup="filterBOMTable()" placeholder="🔍 Cari..." class="w-full sm:w-56 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select id="bomFilterType" onchange="filterBOMTable()" class="px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs">
+                            <option value="all">Semua</option>
+                            <option value="diff">Berbeda/Unik</option>
+                            <option value="common">Universal</option>
+                        </select>
                     </div>
-                    <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center gap-4 text-[10px] text-slate-600">
-                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300 inline-block"></span><span>Qty sama</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block"></span><span>Qty beda</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span><span>Tidak ada (-)</span></div>
-                    </div>
+                </div>
+                <div class="overflow-x-auto max-h-[600px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead id="bomTableHead" class="bg-slate-100 sticky top-0 z-20 text-slate-700"></thead>
+                        <tbody id="bomTableBody" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+                <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center gap-4 text-[10px] text-slate-600">
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300 inline-block"></span><span>Qty sama</span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-300 inline-block"></span><span>Qty beda</span></div>
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span><span>Tidak ada (-)</span></div>
                 </div>
             </div>
         </div>
+    </div>
 
     <script>
         function showToast(msg, type = 'info') {
@@ -93,12 +93,12 @@
         // ============================================================
         // COMPARE BOM STATE
         // ============================================================
-        const BOM_MAX_SHEETS = 4;  // ⚙️ Ubah angka ini kalau mau tambah/kurangi sheet
-let bomSelectedFiles = [];
-let bomMultiSheetData = Array.from({ length: BOM_MAX_SHEETS }, () => []);
-let bomSheetNames = Array.from({ length: BOM_MAX_SHEETS }, (_, i) => `Sheet ${i + 1}`);
-let bomVersions = [];
-let bomActiveTab = 0;
+        const BOM_MAX_SHEETS = 4;
+        let bomSelectedFiles = [];
+        let bomMultiSheetData = Array.from({ length: BOM_MAX_SHEETS }, () => []);
+        let bomSheetNames = Array.from({ length: BOM_MAX_SHEETS }, (_, i) => `Sheet ${i + 1}`);
+        let bomVersions = [];
+        let bomActiveTab = 0;
 
         function handleBOMFileSelect(event) {
             const files = event.target.files;
@@ -125,74 +125,74 @@ let bomActiveTab = 0;
             statusMsg.textContent = "Memproses...";
 
             bomMultiSheetData = Array.from({ length: BOM_MAX_SHEETS }, () => []);
-bomVersions = [];
-const sheetMaps = [new Map(), new Map(), new Map(), new Map()];
-let detectedSheetNames = ['Sheet 1', 'Sheet 2', 'Sheet 3', 'Sheet 4'];
+            bomVersions = [];
+            const sheetMaps = [new Map(), new Map(), new Map(), new Map()];
+            let detectedSheetNames = ['Sheet 1', 'Sheet 2', 'Sheet 3', 'Sheet 4'];
 
-for (let i = 0; i < bomSelectedFiles.length; i++) {
-    const file = bomSelectedFiles[i];
-    const versionNumber = file.name.split('-')[0].trim() || file.name;
-    bomVersions.push(versionNumber);
-    try {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data);
-        const sheetNames = workbook.SheetNames.slice(0, BOM_MAX_SHEETS);
-        if (i === 0) {
-            sheetNames.forEach((sn, idx) => { detectedSheetNames[idx] = sn; });
-        }
-        sheetNames.forEach((sheetName, sIdx) => {
-            if (sIdx >= BOM_MAX_SHEETS) return;
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            const currentMap = sheetMaps[sIdx];
-            for (let r = 2; r < json.length; r++) {
-                const row = json[r];
-                if (!row || !row[3]) continue;
-                const matCode = String(row[3]).trim();
-                const matNameEN = row[6] ? String(row[6]).trim() : '-';
-                const matSpec = row[7] ? String(row[7]).trim() : '-';
-                const matQty = row[9] !== undefined ? row[9] : '-';
-                if (!currentMap.has(matCode)) {
-                    currentMap.set(matCode, { code: matCode, nameEN: matNameEN, spec: matSpec, qtys: {} });
-                }
-                const current = currentMap.get(matCode);
-                if (matNameEN !== '-' && current.nameEN === '-') current.nameEN = matNameEN;
-                if (matSpec !== '-' && current.spec === '-') current.spec = matSpec;
-                current.qtys[versionNumber] = matQty;
+            for (let i = 0; i < bomSelectedFiles.length; i++) {
+                const file = bomSelectedFiles[i];
+                const versionNumber = file.name.split('-')[0].trim() || file.name;
+                bomVersions.push(versionNumber);
+                try {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data);
+                    const sheetNames = workbook.SheetNames.slice(0, BOM_MAX_SHEETS);
+                    if (i === 0) {
+                        sheetNames.forEach((sn, idx) => { detectedSheetNames[idx] = sn; });
+                    }
+                    sheetNames.forEach((sheetName, sIdx) => {
+                        if (sIdx >= BOM_MAX_SHEETS) return;
+                        const worksheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        const currentMap = sheetMaps[sIdx];
+                        for (let r = 2; r < json.length; r++) {
+                            const row = json[r];
+                            if (!row || !row[3]) continue;
+                            const matCode = String(row[3]).trim();
+                            const matNameEN = row[6] ? String(row[6]).trim() : '-';
+                            const matSpec = row[7] ? String(row[7]).trim() : '-';
+                            const matQty = row[9] !== undefined ? row[9] : '-';
+                            if (!currentMap.has(matCode)) {
+                                currentMap.set(matCode, { code: matCode, nameEN: matNameEN, spec: matSpec, qtys: {} });
+                            }
+                            const current = currentMap.get(matCode);
+                            if (matNameEN !== '-' && current.nameEN === '-') current.nameEN = matNameEN;
+                            if (matSpec !== '-' && current.spec === '-') current.spec = matSpec;
+                            current.qtys[versionNumber] = matQty;
+                        }
+                    });
+                } catch (err) { console.error("Gagal baca:", file.name, err); }
             }
-        });
-    } catch (err) { console.error("Gagal baca:", file.name, err); }
-}
 
-bomSheetNames = detectedSheetNames;
-for (let s = 0; s < BOM_MAX_SHEETS; s++) {
-    bomMultiSheetData[s] = Array.from(sheetMaps[s].values());
-    const btn = document.getElementById('bomTabBtn' + s);
-    if (btn) {
-        const nm = bomSheetNames[s] || ('Sheet ' + (s + 1));
-        btn.textContent = nm.length > 20 ? nm.substring(0, 17) + '...' : nm;
-    }
-}
+            bomSheetNames = detectedSheetNames;
+            for (let s = 0; s < BOM_MAX_SHEETS; s++) {
+                bomMultiSheetData[s] = Array.from(sheetMaps[s].values());
+                const btn = document.getElementById('bomTabBtn' + s);
+                if (btn) {
+                    const nm = bomSheetNames[s] || ('Sheet ' + (s + 1));
+                    btn.textContent = nm.length > 20 ? nm.substring(0, 17) + '...' : nm;
+                }
+            }
 
-switchBOMTab(0);
-statusMsg.textContent = `✅ Selesai! ${bomSelectedFiles.length} file diproses.`;
-document.getElementById('bomTableContainer').classList.remove('hidden');
-document.getElementById('bomExportBtn').classList.remove('hidden');
-processBtn.disabled = false;
+            switchBOMTab(0);
+            statusMsg.textContent = `✅ Selesai! ${bomSelectedFiles.length} file diproses.`;
+            document.getElementById('bomTableContainer').classList.remove('hidden');
+            document.getElementById('bomExportBtn').classList.remove('hidden');
+            processBtn.disabled = false;
         }
 
         function switchBOMTab(idx) {
-    bomActiveTab = idx;
-    const activeCls = 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm';
-    const inactiveCls = 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
-    for (let s = 0; s < BOM_MAX_SHEETS; s++) {
-        const btn = document.getElementById('bomTabBtn' + s);
-        if (btn) btn.className = (s === idx) ? activeCls : inactiveCls;
-    }
-    document.getElementById('bomSearchInput').value = '';
-    document.getElementById('bomFilterType').value = 'all';
-    renderBOMTable(bomMultiSheetData[bomActiveTab]);
-}
+            bomActiveTab = idx;
+            const activeCls = 'px-3 py-1.5 rounded-md text-[11px] font-bold bg-white text-indigo-700 shadow-sm';
+            const inactiveCls = 'px-3 py-1.5 rounded-md text-[11px] font-bold text-slate-600';
+            for (let s = 0; s < BOM_MAX_SHEETS; s++) {
+                const btn = document.getElementById('bomTabBtn' + s);
+                if (btn) btn.className = (s === idx) ? activeCls : inactiveCls;
+            }
+            document.getElementById('bomSearchInput').value = '';
+            document.getElementById('bomFilterType').value = 'all';
+            renderBOMTable(bomMultiSheetData[bomActiveTab]);
+        }
 
         function renderBOMTable(dataToRender) {
             const thead = document.getElementById('bomTableHead');
@@ -258,22 +258,149 @@ processBtn.disabled = false;
             renderBOMTable(filtered);
         }
 
+        // ============================================================
+        // EXPORT EXCEL — HEADER 2 BARIS SEPERTI GAMBAR REFERENSI
+        // ============================================================
         function exportBOMToExcel() {
-    const hasAny = bomMultiSheetData.some(sd => sd.length > 0);
-    if (!hasAny) return;
-    const workbook = XLSX.utils.book_new();
+            const hasAny = bomMultiSheetData.some(sd => sd.length > 0);
+            if (!hasAny) return;
+
+            const workbook = XLSX.utils.book_new();
+
             bomMultiSheetData.forEach((sheetData, sIdx) => {
                 if (sheetData.length === 0) return;
-                const exportRows = sheetData.map(item => {
-                    const rowObj = { "Kode Material": item.code, "Material Name (English)": item.nameEN, "Specification": item.spec };
-                    bomVersions.forEach(ver => { rowObj[`BOM ${ver}`] = item.qtys[ver] !== undefined ? item.qtys[ver] : '-'; });
-                    return rowObj;
+
+                // ===== Array-of-arrays =====
+                const aoa = [];
+
+                // Baris 0: Header Grup
+                const headerRow1 = [
+                    "Kode Material", "", "",
+                    "Material Name (English)", "", "", "",
+                    "Specification", "", "", "", "", "", "", "", ""
+                ];
+                bomVersions.forEach(ver => {
+                    headerRow1.push("BOM " + ver, "");
                 });
-                const worksheet = XLSX.utils.json_to_sheet(exportRows);
-                let safeSheetName = (bomSheetNames[sIdx] || `Sheet_${sIdx+1}`).replace(/[\/\\\?\*\[\]]/g, "_");
+                aoa.push(headerRow1);
+
+                // Baris 1: Sub-header
+                const headerRow2 = [
+                    "物料编码 Material Code", "", "",
+                    "物料名称(英文) Material Name (English)", "", "", "",
+                    "物料规格(英文) Material Specification (English)", "", "", "", "", "", "", "", ""
+                ];
+                bomVersions.forEach(() => {
+                    headerRow2.push("数量 Qty", "");
+                });
+                aoa.push(headerRow2);
+
+                // Baris data
+                sheetData.forEach(item => {
+                    const row = [];
+                    row.push(item.code, "", "");
+                    row.push(item.nameEN, "", "", "");
+                    row.push(item.spec, "", "", "", "", "", "", "", "");
+                    bomVersions.forEach(ver => {
+                        const qty = item.qtys[ver];
+                        const displayVal = qty !== undefined ? qty : '-';
+                        row.push(displayVal, "");
+                    });
+                    aoa.push(row);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+                // ===== Lebar kolom =====
+                const colWidths = [];
+                colWidths.push({ wch: 15 }, { wch: 5 }, { wch: 5 });
+                colWidths.push({ wch: 22 }, { wch: 8 }, { wch: 8 }, { wch: 8 });
+                for (let i = 0; i < 9; i++) colWidths.push({ wch: 13 });
+                bomVersions.forEach(() => {
+                    colWidths.push({ wch: 14 }, { wch: 5 });
+                });
+                ws['!cols'] = colWidths;
+
+                // ===== Merge cells =====
+                const merges = [];
+
+                // Header baris 0 & 1: merge vertikal + horizontal untuk grup
+                merges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 2 } });      // Kode Material
+                merges.push({ s: { r: 0, c: 3 }, e: { r: 1, c: 6 } });      // Material Name (English)
+                merges.push({ s: { r: 0, c: 7 }, e: { r: 1, c: 15 } });     // Specification
+
+                // Header versi: merge vertikal (baris 0-1) + horizontal (2 kolom)
+                let colStart = 16;
+                bomVersions.forEach(() => {
+                    merges.push({ s: { r: 0, c: colStart }, e: { r: 1, c: colStart + 1 } });
+                    colStart += 2;
+                });
+
+                // Data rows: merge horizontal per baris
+                for (let r = 2; r <= sheetData.length + 1; r++) {
+                    merges.push({ s: { r: r, c: 0 }, e: { r: r, c: 2 } });
+                    merges.push({ s: { r: r, c: 3 }, e: { r: r, c: 6 } });
+                    merges.push({ s: { r: r, c: 7 }, e: { r: r, c: 15 } });
+                    let vCol = 16;
+                    bomVersions.forEach(() => {
+                        merges.push({ s: { r: r, c: vCol }, e: { r: r, c: vCol + 1 } });
+                        vCol += 2;
+                    });
+                }
+                ws['!merges'] = merges;
+
+                // ===== Styling =====
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                const borderStyle = {
+                    top: { style: 'thin', color: { rgb: '000000' } },
+                    bottom: { style: 'thin', color: { rgb: '000000' } },
+                    left: { style: 'thin', color: { rgb: '000000' } },
+                    right: { style: 'thin', color: { rgb: '000000' } }
+                };
+
+                for (let R = range.s.r; R <= range.e.r; R++) {
+                    for (let C = range.s.c; C <= range.e.c; C++) {
+                        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                        if (!ws[cellRef]) {
+                            ws[cellRef] = { t: 's', v: '' };
+                        }
+                        const cell = ws[cellRef];
+
+                        cell.s = {
+                            border: borderStyle,
+                            alignment: { vertical: 'center', wrapText: true }
+                        };
+
+                        if (R <= 1) {
+                            // Header — hijau, teks putih tebal, center
+                            cell.s.fill = { fgColor: { rgb: '00B050' } };
+                            cell.s.font = { bold: true, color: { rgb: 'FFFFFF' }, sz: 10 };
+                            cell.s.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                        } else {
+                            // Data — putih, teks hitam
+                            cell.s.fill = { fgColor: { rgb: 'FFFFFF' } };
+                            cell.s.font = { sz: 10 };
+
+                            if (C >= 0 && C <= 2) {
+                                cell.s.alignment = { horizontal: 'left', vertical: 'center', wrapText: true };
+                            } else if (C >= 3 && C <= 6) {
+                                cell.s.alignment = { horizontal: 'left', vertical: 'center', wrapText: true };
+                            } else if (C >= 7 && C <= 15) {
+                                cell.s.alignment = { horizontal: 'left', vertical: 'center', wrapText: true };
+                            } else {
+                                cell.s.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+                            }
+                        }
+                    }
+                }
+
+                // Nama sheet
+                let safeSheetName = (bomSheetNames[sIdx] || `Sheet_${sIdx + 1}`).replace(/[\/\\\?\*\[\]]/g, "_");
                 if (safeSheetName.length > 31) safeSheetName = safeSheetName.substring(0, 31);
-                XLSX.utils.book_append_sheet(workbook, worksheet, safeSheetName);
+
+                XLSX.utils.book_append_sheet(workbook, ws, safeSheetName);
             });
+
             XLSX.writeFile(workbook, "Master_BOM_MultiSheet_Comparison.xlsx");
             showToast('📥 Excel BOM diunduh', 'success');
         }
