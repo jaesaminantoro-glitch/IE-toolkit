@@ -249,41 +249,7 @@
         @keyframes lapFlash { 0% { box-shadow: 0 0 0 0 rgba(96,165,250,.9); background: #1e3a8a; } 100% { box-shadow: 0 0 0 14px rgba(96,165,250,0); background: #111827; } }
         .lap-flash { animation: lapFlash .35s ease-out; }
         @keyframes sheetUp { from { transform: translateY(28px); opacity: .6; } to { transform: none; opacity: 1; } }
-        .bottom-controls-btn.armed { background: #d97706 !important; animation: pulse .8s infinite; }
 
-        /* tampilan kartu untuk Master Data */
-        #masterCards, #dataViewToggle { display: none; }
-        #dataViewToggle { gap: 4px; padding: 4px; background: #e5e7eb; border-radius: 12px; margin-bottom: 12px; }
-        .dv-btn { flex: 1; min-height: 40px; border-radius: 9px; font-weight: 700; font-size: 14px; color: #4b5563; background: transparent; border: none; }
-        .dv-btn.dv-active { background: #fff; color: #4F46E5; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-        .mc-count { font-size: 13px; color: #6b7280; margin: 0 2px 8px; }
-        .mc-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; margin-bottom: 12px; overflow: hidden; }
-        .mc-head { padding: 12px 14px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
-        .mc-title { display: flex; gap: 10px; align-items: baseline; }
-        .mc-no { font-weight: 800; color: #4F46E5; font-size: 16px; white-space: nowrap; }
-        .mc-name { font-weight: 700; color: #111827; font-size: 15px; line-height: 1.3; }
-        .mc-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-        .mc-tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
-        .mc-line { background: #e0e7ff; color: #3730a3; }
-        .mc-model { background: #d1fae5; color: #065f46; }
-        .mc-rows { list-style: none; margin: 0; padding: 0; }
-        .mc-rows > li { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
-        .mc-row-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .mc-row-name { font-weight: 600; font-size: 15px; color: #1f2937; }
-        .mc-del { font-size: 13px; font-weight: 600; color: #dc2626; padding: 6px 10px; border-radius: 8px; min-height: 36px; background: transparent; border: none; }
-        .mc-del:active { background: #fee2e2; }
-        .mc-metrics { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px; font-size: 13px; color: #6b7280; }
-        .mc-metrics b { color: #111827; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; }
-        .mc-laps summary { font-size: 13px; color: #4F46E5; font-weight: 600; padding: 8px 0 2px; cursor: pointer; min-height: 32px; }
-        .mc-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px; }
-        .mc-chip { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 6px; padding: 2px 8px; }
-        .mc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; background: #fafafa; }
-        .mc-foot-label { font-size: 12px; color: #6b7280; }
-        .mc-foot-val { font-size: 18px; font-weight: 800; font-family: ui-monospace, Menlo, Consolas, monospace; color: #111827; }
-        .mc-pill { font-size: 20px; font-weight: 800; padding: 6px 14px; border-radius: 10px; text-align: center; min-width: 76px; line-height: 1.15; }
-        .mc-pill small { display: block; font-size: 11px; font-weight: 600; }
-        .mc-heavy { color: #b91c1c; font-size: 12px; font-weight: 700; }
-        .mc-empty { background: #fff; border: 1px dashed #cbd5e1; border-radius: 14px; padding: 24px 16px; text-align: center; color: #6b7280; }
 
         @media (max-width: 767px) {
             /* --- header ringkas --- */
@@ -330,18 +296,13 @@
             .line-model-body .lm-row { padding: 10px; font-size: 14px; }
             .line-model-body .lm-row button { min-width: 40px; min-height: 40px; padding: 4px 8px; font-size: 14px; }
             .line-model-body #lineListContainer, .line-model-body #modelListContainer { max-height: 38vh; }
-
-            /* --- Master Data: kartu / tabel --- */
-            #dataViewToggle { display: flex; }
-            body:not(.data-view-table) #masterCards { display: block; }
-            body:not(.data-view-table) .master-scroll, body:not(.data-view-table) #tableScrollHint { display: none !important; }
         }
         @media (min-width: 768px) {
             #tabBtn-more, #moreSheet { display: none !important; }
             .hdr-menu { display: none !important; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .lap-flash, .modal-bg.active .modal-content, .bottom-controls-btn.armed { animation: none !important; }
+            .lap-flash, .modal-bg.active .modal-content { animation: none !important; }
         }
     </style>
         <!-- PWA Manifest -->
@@ -894,11 +855,6 @@
                     </div>
                 </div>
                 <div id="tableScrollHint" class="lg:hidden text-[10px] text-blue-700 mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1.5 rounded border border-blue-200"><span>👉</span><span>Geser tabel untuk lihat semua kolom</span></div>
-                <div id="dataViewToggle" role="tablist" aria-label="Tampilan data">
-                    <button type="button" id="dvCards" class="dv-btn" onclick="setDataView('cards')">🗂️ Kartu</button>
-                    <button type="button" id="dvTable" class="dv-btn" onclick="setDataView('table')">📋 Tabel (edit)</button>
-                </div>
-                <div id="masterCards" aria-live="polite"></div>
                 <div class="master-scroll border border-gray-200 rounded-lg bg-white">
                     <table class="min-w-full divide-y divide-gray-200 text-xs" id="masterTable">
                         <thead class="bg-yellow-100 text-gray-800"><tr id="masterTableHeaderRow"></tr></thead>
@@ -3057,11 +3013,8 @@ function switchLineModelTab(tab) {
             const b = document.getElementById('timerStatus'); if (b) { b.innerText = t; b.className = 'text-[10px] md:text-xs px-2 py-1 rounded-full font-semibold ' + c; }
             const m = document.getElementById('mobileStatus'); if (m) m.innerText = t;
         }
-        let _stopArmTimer = null;
         function updateStopLabel(m) {
             const b = document.getElementById('mobileStopBtn'); if (!b) return;
-            if (_stopArmTimer) { clearTimeout(_stopArmTimer); _stopArmTimer = null; }
-            b.classList.remove('armed');
             b.innerText = (m === 'pause') ? '⏹️ STOP' : '🔄 RESET';
         }
         function setStartButton(m) {
@@ -3167,23 +3120,7 @@ function switchLineModelTab(tab) {
             }
             if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
         }
-        function handleStopReset() {
-            const b = document.getElementById('mobileStopBtn');
-            const needsConfirm = isRunning || elapsedTime > 0;
-            if (!needsConfirm) { _handleStopResetCore(); return; }
-            if (_stopArmTimer) {
-                clearTimeout(_stopArmTimer); _stopArmTimer = null;
-                if (b) b.classList.remove('armed');
-                _handleStopResetCore();
-                return;
-            }
-            if (b) { b.classList.add('armed'); b.innerText = '👆 TEKAN LAGI'; }
-            if (navigator.vibrate) navigator.vibrate(15);
-            _stopArmTimer = setTimeout(() => {
-                _stopArmTimer = null;
-                updateStopLabel(isRunning ? 'pause' : 'start');
-            }, 2500);
-        }
+        function handleStopReset() { _handleStopResetCore(); }
         function _handleStopResetCore() {
             if (isRunning) { stopTimer(); return; }
             releaseWakeLock();
@@ -3612,10 +3549,6 @@ function switchLineModelTab(tab) {
         // RENDER MASTER TABLE
         // ============================================================
         function renderMasterTable() {
-            _renderMasterTableCore();
-            if (typeof renderMasterCards === 'function') { try { renderMasterCards(); } catch (e) { console.warn('renderMasterCards:', e); } }
-        }
-        function _renderMasterTableCore() {
             const tb = document.getElementById('masterTableBody');
             const th = document.getElementById('masterTableHeaderRow');
             if (!tb || !th) return;
@@ -5111,86 +5044,6 @@ function switchLineModelTab(tab) {
         document.addEventListener('click', (e) => { if (!e.target.closest('#hdrMenu, #hdrMenuBtn')) closeHdrMenu(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeHdrMenu(); closeMoreSheet(); } });
 
-        // ---- Master Data: kartu / tabel ----
-        window.setDataView = function (v) {
-            const table = (v === 'table');
-            document.body.classList.toggle('data-view-table', table);
-            const c = $('dvCards'), t = $('dvTable');
-            if (c) { c.classList.toggle('dv-active', !table); c.setAttribute('aria-selected', String(!table)); }
-            if (t) { t.classList.toggle('dv-active', table); t.setAttribute('aria-selected', String(table)); }
-            try { localStorage.setItem('ts_dataView', v); } catch (e) {}
-        };
-        (function () { let v = 'cards'; try { v = localStorage.getItem('ts_dataView') || 'cards'; } catch (e) {} setDataView(v === 'table' ? 'table' : 'cards'); })();
-
-        const f2 = (n) => (isFinite(n) ? Number(n).toFixed(2) : '0.00');
-        const lapVal = (lv) => { const v = (typeof lv === 'object' && lv !== null) ? parseFloat(lv.dur) : parseFloat(lv); return isNaN(v) ? null : v; };
-
-        window.renderMasterCards = function () {
-            const box = $('masterCards'); if (!box) return;
-            const tb = $('masterTableBody');
-            const fd = getFilteredData();
-            if (!fd.length) {
-                const td = tb && tb.querySelector('td');
-                box.innerHTML = '<div class="mc-empty">' + (td ? td.innerHTML : 'Belum ada data.') + '</div>';
-                return;
-            }
-            const mode = currentMode;
-            const std = getLineStandardUph();
-            const groups = [], map = {};
-            fd.forEach((it) => {
-                const model = it.model || '-';
-                const key = mode === 'mesin' ? [it.line, model, it.no, it.process].join('||')
-                          : mode === 'elemen' ? [it.line, model, it.noSop, it.namaSop].join('||')
-                          : [it.line, model, it.noSop].join('||');
-                if (!map[key]) { map[key] = { first: it, model, rows: [], total: 0, operators: 1, names: [] }; groups.push(map[key]); }
-                const g = map[key];
-                const st = getRowStats(it);
-                g.rows.push({ it, st, idx: masterData.indexOf(it) });
-                g.total += (mode === 'mesin') ? st.capacity : st.smh;
-                if (it.operators) g.operators = it.operators;
-                if (it.namaSop && g.names.indexOf(it.namaSop) < 0) g.names.push(it.namaSop);
-            });
-            const avgTotal = groups.length ? groups.reduce((a, g) => a + g.total, 0) / groups.length : 0;
-            const heavyTh = avgTotal * 1.05;
-
-            let html = `<div class="mc-count">${groups.length} ${mode === 'mesin' ? 'mesin' : 'SOP'} · ${fd.length} baris data</div>`;
-            groups.forEach((g) => {
-                const f = g.first;
-                const no = mode === 'mesin' ? f.no : f.noSop;
-                const name = mode === 'mesin' ? f.process : (mode === 'elemen' ? f.namaSop : g.names.join(', '));
-                html += `<article class="mc-card"><header class="mc-head"><div class="mc-title"><span class="mc-no">${escapeHtml(no || '-')}</span><span class="mc-name">${escapeHtml(name || '-')}</span></div>`
-                      + `<div class="mc-tags"><span class="mc-tag mc-line">${escapeHtml(f.line || '-')}</span><span class="mc-tag mc-model">${escapeHtml(g.model)}</span></div></header><ul class="mc-rows">`;
-                g.rows.forEach((r) => {
-                    const it = r.it, st = r.st;
-                    const rowName = mode === 'mesin' ? (it.subMachine || '—') : (mode === 'elemen' ? (it.elemen || '-') : (it.namaSop || '-'));
-                    const badges = (it.preinstall ? ' 🎯' : '') + (it.sessions > 1 ? ` ${it.sessions}×` : '');
-                    const del = r.idx >= 0 ? `<button type="button" class="mc-del" onclick="deleteMasterRow(${r.idx})" aria-label="Hapus data">Hapus</button>` : '';
-                    let metrics;
-                    if (mode === 'mesin') {
-                        metrics = `<span>Rata² <b>${f2(st.avg)}</b> s</span><span>Gerakan <b>${f2(st.gerakan)}</b></span><span>Kap. <b>${st.capacity}</b>/jam</span>`;
-                    } else {
-                        metrics = `<span>Rata² <b>${f2(st.avg)}</b> s</span><span>Std <b>${f2(st.smh)}</b> s</span>`;
-                    }
-                    const laps = (it.laps || []).map(lapVal).filter((v) => v !== null);
-                    const chips = laps.map((v, i) => `<span class="mc-chip">S${i + 1} ${v.toFixed(2)}</span>`).join('');
-                    html += `<li><div class="mc-row-top"><span class="mc-row-name">${escapeHtml(rowName)}${badges}</span>${del}</div>`
-                          + `<div class="mc-metrics">${metrics}<span>${laps.length}× ukur</span></div>`
-                          + (chips ? `<details class="mc-laps"><summary>Lihat tiap siklus</summary><div class="mc-chips">${chips}</div></details>` : '')
-                          + `</li>`;
-                });
-                if (mode === 'mesin') {
-                    const cls = getUphColorClass(g.total, std);
-                    html += `</ul><footer class="mc-foot"><div><div class="mc-foot-label">Total kapasitas</div><div class="mc-foot-val">${g.total}/jam</div></div><div class="mc-pill ${cls}">${g.total}<small>per jam</small></div></footer></article>`;
-                } else {
-                    const uph = g.total > 0 ? Math.round(3600 / g.total) : 0;
-                    const cls = getUphColorClass(uph, std);
-                    const heavy = heavyTh > 0 && g.total > heavyTh;
-                    html += `</ul><footer class="mc-foot"><div><div class="mc-foot-label">Total Std. Time · ${g.operators} operator</div><div class="mc-foot-val">${f2(g.total)} s</div>${heavy ? '<div class="mc-heavy">⚠️ Di atas rata-rata SOP lain</div>' : ''}</div><div class="mc-pill ${cls}">${uph}<small>UPH</small></div></footer></article>`;
-                }
-            });
-            box.innerHTML = html;
-        };
-
         // ---- Umpan balik visual saat LAP (iPhone tidak mendukung getar) ----
         const lapBtn = $('mobileLapBtn');
         if (lapBtn) lapBtn.addEventListener('click', () => {
@@ -5204,8 +5057,6 @@ function switchLineModelTab(tab) {
             if (document.visibilityState === 'visible' && typeof isRunning !== 'undefined' && (isRunning || elapsedTime > 0)) acquireWakeLock();
         });
 
-        // render awal kartu bila data sudah ada
-        try { if (typeof masterData !== 'undefined' && masterData.length) renderMasterCards(); } catch (e) {}
     })();
     </script>
     <script>
