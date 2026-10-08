@@ -326,9 +326,8 @@
     try {
         const o = document.getElementById('loadingOverlay');
         if (o) { o.classList.add('hidden'); if (o.parentNode) o.remove(); }
-        const sm = localStorage.getItem('timeStudy_mode_v1');
         const mm = document.getElementById('modeModal');
-        if (mm && !sm) mm.classList.add('active');
+        if (mm && !window.__modeChosen) mm.classList.add('active');
         document.body.style.overflow = '';
     } catch (e) {}
 }, 3000);
@@ -1596,6 +1595,7 @@
     if (mode === 'ie' || mode === 'bom') { openEmbedded(mode); return; }
     console.log('🎯 selectMode dipanggil:', mode);
     currentMode = mode;
+    window.__modeChosen = true;
     // Simpan semua mode termasuk 'bom'
     lsSave(LS_KEY_MODE, mode);
 
@@ -4947,8 +4947,8 @@ function switchLineModelTab(tab) {
         // INIT
         // ============================================================
         async function init() {
-    let sm = lsLoad(LS_KEY_MODE, '');
-    if (sm === 'bom' || sm === 'ie') sm = '';  // BOM & IE Tracker kini file terpisah
+    // Selalu tampilkan pilihan mode saat aplikasi dibuka (abaikan mode tersimpan)
+    let sm = '';
             const sl = localStorage.getItem(LS_KEY_ACTIVE_LINE);
             if (sl) activeLine = sl;
             const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
