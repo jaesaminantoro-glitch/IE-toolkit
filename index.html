@@ -1576,6 +1576,7 @@
         };
         function openEmbedded(key) {
             const cfg = EMBED_APPS[key]; if (!cfg) return;
+            window.__modeChosen = true;
             const mm = document.getElementById('modeModal'); if (mm) mm.classList.remove('active');
             const fr = document.getElementById('ieFrame');
             if (fr.getAttribute('data-key') !== key) {
@@ -4987,7 +4988,7 @@ function switchLineModelTab(tab) {
                     firebaseReady = true;
                     setSyncStatus('offline');
                     setLoadingDone();
-                    if (!sm) document.getElementById('modeModal').classList.add('active');
+                    if (!window.__modeChosen) document.getElementById('modeModal').classList.add('active');
                     else selectMode(sm);
                     if (activeLine) syncUphFromActiveLine();
                 }
@@ -5023,7 +5024,7 @@ function switchLineModelTab(tab) {
                 renderSiklusDropdownList(); renderSiklusMasterTable();
                 renderArsipList(); updateArsipCount();
                 setLoadingDone();
-                if (!sm) document.getElementById('modeModal').classList.add('active');
+                if (!window.__modeChosen) document.getElementById('modeModal').classList.add('active');
                 else selectMode(sm);
                 if (activeLine) syncUphFromActiveLine();
             };
