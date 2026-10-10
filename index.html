@@ -1158,8 +1158,23 @@
             try {
                 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
                 const { getDatabase, ref, set, onValue, get, runTransaction } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js");
+                const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
                 const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+
+                // Login anonim (timeout 5 detik supaya mode offline tetap jalan)
+                await Promise.race([
+                    new Promise((resolve, reject) => {
+                        const unsub = onAuthStateChanged(auth, (user) => {
+                            if (user) { unsub(); resolve(user); }
+                        });
+                        signInAnonymously(auth).catch(reject);
+                    }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('auth timeout')), 5000))
+                ]);
+
                 const db = getDatabase(app);
+                window.firebaseAuth = auth;
                 window.firebaseDB = db;
                 window.firebaseRef = ref;
                 window.firebaseSet = set;
