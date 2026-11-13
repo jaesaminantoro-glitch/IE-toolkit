@@ -585,6 +585,7 @@
                         <h1 id="appTitle" class="text-base md:text-xl font-bold text-gray-800 whitespace-nowrap">⏱️ Time Study</h1>
                         <span id="syncDot" class="sync-dot sync-syncing"></span>
                         <span id="offlineBadge" class="hidden ml-1 text-[9px] bg-red-600 text-white px-1.5 py-0.5 rounded font-bold">OFFLINE</span>
+                        <span id="pendingBadge" onclick="manualSync()" title="Ketuk untuk sinkronkan" class="hidden ml-1 text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-bold cursor-pointer"></span>
                     </div>
                     <div class="header-right">
                         <button onclick="openLineModal()" id="lineBadge" class="line-badge bg-indigo-600 hover:bg-indigo-700 text-white">
@@ -1288,6 +1289,154 @@
         const LS_KEY_ARCHIVE = 'timeStudy_archive_v1';
 
         // ============================================================
+        // ANTI-DATA-LOSS: per-mode master, antrean commit, draft rekaman
+        // ============================================================
+        const LS_PENDING_OPS = 'timeStudy_pendingOps_v2';
+        const LS_DRAFT_LAPS = 'timeStudy_draftLaps_v1';
+        let pendingOps = lsLoad(LS_PENDING_OPS, []);
+        let __inCommit = false;
+        let __draftReadyMode = null;
+        let __flushingOps = false;
+        let __flushingSync = false;
+
+        function masterModeKey(m) { return (m === 'elemen' || m === 'siklus') ? m : 'mesin'; }
+        function masterLSKey(m) { return LS_KEY_MASTER + '_' + masterModeKey(m === undefined ? currentMode : m); }
+        function masterNodeFor(m) { return m === 'elemen' ? 'masterDataElemen' : (m === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin'); }
+        function nodeMode(n) { return n === 'masterDataElemen' ? 'elemen' : (n === 'masterDataSiklus' ? 'siklus' : 'mesin'); }
+
+        // Pisahkan data lama (1 kunci bersama) ke kunci per-mode. Kunci lama dibiarkan sebagai cadangan.
+        function migrateLegacyMaster() {
+            try {
+                if (localStorage.getItem('timeStudy_master_v3_migrated')) return;
+                const legacy = lsLoad(LS_KEY_MASTER, null);
+                if (Array.isArray(legacy) && legacy.length) {
+                    const b = { mesin: [], elemen: [], siklus: [] };
+                    legacy.forEach(r => {
+                        if (!r) return;
+                        const m = r.elemen !== undefined ? 'elemen' : (r.noSop !== undefined ? 'siklus' : 'mesin');
+                        b[m].push(r);
+                    });
+                    Object.keys(b).forEach(m => {
+                        if (b[m].length && localStorage.getItem(LS_KEY_MASTER + '_' + m) === null) lsSave(LS_KEY_MASTER + '_' + m, b[m]);
+                    });
+                }
+                localStorage.setItem('timeStudy_master_v3_migrated', '1');
+            } catch (e) {}
+        }
+
+        // Terapkan 1 commit (delta) ke array dari server. Aman dipanggil berulang (dedupe via commitIds).
+        function applyOpToArray(arr, op) {
+            const mode = nodeMode(op.node);
+            const out = (arr || []).map(x => ({ ...x, laps: x.laps ? [...x.laps] : x.laps }));
+            (op.items || []).forEach(it => {
+                const i = out.findIndex(x => recordIdentityMatch(x, it, mode));
+                if (i !== -1) {
+                    const ex = out[i];
+                    if ((ex.commitIds || []).includes(op.id)) return;
+                    ex.laps = (ex.laps || []).concat(it.laps || []);
+                    ex.sessions = (ex.sessions || 1) + 1;
+                    ['operators', 'preinstall', 'ngRate', 'actualMachine', 'gerakan'].forEach(f => { if (it[f] !== undefined) ex[f] = it[f]; });
+                    ex.commitIds = (ex.commitIds || []).concat(op.id).slice(-30);
+                } else {
+                    out.push({ ...it, laps: [...(it.laps || [])], commitIds: [op.id] });
+                }
+            });
+            return out;
+        }
+        function applyPendingOps(arr, node) {
+            let out = arr || [];
+            pendingOps.filter(o => o.node === node).forEach(o => { out = applyOpToArray(out, o); });
+            return out;
+        }
+        function stampLocalWithOp(op) {
+            const mode = nodeMode(op.node);
+            (op.items || []).forEach(it => {
+                const x = masterData.find(r => recordIdentityMatch(r, it, mode));
+                if (x) x.commitIds = (x.commitIds || []).concat(op.id).slice(-30);
+            });
+        }
+        async function flushPendingOps() {
+            if (__flushingOps || !navigator.onLine || !firebaseReady || pendingOps.length === 0) return;
+            __flushingOps = true;
+            try {
+                while (pendingOps.length > 0) {
+                    const op = pendingOps[0];
+                    const ok = await Promise.race([
+                        fbTransactionMergeArray(op.node, (arr) => applyOpToArray(arr, op)),
+                        new Promise(r => setTimeout(() => r(false), 15000))
+                    ]);
+                    if (!ok) break;
+                    pendingOps.shift();
+                    lsSave(LS_PENDING_OPS, pendingOps);
+                    updatePendingBadge();
+                }
+            } catch (e) {} finally { __flushingOps = false; updatePendingBadge(); }
+        }
+        function pendingTotal() {
+            return pendingOps.length + Object.keys(pendingSync).filter(k => pendingSync[k] === true).length;
+        }
+        function updatePendingBadge() {
+            const b = document.getElementById('pendingBadge'); if (!b) return;
+            const n = pendingTotal();
+            if (n > 0) { b.textContent = '⏳ ' + n + ' belum tersinkron'; b.classList.remove('hidden'); }
+            else b.classList.add('hidden');
+        }
+
+        // Draft rekaman siklus (autosave) — per mode
+        function draftKey(m) { return LS_DRAFT_LAPS + '_' + m; }
+        function saveDraftLaps() {
+            try {
+                if (currentMode !== 'elemen' && currentMode !== 'siklus') return;
+                if (__draftReadyMode !== currentMode) return;
+                if (!currentLaps || currentLaps.length === 0) { localStorage.removeItem(draftKey(currentMode)); return; }
+                lsSave(draftKey(currentMode), { line: activeLine, model: activeModel, laps: currentLaps, savedAt: Date.now() });
+            } catch (e) {}
+        }
+        function clearDraftLaps() { try { if (currentMode) localStorage.removeItem(draftKey(currentMode)); } catch (e) {} }
+        function offerDraftRestore(mode) {
+            __draftReadyMode = null;
+            let restored = false;
+            try {
+                if ((mode === 'elemen' || mode === 'siklus') && currentLaps.length === 0) {
+                    const d = lsLoad(draftKey(mode), null);
+                    if (d && Array.isArray(d.laps) && d.laps.length > 0) {
+                        const first = d.laps[0] || {};
+                        const when = d.savedAt ? new Date(d.savedAt).toLocaleString('id-ID') : '-';
+                        if (confirm('Ditemukan ' + d.laps.length + ' rekaman siklus yang belum disimpan.\nLine: ' + (d.line || '-') + ' · Model: ' + (d.model || '-') + ' · SOP: ' + (first.noSop || '-') + '\nTerakhir: ' + when + '\n\nPulihkan sekarang?')) {
+                            if (d.line) { activeLine = d.line; localStorage.setItem(LS_KEY_ACTIVE_LINE, activeLine); }
+                            if (d.model) { activeModel = d.model; localStorage.setItem(LS_KEY_ACTIVE_MODEL, activeModel); }
+                            updateLineDisplay(); updateModelDisplay();
+                            if (!first.preinstall && first.noSop) { if (mode === 'siklus') selectSiklus(first.noSop); else selectSop(first.noSop); }
+                            currentLaps = d.laps;
+                            if (mode === 'elemen' && !first.preinstall) {
+                                const last = currentLaps[currentLaps.length - 1];
+                                const li = activeElemenList.findIndex(e => e.elemen === last.elemen);
+                                if (li === activeElemenList.length - 1) { currentCycleNum = (last.cycleNum || 1) + 1; currentElemenIndex = 0; }
+                                else if (li >= 0) { currentCycleNum = last.cycleNum || 1; currentElemenIndex = li + 1; }
+                                updateElemenActiveInfo(); updateLapButtonLabel();
+                            }
+                            updateLapsUI();
+                            document.getElementById('lapSplitPreview').innerText = '✅ ' + currentLaps.length + ' siklus dipulihkan, siap di-commit';
+                            setTimerStatus('Siap Commit', 'bg-indigo-100 text-indigo-700'); setButtonEnabled('commitBtn', true);
+                            if (activeLine) syncUphFromActiveLine();
+                            showToast('♻️ Rekaman belum disimpan berhasil dipulihkan', 'success');
+                            restored = true;
+                        } else { localStorage.removeItem(draftKey(mode)); }
+                    }
+                }
+            } catch (e) { console.warn('offerDraftRestore gagal:', e); }
+            __draftReadyMode = mode;
+            return restored;
+        }
+
+        window.addEventListener('beforeunload', (e) => {
+            if ((currentLaps && currentLaps.length > 0) || pendingOps.length > 0) { e.preventDefault(); e.returnValue = ''; }
+        });
+        setInterval(() => {
+            if (navigator.onLine && firebaseReady && pendingTotal() > 0) flushPendingSync(true);
+        }, 30000);
+
+        // ============================================================
         // UTILS
         // ============================================================
         function lsSave(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
@@ -1304,6 +1453,7 @@
         }
         function getLineUph(n) { const f = lineList.find(l => l.name === n); return f ? parseFloat(f.uph) || 0 : 0; }
         function setSyncStatus(s) {
+            try { updatePendingBadge(); } catch (e) {}
             const d = document.getElementById('syncDot');
             const badge = document.getElementById('offlineBadge');
             if (d) d.className = 'sync-dot ' + (s === 'online' ? 'sync-online' : s === 'offline' ? 'sync-offline' : 'sync-syncing');
@@ -1614,6 +1764,7 @@
     window.__modeChosen = true;
     // Simpan semua mode termasuk 'bom'
     lsSave(LS_KEY_MODE, mode);
+    masterData = lsLoad(masterLSKey(mode), []);
 
             const mm = document.getElementById('modeModal');
             const mc = mm ? mm.querySelector(`button[onclick="selectMode('${mode}')"]`) : null;
@@ -1635,6 +1786,7 @@
             } catch (e) {
                 console.error('❌ Gagal apply UI:', e);
             }
+            const __draftRestored = offerDraftRestore(mode);
 
             // 🔥 STEP 3: Sync Firebase di background (jangan block UI)
             if (firebaseReady) {
@@ -1649,7 +1801,7 @@
 
             if (mc) { mc.style.opacity = ''; mc.style.pointerEvents = ''; }
 
-            if (mode !== 'bom') {
+            if (mode !== 'bom' && !__draftRestored) {
                 setTimeout(() => {
                     try { openLineModal(); } catch (e) { console.error('openLineModal gagal:', e); }
                 }, 300);
@@ -1773,43 +1925,56 @@
 
         // === PENDING SYNC ===
         function markPending(key) {
-            if (!navigator.onLine) {
-                pendingSync[key] = true;
-                lsSave('timeStudy_pendingSync', pendingSync);
-                console.log('📥 Pending sync:', key);
-            }
+            pendingSync[key] = true;
+            lsSave('timeStudy_pendingSync', pendingSync);
+            updatePendingBadge();
+            console.log('📥 Pending sync:', key);
         }
-        async function flushPendingSync() {
-            if (!navigator.onLine || !firebaseReady) return;
-            const hasPending = Object.values(pendingSync).some(v => v === true);
-            if (!hasPending) return;
-
-            showToast('🔄 Sinkronisasi data offline...', 'info');
+        async function flushPendingSync(quiet) {
+            if (!navigator.onLine || !firebaseReady || __flushingSync) return;
+            if (pendingSync.master) { pendingSync.master = false; lsSave('timeStudy_pendingSync', pendingSync); }
+            const hasPending = pendingOps.length > 0 || Object.values(pendingSync).some(v => v === true);
+            if (!hasPending) { updatePendingBadge(); return; }
+            __flushingSync = true;
+            if (!quiet) showToast('🔄 Sinkronisasi data offline...', 'info');
             setSyncStatus('syncing');
-
             try {
-                if (pendingSync.master && typeof saveMasterToFirebase === 'function') { await saveMasterToFirebase(); pendingSync.master = false; }
-                if (pendingSync.machines) { await saveMachinesToFirebase(); pendingSync.machines = false; }
-                if (pendingSync.lines) { await saveLineListToFirebase(); pendingSync.lines = false; }
-                if (pendingSync.elemen) { await saveElemenMasterToFirebase(); pendingSync.elemen = false; }
-                if (pendingSync.siklus) { await saveSiklusMasterToFirebase(); pendingSync.siklus = false; }
-                if (pendingSync.models) { await saveModelListToFirebase(); pendingSync.models = false; }
-                if (pendingSync.archive) { await saveArchiveToFirebase(); pendingSync.archive = false; }
-
+                for (const k of Object.keys(pendingSync)) {
+                    if (k.indexOf('master_') === 0 && pendingSync[k]) {
+                        const node = k.slice(7);
+                        await dbSet(node, lsLoad(masterLSKey(nodeMode(node)), []));
+                        pendingSync[k] = false; lsSave('timeStudy_pendingSync', pendingSync);
+                    }
+                }
+                if (pendingSync.machines) { pendingSync.machines = false; await saveMachinesToFirebase(); }
+                if (pendingSync.lines) { pendingSync.lines = false; await saveLineListToFirebase(); }
+                if (pendingSync.elemen) { pendingSync.elemen = false; await saveElemenMasterToFirebase(); }
+                if (pendingSync.siklus) { pendingSync.siklus = false; await saveSiklusMasterToFirebase(); }
+                if (pendingSync.models) { pendingSync.models = false; await saveModelListToFirebase(); }
+                if (pendingSync.archive) { pendingSync.archive = false; await saveArchiveToFirebase(); }
                 lsSave('timeStudy_pendingSync', pendingSync);
+                await flushPendingOps();
+                if (pendingOps.length > 0 || Object.values(pendingSync).some(v => v === true)) throw new Error('masih ada yang tertunda');
                 setSyncStatus('online');
-                showToast('✅ Data offline berhasil disinkronkan', 'success');
+                showToast('✅ Data tertunda berhasil disinkronkan', 'success');
             } catch (e) {
                 setSyncStatus('offline');
-                showToast('⚠️ Gagal sync, akan dicoba lagi', 'warning');
-            }
+                if (!quiet) showToast('⚠️ Gagal sync, akan dicoba lagi', 'warning');
+            } finally { __flushingSync = false; updatePendingBadge(); }
         }
-        async function saveMasterToFirebase(mutatorFn) {
+        async function saveMasterToFirebase(mutatorFn, mode) {
             if (isSyncingFromRemote) return;
-            if (!navigator.onLine || !firebaseReady) { markPending('master'); return; }
-            const node = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
-            if (typeof mutatorFn === 'function') { await fbTransactionMergeArray(node, mutatorFn); return; }
-            try { setSyncStatus('syncing'); await dbSet(node, masterData); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); markPending('master'); }
+            const md = mode || currentMode;
+            if (!md) return; // mode belum dipilih: jangan menulis apa pun ke server
+            const node = masterNodeFor(md);
+            const key = 'master_' + node;
+            if (!navigator.onLine || !firebaseReady) { markPending(key); return; }
+            if (typeof mutatorFn === 'function') {
+                const ok = await fbTransactionMergeArray(node, mutatorFn);
+                if (!ok) markPending(key);
+                return;
+            }
+            try { setSyncStatus('syncing'); await dbSet(node, masterData); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); markPending(key); }
         }
         async function saveMachinesToFirebase() {
             if (isSyncingFromRemote) return;
@@ -1919,7 +2084,7 @@
                                 const val = snap.val(); if (!val || isSyncingFromRemote) return;
                                 const rd = val.data || [];
                                 const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
-                                if (node === activeNode && JSON.stringify(rd) !== JSON.stringify(masterData)) { isSyncingFromRemote = true; masterData = rd; renderMasterTable(); renderStandardCheck(); updateCounters(); isSyncingFromRemote = false; }
+                                if (currentMode && node === activeNode && JSON.stringify(pendingSync['master_' + node] ? masterData : applyPendingOps(rd, node)) !== JSON.stringify(masterData)) { isSyncingFromRemote = true; masterData = pendingSync['master_' + node] ? masterData : applyPendingOps(rd, node); lsSave(masterLSKey(), masterData); renderMasterTable(); renderStandardCheck(); updateCounters(); isSyncingFromRemote = false; }
                                 if (node === activeNode) {
                                     lastServerUpdate = val.lastUpdate; setSyncStatus('online');
                                     const mc = document.getElementById('serverMasterCount'); if (mc) mc.innerText = rd.length;
@@ -1965,6 +2130,7 @@
         async function loadAllFromFirebaseOnce() {
             if (!firebaseReady) return;
             if (!navigator.onLine) { console.log('📵 Offline, skip load dari Firebase'); return; }
+            try { await Promise.race([flushPendingSync(true), new Promise(r => setTimeout(r, 8000))]); } catch (e) {}
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Firebase timeout')), 8000)
             );
@@ -1973,17 +2139,17 @@
                     (async () => {
                         const s1 = await dbGet('lineList');
                         const remoteLines = normalizeLineList(s1.data || []);
-                        if (remoteLines.length > 0 || lineList.length === 0) { lineList = remoteLines; lsSave(LS_KEY_LINE_LIST, lineList); }
-                        const s2 = await dbGet('machineList'); machineList = s2.data || [];
-                        const s3 = await dbGet('elemenMaster'); elemenMasterList = s3.data || [];
-                        const s4 = await dbGet('siklusMaster'); siklusMasterList = s4.data || [];
-                        const s5 = await dbGet('modelList'); modelList = s5.data || [];
-                        const s6 = await dbGet('archive'); archiveList = s6.data || [];
+                        if ((remoteLines.length > 0 || lineList.length === 0) && !pendingSync.lines) { lineList = remoteLines; lsSave(LS_KEY_LINE_LIST, lineList); }
+                        const s2 = await dbGet('machineList'); if (!pendingSync.machines) machineList = s2.data || [];
+                        const s3 = await dbGet('elemenMaster'); if (!pendingSync.elemen) elemenMasterList = s3.data || [];
+                        const s4 = await dbGet('siklusMaster'); if (!pendingSync.siklus) siklusMasterList = s4.data || [];
+                        const s5 = await dbGet('modelList'); if (!pendingSync.models) modelList = s5.data || [];
+                        const s6 = await dbGet('archive'); if (!pendingSync.archive) archiveList = s6.data || [];
                         const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
                         const sM = await dbGet(activeNode);
-                        masterData = sM.data || []; lastServerUpdate = sM.lastUpdate;
+                        if (currentMode) { if (!pendingSync['master_' + activeNode]) masterData = applyPendingOps(sM.data || [], activeNode); lastServerUpdate = sM.lastUpdate; }
                         lsSave(LS_KEY_MACHINES, machineList); lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
-                        lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(LS_KEY_MASTER, masterData);
+                        lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(masterLSKey(), masterData);
                         lsSave(LS_KEY_MODEL_LIST, modelList); lsSave(LS_KEY_ARCHIVE, archiveList);
                         renderMachineDropdownList(); renderMachineTable(); renderMasterTable(); renderStandardCheck(); updateCounters();
                         updateModelDisplay(); renderArsipList(); updateArsipCount(); renderLineList();
@@ -2000,7 +2166,24 @@
         }
 
         function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
-        function saveMasterToLS(mutatorFn) { lsSave(LS_KEY_MASTER, masterData); if (firebaseReady) saveMasterToFirebase(mutatorFn); }
+        function saveMasterToLS(mutatorFn) {
+            lsSave(masterLSKey(), masterData);
+            if (typeof mutatorFn === 'function' && __inCommit) {
+                let items = [];
+                try { items = mutatorFn([]) || []; } catch (e) {}
+                if (items.length > 0) {
+                    const op = { id: 'op' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), node: masterNodeFor(currentMode), items, ts: Date.now() };
+                    stampLocalWithOp(op);
+                    pendingOps.push(op);
+                    lsSave(LS_PENDING_OPS, pendingOps);
+                    lsSave(masterLSKey(), masterData);
+                    updatePendingBadge();
+                    flushPendingOps();
+                    return;
+                }
+            }
+            saveMasterToFirebase(mutatorFn);
+        }
         function syncUphFromActiveLine() {
             if (uphUserOverride || !activeLine) return;
             const uph = getLineUph(activeLine);
@@ -3323,6 +3506,7 @@ function switchLineModelTab(tab) {
             if (currentLaps.length === 0) { setButtonEnabled('commitBtn', false); document.getElementById('lapSplitPreview').innerText = 'Split Terakhir: --:--.--'; }
         }
         function updateLapsUI() {
+            saveDraftLaps();
             const c = document.getElementById('currentLapsContainer'); const b = document.getElementById('lapCounterBadge');
             if (!c || !b) return;
             b.innerText = `${currentLaps.length} Siklus`;
@@ -3355,15 +3539,18 @@ function switchLineModelTab(tab) {
         function commitStudyRow() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
             if (!activeModel) { showToast('⚠️ Pilih Model dulu!', 'error'); openLineModal(); return; }
-            if (currentMode === 'elemen') commitElemenRow();
-            else if (currentMode === 'siklus') commitSiklusRow();
-            else commitMesinRow();
+            __inCommit = true;
+            try {
+                if (currentMode === 'elemen') commitElemenRow();
+                else if (currentMode === 'siklus') commitSiklusRow();
+                else commitMesinRow();
+            } finally { __inCommit = false; }
         }
         function commitElemenRow() {
             if (currentMode !== 'elemen') { showToast('⚠️ Mode tidak sesuai!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
 
-            if (preinstallActive) {
+            if (preinstallActive || currentLaps.some(l => l && typeof l === 'object' && l.preinstall)) {
                 const grouped = {};
                 currentLaps.forEach(lap => {
                     if (typeof lap !== 'object' || !lap.elemen) return;
@@ -3444,7 +3631,7 @@ function switchLineModelTab(tab) {
             if (currentMode !== 'siklus') { showToast('⚠️ Mode tidak sesuai!', 'error'); return; }
             if (currentLaps.length === 0) { showToast('Mohon rekam minimal 1 siklus!', 'error'); return; }
 
-            if (preinstallActive) {
+            if (preinstallActive || currentLaps.some(l => l && typeof l === 'object' && l.preinstall)) {
                 const grouped = {};
                 currentLaps.forEach(lap => {
                     if (typeof lap !== 'object' || !lap.noSop) return;
@@ -3565,6 +3752,7 @@ function switchLineModelTab(tab) {
             resetStopwatchAfterCommit();
         }
         function resetStopwatchAfterCommit() {
+            clearDraftLaps();
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
             isRunning = false; elapsedTime = 0; currentLaps = []; lastLapTimestamp = 0;
             document.getElementById('timerDisplay').innerText = '00:00.00';
@@ -4897,7 +5085,7 @@ function switchLineModelTab(tab) {
                     masterData = b.masterData || [];
                     lsSave(LS_KEY_LINE_LIST, lineList);
                     lsSave(LS_KEY_MACHINES, machineList); lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList);
-                    lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(LS_KEY_MASTER, masterData);
+                    lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); lsSave(masterLSKey(), masterData);
                     lsSave(LS_KEY_MODEL_LIST, modelList); lsSave(LS_KEY_ARCHIVE, archiveList);
                     if (firebaseReady) {
                         saveLineListToFirebase(); saveMachinesToFirebase(); saveElemenMasterToFirebase();
@@ -4970,7 +5158,7 @@ function switchLineModelTab(tab) {
             const smd = localStorage.getItem(LS_KEY_ACTIVE_MODEL);
             if (smd) activeModel = smd;
             machineList = lsLoad(LS_KEY_MACHINES, []);
-            masterData = lsLoad(LS_KEY_MASTER, []);
+            migrateLegacyMaster(); masterData = [];
             elemenMasterList = lsLoad(LS_KEY_ELEMEN_MASTER, []);
             siklusMasterList = lsLoad(LS_KEY_SIKLUS_MASTER, []);
             modelList = lsLoad(LS_KEY_MODEL_LIST, []);
@@ -5014,16 +5202,17 @@ function switchLineModelTab(tab) {
                 clearTimeout(firebaseTimeout);
                 setLoadingDetail('Database siap...');
                 if (navigator.onLine) {
-                    try { const s1 = await dbGet('lineList'); const remoteLines = normalizeLineList(s1.data || []); if (remoteLines.length > 0) { lineList = remoteLines; lsSave(LS_KEY_LINE_LIST, lineList); } } catch (e) {}
-                    try { const s2 = await dbGet('machineList'); if (s2 && s2.data) { machineList = s2.data; lsSave(LS_KEY_MACHINES, machineList); } } catch (e) {}
-                    try { const s3 = await dbGet('elemenMaster'); if (s3 && s3.data) { elemenMasterList = s3.data; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); } } catch (e) {}
-                    try { const s4 = await dbGet('siklusMaster'); if (s4 && s4.data) { siklusMasterList = s4.data; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); } } catch (e) {}
-                    try { const s5 = await dbGet('modelList'); if (s5 && s5.data) { modelList = s5.data; lsSave(LS_KEY_MODEL_LIST, modelList); } } catch (e) {}
-                    try { const s6 = await dbGet('archive'); if (s6 && s6.data) { archiveList = s6.data; lsSave(LS_KEY_ARCHIVE, archiveList); } } catch (e) {}
+                    try { await Promise.race([flushPendingSync(true), new Promise(r => setTimeout(r, 6000))]); } catch (e) {}
+                    try { const s1 = await dbGet('lineList'); const remoteLines = normalizeLineList(s1.data || []); if (remoteLines.length > 0 && !pendingSync.lines) { lineList = remoteLines; lsSave(LS_KEY_LINE_LIST, lineList); } } catch (e) {}
+                    try { const s2 = await dbGet('machineList'); if (s2 && s2.data && !pendingSync.machines) { machineList = s2.data; lsSave(LS_KEY_MACHINES, machineList); } } catch (e) {}
+                    try { const s3 = await dbGet('elemenMaster'); if (s3 && s3.data && !pendingSync.elemen) { elemenMasterList = s3.data; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); } } catch (e) {}
+                    try { const s4 = await dbGet('siklusMaster'); if (s4 && s4.data && !pendingSync.siklus) { siklusMasterList = s4.data; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); } } catch (e) {}
+                    try { const s5 = await dbGet('modelList'); if (s5 && s5.data && !pendingSync.models) { modelList = s5.data; lsSave(LS_KEY_MODEL_LIST, modelList); } } catch (e) {}
+                    try { const s6 = await dbGet('archive'); if (s6 && s6.data && !pendingSync.archive) { archiveList = s6.data; lsSave(LS_KEY_ARCHIVE, archiveList); } } catch (e) {}
                     try {
                         const activeNode = currentMode === 'elemen' ? 'masterDataElemen' : (currentMode === 'siklus' ? 'masterDataSiklus' : 'masterDataMesin');
                         const sM = await dbGet(activeNode);
-                        if (sM && sM.data) { masterData = sM.data; lastServerUpdate = sM.lastUpdate; }
+                        if (currentMode && sM && sM.data) { if (!pendingSync['master_' + activeNode]) masterData = applyPendingOps(sM.data, activeNode); lastServerUpdate = sM.lastUpdate; }
                     } catch (e) {}
                     try { if (autoMigrateModelField()) { saveMasterToFirebase(); saveElemenMasterToFirebase(); saveSiklusMasterToFirebase(); } } catch (e) {}
                     try { setupFirebaseListeners(); setSyncStatus('online'); } catch (e) { setSyncStatus('offline'); }
