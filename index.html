@@ -2150,7 +2150,7 @@
                         try {
                             const val = snap.val(); if (!val || isSyncingFromRemote) return;
                             const rd = val.data || [];
-                            if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; }
+                            if (!pendingSync.archive && JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; }
                         } catch (e) {}
                     }, () => {});
                 } catch (e) {}
@@ -2188,7 +2188,7 @@
                             else if (node === 'elemenMaster') { if (JSON.stringify(rd) !== JSON.stringify(elemenMasterList)) { isSyncingFromRemote = true; elemenMasterList = rd; lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (currentMode === 'elemen') { renderSopDropdownList(); renderElemenMasterTable(); } isSyncingFromRemote = false; } }
                             else if (node === 'siklusMaster') { if (JSON.stringify(rd) !== JSON.stringify(siklusMasterList)) { isSyncingFromRemote = true; siklusMasterList = rd; lsSave(LS_KEY_SIKLUS_MASTER, siklusMasterList); if (currentMode === 'siklus') { renderSiklusDropdownList(); renderSiklusMasterTable(); } isSyncingFromRemote = false; } }
                             else if (node === 'modelList') { if (JSON.stringify(rd) !== JSON.stringify(modelList)) { isSyncingFromRemote = true; modelList = rd; lsSave(LS_KEY_MODEL_LIST, modelList); updateModelDisplay(); isSyncingFromRemote = false; } }
-                            else if (node === 'archive') { if (JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; } }
+                            else if (node === 'archive') { if (!pendingSync.archive && JSON.stringify(rd) !== JSON.stringify(archiveList)) { isSyncingFromRemote = true; archiveList = rd; lsSave(LS_KEY_ARCHIVE, archiveList); renderArsipList(); updateArsipCount(); isSyncingFromRemote = false; } }
                         }
                         setSyncStatus('online');
                     } catch (e) { setSyncStatus('offline'); }
@@ -2243,8 +2243,48 @@
         }
 
         function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
+        // ============================================================
+        // ARSIP OTOMATIS: 1 arsip per mode/line/model per bulan, diperbarui tiap data berubah.
+        // Master Data tidak diubah sama sekali.
+        // ============================================================
+        let __autoArchiveTimer = null;
+        function scheduleAutoArchive() {
+            clearTimeout(__autoArchiveTimer);
+            __autoArchiveTimer = setTimeout(runAutoArchive, 3000);
+        }
+        function runAutoArchive() {
+            try {
+                if (!currentMode || !Array.isArray(masterData) || masterData.length === 0) return;
+                const now = new Date(), tahun = now.getFullYear(), bulan = now.getMonth() + 1;
+                const groups = {};
+                masterData.forEach(d => { const k = (d.line || '-') + '\u0001' + (d.model || '-'); (groups[k] = groups[k] || []).push(d); });
+                const upserts = [];
+                Object.keys(groups).forEach(k => {
+                    const rows = groups[k];
+                    const line = rows[0].line || '-', model = rows[0].model || '-';
+                    const id = ('auto_' + currentMode + '_' + line + '_' + model + '_' + tahun + '_' + bulan).replace(/[^A-Za-z0-9_\-]/g, '_');
+                    const snap = JSON.parse(JSON.stringify(rows, (key, val) => key === 'commitIds' ? undefined : val));
+                    const ex = archiveList.find(a => a.id === id);
+                    if (ex && JSON.stringify(ex.data) === JSON.stringify(snap)) return;
+                    const entry = { id, auto: true, tahun, bulan, line, model, mode: currentMode, data: snap, created_at: now.toISOString(), count: snap.length, restoredCount: ex ? (ex.restoredCount || 0) : 0 };
+                    if (ex) archiveList[archiveList.indexOf(ex)] = entry; else archiveList.unshift(entry);
+                    upserts.push(entry);
+                });
+                if (upserts.length === 0) return;
+                lsSave(LS_KEY_ARCHIVE, archiveList);
+                renderArsipList(); updateArsipCount();
+                if (!navigator.onLine || !firebaseReady) { markPending('archive'); return; }
+                fbTransactionMergeArray('archive', (arr) => {
+                    const out = (arr || []).slice();
+                    upserts.forEach(e => { const i = out.findIndex(x => x.id === e.id); if (i >= 0) out[i] = e; else out.unshift(e); });
+                    return out;
+                }).then(ok => { if (!ok) markPending('archive'); });
+            } catch (e) { console.warn('runAutoArchive gagal:', e); }
+        }
+
         function saveMasterToLS(mutatorFn) {
             lsSave(masterLSKey(), masterData);
+            scheduleAutoArchive();
             if (typeof mutatorFn === 'function' && __inCommit) {
                 let items = [];
                 try { items = mutatorFn([]) || []; } catch (e) {}
@@ -4501,10 +4541,11 @@ function switchLineModelTab(tab) {
                         <span class="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
                         <span class="bg-gray-700 text-white text-[10px] font-bold px-2 py-1 rounded uppercase shadow-sm">${escapeHtml(a.mode || '-')}</span>
                         ${restoreBadge}
+                        ${a.auto ? '<span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm" title="Salinan otomatis, diperbarui setiap data berubah">🤖 Otomatis</span>' : ''}
                     </div>
                     <div class="text-xs text-gray-800 mb-2 font-medium bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
                         <b>${a.count || a.data?.length || 0}</b> item
-                        <span class="text-gray-500">· ${new Date(a.created_at).toLocaleString('id-ID')}</span>
+                        <span class="text-gray-500">· ${a.auto ? 'diperbarui ' : ''}${new Date(a.created_at).toLocaleString('id-ID')}</span>
                     </div>
                     <div class="grid grid-cols-4 gap-1.5">
                         <button onclick="restoreArchive('${a.id}')" class="text-blue-700 hover:text-white hover:bg-blue-600 border border-blue-300 text-[10px] font-bold px-1 py-1.5 bg-blue-50 rounded flex items-center justify-center gap-1 transition">♻️ <span class="hidden sm:inline">Restore</span></button>
@@ -4529,12 +4570,13 @@ function switchLineModelTab(tab) {
             const duplicateCount = data.filter(d => existingKeys.has(makeKey(d))).length;
             const newCount = data.length - duplicateCount;
             if (a.restoredCount && a.restoredCount > 0) { if (!confirm(`⚠️ Arsip sudah pernah di-restore ${a.restoredCount}x. Lanjut?`)) return; }
-            if (!confirm(`♻️ Kembalikan ${data.length} data?\n⚠️ ${duplicateCount} sudah ada (digabung)\n✅ ${newCount} baru`)) return;
+            if (!confirm(`♻️ Kembalikan ${data.length} data?\n⚠️ ${duplicateCount} sudah ada (${a.auto ? 'dilewati' : 'digabung'})\n✅ ${newCount} baru`)) return;
             let added = 0, merged = 0;
             data.forEach(item => {
                 const key = makeKey(item);
                 const idx = masterData.findIndex(d => makeKey(d) === key);
                 if (idx !== -1) {
+                    if (a.auto) return;
                     const ex = masterData[idx];
                     ex.laps = (ex.laps || []).concat(item.laps || []);
                     ex.sessions = (ex.sessions || 1) + (item.sessions || 1);
