@@ -1033,7 +1033,7 @@
                         </div>
                     </div>
 
-                    <div id="arsipListContainer" class="space-y-2 max-h-[500px] overflow-y-auto">
+                    <div id="arsipListContainer" class="max-h-[70vh] overflow-y-auto pr-1">
                         <div class="text-center text-gray-400 italic text-xs py-8">Belum ada arsip.</div>
                     </div>
                 </div>
@@ -4531,30 +4531,47 @@ function switchLineModelTab(tab) {
             if (filterTahun) filtered = filtered.filter(a => String(a.tahun) === String(filterTahun));
             if (filtered.length === 0) { c.innerHTML = '<div class="text-center text-gray-400 italic text-xs py-8">Belum ada arsip.</div>'; return; }
             const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-            c.innerHTML = filtered.map(a => {
-                const restoreBadge = a.restoredCount ? `<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">♻️ ${a.restoredCount}x</span>` : '';
+            const sorted = filtered.slice().sort((x, y) =>
+                String(x.line || '').localeCompare(String(y.line || ''), undefined, { numeric: true }) ||
+                String(x.model || '').localeCompare(String(y.model || '')) ||
+                ((y.tahun || 0) - (x.tahun || 0)) || ((y.bulan || 0) - (x.bulan || 0)));
+            const totalItem = sorted.reduce((n, a) => n + (a.count || a.data?.length || 0), 0);
+            const fmtTgl = (iso) => { try { return new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return '-'; } };
+            const iconBtn = (fn, id, icon, title, cls) => `<button onclick="${fn}('${id}')" title="${title}" class="w-9 h-8 flex items-center justify-center rounded-lg border text-sm transition ${cls}">${icon}</button>`;
+            c.innerHTML = `<div class="text-[11px] text-gray-500 mb-2 px-1"><b class="text-gray-700">${sorted.length}</b> arsip · <b class="text-gray-700">${totalItem}</b> item</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">` + sorted.map(a => {
+                const n = a.count || a.data?.length || 0;
+                const accent = a.auto ? 'border-l-purple-500' : 'border-l-amber-500';
+                const tipe = a.auto
+                    ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Salinan otomatis, diperbarui setiap data berubah">🤖 Otomatis</span>'
+                    : '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✋ Manual</span>';
+                const restoreBadge = a.restoredCount ? `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>` : '';
                 return `
-                <div class="bg-white border-2 border-gray-300 rounded-lg p-3 shadow-sm hover:shadow-md hover:border-amber-400 transition">
-                    <div class="flex items-center gap-1.5 flex-wrap mb-2">
-                        <span class="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">${escapeHtml(a.line || '-')}</span>
-                        <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">📦 ${escapeHtml(a.model || '-')}</span>
-                        <span class="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
-                        <span class="bg-gray-700 text-white text-[10px] font-bold px-2 py-1 rounded uppercase shadow-sm">${escapeHtml(a.mode || '-')}</span>
-                        ${restoreBadge}
-                        ${a.auto ? '<span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm" title="Salinan otomatis, diperbarui setiap data berubah">🤖 Otomatis</span>' : ''}
+                <div class="bg-white rounded-xl border border-gray-200 border-l-4 ${accent} shadow-sm hover:shadow-md transition p-3 flex flex-col gap-2">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-sm font-extrabold text-indigo-700 leading-tight">${escapeHtml(a.line || '-')}</div>
+                            <div class="text-xs font-semibold text-emerald-700 truncate" title="${escapeHtml(a.model || '-')}">📦 ${escapeHtml(a.model || '-')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-2xl font-extrabold text-gray-800 leading-none">${n}</div>
+                            <div class="text-[10px] text-gray-400 mt-0.5">item</div>
+                        </div>
                     </div>
-                    <div class="text-xs text-gray-800 mb-2 font-medium bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
-                        <b>${a.count || a.data?.length || 0}</b> item
-                        <span class="text-gray-500">· ${a.auto ? 'diperbarui ' : ''}${new Date(a.created_at).toLocaleString('id-ID')}</span>
+                    <div class="flex items-center gap-1 flex-wrap">
+                        <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
+                        <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
+                        ${tipe}${restoreBadge}
                     </div>
-                    <div class="grid grid-cols-4 gap-1.5">
-                        <button onclick="restoreArchive('${a.id}')" class="text-blue-700 hover:text-white hover:bg-blue-600 border border-blue-300 text-[10px] font-bold px-1 py-1.5 bg-blue-50 rounded flex items-center justify-center gap-1 transition">♻️ <span class="hidden sm:inline">Restore</span></button>
-                        <button onclick="exportArchiveExcel('${a.id}')" class="text-emerald-700 hover:text-white hover:bg-emerald-600 border border-emerald-300 text-[10px] font-bold px-1 py-1.5 bg-emerald-50 rounded flex items-center justify-center gap-1 transition">📊 <span class="hidden sm:inline">Excel</span></button>
-                        <button onclick="exportArchiveCSV('${a.id}')" class="text-teal-700 hover:text-white hover:bg-teal-600 border border-teal-300 text-[10px] font-bold px-1 py-1.5 bg-teal-50 rounded flex items-center justify-center gap-1 transition">📥 <span class="hidden sm:inline">CSV</span></button>
-                        <button onclick="deleteArchive('${a.id}')" class="text-red-700 hover:text-white hover:bg-red-600 border border-red-300 text-[10px] font-bold px-1 py-1.5 bg-red-50 rounded flex items-center justify-center gap-1 transition">🗑️ <span class="hidden sm:inline">Hapus</span></button>
+                    <div class="text-[10px] text-gray-400">${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
+                    <div class="flex gap-1.5 mt-auto pt-1">
+                        <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master Data" class="flex-1 h-8 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
+                        ${iconBtn('exportArchiveExcel', a.id, '📊', 'Unduh Excel', 'border-emerald-300 bg-emerald-50 hover:bg-emerald-600')}
+                        ${iconBtn('exportArchiveCSV', a.id, '📥', 'Unduh CSV', 'border-teal-300 bg-teal-50 hover:bg-teal-600')}
+                        ${iconBtn('deleteArchive', a.id, '🗑️', 'Hapus arsip', 'border-red-300 bg-red-50 hover:bg-red-600')}
                     </div>
                 </div>`;
-            }).join('');
+            }).join('') + '</div>';
         }
         async function restoreArchive(id) {
             const a = archiveList.find(x => x.id === id);
