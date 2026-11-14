@@ -2245,12 +2245,34 @@
         function saveMachinesToLS() { lsSave(LS_KEY_MACHINES, machineList); if (firebaseReady) saveMachinesToFirebase(); }
         // ============================================================
         // ARSIP OTOMATIS: 1 arsip per mode/line/model per bulan, diperbarui tiap data berubah.
-        // Master Data tidak diubah sama sekali.
+        // Master Data tidak diubah. Baris yang dihapus dengan pilihan "arsip tidak berubah"
+        // dicatat di retainedKeys supaya tetap ada di arsip pada pembaruan berikutnya.
         // ============================================================
         let __autoArchiveTimer = null;
         function scheduleAutoArchive() {
             clearTimeout(__autoArchiveTimer);
             __autoArchiveTimer = setTimeout(runAutoArchive, 3000);
+        }
+        function archiveRowKey(mode, d) {
+            if (mode === 'elemen') return `${d.line}|${d.model || '-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
+            if (mode === 'siklus') return `${d.line}|${d.model || '-'}|${d.noSop}|${d.namaSop}`;
+            return `${d.line}|${d.model || '-'}|${d.no}|${d.process}|${d.subMachine}`;
+        }
+        function autoArchiveId(line, model) {
+            const n = new Date();
+            return ('auto_' + currentMode + '_' + line + '_' + model + '_' + n.getFullYear() + '_' + (n.getMonth() + 1)).replace(/[^A-Za-z0-9_\-]/g, '_');
+        }
+        function persistAutoEntries(upserts, removeIds) {
+            removeIds = removeIds || [];
+            if (upserts.length === 0 && removeIds.length === 0) return;
+            lsSave(LS_KEY_ARCHIVE, archiveList);
+            renderArsipList(); updateArsipCount();
+            if (!navigator.onLine || !firebaseReady) { markPending('archive'); return; }
+            fbTransactionMergeArray('archive', (arr) => {
+                const out = (arr || []).filter(x => !removeIds.includes(x.id));
+                upserts.forEach(e => { const i = out.findIndex(x => x.id === e.id); if (i >= 0) out[i] = e; else out.unshift(e); });
+                return out;
+            }).then(ok => { if (!ok) markPending('archive'); });
         }
         function runAutoArchive() {
             try {
@@ -2262,24 +2284,84 @@
                 Object.keys(groups).forEach(k => {
                     const rows = groups[k];
                     const line = rows[0].line || '-', model = rows[0].model || '-';
-                    const id = ('auto_' + currentMode + '_' + line + '_' + model + '_' + tahun + '_' + bulan).replace(/[^A-Za-z0-9_\-]/g, '_');
-                    const snap = JSON.parse(JSON.stringify(rows, (key, val) => key === 'commitIds' ? undefined : val));
+                    const id = autoArchiveId(line, model);
+                    const cur = JSON.parse(JSON.stringify(rows, (key, val) => key === 'commitIds' ? undefined : val));
                     const ex = archiveList.find(a => a.id === id);
+                    let snap = cur;
+                    if (ex && ex.retainedKeys && ex.retainedKeys.length) {
+                        const curKeys = new Set(cur.map(d => archiveRowKey(currentMode, d)));
+                        const keep = new Set(ex.retainedKeys);
+                        const extra = (ex.data || []).filter(d => { const kk = archiveRowKey(currentMode, d); return keep.has(kk) && !curKeys.has(kk); });
+                        snap = cur.concat(extra);
+                    }
                     if (ex && JSON.stringify(ex.data) === JSON.stringify(snap)) return;
                     const entry = { id, auto: true, tahun, bulan, line, model, mode: currentMode, data: snap, created_at: now.toISOString(), count: snap.length, restoredCount: ex ? (ex.restoredCount || 0) : 0 };
+                    if (ex && ex.retainedKeys && ex.retainedKeys.length) entry.retainedKeys = ex.retainedKeys;
                     if (ex) archiveList[archiveList.indexOf(ex)] = entry; else archiveList.unshift(entry);
                     upserts.push(entry);
                 });
-                if (upserts.length === 0) return;
-                lsSave(LS_KEY_ARCHIVE, archiveList);
-                renderArsipList(); updateArsipCount();
-                if (!navigator.onLine || !firebaseReady) { markPending('archive'); return; }
-                fbTransactionMergeArray('archive', (arr) => {
-                    const out = (arr || []).slice();
-                    upserts.forEach(e => { const i = out.findIndex(x => x.id === e.id); if (i >= 0) out[i] = e; else out.unshift(e); });
-                    return out;
-                }).then(ok => { if (!ok) markPending('archive'); });
+                persistAutoEntries(upserts);
             } catch (e) { console.warn('runAutoArchive gagal:', e); }
+        }
+        // Dipanggil SEBELUM baris dihapus dari Master Data: baris tetap ada di arsip otomatis.
+        function retainRowsInAutoArchive(rows) {
+            clearTimeout(__autoArchiveTimer); runAutoArchive();
+            const touched = [];
+            rows.forEach(r => {
+                const ex = archiveList.find(a => a.id === autoArchiveId(r.line || '-', r.model || '-'));
+                if (!ex) return;
+                ex.retainedKeys = Array.from(new Set((ex.retainedKeys || []).concat(archiveRowKey(currentMode, r))));
+                if (!touched.includes(ex)) touched.push(ex);
+            });
+            persistAutoEntries(touched);
+        }
+        // Dipanggil SEBELUM baris dihapus: baris ikut dihapus dari arsip otomatis (arsip manual tidak disentuh).
+        function releaseRowsFromAutoArchive(rows) {
+            clearTimeout(__autoArchiveTimer); runAutoArchive();
+            const touched = [], removeIds = [];
+            rows.forEach(r => {
+                const ex = archiveList.find(a => a.id === autoArchiveId(r.line || '-', r.model || '-'));
+                if (!ex) return;
+                const k = archiveRowKey(currentMode, r);
+                ex.retainedKeys = (ex.retainedKeys || []).filter(x => x !== k);
+                ex.data = (ex.data || []).filter(d => archiveRowKey(currentMode, d) !== k);
+                ex.count = ex.data.length;
+                ex.created_at = new Date().toISOString();
+                if (!touched.includes(ex)) touched.push(ex);
+            });
+            touched.filter(e => e.data.length === 0).forEach(e => { archiveList = archiveList.filter(x => x.id !== e.id); removeIds.push(e.id); });
+            persistAutoEntries(touched.filter(e => e.data.length > 0), removeIds);
+        }
+        // Dialog pilihan hapus: 'keep' = arsip tidak berubah, 'sync' = arsip otomatis ikut diperbarui, null = batal
+        function askDeleteChoice(title, detail) {
+            return new Promise(resolve => {
+                const ov = document.createElement('div');
+                ov.className = 'fixed inset-0 flex items-center justify-center bg-black/50 p-4';
+                ov.style.zIndex = '99999';
+                ov.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5">
+                    <div class="text-base font-extrabold text-gray-800 mb-1">🗑️ ${escapeHtml(title)}</div>
+                    <div class="text-xs text-gray-500 mb-4">${escapeHtml(detail || '')}</div>
+                    <div class="space-y-2">
+                        <button data-k="keep" class="w-full text-left px-3 py-2 rounded-xl border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 transition">
+                            <div class="text-sm font-bold text-emerald-800">✅ Hapus data saja</div>
+                            <div class="text-[11px] text-emerald-700">Arsip tidak berubah. Data tetap tersimpan di Arsip.</div>
+                        </button>
+                        <button data-k="sync" class="w-full text-left px-3 py-2 rounded-xl border-2 border-red-300 bg-red-50 hover:bg-red-100 transition">
+                            <div class="text-sm font-bold text-red-700">🧹 Hapus juga dari Arsip otomatis</div>
+                            <div class="text-[11px] text-red-600">Data hilang dari arsip otomatis. Arsip manual tidak terpengaruh.</div>
+                        </button>
+                        <button data-k="cancel" class="w-full px-3 py-2 rounded-xl border border-gray-300 bg-gray-50 hover:bg-gray-100 text-sm font-semibold text-gray-600 transition">Batal</button>
+                    </div></div>`;
+                const close = (v) => { document.removeEventListener('keydown', onKey); ov.remove(); resolve(v); };
+                const onKey = (e) => { if (e.key === 'Escape') close(null); };
+                ov.addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-k]');
+                    if (btn) close(btn.dataset.k === 'cancel' ? null : btn.dataset.k);
+                    else if (e.target === ov) close(null);
+                });
+                document.addEventListener('keydown', onKey);
+                document.body.appendChild(ov);
+            });
         }
 
         function saveMasterToLS(mutatorFn) {
@@ -4305,22 +4387,26 @@ function switchLineModelTab(tab) {
         }
         function reopenCardView() { if (currentCardViewIdx !== null) openCardView(currentCardViewIdx); }
 
-        function deleteMasterRow(idx) {
+        async function deleteMasterRow(idx) {
             const it = masterData[idx]; if (!it) return;
             const lb = it.elemen || it.namaSop || it.process || 'data';
-            if (!confirm(`Hapus data "${lb}"?`)) return;
+            const choice = await askDeleteChoice(`Hapus "${lb}"?`, `${it.line || '-'} · ${it.model || '-'}`);
+            if (!choice) return;
+            const cur = masterData.indexOf(it);
+            if (cur === -1) { showToast('Data sudah berubah, coba lagi', 'warning'); return; }
+            if (choice === 'keep') retainRowsInAutoArchive([it]); else releaseRowsFromAutoArchive([it]);
             const ref = { line: it.line, model: it.model || '-', no: it.no, process: it.process, subMachine: it.subMachine, noSop: it.noSop, namaSop: it.namaSop, elemen: it.elemen };
             const md = currentMode;
-            masterData.splice(idx, 1);
+            masterData.splice(cur, 1);
             saveMasterToLS((serverArr) => {
                 const f = serverArr.filter(x => !recordIdentityMatch(x, ref, md));
                 if (f.length === serverArr.length) return null;
                 return f;
             });
             renderMasterTable(); renderStandardCheck(); updateCounters();
-            showToast('Data dihapus', 'warning');
+            showToast(choice === 'keep' ? 'Data dihapus (arsip tidak berubah)' : 'Data dihapus (arsip otomatis ikut diperbarui)', 'warning');
         }
-        function clearAllData() {
+        async function clearAllData() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
             const fLine = document.getElementById('dataFilterLine');
             const fv = fLine ? fLine.value : '__active__';
@@ -4334,7 +4420,10 @@ function switchLineModelTab(tab) {
             else toDelete = candidates.filter(d => (d.model || '-') === targetModel);
             const count = toDelete.length;
             if (count === 0) { showToast('⚠️ Tidak ada data', 'warning'); return; }
-            if (!confirm(`🗑️ Hapus data Master?\n\nLine: ${lineLabel}\nModel: ${modelLabel}\n\n${count} data akan dihapus.`)) return;
+            const choice = await askDeleteChoice('Hapus data Master?', `Line: ${lineLabel} · Model: ${modelLabel} · ${count} data akan dihapus`);
+            if (!choice) return;
+            toDelete = toDelete.filter(d => masterData.includes(d));
+            if (choice === 'keep') retainRowsInAutoArchive(toDelete); else releaseRowsFromAutoArchive(toDelete);
             const makeKey = (d) => {
                 if (currentMode === 'elemen') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}|${d.elemen}`;
                 if (currentMode === 'siklus') return `${d.line}|${d.model||'-'}|${d.noSop}|${d.namaSop}`;
@@ -4344,7 +4433,7 @@ function switchLineModelTab(tab) {
             masterData = masterData.filter(d => !idsToRemove.has(makeKey(d)));
             saveMasterToLS();
             renderMasterTable(); renderStandardCheck(); updateCounters();
-            showToast(`✅ ${count} data dihapus`, 'warning');
+            showToast(`✅ ${toDelete.length} data dihapus` + (choice === 'keep' ? ' (arsip tidak berubah)' : ' (arsip otomatis ikut diperbarui)'), 'warning');
         }
         function updateCounters() {
             let activeData = masterData.filter(d => d.line === activeLine);
@@ -4546,6 +4635,7 @@ function switchLineModelTab(tab) {
                     ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Salinan otomatis, diperbarui setiap data berubah">🤖 Otomatis</span>'
                     : '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✋ Manual</span>';
                 const restoreBadge = a.restoredCount ? `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>` : '';
+                const retained = (a.retainedKeys && a.retainedKeys.length) ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Baris yang sudah dihapus dari Master Data tapi sengaja dipertahankan di arsip ini">🔒 ${a.retainedKeys.length} dipertahankan</span>` : '';
                 return `
                 <div class="bg-white rounded-xl border border-gray-200 border-l-4 ${accent} shadow-sm hover:shadow-md transition p-3 flex flex-col gap-2">
                     <div class="flex items-start justify-between gap-2">
@@ -4561,7 +4651,7 @@ function switchLineModelTab(tab) {
                     <div class="flex items-center gap-1 flex-wrap">
                         <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
                         <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
-                        ${tipe}${restoreBadge}
+                        ${tipe}${restoreBadge}${retained}
                     </div>
                     <div class="text-[10px] text-gray-400">${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
                     <div class="flex gap-1.5 mt-auto pt-1">

@@ -54,7 +54,11 @@ Data disimpan di dua tempat: **localStorage** browser (offline) dan **Firebase**
 - **Arsip otomatis**: setiap data berubah, salinan terbaru disimpan ke tab Arsip, satu entri per mode + line + model + bulan (label 🤖 Otomatis). Master Data tidak berubah. Entri diperbarui terus, bukan dibuat baru setiap kali.
 - **Arsip manual** (tombol **ARSIP** di tab Data): memindahkan data ke Arsip dan **menghapusnya** dari Master Data.
 - **Restore** arsip otomatis hanya menambahkan baris yang belum ada di Master Data (tidak menggabung siklus yang sudah ada, supaya tidak dobel). Restore arsip manual menggabungkan siklus ke data yang sudah ada.
-- Arsip otomatis adalah salinan terbaru, **bukan riwayat per perubahan**. Kalau ada baris terhapus tidak sengaja, arsip bulan itu ikut berubah. Untuk pengaman, gunakan **Backup**.
+- **Menghapus data (tombol Hapus per baris atau Reset)** menampilkan dua pilihan:
+  - **✅ Hapus data saja**: data hilang dari Master Data, tetapi tetap ada di arsip otomatis. Baris itu terus dipertahankan walau data lain berubah (kartu arsip menampilkan label 🔒 *N dipertahankan*).
+  - **🧹 Hapus juga dari Arsip otomatis**: baris ikut hilang dari arsip otomatis. Kalau seluruh isi arsip otomatis habis, entrinya ikut dihapus.
+  - **Arsip manual tidak pernah terpengaruh** oleh penghapusan di Master Data.
+- Arsip otomatis adalah salinan terbaru, bukan riwayat per perubahan. Untuk pengaman tambahan, gunakan **Backup**.
 
 ## Backup
 
