@@ -1580,6 +1580,83 @@
             });
         }
 
+        function startInlineEditNo(indices, cellEl) {
+            if (currentMode !== 'mesin') return;
+            if (cellEl.querySelector('input')) return;
+            const first = masterData[indices[0]];
+            if (!first) return;
+            const oldNo = first.no, line = first.line, model = first.model || '-', process = first.process;
+            const originalHtml = cellEl.innerHTML;
+            cellEl.innerHTML = `<input type="text" value="${escapeHtml(String(oldNo === undefined || oldNo === null ? '' : oldNo))}" maxlength="20"
+                class="w-16 px-1 py-0.5 text-center border-2 border-indigo-500 rounded font-bold text-indigo-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300" style="font-size:12px;">`;
+            const input = cellEl.querySelector('input');
+            input.focus(); input.select();
+            let cancelled = false, done = false;
+            const sameGroup = (m) => m.line === line && (m.model || '-') === model && m.process === process && m.no === oldNo;
+            const commit = () => {
+                if (cancelled || done) return;
+                done = true;
+                let nv = input.value.trim(); if (!nv) nv = '-';
+                if (nv === String(oldNo)) { cellEl.innerHTML = originalHtml; return; }
+                const subs = new Set(masterData.filter(sameGroup).map(m => m.subMachine));
+                const clash = masterData.some(m => m.line === line && (m.model || '-') === model && m.process === process && m.no === nv && subs.has(m.subMachine));
+                if (clash) { cellEl.innerHTML = originalHtml; showToast(`⚠️ No ${nv} sudah dipakai proses "${process}" yang sama`, 'error'); return; }
+                masterData.forEach(m => { if (sameGroup(m)) m.no = nv; });
+                // commit tertunda (belum terkirim) ikut diganti agar tidak membuat data No lama lagi
+                let changed = false;
+                pendingOps.forEach(op => {
+                    if (op.node !== 'masterDataMesin') return;
+                    (op.items || []).forEach(it => { if (it.line === line && (it.model || '-') === model && it.process === process && it.no === oldNo) { it.no = nv; changed = true; } });
+                });
+                if (changed) lsSave(LS_PENDING_OPS, pendingOps);
+                saveMasterToLS((serverArr) => serverArr.map(x => (x.line === line && (x.model || '-') === model && x.process === process && x.no === oldNo) ? { ...x, no: nv } : x));
+                renderMasterTable(); renderStandardCheck();
+                showToast(`✅ No ${oldNo} → ${nv}`, 'success');
+            };
+            input.addEventListener('blur', commit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                else if (e.key === 'Escape') { e.preventDefault(); cancelled = true; cellEl.innerHTML = originalHtml; showToast('⏹️ Dibatalkan', 'info'); }
+            });
+        }
+        // Ubah No untuk SATU sub mesin saja (memisahkan dari kelompok No yang sama)
+        function startInlineEditNoRow(idx, cellEl) {
+            if (currentMode !== 'mesin') return;
+            if (cellEl.querySelector('input')) return;
+            const item = masterData[idx];
+            if (!item) return;
+            const oldNo = item.no, line = item.line, model = item.model || '-', process = item.process, sub = item.subMachine;
+            const originalHtml = cellEl.innerHTML;
+            cellEl.innerHTML = `<input type="text" value="${escapeHtml(String(oldNo === undefined || oldNo === null ? '' : oldNo))}" maxlength="20" title="No baru untuk sub mesin ini saja"
+                class="w-20 px-1 py-0.5 text-center border-2 border-pink-500 rounded font-bold text-pink-700 bg-white focus:outline-none focus:ring-2 focus:ring-pink-300" style="font-size:12px;">`;
+            const input = cellEl.querySelector('input');
+            input.focus(); input.select();
+            let cancelled = false, done = false;
+            const isRow = (m) => m.line === line && (m.model || '-') === model && m.process === process && m.subMachine === sub && m.no === oldNo;
+            const commit = () => {
+                if (cancelled || done) return;
+                done = true;
+                let nv = input.value.trim(); if (!nv) nv = '-';
+                if (nv === String(oldNo)) { cellEl.innerHTML = originalHtml; return; }
+                const clash = masterData.some(m => m.line === line && (m.model || '-') === model && m.process === process && m.subMachine === sub && m.no === nv);
+                if (clash) { cellEl.innerHTML = originalHtml; showToast(`⚠️ No ${nv} sudah dipakai sub mesin "${sub}" pada proses ini`, 'error'); return; }
+                masterData.forEach(m => { if (isRow(m)) m.no = nv; });
+                let changed = false;
+                pendingOps.forEach(op => {
+                    if (op.node !== 'masterDataMesin') return;
+                    (op.items || []).forEach(it => { if (it.line === line && (it.model || '-') === model && it.process === process && it.subMachine === sub && it.no === oldNo) { it.no = nv; changed = true; } });
+                });
+                if (changed) lsSave(LS_PENDING_OPS, pendingOps);
+                saveMasterToLS((serverArr) => serverArr.map(x => (x.line === line && (x.model || '-') === model && x.process === process && x.subMachine === sub && x.no === oldNo) ? { ...x, no: nv } : x));
+                renderMasterTable(); renderStandardCheck();
+                showToast(`✅ Sub mesin ${sub}: No ${oldNo} → ${nv}`, 'success');
+            };
+            input.addEventListener('blur', commit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                else if (e.key === 'Escape') { e.preventDefault(); cancelled = true; cellEl.innerHTML = originalHtml; showToast('⏹️ Dibatalkan', 'info'); }
+            });
+        }
         function startInlineEditGroup(indices, field, cellEl) {
             if (!indices || indices.length === 0) return;
             const firstIdx = indices[0];
@@ -4058,10 +4135,10 @@ function switchLineModelTab(tab) {
                     if (ri === 0) {
                         out += `<td rowspan="${rs}" class="col-line px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(g.line || '-')}</td>`;
                         out += `<td rowspan="${rs}" class="col-model px-2 py-2 text-center border-r border-b bg-emerald-50 align-middle whitespace-nowrap"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold">${escapeHtml(g.model || '-')}</span></td>`;
-                        out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap">${escapeHtml(g.no || '-')}</td>`;
+                        out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap editable-cell" onclick="startInlineEditNo([${g.rows.map(x => x.originalIndex).join(',')}], this)" title="Klik untuk edit No">${escapeHtml(g.no || '-')}</td>`;
                         out += `<td rowspan="${rs}" class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle"><span class="hp-model-badge">📦 ${escapeHtml(g.model || '-')}</span><div>${escapeHtml(g.process || '-')}</div></td>`;
                     }
-                    out += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(r.subMachine || '-')}</span></td>`;
+                    out += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(r.subMachine || '-')}</span>${rs > 1 ? `<button type="button" onclick="event.stopPropagation(); startInlineEditNoRow(${r.originalIndex}, this.parentElement)" title="Pisahkan sub mesin ini ke No lain (mis. ${escapeHtml(String(g.no || ''))}-${ri + 1})" class="ml-1 text-[11px] px-1 rounded hover:bg-pink-100">✂️</button>` : ''}</td>`;
                     for (let i = 0; i < mL; i++) {
                         const lv = r.laps[i];
                         if (lv !== undefined && lv !== null) {
