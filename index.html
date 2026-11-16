@@ -2258,9 +2258,48 @@
             if (mode === 'siklus') return `${d.line}|${d.model || '-'}|${d.noSop}|${d.namaSop}`;
             return `${d.line}|${d.model || '-'}|${d.no}|${d.process}|${d.subMachine}`;
         }
-        function autoArchiveId(line, model) {
-            const n = new Date();
-            return ('auto_' + currentMode + '_' + line + '_' + model + '_' + n.getFullYear() + '_' + (n.getMonth() + 1)).replace(/[^A-Za-z0-9_\-]/g, '_');
+        function ymd(d) {
+            const x = d instanceof Date ? d : new Date(d);
+            return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
+        }
+        // Perbandingan isi arsip yang tahan terhadap urutan baris/field (Firebase bisa mengurutkan ulang field
+        // dan membuang nilai kosong), supaya tidak muncul versi baru kalau isinya sebenarnya sama.
+        function canonJSON(v) {
+            if (Array.isArray(v)) return '[' + v.map(canonJSON).join(',') + ']';
+            if (v && typeof v === 'object') {
+                return '{' + Object.keys(v).sort().filter(k => { const x = v[k]; return x !== undefined && x !== null && !(Array.isArray(x) && x.length === 0); })
+                    .map(k => JSON.stringify(k) + ':' + canonJSON(v[k])).join(',') + '}';
+            }
+            return JSON.stringify(v);
+        }
+        function sameArchiveData(a, b) {
+            const norm = (arr) => (arr || []).map(d => archiveRowKey(currentMode, d) + '\u0002' + canonJSON(d)).sort().join('\u0003');
+            return norm(a) === norm(b);
+        }
+        function autoArchiveId(line, model, ver) {
+            return ('auto_' + currentMode + '_' + line + '_' + model + '_v' + ver).replace(/[^A-Za-z0-9_\-]/g, '_');
+        }
+        function autoGroupEntries(mode, line, model) {
+            return archiveList.filter(a => a.auto && a.mode === mode && a.line === line && a.model === model);
+        }
+        // Versi terbaru arsip otomatis untuk satu mode + line + model
+        function latestAutoEntry(mode, line, model) {
+            return autoGroupEntries(mode, line, model).reduce((m, a) => (!m || (a.version || 0) > (m.version || 0)) ? a : m, null);
+        }
+        // Arsip otomatis lama (sebelum ada versi): beri nomor versi berdasarkan urutan bulan
+        function normalizeLegacyAutoEntries() {
+            const legacy = archiveList.filter(a => a.auto && a.version === undefined);
+            if (legacy.length === 0) return [];
+            const byGroup = {};
+            legacy.forEach(a => { const k = a.mode + '\u0001' + a.line + '\u0001' + a.model; (byGroup[k] = byGroup[k] || []).push(a); });
+            const changed = [];
+            Object.keys(byGroup).forEach(k => {
+                const list = byGroup[k].sort((x, y) => ((x.tahun || 0) - (y.tahun || 0)) || ((x.bulan || 0) - (y.bulan || 0)));
+                const versioned = autoGroupEntries(list[0].mode, list[0].line, list[0].model).filter(a => a.version !== undefined).map(a => a.version);
+                const base = (versioned.length ? Math.max(...versioned) : -1) + 1;
+                list.forEach((a, i) => { a.version = base + i; a.versionLabel = 'V1.' + a.version; a.tanggal = ymd(a.created_at); changed.push(a); });
+            });
+            return changed;
         }
         function persistAutoEntries(upserts, removeIds) {
             removeIds = removeIds || [];
@@ -2274,53 +2313,63 @@
                 return out;
             }).then(ok => { if (!ok) markPending('archive'); });
         }
+        // Aturan versi: perubahan di hari yang sama memperbarui versi hari itu.
+        // Perubahan di hari berikutnya membuat versi baru (V1.0 -> V1.1 -> V1.2 ...), versi lama tidak disentuh.
         function runAutoArchive() {
             try {
-                if (!currentMode || !Array.isArray(masterData) || masterData.length === 0) return;
-                const now = new Date(), tahun = now.getFullYear(), bulan = now.getMonth() + 1;
-                const groups = {};
-                masterData.forEach(d => { const k = (d.line || '-') + '\u0001' + (d.model || '-'); (groups[k] = groups[k] || []).push(d); });
-                const upserts = [];
-                Object.keys(groups).forEach(k => {
-                    const rows = groups[k];
-                    const line = rows[0].line || '-', model = rows[0].model || '-';
-                    const id = autoArchiveId(line, model);
-                    const cur = JSON.parse(JSON.stringify(rows, (key, val) => key === 'commitIds' ? undefined : val));
-                    const ex = archiveList.find(a => a.id === id);
-                    let snap = cur;
-                    if (ex && ex.retainedKeys && ex.retainedKeys.length) {
-                        const curKeys = new Set(cur.map(d => archiveRowKey(currentMode, d)));
-                        const keep = new Set(ex.retainedKeys);
-                        const extra = (ex.data || []).filter(d => { const kk = archiveRowKey(currentMode, d); return keep.has(kk) && !curKeys.has(kk); });
-                        snap = cur.concat(extra);
-                    }
-                    if (ex && JSON.stringify(ex.data) === JSON.stringify(snap)) return;
-                    const entry = { id, auto: true, tahun, bulan, line, model, mode: currentMode, data: snap, created_at: now.toISOString(), count: snap.length, restoredCount: ex ? (ex.restoredCount || 0) : 0 };
-                    if (ex && ex.retainedKeys && ex.retainedKeys.length) entry.retainedKeys = ex.retainedKeys;
-                    if (ex) archiveList[archiveList.indexOf(ex)] = entry; else archiveList.unshift(entry);
-                    upserts.push(entry);
-                });
+                const upserts = normalizeLegacyAutoEntries();
+                if (currentMode && Array.isArray(masterData) && masterData.length > 0) {
+                    const now = new Date(), tahun = now.getFullYear(), bulan = now.getMonth() + 1, today = ymd(now);
+                    const groups = {};
+                    masterData.forEach(d => { const k = (d.line || '-') + '\u0001' + (d.model || '-'); (groups[k] = groups[k] || []).push(d); });
+                    Object.keys(groups).forEach(k => {
+                        const rows = groups[k];
+                        const line = rows[0].line || '-', model = rows[0].model || '-';
+                        const cur = JSON.parse(JSON.stringify(rows, (key, val) => key === 'commitIds' ? undefined : val));
+                        const latest = latestAutoEntry(currentMode, line, model);
+                        let snap = cur;
+                        if (latest && latest.retainedKeys && latest.retainedKeys.length) {
+                            const curKeys = new Set(cur.map(d => archiveRowKey(currentMode, d)));
+                            const keep = new Set(latest.retainedKeys);
+                            const extra = (latest.data || []).filter(d => { const kk = archiveRowKey(currentMode, d); return keep.has(kk) && !curKeys.has(kk); });
+                            snap = cur.concat(extra);
+                        }
+                        if (latest && sameArchiveData(latest.data, snap)) return;
+                        let entry;
+                        if (latest && latest.tanggal === today) {
+                            entry = { ...latest, data: snap, count: snap.length, created_at: now.toISOString() };
+                            archiveList[archiveList.indexOf(latest)] = entry;
+                        } else {
+                            const v = latest ? (latest.version || 0) + 1 : 0;
+                            entry = { id: autoArchiveId(line, model, v), auto: true, version: v, versionLabel: 'V1.' + v, tanggal: today, tahun, bulan, line, model, mode: currentMode, data: snap, created_at: now.toISOString(), count: snap.length, restoredCount: 0 };
+                            if (latest && latest.retainedKeys && latest.retainedKeys.length) entry.retainedKeys = latest.retainedKeys;
+                            archiveList.unshift(entry);
+                        }
+                        upserts.push(entry);
+                    });
+                }
                 persistAutoEntries(upserts);
             } catch (e) { console.warn('runAutoArchive gagal:', e); }
         }
-        // Dipanggil SEBELUM baris dihapus dari Master Data: baris tetap ada di arsip otomatis.
+        // Dipanggil SEBELUM baris dihapus dari Master Data: baris tetap ada di arsip otomatis (juga di versi-versi berikutnya).
         function retainRowsInAutoArchive(rows) {
             clearTimeout(__autoArchiveTimer); runAutoArchive();
             const touched = [];
             rows.forEach(r => {
-                const ex = archiveList.find(a => a.id === autoArchiveId(r.line || '-', r.model || '-'));
+                const ex = latestAutoEntry(currentMode, r.line || '-', r.model || '-');
                 if (!ex) return;
                 ex.retainedKeys = Array.from(new Set((ex.retainedKeys || []).concat(archiveRowKey(currentMode, r))));
                 if (!touched.includes(ex)) touched.push(ex);
             });
             persistAutoEntries(touched);
         }
-        // Dipanggil SEBELUM baris dihapus: baris ikut dihapus dari arsip otomatis (arsip manual tidak disentuh).
+        // Dipanggil SEBELUM baris dihapus: baris dihapus dari versi arsip otomatis terbaru.
+        // Versi yang lebih lama tidak diubah. Arsip manual tidak disentuh.
         function releaseRowsFromAutoArchive(rows) {
             clearTimeout(__autoArchiveTimer); runAutoArchive();
             const touched = [], removeIds = [];
             rows.forEach(r => {
-                const ex = archiveList.find(a => a.id === autoArchiveId(r.line || '-', r.model || '-'));
+                const ex = latestAutoEntry(currentMode, r.line || '-', r.model || '-');
                 if (!ex) return;
                 const k = archiveRowKey(currentMode, r);
                 ex.retainedKeys = (ex.retainedKeys || []).filter(x => x !== k);
@@ -4623,7 +4672,7 @@ function switchLineModelTab(tab) {
             const sorted = filtered.slice().sort((x, y) =>
                 String(x.line || '').localeCompare(String(y.line || ''), undefined, { numeric: true }) ||
                 String(x.model || '').localeCompare(String(y.model || '')) ||
-                ((y.tahun || 0) - (x.tahun || 0)) || ((y.bulan || 0) - (x.bulan || 0)));
+                ((y.tahun || 0) - (x.tahun || 0)) || ((y.bulan || 0) - (x.bulan || 0)) || ((y.version || 0) - (x.version || 0)));
             const totalItem = sorted.reduce((n, a) => n + (a.count || a.data?.length || 0), 0);
             const fmtTgl = (iso) => { try { return new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return '-'; } };
             const iconBtn = (fn, id, icon, title, cls) => `<button onclick="${fn}('${id}')" title="${title}" class="w-9 h-8 flex items-center justify-center rounded-lg border text-sm transition ${cls}">${icon}</button>`;
@@ -4635,6 +4684,7 @@ function switchLineModelTab(tab) {
                     ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Salinan otomatis, diperbarui setiap data berubah">🤖 Otomatis</span>'
                     : '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✋ Manual</span>';
                 const restoreBadge = a.restoredCount ? `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>` : '';
+                const verChip = a.auto ? `<span class="bg-purple-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full" title="Versi arsip otomatis">${escapeHtml(a.versionLabel || 'V1.0')}</span>` : '';
                 const retained = (a.retainedKeys && a.retainedKeys.length) ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Baris yang sudah dihapus dari Master Data tapi sengaja dipertahankan di arsip ini">🔒 ${a.retainedKeys.length} dipertahankan</span>` : '';
                 return `
                 <div class="bg-white rounded-xl border border-gray-200 border-l-4 ${accent} shadow-sm hover:shadow-md transition p-3 flex flex-col gap-2">
@@ -4651,10 +4701,11 @@ function switchLineModelTab(tab) {
                     <div class="flex items-center gap-1 flex-wrap">
                         <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
                         <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
-                        ${tipe}${restoreBadge}${retained}
+                        ${verChip}${tipe}${restoreBadge}${retained}
                     </div>
                     <div class="text-[10px] text-gray-400">${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
                     <div class="flex gap-1.5 mt-auto pt-1">
+                        <button onclick="openArchiveView('${a.id}')" title="Lihat isi arsip" class="flex-1 h-8 text-[11px] font-bold rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition">👁️ Buka</button>
                         <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master Data" class="flex-1 h-8 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
                         ${iconBtn('exportArchiveExcel', a.id, '📊', 'Unduh Excel', 'border-emerald-300 bg-emerald-50 hover:bg-emerald-600')}
                         ${iconBtn('exportArchiveCSV', a.id, '📥', 'Unduh CSV', 'border-teal-300 bg-teal-50 hover:bg-teal-600')}
@@ -4662,6 +4713,89 @@ function switchLineModelTab(tab) {
                     </div>
                 </div>`;
             }).join('') + '</div>';
+        }
+        // Lihat isi arsip (read-only) tanpa mengubah Master Data
+        function buildArchiveViewTable(a) {
+            const mode = a.mode || 'mesin';
+            const items = (a.data || []).slice();
+            const keyOf = (it) => mode === 'mesin' ? it.no : it.noSop;
+            const subOf = (it) => String(it.elemen || it.subMachine || '');
+            items.sort((x, y) => String(keyOf(x) ?? '').localeCompare(String(keyOf(y) ?? ''), undefined, { numeric: true }) || subOf(x).localeCompare(subOf(y), undefined, { numeric: true }));
+            const mL = Math.min(Math.max(...items.map(i => (i.laps || []).length), 1), 10);
+            const n2 = (v) => (v === undefined || v === null || isNaN(v)) ? '—' : Number(v).toFixed(2);
+            const lapVal = (b) => (typeof b === 'object' && b !== null) ? (parseFloat(b.dur) || 0) : (parseFloat(b) || 0);
+            const th = (t, cls) => `<th class="px-2 py-2 text-center font-bold border-b border-r border-gray-200 whitespace-nowrap ${cls || ''}">${t}</th>`;
+            const td = (t, cls) => `<td class="px-2 py-1.5 border-b border-r border-gray-100 whitespace-nowrap ${cls || 'text-center'}">${t}</td>`;
+            let head = '';
+            if (mode === 'mesin') head = th('No') + th('Nama Mesin') + th('Sub');
+            else if (mode === 'elemen') head = th('No. SOP') + th('Nama SOP') + th('Elemen');
+            else head = th('No. SOP') + th('Nama SOP');
+            for (let i = 1; i <= mL; i++) head += th('S' + i, 'bg-blue-50 text-blue-800');
+            if (mode === 'mesin') head += th('Σ Rata²', 'bg-yellow-50') + th('NG%') + th('Gerakan') + th('CT+Gerakan') + th('Kapasitas', 'bg-emerald-50') + th('Jml Mesin');
+            else head += th('Σ Rata²', 'bg-yellow-50') + th('Std Time') + th('UPH', 'bg-emerald-50');
+            const body = items.map(it => {
+                const st = getRowStatsArchive(it, mode);
+                const laps = (it.laps || []).map(lapVal);
+                let r = '';
+                if (mode === 'mesin') r += td(escapeHtml(String(it.no ?? '-')), 'text-center font-bold') + td(escapeHtml(it.process || '-'), 'text-left font-semibold') + td(escapeHtml(String(it.subMachine ?? '-')));
+                else if (mode === 'elemen') r += td(escapeHtml(String(it.noSop ?? '-')), 'text-center font-bold') + td(escapeHtml(it.namaSop || '-'), 'text-left font-semibold') + td(escapeHtml(it.elemen || '-'), 'text-left');
+                else r += td(escapeHtml(String(it.noSop ?? '-')), 'text-center font-bold') + td(escapeHtml(it.namaSop || '-'), 'text-left font-semibold');
+                for (let i = 0; i < mL; i++) r += td(laps[i] !== undefined ? n2(laps[i]) : '—', 'text-center font-mono text-blue-800');
+                if (mode === 'mesin') r += td(n2(st.avg), 'text-center font-bold text-amber-700') + td(String(st.ngRate) + '%') + td(n2(st.gerakan)) + td(n2(st.ctPlusG)) + td(String(st.capacity), 'text-center font-extrabold text-emerald-700') + td(String(st.actualMachine));
+                else r += td(n2(st.avg), 'text-center font-bold text-amber-700') + td(n2(st.smh)) + td(String(st.uph), 'text-center font-extrabold text-emerald-700');
+                const searchText = escapeHtml(`${it.no ?? ''} ${it.process ?? ''} ${it.noSop ?? ''} ${it.namaSop ?? ''} ${it.elemen ?? ''}`.toLowerCase());
+                return `<tr class="hover:bg-yellow-50" data-s="${searchText}">${r}</tr>`;
+            }).join('');
+            return `<table class="min-w-full text-xs"><thead class="sticky top-0 bg-gray-50 z-10"><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+        }
+        function openArchiveView(id) {
+            const a = archiveList.find(x => x.id === id);
+            if (!a) { showToast('❌ Arsip tidak ditemukan', 'error'); return; }
+            if (!a.data || a.data.length === 0) { showToast('⚠️ Arsip kosong', 'warning'); return; }
+            const bulanNama = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const ov = document.createElement('div');
+            ov.className = 'fixed inset-0 flex items-center justify-center bg-black/50 p-2 sm:p-4';
+            ov.style.zIndex = '99999';
+            ov.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden">
+                <div class="flex items-start justify-between gap-3 px-4 py-3 border-b border-gray-200">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-base font-extrabold text-indigo-700">${escapeHtml(a.line || '-')}</span>
+                            <span class="text-sm font-semibold text-emerald-700">📦 ${escapeHtml(a.model || '-')}</span>
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
+                            <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
+                            ${a.auto ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">🤖 Otomatis · ${escapeHtml(a.versionLabel || 'V1.0')}</span>` : '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✋ Manual</span>'}
+                        </div>
+                        <div class="text-[11px] text-gray-500 mt-1"><b class="text-gray-700">${a.data.length}</b> item · hanya lihat, Master Data tidak berubah</div>
+                    </div>
+                    <button data-act="close" class="shrink-0 w-8 h-8 rounded-lg border border-gray-300 bg-gray-50 hover:bg-gray-200 text-gray-600 font-bold" title="Tutup">✕</button>
+                </div>
+                <div class="px-4 py-2 border-b border-gray-100"><input id="arsipViewSearch" type="text" placeholder="🔍 Cari nama / nomor..." class="w-full sm:w-72 px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"></div>
+                <div class="overflow-auto flex-1">${buildArchiveViewTable(a)}</div>
+                <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-200 bg-gray-50">
+                    <button data-act="excel" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition">📊 Excel</button>
+                    <button data-act="csv" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white transition">📥 CSV</button>
+                    <button data-act="restore" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
+                    <button data-act="close" class="h-8 px-4 text-[11px] font-bold rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition">Tutup</button>
+                </div></div>`;
+            const close = () => { document.removeEventListener('keydown', onKey); ov.remove(); };
+            const onKey = (e) => { if (e.key === 'Escape') close(); };
+            ov.addEventListener('click', (e) => {
+                if (e.target === ov) { close(); return; }
+                const b = e.target.closest('[data-act]'); if (!b) return;
+                const act = b.dataset.act;
+                if (act === 'close') close();
+                else if (act === 'excel') exportArchiveExcel(id);
+                else if (act === 'csv') exportArchiveCSV(id);
+                else if (act === 'restore') { close(); restoreArchive(id); }
+            });
+            const q = ov.querySelector('#arsipViewSearch');
+            q.addEventListener('input', () => {
+                const t = q.value.trim().toLowerCase();
+                ov.querySelectorAll('tbody tr').forEach(tr => { tr.style.display = (!t || (tr.dataset.s || '').includes(t)) ? '' : 'none'; });
+            });
+            document.addEventListener('keydown', onKey);
+            document.body.appendChild(ov);
         }
         async function restoreArchive(id) {
             const a = archiveList.find(x => x.id === id);
@@ -4746,7 +4880,7 @@ function switchLineModelTab(tab) {
             const sLine = sanitizeFilename(a.line || 'AllLine');
             const sModel = sanitizeFilename(a.model || 'AllModel');
             const dateStr = new Date().toISOString().slice(0,10);
-            downloadBlob(blob, `Arsip_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}_${dateStr}.csv`);
+            downloadBlob(blob, `Arsip_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}${a.versionLabel ? '_' + a.versionLabel : ''}_${dateStr}.csv`);
             showToast('📄 CSV diunduh', 'success');
         }
         function exportArchiveExcel(id) {
@@ -4766,7 +4900,7 @@ function switchLineModelTab(tab) {
                 const sLine = sanitizeFilename(a.line || 'AllLine');
                 const sModel = sanitizeFilename(a.model || 'AllModel');
                 const dateStr = new Date().toISOString().slice(0,10);
-                const filename = `Arsip_${mode}_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}_${dateStr}.xlsx`;
+                const filename = `Arsip_${mode}_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}${a.versionLabel ? '_' + a.versionLabel : ''}_${dateStr}.xlsx`;
                 if (downloadBlob(blob, filename)) showToast('📊 Excel arsip diunduh', 'success');
             } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
         }

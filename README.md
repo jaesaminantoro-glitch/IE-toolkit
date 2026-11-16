@@ -51,14 +51,19 @@ Data disimpan di dua tempat: **localStorage** browser (offline) dan **Firebase**
 
 ## Arsip
 
-- **Arsip otomatis**: setiap data berubah, salinan terbaru disimpan ke tab Arsip, satu entri per mode + line + model + bulan (label 🤖 Otomatis). Master Data tidak berubah. Entri diperbarui terus, bukan dibuat baru setiap kali.
+- **Arsip otomatis berversi per hari** (label 🤖 Otomatis dan nomor versi, misalnya `V1.0`): setiap data berubah, salinan terbaru disimpan ke tab Arsip untuk tiap mode + line + model.
+  - Perubahan di **hari yang sama** memperbarui versi hari itu.
+  - Perubahan di **hari berikutnya** membuat versi baru (`V1.0` → `V1.1` → `V1.2` ...). Versi lama tetap utuh sebagai riwayat.
+  - Kalau tidak ada perubahan isi, tidak ada versi baru.
+  - Master Data tidak berubah. Nama file Excel/CSV yang diunduh memuat nomor versinya.
+- **👁️ Buka** pada kartu arsip menampilkan isi arsip (siklus S1..Sn, rata-rata, kapasitas/UPH) tanpa mengubah Master Data. Ada kolom pencarian, dan dari tampilan itu Anda bisa langsung unduh Excel/CSV atau Restore.
 - **Arsip manual** (tombol **ARSIP** di tab Data): memindahkan data ke Arsip dan **menghapusnya** dari Master Data.
 - **Restore** arsip otomatis hanya menambahkan baris yang belum ada di Master Data (tidak menggabung siklus yang sudah ada, supaya tidak dobel). Restore arsip manual menggabungkan siklus ke data yang sudah ada.
 - **Menghapus data (tombol Hapus per baris atau Reset)** menampilkan dua pilihan:
   - **✅ Hapus data saja**: data hilang dari Master Data, tetapi tetap ada di arsip otomatis. Baris itu terus dipertahankan walau data lain berubah (kartu arsip menampilkan label 🔒 *N dipertahankan*).
-  - **🧹 Hapus juga dari Arsip otomatis**: baris ikut hilang dari arsip otomatis. Kalau seluruh isi arsip otomatis habis, entrinya ikut dihapus.
+  - **🧹 Hapus juga dari Arsip otomatis**: baris ikut hilang dari versi arsip otomatis **terbaru**. Versi yang lebih lama tidak diubah. Kalau isi versi terbaru habis, versi itu ikut dihapus.
   - **Arsip manual tidak pernah terpengaruh** oleh penghapusan di Master Data.
-- Arsip otomatis adalah salinan terbaru, bukan riwayat per perubahan. Untuk pengaman tambahan, gunakan **Backup**.
+- Riwayat arsip otomatis dicatat per hari (bukan per perubahan). Untuk pengaman tambahan, gunakan **Backup**.
 
 ## Backup
 
