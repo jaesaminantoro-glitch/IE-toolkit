@@ -1294,6 +1294,7 @@
         const LS_PENDING_OPS = 'timeStudy_pendingOps_v2';
         const LS_DRAFT_LAPS = 'timeStudy_draftLaps_v1';
         let pendingOps = lsLoad(LS_PENDING_OPS, []);
+        let arsipOpenFolders = new Set(lsLoad('timeStudy_arsipFolders_v1', []));
         let __inCommit = false;
         let __draftReadyMode = null;
         let __flushingOps = false;
@@ -4642,6 +4643,17 @@ function switchLineModelTab(tab) {
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast(`✅ ${entry.count} data diarsipkan`, 'success');
         }
+        function toggleArsipFolder(key) {
+            if (arsipOpenFolders.has(key)) arsipOpenFolders.delete(key); else arsipOpenFolders.add(key);
+            lsSave('timeStudy_arsipFolders_v1', Array.from(arsipOpenFolders));
+            renderArsipList();
+        }
+        function arsipExpandAll(open) {
+            arsipOpenFolders = new Set();
+            if (open) archiveList.forEach(a => { const L = a.line || '-'; arsipOpenFolders.add('L:' + L); arsipOpenFolders.add('M:' + L + '|' + (a.model && a.model !== '-' ? a.model : '(Tanpa model)')); });
+            lsSave('timeStudy_arsipFolders_v1', Array.from(arsipOpenFolders));
+            renderArsipList();
+        }
         function renderArsipList() {
             const c = document.getElementById('arsipListContainer'); if (!c) return;
             const fl = document.getElementById('arsipFilterLine');
@@ -4669,50 +4681,91 @@ function switchLineModelTab(tab) {
             if (filterTahun) filtered = filtered.filter(a => String(a.tahun) === String(filterTahun));
             if (filtered.length === 0) { c.innerHTML = '<div class="text-center text-gray-400 italic text-xs py-8">Belum ada arsip.</div>'; return; }
             const bulanNama = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const forceOpen = !!(filterLine || filterModel || filterBulan || filterTahun);
             const sorted = filtered.slice().sort((x, y) =>
-                String(x.line || '').localeCompare(String(y.line || ''), undefined, { numeric: true }) ||
-                String(x.model || '').localeCompare(String(y.model || '')) ||
-                ((y.tahun || 0) - (x.tahun || 0)) || ((y.bulan || 0) - (x.bulan || 0)) || ((y.version || 0) - (x.version || 0)));
+                ((y.tahun || 0) - (x.tahun || 0)) || ((y.bulan || 0) - (x.bulan || 0)) || ((y.version || 0) - (x.version || 0)) ||
+                String(x.mode || '').localeCompare(String(y.mode || '')));
             const totalItem = sorted.reduce((n, a) => n + (a.count || a.data?.length || 0), 0);
             const fmtTgl = (iso) => { try { return new Date(iso).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return '-'; } };
-            const iconBtn = (fn, id, icon, title, cls) => `<button onclick="${fn}('${id}')" title="${title}" class="w-9 h-8 flex items-center justify-center rounded-lg border text-sm transition ${cls}">${icon}</button>`;
-            c.innerHTML = `<div class="text-[11px] text-gray-500 mb-2 px-1"><b class="text-gray-700">${sorted.length}</b> arsip · <b class="text-gray-700">${totalItem}</b> item</div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">` + sorted.map(a => {
-                const n = a.count || a.data?.length || 0;
-                const accent = a.auto ? 'border-l-purple-500' : 'border-l-amber-500';
+            const itemsOf = (a) => a.count || a.data?.length || 0;
+            const iconBtn = (fn, id, icon, title, cls) => `<button onclick="${fn}('${id}')" title="${title}" class="w-8 h-7 flex items-center justify-center rounded-lg border text-sm transition ${cls}">${icon}</button>`;
+
+            // Susun pohon: Line -> Model -> daftar arsip
+            const tree = {};
+            sorted.forEach(a => {
+                const L = a.line || '-';
+                const M = (a.model && a.model !== '-') ? a.model : '(Tanpa model)';
+                ((tree[L] = tree[L] || {})[M] = tree[L][M] || []).push(a);
+            });
+
+            const entryRow = (a) => {
+                const verChip = a.auto ? `<span class="bg-purple-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full" title="Versi arsip otomatis">${escapeHtml(a.versionLabel || 'V1.0')}</span>` : '';
                 const tipe = a.auto
-                    ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Salinan otomatis, diperbarui setiap data berubah">🤖 Otomatis</span>'
+                    ? '<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Salinan otomatis, berversi per hari">🤖 Otomatis</span>'
                     : '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✋ Manual</span>';
                 const restoreBadge = a.restoredCount ? `<span class="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">♻️ ${a.restoredCount}x</span>` : '';
-                const verChip = a.auto ? `<span class="bg-purple-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full" title="Versi arsip otomatis">${escapeHtml(a.versionLabel || 'V1.0')}</span>` : '';
                 const retained = (a.retainedKeys && a.retainedKeys.length) ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Baris yang sudah dihapus dari Master Data tapi sengaja dipertahankan di arsip ini">🔒 ${a.retainedKeys.length} dipertahankan</span>` : '';
                 return `
-                <div class="bg-white rounded-xl border border-gray-200 border-l-4 ${accent} shadow-sm hover:shadow-md transition p-3 flex flex-col gap-2">
-                    <div class="flex items-start justify-between gap-2">
-                        <div class="min-w-0">
-                            <div class="text-sm font-extrabold text-indigo-700 leading-tight">${escapeHtml(a.line || '-')}</div>
-                            <div class="text-xs font-semibold text-emerald-700 truncate" title="${escapeHtml(a.model || '-')}">📦 ${escapeHtml(a.model || '-')}</div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-2xl font-extrabold text-gray-800 leading-none">${n}</div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">item</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-1 flex-wrap">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 border-t border-gray-100 bg-white hover:bg-gray-50 border-l-4 ${a.auto ? 'border-l-purple-400' : 'border-l-amber-400'}">
+                    <div class="flex items-center gap-1 flex-wrap flex-1 min-w-[200px]">
+                        ${verChip}
                         <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
                         <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
-                        ${verChip}${tipe}${restoreBadge}${retained}
+                        ${tipe}${restoreBadge}${retained}
                     </div>
-                    <div class="text-[10px] text-gray-400">${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
-                    <div class="flex gap-1.5 mt-auto pt-1">
-                        <button onclick="openArchiveView('${a.id}')" title="Lihat isi arsip" class="flex-1 h-8 text-[11px] font-bold rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition">👁️ Buka</button>
-                        <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master Data" class="flex-1 h-8 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
+                    <div class="text-[11px] text-gray-500 whitespace-nowrap"><b class="text-gray-800 text-sm">${itemsOf(a)}</b> item · ${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
+                    <div class="flex gap-1.5 shrink-0">
+                        <button onclick="openArchiveView('${a.id}')" title="Lihat isi arsip" class="h-7 px-2.5 text-[11px] font-bold rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition">👁️ Buka</button>
+                        <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master Data" class="h-7 px-2.5 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
                         ${iconBtn('exportArchiveExcel', a.id, '📊', 'Unduh Excel', 'border-emerald-300 bg-emerald-50 hover:bg-emerald-600')}
                         ${iconBtn('exportArchiveCSV', a.id, '📥', 'Unduh CSV', 'border-teal-300 bg-teal-50 hover:bg-teal-600')}
                         ${iconBtn('deleteArchive', a.id, '🗑️', 'Hapus arsip', 'border-red-300 bg-red-50 hover:bg-red-600')}
                     </div>
                 </div>`;
-            }).join('') + '</div>';
+            };
+
+            const folderHead = (key, open, icon, title, meta, cls) => `
+                <button type="button" data-k="${escapeHtml(key)}" ${forceOpen ? '' : 'onclick="toggleArsipFolder(this.dataset.k)"'} class="w-full flex items-center gap-2 px-3 py-2 text-left ${forceOpen ? 'cursor-default' : 'hover:bg-indigo-50'} transition ${cls}">
+                    <span class="text-[10px] text-gray-400 w-3 inline-block transition-transform ${open ? 'rotate-90' : ''}">▶</span>
+                    <span class="text-base">${open ? '📂' : icon}</span>
+                    <span class="font-extrabold text-sm ${icon === '📁' ? 'text-indigo-700' : 'text-emerald-700'}">${escapeHtml(title)}</span>
+                    <span class="text-[11px] text-gray-500">${meta}</span>
+                </button>`;
+
+            const lineNames = Object.keys(tree).sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+            const html = lineNames.map(L => {
+                const models = tree[L];
+                const modelNames = Object.keys(models).sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
+                const nArsip = modelNames.reduce((n, M) => n + models[M].length, 0);
+                const nItem = modelNames.reduce((n, M) => n + models[M].reduce((k, a) => k + itemsOf(a), 0), 0);
+                const lkey = 'L:' + L;
+                const lOpen = forceOpen || arsipOpenFolders.has(lkey);
+                let inner = '';
+                if (lOpen) {
+                    inner = '<div class="pl-5 pr-2 pb-2 space-y-1.5 bg-gray-50/60">' + modelNames.map(M => {
+                        const list = models[M];
+                        const mkey = 'M:' + L + '|' + M;
+                        const mOpen = forceOpen || arsipOpenFolders.has(mkey);
+                        const mItem = list.reduce((k, a) => k + itemsOf(a), 0);
+                        return `<div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                            ${folderHead(mkey, mOpen, '📁', '📦 ' + M, `${list.length} arsip · ${mItem} item`, 'bg-white')}
+                            ${mOpen ? '<div>' + list.map(entryRow).join('') + '</div>' : ''}
+                        </div>`;
+                    }).join('') + '</div>';
+                }
+                return `<div class="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden mb-2">
+                    ${folderHead(lkey, lOpen, '📁', L, `${modelNames.length} model · ${nArsip} arsip · ${nItem} item`, 'bg-indigo-50/40')}
+                    ${inner}
+                </div>`;
+            }).join('');
+
+            c.innerHTML = `<div class="flex items-center justify-between gap-2 mb-2 px-1 flex-wrap">
+                    <div class="text-[11px] text-gray-500"><b class="text-gray-700">${sorted.length}</b> arsip · <b class="text-gray-700">${totalItem}</b> item · <b class="text-gray-700">${lineNames.length}</b> line</div>
+                    ${forceOpen ? '<div class="text-[10px] text-gray-400">Filter aktif: semua folder terbuka</div>' : `<div class="flex gap-1.5">
+                        <button onclick="arsipExpandAll(true)" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-gray-600">📂 Buka semua</button>
+                        <button onclick="arsipExpandAll(false)" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-gray-600">📁 Tutup semua</button>
+                    </div>`}
+                </div>` + html;
         }
         // Lihat isi arsip (read-only) tanpa mengubah Master Data
         function buildArchiveViewTable(a) {

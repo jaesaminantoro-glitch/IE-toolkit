@@ -20,7 +20,7 @@ Mode dipilih dari halaman awal. Setiap mode punya data sendiri-sendiri.
 - **Data**: tabel Master Data (rata-rata, NG%, gerakan, kapasitas, jumlah mesin, total kapasitas). Angka di kolom kuning bisa diedit langsung. Ada ekspor Excel dan CSV.
 - **Mesin / Elemen / Siklus**: daftar master (mesin, elemen, atau SOP).
 - **Analisa**: pengecekan UPH standar per proses, menampilkan proses yang masih di bawah standar.
-- **Arsip**: riwayat data per Line + Model + Bulan.
+- **Arsip**: riwayat data, ditata dalam **folder** Line → Model. Klik folder untuk membuka/menutup (status buka/tutup diingat). Tombol *Buka semua* / *Tutup semua* tersedia, dan saat filter aktif semua folder otomatis terbuka. Di dalam folder model, setiap arsip tampil sebagai satu baris dengan versi, bulan, mode, jumlah item, dan tombol aksi.
 
 ## Cara pakai singkat
 
