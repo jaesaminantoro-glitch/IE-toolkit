@@ -261,10 +261,15 @@
             #currentLineText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 26vw; }
             .header-btn .btn-label { font-size: 10px; }
 
-            /* --- navigasi: 4 tab, tidak sticky --- */
+            /* --- navigasi: semua tab terlihat langsung (Input, Data, Master, Analisa, Arsip), tidak sticky --- */
             #mainNav { position: static !important; }
-            .tab-extra { display: none !important; }
-            .tab-btn { padding: 14px 4px; font-size: 13px; }
+            .tab-extra.hidden { display: none !important; }
+            .tab-extra:not(.hidden) { display: block !important; }
+            #tabBtn-more { display: none !important; }
+            #mainNav > div { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+            #mainNav > div::-webkit-scrollbar { display: none; }
+            .tab-btn { padding: 13px 2px; font-size: 11.5px; min-width: 0; }
+            .tab-btn span.ml-1 { margin-left: 2px; padding-left: 4px; padding-right: 4px; font-size: 9px; }
 
             /* --- kontrol timer di bawah --- */
             .bottom-controls { padding: 10px calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px)); }
@@ -5887,7 +5892,10 @@ function switchLineModelTab(tab) {
             if (tg) tg.classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
             const b = document.getElementById('tabBtn-' + t);
-            if (b) b.classList.add('tab-active');
+            if (b) {
+                b.classList.add('tab-active');
+                if (window.innerWidth < 768 && b.scrollIntoView) { try { b.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {} }
+            }
             if (typeof updateMoreTab === 'function') updateMoreTab(t);
             currentTab = t;
             if (t === 'mesin') renderMachineTable();

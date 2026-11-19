@@ -21,6 +21,7 @@ Mode dipilih dari halaman awal. Setiap mode punya data sendiri-sendiri.
 - **Mesin / Elemen / Siklus**: daftar master (mesin, elemen, atau SOP).
 - **Analisa**: pengecekan UPH standar per proses, menampilkan proses yang masih di bawah standar.
 - **Arsip**: riwayat data, ditata dalam **folder** Line → Model → Mode (🔧 Mesin, 🔄 Siklus, 📋 Elemen). Klik folder untuk membuka/menutup (status buka/tutup diingat). Tombol *Buka semua* / *Tutup semua* tersedia, dan saat filter aktif semua folder otomatis terbuka. Di dalam folder mode, setiap arsip tampil sebagai satu baris dengan versi, bulan, jumlah item, dan tombol aksi.
+- **Di HP:** semua tab tampil langsung di bilah tab (Input, Data, tab master sesuai mode yaitu Mesin/Elemen/Siklus, Analisa, Arsip). Kalau layar sangat sempit, bilah bisa digeser ke samping dan tab yang aktif otomatis dipusatkan.
 
 ## Cara pakai singkat
 
