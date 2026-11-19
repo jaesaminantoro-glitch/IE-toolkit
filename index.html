@@ -5059,6 +5059,57 @@ function switchLineModelTab(tab) {
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast(`✅ ${entry.count} data diarsipkan`, 'success');
         }
+        // Logo Excel (SVG) untuk tombol unduh
+        const EXCEL_ICON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="display:inline-block;vertical-align:middle"><rect x="2" y="3" width="20" height="18" rx="2.5" fill="#1D6F42"/><rect x="2" y="3" width="10" height="18" rx="2.5" fill="#155C36"/><path d="M5 8.5l5 7M10 8.5l-5 7" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/><rect x="13.5" y="7.5" width="6" height="1.8" rx=".6" fill="#fff"/><rect x="13.5" y="11.1" width="6" height="1.8" rx=".6" fill="#fff"/><rect x="13.5" y="14.7" width="6" height="1.8" rx=".6" fill="#fff"/></svg>';
+        // Nama arsip: nama buatan sendiri (a.nama) kalau ada, kalau tidak dibuat otomatis
+        function archiveDisplayName(a) {
+            if (a.nama && String(a.nama).trim()) return String(a.nama).trim();
+            const modeName = { mesin: 'Mesin', siklus: 'Siklus', elemen: 'Elemen' }[a.mode] || (a.mode || '');
+            const model = (a.model && a.model !== '-') ? a.model : '';
+            let tail;
+            if (a.auto) tail = a.versionLabel || 'V1.0';
+            else { let d = ''; try { d = new Date(a.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) {} tail = ('Manual ' + d).trim(); }
+            return ['Time Study', modeName, a.line, model, tail].filter(Boolean).join(' ');
+        }
+        function archiveFileBase(a) { return sanitizeFilename(archiveDisplayName(a)).replace(/\s+/g, '_'); }
+        function askText(title, value, hint) {
+            return new Promise(resolve => {
+                const ov = document.createElement('div');
+                ov.className = 'fixed inset-0 flex items-center justify-center bg-black/50 p-4';
+                ov.style.zIndex = '99999';
+                ov.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5">
+                    <div class="text-base font-extrabold text-gray-800 mb-1">✏️ ${escapeHtml(title)}</div>
+                    <div class="text-xs text-gray-500 mb-3">${escapeHtml(hint || '')}</div>
+                    <input id="askTextInput" type="text" maxlength="80" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button data-k="cancel" class="h-8 px-4 text-xs font-semibold rounded-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-600">Batal</button>
+                        <button data-k="ok" class="h-8 px-4 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">Simpan</button>
+                    </div></div>`;
+                const input = ov.querySelector('#askTextInput'); input.value = value || '';
+                const close = (v) => { document.removeEventListener('keydown', onKey); ov.remove(); resolve(v); };
+                const onKey = (e) => { if (e.key === 'Escape') close(null); else if (e.key === 'Enter') close(input.value); };
+                ov.addEventListener('click', (e) => {
+                    if (e.target === ov) { close(null); return; }
+                    const b = e.target.closest('[data-k]'); if (b) close(b.dataset.k === 'ok' ? input.value : null);
+                });
+                document.addEventListener('keydown', onKey);
+                document.body.appendChild(ov);
+                setTimeout(() => { input.focus(); input.select(); }, 50);
+            });
+        }
+        async function renameArchive(id) {
+            const a = archiveList.find(x => x.id === id); if (!a) return;
+            const v = await askText('Ubah nama arsip', archiveDisplayName(a), 'Kosongkan untuk memakai nama otomatis.');
+            if (v === null) return;
+            const t = v.trim().slice(0, 80);
+            const saved = a.nama; delete a.nama;
+            const autoName = archiveDisplayName(a);
+            if (t !== '' && t !== autoName) a.nama = t;
+            else if (saved === undefined) { /* tidak ada perubahan */ }
+            persistAutoEntries([a]);
+            showToast('✏️ Nama arsip diperbarui', 'success');
+        }
+
         // Chip mode berwarna supaya mudah dibedakan: Mesin (biru), Siklus (hijau tosca), Elemen (oranye)
         function archiveModeChip(mode) {
             const m = String(mode || '-').toLowerCase();
@@ -5077,7 +5128,7 @@ function switchLineModelTab(tab) {
         }
         function arsipExpandAll(open) {
             arsipOpenFolders = new Set();
-            if (open) archiveList.forEach(a => { const L = a.line || '-'; arsipOpenFolders.add('L:' + L); arsipOpenFolders.add('M:' + L + '|' + (a.model && a.model !== '-' ? a.model : '(Tanpa model)')); });
+            if (open) archiveList.forEach(a => { const L = a.line || '-'; arsipOpenFolders.add('L:' + L); const Mn = (a.model && a.model !== '-' ? a.model : '(Tanpa model)'); arsipOpenFolders.add('M:' + L + '|' + Mn); arsipOpenFolders.add('D:' + L + '|' + Mn + '|' + (a.mode || '-')); });
             lsSave('timeStudy_arsipFolders_v1', Array.from(arsipOpenFolders));
             renderArsipList();
         }
@@ -5134,17 +5185,22 @@ function switchLineModelTab(tab) {
                 const retained = (a.retainedKeys && a.retainedKeys.length) ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full" title="Baris yang sudah dihapus dari Master Data tapi sengaja dipertahankan di arsip ini">🔒 ${a.retainedKeys.length} dipertahankan</span>` : '';
                 return `
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 border-t border-gray-100 bg-white hover:bg-gray-50 border-l-4 ${a.auto ? 'border-l-purple-400' : 'border-l-amber-400'}">
-                    <div class="flex items-center gap-1 flex-wrap flex-1 min-w-[200px]">
-                        ${verChip}
-                        <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
-                        ${archiveModeChip(a.mode)}
-                        ${tipe}${restoreBadge}${retained}
+                    <div class="flex-1 min-w-[220px]">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <button onclick="openArchiveView('${a.id}')" title="${escapeHtml(archiveDisplayName(a))}" class="text-left font-bold text-[13px] text-gray-800 hover:text-indigo-700 truncate">📄 ${escapeHtml(archiveDisplayName(a))}</button>
+                            <button onclick="renameArchive('${a.id}')" title="Ubah nama arsip" class="shrink-0 text-[11px] text-gray-400 hover:text-indigo-600">✏️</button>
+                        </div>
+                        <div class="flex items-center gap-1 flex-wrap mt-1">
+                            ${verChip}
+                            <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
+                            ${tipe}${restoreBadge}${retained}
+                        </div>
                     </div>
                     <div class="text-[11px] text-gray-500 whitespace-nowrap"><b class="text-gray-800 text-sm">${itemsOf(a)}</b> item · ${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
                     <div class="flex gap-1.5 shrink-0">
                         <button onclick="openArchiveView('${a.id}')" title="Lihat isi arsip" class="h-7 px-2.5 text-[11px] font-bold rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition">👁️ Buka</button>
                         <button onclick="restoreArchive('${a.id}')" title="Kembalikan ke Master Data" class="h-7 px-2.5 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
-                        ${iconBtn('exportArchiveExcel', a.id, '📊', 'Unduh Excel', 'border-emerald-300 bg-emerald-50 hover:bg-emerald-600')}
+                        ${iconBtn('exportArchiveExcel', a.id, EXCEL_ICON_SVG, 'Unduh Excel', 'border-emerald-300 bg-emerald-50 hover:bg-emerald-100')}
                         ${iconBtn('exportArchiveCSV', a.id, '📥', 'Unduh CSV', 'border-teal-300 bg-teal-50 hover:bg-teal-600')}
                         ${iconBtn('deleteArchive', a.id, '🗑️', 'Hapus arsip', 'border-red-300 bg-red-50 hover:bg-red-600')}
                     </div>
@@ -5158,6 +5214,29 @@ function switchLineModelTab(tab) {
                     <span class="font-extrabold text-sm ${icon === '📁' ? 'text-indigo-700' : 'text-emerald-700'}">${escapeHtml(title)}</span>
                     <span class="text-[11px] text-gray-500">${meta}</span>
                 </button>`;
+
+            // Folder mode (Mesin / Siklus / Elemen) di dalam folder model
+            const MODE_ORDER = ['mesin', 'siklus', 'elemen'];
+            const modeRank = (m) => { const i = MODE_ORDER.indexOf(m); return i < 0 ? 99 : i; };
+            const modeFoldersHtml = (L, M, list) => {
+                const byMode = {};
+                list.forEach(a => { const k = a.mode || '-'; (byMode[k] = byMode[k] || []).push(a); });
+                return Object.keys(byMode).sort((x, y) => modeRank(x) - modeRank(y) || x.localeCompare(y)).map(mode => {
+                    const items = byMode[mode];
+                    const dkey = 'D:' + L + '|' + M + '|' + mode;
+                    const dOpen = forceOpen || arsipOpenFolders.has(dkey);
+                    const dItem = items.reduce((k, a) => k + itemsOf(a), 0);
+                    return `<div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                        <button type="button" data-k="${escapeHtml(dkey)}" ${forceOpen ? '' : 'onclick="toggleArsipFolder(this.dataset.k)"'} class="w-full flex items-center gap-2 px-3 py-1.5 text-left ${forceOpen ? 'cursor-default' : 'hover:bg-indigo-50'} transition">
+                            <span class="text-[10px] text-gray-400 w-3 inline-block transition-transform ${dOpen ? 'rotate-90' : ''}">▶</span>
+                            <span class="text-base">${dOpen ? '📂' : '📁'}</span>
+                            ${archiveModeChip(mode)}
+                            <span class="text-[11px] text-gray-500">${items.length} arsip · ${dItem} item</span>
+                        </button>
+                        ${dOpen ? '<div>' + items.map(entryRow).join('') + '</div>' : ''}
+                    </div>`;
+                }).join('');
+            };
 
             const lineNames = Object.keys(tree).sort((x, y) => x.localeCompare(y, undefined, { numeric: true }));
             const html = lineNames.map(L => {
@@ -5176,7 +5255,7 @@ function switchLineModelTab(tab) {
                         const mItem = list.reduce((k, a) => k + itemsOf(a), 0);
                         return `<div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
                             ${folderHead(mkey, mOpen, '📁', '📦 ' + M, `${list.length} arsip · ${mItem} item`, 'bg-white')}
-                            ${mOpen ? '<div>' + list.map(entryRow).join('') + '</div>' : ''}
+                            ${mOpen ? '<div class="pl-4 pr-2 py-1.5 space-y-1.5 bg-gray-50/60">' + modeFoldersHtml(L, M, list) + '</div>' : ''}
                         </div>`;
                     }).join('') + '</div>';
                 }
@@ -5239,6 +5318,7 @@ function switchLineModelTab(tab) {
             ov.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden">
                 <div class="flex items-start justify-between gap-3 px-4 py-3 border-b border-gray-200">
                     <div class="min-w-0">
+                        <div class="text-sm font-extrabold text-gray-800 mb-1 truncate">📄 ${escapeHtml(archiveDisplayName(a))}</div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="text-base font-extrabold text-indigo-700">${escapeHtml(a.line || '-')}</span>
                             <span class="text-sm font-semibold text-emerald-700">📦 ${escapeHtml(a.model || '-')}</span>
@@ -5253,7 +5333,7 @@ function switchLineModelTab(tab) {
                 <div class="px-4 py-2 border-b border-gray-100"><input id="arsipViewSearch" type="text" placeholder="🔍 Cari nama / nomor..." class="w-full sm:w-72 px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"></div>
                 <div class="overflow-auto flex-1">${buildArchiveViewTable(a)}</div>
                 <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-200 bg-gray-50">
-                    <button data-act="excel" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition">📊 Excel</button>
+                    <button data-act="excel" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition inline-flex items-center gap-1.5">${EXCEL_ICON_SVG} Excel</button>
                     <button data-act="csv" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white transition">📥 CSV</button>
                     <button data-act="restore" class="h-8 px-3 text-[11px] font-bold rounded-lg border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition">♻️ Restore</button>
                     <button data-act="close" class="h-8 px-4 text-[11px] font-bold rounded-lg bg-gray-700 text-white hover:bg-gray-800 transition">Tutup</button>
@@ -5360,7 +5440,7 @@ function switchLineModelTab(tab) {
             const sLine = sanitizeFilename(a.line || 'AllLine');
             const sModel = sanitizeFilename(a.model || 'AllModel');
             const dateStr = new Date().toISOString().slice(0,10);
-            downloadBlob(blob, `Arsip_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}${a.versionLabel ? '_' + a.versionLabel : ''}_${dateStr}.csv`);
+            downloadBlob(blob, `${archiveFileBase(a)}.csv`);
             showToast('📄 CSV diunduh', 'success');
         }
         function exportArchiveExcel(id) {
@@ -5380,7 +5460,7 @@ function switchLineModelTab(tab) {
                 const sLine = sanitizeFilename(a.line || 'AllLine');
                 const sModel = sanitizeFilename(a.model || 'AllModel');
                 const dateStr = new Date().toISOString().slice(0,10);
-                const filename = `Arsip_${mode}_${sLine}_${sModel}_${a.tahun}-${String(a.bulan).padStart(2,'0')}${a.versionLabel ? '_' + a.versionLabel : ''}_${dateStr}.xlsx`;
+                const filename = `${archiveFileBase(a)}.xlsx`;
                 if (downloadBlob(blob, filename)) showToast('📊 Excel arsip diunduh', 'success');
             } catch (err) { console.error(err); showToast('❌ Gagal export Excel.', 'error'); }
         }

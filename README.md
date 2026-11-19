@@ -20,7 +20,7 @@ Mode dipilih dari halaman awal. Setiap mode punya data sendiri-sendiri.
 - **Data**: tabel Master Data (rata-rata, NG%, gerakan, kapasitas, jumlah mesin, total kapasitas). Angka di kolom kuning bisa diedit langsung. Ada ekspor Excel dan CSV.
 - **Mesin / Elemen / Siklus**: daftar master (mesin, elemen, atau SOP).
 - **Analisa**: pengecekan UPH standar per proses, menampilkan proses yang masih di bawah standar.
-- **Arsip**: riwayat data, ditata dalam **folder** Line → Model. Klik folder untuk membuka/menutup (status buka/tutup diingat). Tombol *Buka semua* / *Tutup semua* tersedia, dan saat filter aktif semua folder otomatis terbuka. Di dalam folder model, setiap arsip tampil sebagai satu baris dengan versi, bulan, mode, jumlah item, dan tombol aksi.
+- **Arsip**: riwayat data, ditata dalam **folder** Line → Model → Mode (🔧 Mesin, 🔄 Siklus, 📋 Elemen). Klik folder untuk membuka/menutup (status buka/tutup diingat). Tombol *Buka semua* / *Tutup semua* tersedia, dan saat filter aktif semua folder otomatis terbuka. Di dalam folder mode, setiap arsip tampil sebagai satu baris dengan versi, bulan, jumlah item, dan tombol aksi.
 
 ## Cara pakai singkat
 
@@ -75,6 +75,7 @@ Data disimpan di dua tempat: **localStorage** browser (offline) dan **Firebase**
   - Perubahan di **hari berikutnya** membuat versi baru (`V1.0` → `V1.1` → `V1.2` ...). Versi lama tetap utuh sebagai riwayat.
   - Kalau tidak ada perubahan isi, tidak ada versi baru.
   - Master Data tidak berubah. Nama file Excel/CSV yang diunduh memuat nomor versinya.
+- **Nama arsip:** setiap arsip punya nama, ditampilkan di barisnya dengan ikon 📄. Nama otomatis berbentuk `Time Study Mesin TAC607 Digibaby-S3 V1.1` (arsip manual: `... Manual 14 Nov 2026`). Klik ✏️ di samping nama untuk menggantinya sendiri (kosongkan untuk kembali ke nama otomatis). Nama ini juga dipakai sebagai nama file saat unduh Excel/CSV.
 - **👁️ Buka** pada kartu arsip menampilkan isi arsip (siklus S1..Sn, rata-rata, kapasitas/UPH) tanpa mengubah Master Data. Ada kolom pencarian, dan dari tampilan itu Anda bisa langsung unduh Excel/CSV atau Restore.
 - **Arsip manual** (tombol **ARSIP** di tab Data): memindahkan data ke Arsip dan **menghapusnya** dari Master Data.
 - **Restore** arsip otomatis hanya menambahkan baris yang belum ada di Master Data (tidak menggabung siklus yang sudah ada, supaya tidak dobel). Restore arsip manual menggabungkan siklus ke data yang sudah ada.
