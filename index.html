@@ -199,6 +199,9 @@
             .mode-card-desc { font-size: 15px; }
         }
         .editable-cell { position: relative; cursor: pointer; transition: background 0.15s; }
+        #masterTableBody td.sel-cell { background-color: #e0e7ff !important; outline: 2px solid #6366f1; outline-offset: -2px; }
+        #masterTableBody td[data-r] { user-select: none; -webkit-user-select: none; }
+        #masterTableBody td[data-r] input { user-select: text; -webkit-user-select: text; }
         .editable-cell:hover { background-color: #fef3c7 !important; }
         .editable-cell:hover::after { content: "✏️"; position: absolute; top: 1px; right: 1px; font-size: 8px; opacity: 0.7; pointer-events: none; }
         .sop-elemen-list { max-height: 300px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -847,7 +850,7 @@
         <div id="tab-data" class="tab-content hidden">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-4">
                 <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                    <div><h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2><p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time · <span class="text-amber-700 font-semibold">💡 Klik angka di kolom kuning untuk edit langsung</span></p></div>
+                    <div><h2 class="text-sm md:text-base font-semibold text-gray-800">📊 Master Data</h2><p class="text-[10px] md:text-xs text-gray-500">Data tersinkron real-time · <span class="text-amber-700 font-semibold">💡 Klik angka di kolom kuning untuk edit langsung</span><span id="clipHint" class="hidden md:inline text-gray-500"> · Seret / Shift+klik untuk pilih sel, Ctrl+C / Ctrl+V untuk salin-tempel</span></p></div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 mb-3 bg-white border border-gray-200 rounded-lg p-2">
                     <div class="flex items-center gap-1.5">
@@ -857,6 +860,8 @@
                         </select>
                     </div>
                     <div class="flex items-center gap-1.5 ml-auto flex-wrap">
+                        <button id="btnCopySel" onclick="mesinCopyButton()" title="Salin sel terpilih (atau seluruh tabel jika belum ada yang dipilih)" class="sel-keep hidden bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📋 Salin</button>
+                        <button id="btnPasteSel" onclick="mesinOpenPasteModal()" title="Tempel data dari Excel mulai dari sel terpilih" class="sel-keep hidden bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📝 Tempel</button>
                         <button onclick="exportToExcelXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📥 EXCEL</button>
                         <button onclick="exportToCSV()" class="bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📄 CSV</button>
                         <button onclick="archiveFilteredData()" class="bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-sm">📦 ARSIP</button>
@@ -4087,6 +4092,8 @@ function switchLineModelTab(tab) {
             const tb = document.getElementById('masterTableBody');
             const th = document.getElementById('masterTableHeaderRow');
             if (!tb || !th) return;
+            mesinGridRows = []; if (currentMode !== 'mesin') mesinSel = null;
+            updateMesinClipButtons();
             const fd = getFilteredData();
             if (fd.length === 0) {
                 const cols = currentMode === 'mesin'
@@ -4269,9 +4276,411 @@ function switchLineModelTab(tab) {
             tb.innerHTML = out;
         }
 
+        // ============================================================
+        // MODE MESIN: edit angka siklus (S1..Sn) + pilih sel + salin / tempel
+        // ============================================================
+        let mesinGridRows = [], mesinGridMeta = { mL: 0 };
+        let mesinSel = null, mesinAnchor = null, mesinDrag = null;
+        let __mesinEventsBound = false, __mesinUndoTimer = null;
+        const MESIN_TAIL_COLS = ['avg', 'ng', 'gerakan', 'ctg', 'kap', 'jml'];
+        const MESIN_TAIL_LABELS = { avg: 'Σ Rata²', ng: 'NG%', gerakan: 'Gerakan', ctg: 'CT+Gerakan', kap: 'Kapasitas', jml: 'Jml Mesin' };
+
+        function mesinColKind(c) {
+            const mL = mesinGridMeta.mL;
+            if (c === 0) return 'sub';
+            if (c >= 1 && c <= mL) return 'lap';
+            return MESIN_TAIL_COLS[c - mL - 1] || null;
+        }
+        function mesinColLabel(c) { const k = mesinColKind(c); return k === 'sub' ? 'Sub Mesin' : (k === 'lap' ? 'S' + c : (MESIN_TAIL_LABELS[k] || '?')); }
+        function parseClipboardGrid(text) {
+            let t = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            if (t.endsWith('\n')) t = t.slice(0, -1);
+            return t.split('\n').map(r => r.split('\t'));
+        }
+        function parseMesinNumber(val) {
+            const t = String(val === undefined || val === null ? '' : val).trim().replace('%', '').replace(/\s/g, '');
+            if (t === '' || t === '—' || t === '-') return null;
+            const n = parseFloat(t.replace(',', '.'));
+            return isNaN(n) ? null : n;
+        }
+        function mesinRefOf(it) { return { line: it.line, model: it.model || '-', no: it.no, process: it.process, subMachine: it.subMachine }; }
+        function mesinLiveItem(it) {
+            if (masterData.includes(it)) return it;
+            return masterData.find(x => recordIdentityMatch(x, mesinRefOf(it), 'mesin')) || null;
+        }
+
+        // ---- pilih sel ----
+        function applyMesinSelection() {
+            document.querySelectorAll('#masterTableBody td.sel-cell').forEach(t => t.classList.remove('sel-cell'));
+            if (!mesinSel || currentMode !== 'mesin') return;
+            if (mesinSel.r1 >= mesinGridRows.length) { mesinSel = null; return; }
+            document.querySelectorAll('#masterTableBody td[data-r]').forEach(td => {
+                const r = +td.dataset.r, c = +td.dataset.c;
+                if (r >= mesinSel.r1 && r <= mesinSel.r2 && c >= mesinSel.c1 && c <= mesinSel.c2) td.classList.add('sel-cell');
+            });
+        }
+        function setMesinSel(a, b) {
+            mesinSel = { r1: Math.min(a.r, b.r), c1: Math.min(a.c, b.c), r2: Math.max(a.r, b.r), c2: Math.max(a.c, b.c) };
+            applyMesinSelection();
+        }
+        function clearMesinSel() { mesinSel = null; applyMesinSelection(); }
+        function updateMesinClipButtons() {
+            const on = currentMode === 'mesin';
+            ['btnCopySel', 'btnPasteSel'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !on); });
+            const h = document.getElementById('clipHint'); if (h) h.classList.toggle('hidden', !on);
+        }
+
+        // ---- salin ----
+        function mesinSelectionTSV() {
+            if (!mesinSel) return '';
+            const lines = [];
+            for (let r = mesinSel.r1; r <= mesinSel.r2; r++) {
+                const row = [];
+                for (let c = mesinSel.c1; c <= mesinSel.c2; c++) {
+                    const td = document.querySelector(`#masterTableBody td[data-r="${r}"][data-c="${c}"]`);
+                    row.push(td ? (td.dataset.v || '') : '');
+                }
+                lines.push(row.join('\t'));
+            }
+            return lines.join('\n');
+        }
+        function mesinFullTableTSV() {
+            const mL = mesinGridMeta.mL;
+            const head = ['Line', 'Model', 'No', 'Nama Mesin', 'Sub Mesin'];
+            for (let i = 1; i <= mL; i++) head.push('S' + i);
+            head.push('Σ Rata²', 'NG%', 'Gerakan', 'CT+Gerakan', 'Kapasitas', 'Jml Mesin');
+            const lines = [head.join('\t')];
+            mesinGridRows.forEach(idx => {
+                const it = masterData[idx]; if (!it) return;
+                const st = getRowStats(it);
+                const row = [it.line, it.model || '-', it.no, it.process, it.subMachine];
+                for (let i = 0; i < mL; i++) {
+                    const lv = (it.laps || [])[i];
+                    const v = (lv === undefined || lv === null) ? NaN : (typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv));
+                    row.push(isNaN(v) ? '' : v);
+                }
+                row.push(st.avg.toFixed(2), st.ngRate, st.gerakan, st.ctPlusG.toFixed(2), st.capacity, st.actualMachine);
+                lines.push(row.map(x => String(x === undefined || x === null ? '' : x).replace(/[\t\r\n]+/g, ' ')).join('\t'));
+            });
+            return lines.join('\n');
+        }
+        async function mesinWriteClipboard(text) {
+            try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta); ta.select();
+                    const ok = document.execCommand('copy'); ta.remove(); return ok;
+                } catch (e2) { return false; }
+            }
+        }
+        async function mesinCopyButton() {
+            if (currentMode !== 'mesin') return;
+            let text, label;
+            if (mesinSel) { text = mesinSelectionTSV(); label = `${mesinSel.r2 - mesinSel.r1 + 1} baris × ${mesinSel.c2 - mesinSel.c1 + 1} kolom`; }
+            else { text = mesinFullTableTSV(); label = 'seluruh tabel (' + mesinGridRows.length + ' baris)'; }
+            const ok = await mesinWriteClipboard(text);
+            showToast(ok ? '📋 Tersalin: ' + label : '❌ Gagal menyalin', ok ? 'success' : 'error');
+        }
+
+        // ---- ubah data (satu pintu untuk edit sel, tempel, dan urungkan) ----
+        // Gabungkan perubahan siklus dengan data server: kalau perangkat lain sudah mengubah daftar siklus,
+        // hanya sel yang diedit di sini yang diterapkan (tidak menimpa seluruh daftar).
+        function mergeLapsPatch(serverLaps, beforeLaps, afterLaps) {
+            const cl = (x) => (typeof x === 'object' && x !== null) ? { ...x } : x;
+            const num = (x) => (typeof x === 'object' && x !== null) ? parseFloat(x.dur) : parseFloat(x);
+            const canon = (a) => JSON.stringify((a || []).map(num));
+            if (!beforeLaps || canon(serverLaps) === canon(beforeLaps)) return (afterLaps || []).map(cl);
+            if ((afterLaps || []).length < (beforeLaps || []).length) return afterLaps.map(cl);   // siklus dihapus: ikuti hasil edit
+            const out = (serverLaps || []).map(cl);
+            afterLaps.forEach((v, i) => {
+                if (i < beforeLaps.length && num(beforeLaps[i]) === num(v)) return;   // sel ini tidak diubah di sini
+                if (i < out.length) out[i] = (typeof out[i] === 'object' && out[i] !== null) ? { ...out[i], dur: num(v) } : num(v);
+                else if (i === out.length) out.push(cl(v));
+            });
+            return out;
+        }
+        function applyMesinPatches(patches) {
+            const work = [];
+            patches.forEach(p => {
+                const live = mesinLiveItem(p.item); if (!live) return;
+                work.push({ ref: mesinRefOf(live), patch: JSON.parse(JSON.stringify(p.patch)), beforeLaps: (p.before && p.before.laps) ? JSON.parse(JSON.stringify(p.before.laps)) : null, commitIds: (live.commitIds || []).slice() });
+                Object.assign(live, JSON.parse(JSON.stringify(p.patch)));
+            });
+            if (work.length === 0) return;
+            saveMasterToLS((serverArr) => {
+                const arr = serverArr.map(x => ({ ...x }));
+                work.forEach(w => {
+                    const i2 = arr.findIndex(x => recordIdentityMatch(x, w.ref, 'mesin'));
+                    if (i2 === -1) return;
+                    const pp = JSON.parse(JSON.stringify(w.patch));
+                    if (pp.laps) pp.laps = mergeLapsPatch(arr[i2].laps, w.beforeLaps, pp.laps);
+                    Object.assign(arr[i2], pp);
+                    if (w.commitIds.length) arr[i2].commitIds = Array.from(new Set([...(arr[i2].commitIds || []), ...w.commitIds])).slice(-30);
+                });
+                return arr;
+            });
+            renderMasterTable(); renderStandardCheck();
+        }
+        function computeMesinPatches(targets) {
+            targets.sort((a, b) => a.r - b.r || a.c - b.c);
+            const cl = (x) => (typeof x === 'object' && x !== null) ? { ...x } : x;
+            const lapNum = (x) => (typeof x === 'object' && x !== null) ? parseFloat(x.dur) : parseFloat(x);
+            const work = new Map();
+            let changed = 0, skipped = 0;
+            targets.forEach(t => {
+                const idx = mesinGridRows[t.r];
+                const item = idx !== undefined ? masterData[idx] : null;
+                const kind = mesinColKind(t.c);
+                if (!item || !kind) { skipped++; return; }
+                let w = work.get(item);
+                if (!w) {
+                    w = { item, laps: (item.laps || []).map(cl), ngRate: item.ngRate, gerakan: item.gerakan, actualMachine: item.actualMachine,
+                        before: { laps: (item.laps || []).map(cl), ngRate: item.ngRate, gerakan: item.gerakan, actualMachine: item.actualMachine }, touched: new Set() };
+                    work.set(item, w);
+                }
+                const n = parseMesinNumber(t.val);
+                if (n === null) { skipped++; return; }
+                if (kind === 'lap') {
+                    const i = t.c - 1;
+                    if (n < 0) { skipped++; return; }
+                    if (i < w.laps.length) {
+                        if (lapNum(w.laps[i]) === n) return;
+                        w.laps[i] = (typeof w.laps[i] === 'object' && w.laps[i] !== null) ? { ...w.laps[i], dur: n } : n;
+                        w.touched.add('laps'); changed++;
+                    } else if (i === w.laps.length) { w.laps.push(n); w.touched.add('laps'); changed++; }
+                    else skipped++;
+                } else if (kind === 'ng') {
+                    if (n < 0 || n > 100) { skipped++; return; }
+                    if (n !== (parseFloat(w.ngRate) || 0)) { w.ngRate = n; w.touched.add('ngRate'); changed++; }
+                } else if (kind === 'gerakan') {
+                    if (n < 0) { skipped++; return; }
+                    if (n !== (parseFloat(w.gerakan) || 0)) { w.gerakan = n; w.touched.add('gerakan'); changed++; }
+                } else if (kind === 'jml') {
+                    const v = Math.round(n);
+                    if (v < 1) { skipped++; return; }
+                    if (v !== (parseInt(w.actualMachine) || 1)) { w.actualMachine = v; w.touched.add('actualMachine'); changed++; }
+                } else skipped++;
+            });
+            const patches = [];
+            work.forEach(w => {
+                if (w.touched.size === 0) return;
+                const patch = {}, before = {};
+                w.touched.forEach(f => { patch[f] = (f === 'laps') ? w.laps : w[f]; before[f] = w.before[f]; });
+                patches.push({ item: w.item, patch, before });
+            });
+            return { patches, changed, skipped };
+        }
+        function showMesinUndo(msg, patches) {
+            const old = document.getElementById('mesinUndoBar'); if (old) old.remove();
+            clearTimeout(__mesinUndoTimer);
+            const bar = document.createElement('div');
+            bar.id = 'mesinUndoBar';
+            bar.className = 'fixed left-1/2 bottom-4 flex items-center gap-3 bg-gray-800 text-white text-xs rounded-xl shadow-2xl px-4 py-2.5';
+            bar.style.zIndex = '99998'; bar.style.transform = 'translateX(-50%)';
+            bar.innerHTML = `<span>${escapeHtml(msg)}</span><button type="button" class="font-bold text-amber-300 hover:text-amber-200">↩️ Urungkan</button>`;
+            bar.querySelector('button').onclick = () => {
+                applyMesinPatches(patches.map(p => ({ item: p.item, patch: p.before, before: p.patch })));
+                bar.remove(); showToast('↩️ Perubahan dibatalkan', 'info');
+            };
+            document.body.appendChild(bar);
+            __mesinUndoTimer = setTimeout(() => bar.remove(), 15000);
+        }
+        function mesinPasteText(text, start) {
+            const grid = parseClipboardGrid(text);
+            const targets = [];
+            const single = grid.length === 1 && grid[0].length === 1;
+            if (single && mesinSel && (mesinSel.r2 > mesinSel.r1 || mesinSel.c2 > mesinSel.c1)) {
+                for (let r = mesinSel.r1; r <= mesinSel.r2; r++) for (let c = mesinSel.c1; c <= mesinSel.c2; c++) targets.push({ r, c, val: grid[0][0] });
+            } else {
+                grid.forEach((row, dr) => row.forEach((val, dc) => targets.push({ r: start.r + dr, c: start.c + dc, val })));
+            }
+            const { patches, changed, skipped } = computeMesinPatches(targets);
+            if (patches.length === 0) { showToast('⚠️ Tidak ada sel yang berubah. Yang bisa ditempel: S1–Sn, NG%, Gerakan, Jml Mesin.', 'warning'); return; }
+            applyMesinPatches(patches);
+            showMesinUndo(`📋 ${changed} sel ditempel${skipped ? ' · ' + skipped + ' dilewati' : ''}`, patches);
+        }
+        function mesinOpenPasteModal() {
+            if (currentMode !== 'mesin') return;
+            if (mesinGridRows.length === 0) { showToast('⚠️ Belum ada data di tabel', 'warning'); return; }
+            const start = mesinSel ? { r: mesinSel.r1, c: mesinSel.c1 } : { r: 0, c: 1 };
+            const ov = document.createElement('div');
+            ov.id = 'mesinPasteModal';
+            ov.className = 'fixed inset-0 flex items-center justify-center bg-black/50 p-4';
+            ov.style.zIndex = '99999';
+            ov.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-5">
+                <div class="text-base font-extrabold text-gray-800 mb-1">📝 Tempel data</div>
+                <div class="text-xs text-gray-500 mb-3">Mulai dari <b class="text-indigo-700">baris ${start.r + 1} · ${escapeHtml(mesinColLabel(start.c))}</b>${mesinSel ? '' : ' (klik/pilih sel dulu di tabel untuk mengganti titik mulai)'}.<br>Yang bisa diubah: <b>S1–Sn, NG%, Gerakan, Jml Mesin</b>. Kolom lain dilewati.</div>
+                <textarea id="mesinPasteArea" rows="7" placeholder="Tempel dari Excel di sini (Ctrl+V)..." class="w-full border border-gray-300 rounded-lg p-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-violet-300"></textarea>
+                <div class="flex justify-end gap-2 mt-3">
+                    <button data-act="cancel" class="h-8 px-4 text-xs font-semibold rounded-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-gray-600">Batal</button>
+                    <button data-act="ok" class="h-8 px-4 text-xs font-bold rounded-lg bg-violet-600 hover:bg-violet-700 text-white">Terapkan</button>
+                </div></div>`;
+            const close = () => { document.removeEventListener('keydown', onKey); ov.remove(); };
+            const onKey = (e) => { if (e.key === 'Escape') close(); };
+            ov.addEventListener('click', (e) => {
+                if (e.target === ov) { close(); return; }
+                const b = e.target.closest('[data-act]'); if (!b) return;
+                if (b.dataset.act === 'cancel') close();
+                else { const t = ov.querySelector('#mesinPasteArea').value; close(); if (t.trim()) mesinPasteText(t, start); }
+            });
+            document.addEventListener('keydown', onKey);
+            document.body.appendChild(ov);
+            setTimeout(() => { const ta = ov.querySelector('#mesinPasteArea'); if (ta) ta.focus(); }, 50);
+        }
+
+        // ---- edit satu angka siklus (S1..Sn) ----
+        function startInlineEditLap(idx, i, cellEl) {
+            if (currentMode !== 'mesin') return;
+            const item = masterData[idx];
+            if (!item || cellEl.querySelector('input')) return;
+            const laps = item.laps || [];
+            const cur = laps[i];
+            const exists = cur !== undefined && cur !== null;
+            const curVal = exists ? ((typeof cur === 'object') ? parseFloat(cur.dur) : parseFloat(cur)) : NaN;
+            const originalHtml = cellEl.innerHTML;
+            cellEl.innerHTML = `<input type="number" value="${isNaN(curVal) ? '' : curVal}" step="0.01" min="0" inputmode="decimal" placeholder="${exists ? 'kosong = hapus' : 'detik'}"
+                class="w-16 px-1 py-0.5 text-center border-2 border-indigo-500 rounded font-bold text-indigo-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300" style="font-size:12px;">`;
+            const input = cellEl.querySelector('input');
+            input.focus(); input.select();
+            let cancelled = false, done = false;
+            const cl = (x) => (typeof x === 'object' && x !== null) ? { ...x } : x;
+            const commit = () => {
+                if (cancelled || done) return;
+                done = true;
+                const t = input.value.trim();
+                let newLaps;
+                if (t === '') {
+                    if (!exists) { cellEl.innerHTML = originalHtml; return; }
+                    if (laps.length <= 1) { cellEl.innerHTML = originalHtml; showToast('⚠️ Minimal 1 siklus. Gunakan tombol Hapus untuk menghapus baris.', 'warning'); return; }
+                    newLaps = laps.filter((_, k) => k !== i).map(cl);
+                } else {
+                    const v = parseFloat(t.replace(',', '.'));
+                    if (isNaN(v) || v < 0) { cellEl.innerHTML = originalHtml; showToast('⚠️ Angka tidak valid', 'warning'); return; }
+                    if (exists && v === curVal) { cellEl.innerHTML = originalHtml; return; }
+                    newLaps = laps.map(cl);
+                    if (exists) newLaps[i] = (typeof newLaps[i] === 'object' && newLaps[i] !== null) ? { ...newLaps[i], dur: v } : v;
+                    else newLaps.push(v);
+                }
+                applyMesinPatches([{ item, patch: { laps: newLaps }, before: { laps: laps.map(cl) } }]);
+                showToast(`✅ S${i + 1} ${t === '' ? 'dihapus' : '→ ' + t}`, 'success');
+            };
+            input.addEventListener('blur', commit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                else if (e.key === 'Escape') { e.preventDefault(); cancelled = true; cellEl.innerHTML = originalHtml; showToast('⏹️ Dibatalkan', 'info'); }
+            });
+        }
+
+        // ---- event pilih sel / salin / tempel (dipasang sekali) ----
+        function ensureMesinGridEvents() {
+            if (__mesinEventsBound) return;
+            const tb = document.getElementById('masterTableBody'); if (!tb) return;
+            __mesinEventsBound = true;
+            const cellOf = (el) => (el && el.closest) ? el.closest('td[data-r]') : null;
+            const posOf = (td) => ({ r: +td.dataset.r, c: +td.dataset.c });
+            tb.addEventListener('mousedown', (e) => {
+                if (currentMode !== 'mesin' || e.button !== 0) return;
+                if (e.target.closest('input,button,select,textarea')) return;
+                const td = cellOf(e.target); if (!td) return;
+                const pos = posOf(td);
+                if (e.shiftKey && mesinAnchor) { e.preventDefault(); setMesinSel(mesinAnchor, pos); mesinDrag = null; return; }
+                mesinAnchor = pos; mesinDrag = { ...pos, moved: false };
+            });
+            tb.addEventListener('mouseover', (e) => {
+                if (!mesinDrag || (e.buttons & 1) === 0) return;
+                const td = cellOf(e.target); if (!td) return;
+                const pos = posOf(td);
+                if (!mesinDrag.moved && pos.r === mesinDrag.r && pos.c === mesinDrag.c) return;
+                mesinDrag.moved = true;
+                setMesinSel({ r: mesinDrag.r, c: mesinDrag.c }, pos);
+            });
+            tb.addEventListener('click', (e) => {   // Shift+klik hanya memilih sel, tidak membuka edit
+                if (e.shiftKey && cellOf(e.target)) { e.stopPropagation(); e.preventDefault(); }
+            }, true);
+            document.addEventListener('mouseup', () => {
+                if (mesinDrag && !mesinDrag.moved && mesinAnchor) setMesinSel(mesinAnchor, mesinAnchor);
+                mesinDrag = null;
+            });
+            document.addEventListener('mousedown', (e) => {
+                if (!mesinSel) return;
+                if (e.target.closest && e.target.closest('#masterTableBody td[data-r], .sel-keep, #mesinPasteModal, #mesinUndoBar')) return;
+                clearMesinSel();
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && mesinSel && !document.getElementById('mesinPasteModal')) {
+                    const ae = document.activeElement;
+                    if (!(ae && ae.tagName === 'INPUT')) clearMesinSel();
+                }
+            });
+            const gridVisible = () => currentMode === 'mesin' && tb.offsetParent !== null;
+            document.addEventListener('copy', (e) => {
+                if (!gridVisible() || !mesinSel) return;
+                const ae = document.activeElement;
+                if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+                const tsv = mesinSelectionTSV(); if (!tsv && tsv !== '0') return;
+                e.clipboardData.setData('text/plain', tsv); e.preventDefault();
+                showToast(`📋 Tersalin: ${mesinSel.r2 - mesinSel.r1 + 1} baris × ${mesinSel.c2 - mesinSel.c1 + 1} kolom`, 'success');
+            });
+            document.addEventListener('paste', (e) => {
+                if (!gridVisible()) return;
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                if (!text) return;
+                const ae = document.activeElement;
+                let start = null;
+                if (ae && ae.tagName === 'INPUT' && tb.contains(ae)) {
+                    if (!/[\t\r\n]/.test(text.replace(/[\r\n]+$/, ''))) return;   // 1 nilai: biarkan paste biasa
+                    const td = cellOf(ae); if (!td) return;
+                    start = posOf(td);
+                } else if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+                else if (mesinSel) start = { r: mesinSel.r1, c: mesinSel.c1 };
+                else return;
+                e.preventDefault();
+                if (ae && ae.tagName === 'INPUT') ae.blur();
+                mesinPasteText(text, start);
+            });
+        }
+
+        // Duplikat baris (mode Mesin): tambah Sub Mesin baru di bawah kelompok yang sama dengan data yang sama
+        function duplicateMesinRow(idx) {
+            if (currentMode !== 'mesin') return;
+            const src = masterData[idx]; if (!src) return;
+            const same = (m) => m.line === src.line && (m.model || '-') === (src.model || '-') && m.no === src.no && m.process === src.process;
+            const subs = masterData.filter(same).map(m => String(m.subMachine === undefined || m.subMachine === null ? '' : m.subMachine));
+            const srcSub = String(src.subMachine === undefined || src.subMachine === null ? '' : src.subMachine);
+            let newSub;
+            const mt = srcSub.match(/^(.*?)(\d+)\s*$/);
+            if (mt) {
+                let max = 0;
+                subs.forEach(sv => { const mm = sv.match(/^(.*?)(\d+)\s*$/); if (mm && mm[1] === mt[1]) max = Math.max(max, parseInt(mm[2], 10)); });
+                newSub = mt[1] + (max + 1);
+            } else {
+                let n = 2; do { newSub = srcSub + ' ' + n++; } while (subs.includes(newSub));
+            }
+            const rec = JSON.parse(JSON.stringify(src));
+            delete rec.commitIds;
+            rec.subMachine = newSub;
+            const ref = { line: src.line, model: src.model || '-', no: src.no, process: src.process };
+            let at = idx;
+            masterData.forEach((x, i) => { if (same(x) && i > at) at = i; });
+            masterData.splice(at + 1, 0, rec);
+            saveMasterToLS((serverArr) => {
+                if (serverArr.some(x => recordIdentityMatch(x, { ...ref, subMachine: newSub }, 'mesin'))) return null;
+                const arr = serverArr.map(x => ({ ...x }));
+                let last = -1;
+                arr.forEach((x, i) => { if (x.line === ref.line && (x.model || '-') === ref.model && x.no === ref.no && x.process === ref.process) last = i; });
+                const copy = JSON.parse(JSON.stringify(rec));
+                if (last === -1) arr.push(copy); else arr.splice(last + 1, 0, copy);
+                return arr;
+            });
+            renderMasterTable(); renderStandardCheck();
+            showToast(`📑 Baris diduplikat sebagai Sub Mesin ${newSub}. Silakan ubah angkanya.`, 'success');
+        }
+
         function renderMasterTableMesin(fd, tb, th) {
             const mL = Math.max(...fd.map(i => i.laps.length));
             const std = getLineStandardUph();
+            mesinGridRows = []; mesinGridMeta = { mL };
             let h = `<th class="col-line px-2 py-3 text-center font-bold border-r whitespace-nowrap">Line</th>
                 <th class="col-model px-2 py-3 text-center font-bold border-r whitespace-nowrap bg-emerald-50">Model</th>
                 <th class="col-sop px-2 py-3 text-center font-bold border-r whitespace-nowrap">No</th>
@@ -4303,6 +4712,7 @@ function switchLineModelTab(tab) {
                 const tc = getUphColorClass(g.totalCapacity, std);
                 g.rows.forEach((r, ri) => {
                     const st = getRowStats(r);
+                    const vr = mesinGridRows.length; mesinGridRows.push(r.originalIndex);
                     out += `<tr class="hover:bg-yellow-50/50">`;
                     if (ri === 0) {
                         out += `<td rowspan="${rs}" class="col-line px-2 py-2 text-center font-bold border-r border-b bg-indigo-50 align-middle whitespace-nowrap text-indigo-700">${escapeHtml(g.line || '-')}</td>`;
@@ -4310,28 +4720,34 @@ function switchLineModelTab(tab) {
                         out += `<td rowspan="${rs}" class="col-sop px-2 py-2 text-center font-bold border-r border-b bg-yellow-50 align-middle whitespace-nowrap editable-cell" onclick="startInlineEditNo([${g.rows.map(x => x.originalIndex).join(',')}], this)" title="Klik untuk edit No">${escapeHtml(g.no || '-')}</td>`;
                         out += `<td rowspan="${rs}" class="col-nama px-3 py-2 font-bold text-gray-800 border-r border-b bg-yellow-50/40 align-middle"><span class="hp-model-badge">📦 ${escapeHtml(g.model || '-')}</span><div>${escapeHtml(g.process || '-')}</div></td>`;
                     }
-                    out += `<td class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(r.subMachine || '-')}</span>${rs > 1 ? `<button type="button" onclick="event.stopPropagation(); startInlineEditNoRow(${r.originalIndex}, this.parentElement)" title="Pisahkan sub mesin ini ke No lain (mis. ${escapeHtml(String(g.no || ''))}-${ri + 1})" class="ml-1 text-[11px] px-1 rounded hover:bg-pink-100">✂️</button>` : ''}</td>`;
+                    out += `<td data-r="${vr}" data-c="0" data-v="${escapeHtml(String(r.subMachine ?? ''))}" class="px-3 py-2 text-gray-700 border-r border-b font-medium whitespace-nowrap"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">${escapeHtml(r.subMachine || '-')}</span>${rs > 1 ? `<button type="button" onclick="event.stopPropagation(); startInlineEditNoRow(${r.originalIndex}, this.parentElement)" title="Pisahkan sub mesin ini ke No lain (mis. ${escapeHtml(String(g.no || ''))}-${ri + 1})" class="ml-1 text-[11px] px-1 rounded hover:bg-pink-100">✂️</button>` : ''}</td>`;
                     for (let i = 0; i < mL; i++) {
                         const lv = r.laps[i];
-                        if (lv !== undefined && lv !== null) {
-                            const v = typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv);
-                            out += `<td class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
-                        } else out += `<td class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
+                        const has = lv !== undefined && lv !== null;
+                        const v = has ? (typeof lv === 'object' ? parseFloat(lv.dur) : parseFloat(lv)) : NaN;
+                        const attrs = `data-r="${vr}" data-c="${i + 1}" data-v="${isNaN(v) ? '' : v}"`;
+                        if (has) {
+                            out += `<td ${attrs} class="px-2 py-2 text-center font-mono text-gray-700 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEditLap(${r.originalIndex}, ${i}, this)" title="Klik untuk edit S${i + 1}">${isNaN(v) ? '—' : v.toFixed(2)}</td>`;
+                        } else if (i === r.laps.length) {
+                            out += `<td ${attrs} class="px-2 py-2 text-center text-gray-300 border-r border-b editable-cell" onclick="startInlineEditLap(${r.originalIndex}, ${i}, this)" title="Klik untuk tambah S${i + 1}">—</td>`;
+                        } else out += `<td ${attrs} class="px-2 py-2 text-center text-gray-300 border-r border-b">—</td>`;
                     }
-                    out += `<td class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${st.avg.toFixed(2)}</td>`;
-                    out += `<td class="px-2 py-2 text-center border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'ngRate', this)" title="Klik untuk edit NG%">${r.ngRate || 0}%</td>`;
-                    out += `<td class="px-2 py-2 text-center font-mono text-amber-700 bg-amber-50 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'gerakan', this)" title="Klik untuk edit Gerakan">${st.gerakan.toFixed(2)}</td>`;
-                    out += `<td class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${st.ctPlusG.toFixed(2)}</td>`;
-                    out += `<td class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${st.capacity}</td>`;
-                    out += `<td class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'actualMachine', this)" title="Klik untuk edit Jml Mesin">${st.actualMachine}</td>`;
+                    out += `<td data-r="${vr}" data-c="${mL + 1}" data-v="${st.avg.toFixed(2)}" class="px-2 py-2 text-center font-bold text-yellow-700 bg-yellow-50 border-r border-b whitespace-nowrap">${st.avg.toFixed(2)}</td>`;
+                    out += `<td data-r="${vr}" data-c="${mL + 2}" data-v="${r.ngRate || 0}" class="px-2 py-2 text-center border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'ngRate', this)" title="Klik untuk edit NG%">${r.ngRate || 0}%</td>`;
+                    out += `<td data-r="${vr}" data-c="${mL + 3}" data-v="${st.gerakan}" class="px-2 py-2 text-center font-mono text-amber-700 bg-amber-50 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'gerakan', this)" title="Klik untuk edit Gerakan">${st.gerakan.toFixed(2)}</td>`;
+                    out += `<td data-r="${vr}" data-c="${mL + 4}" data-v="${st.ctPlusG.toFixed(2)}" class="px-2 py-2 text-center font-mono text-orange-700 bg-orange-50 border-r border-b whitespace-nowrap">${st.ctPlusG.toFixed(2)}</td>`;
+                    out += `<td data-r="${vr}" data-c="${mL + 5}" data-v="${st.capacity}" class="px-2 py-2 text-center font-bold text-emerald-700 bg-emerald-50 border-r border-b whitespace-nowrap">${st.capacity}</td>`;
+                    out += `<td data-r="${vr}" data-c="${mL + 6}" data-v="${st.actualMachine}" class="px-2 py-2 text-center font-bold text-pink-700 bg-pink-50 border-r border-b whitespace-nowrap editable-cell" onclick="startInlineEdit(${r.originalIndex}, 'actualMachine', this)" title="Klik untuk edit Jml Mesin">${st.actualMachine}</td>`;
                     if (ri === 0) out += `<td rowspan="${rs}" class="px-3 py-2 text-center font-extrabold border-r border-b align-middle whitespace-nowrap text-sm ${tc}">${g.totalCapacity}</td>`;
                     out += `<td class="px-2 py-2 text-center border-b whitespace-nowrap">
                         <button onclick="openCardView(${r.originalIndex})" class="text-blue-600 hover:text-blue-800 font-medium text-xs mr-2">📇 Card</button>
+                        <button onclick="duplicateMesinRow(${r.originalIndex})" title="Duplikat baris ini: tambah Sub Mesin baru dengan data yang sama" class="text-emerald-600 hover:text-emerald-800 font-medium text-xs mr-2">📑 Duplikat</button>
                         <button onclick="deleteMasterRow(${r.originalIndex})" class="text-red-500 hover:text-red-700 font-medium text-xs">Hapus</button>
                     </td></tr>`;
                 });
             });
             tb.innerHTML = out;
+            ensureMesinGridEvents(); applyMesinSelection();
         }
 
         // ============================================================
@@ -4643,6 +5059,17 @@ function switchLineModelTab(tab) {
             renderMasterTable(); renderStandardCheck(); updateCounters();
             showToast(`✅ ${entry.count} data diarsipkan`, 'success');
         }
+        // Chip mode berwarna supaya mudah dibedakan: Mesin (biru), Siklus (hijau tosca), Elemen (oranye)
+        function archiveModeChip(mode) {
+            const m = String(mode || '-').toLowerCase();
+            const map = {
+                mesin: ['bg-sky-600', '🔧'],
+                siklus: ['bg-teal-600', '🔄'],
+                elemen: ['bg-orange-500', '📋']
+            };
+            const [bg, ico] = map[m] || ['bg-gray-600', '•'];
+            return `<span class="${bg} text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-sm">${ico} ${escapeHtml(m)}</span>`;
+        }
         function toggleArsipFolder(key) {
             if (arsipOpenFolders.has(key)) arsipOpenFolders.delete(key); else arsipOpenFolders.add(key);
             lsSave('timeStudy_arsipFolders_v1', Array.from(arsipOpenFolders));
@@ -4710,7 +5137,7 @@ function switchLineModelTab(tab) {
                     <div class="flex items-center gap-1 flex-wrap flex-1 min-w-[200px]">
                         ${verChip}
                         <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
-                        <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
+                        ${archiveModeChip(a.mode)}
                         ${tipe}${restoreBadge}${retained}
                     </div>
                     <div class="text-[11px] text-gray-500 whitespace-nowrap"><b class="text-gray-800 text-sm">${itemsOf(a)}</b> item · ${a.auto ? 'Diperbarui' : 'Dibuat'} ${fmtTgl(a.created_at)}</div>
@@ -4816,7 +5243,7 @@ function switchLineModelTab(tab) {
                             <span class="text-base font-extrabold text-indigo-700">${escapeHtml(a.line || '-')}</span>
                             <span class="text-sm font-semibold text-emerald-700">📦 ${escapeHtml(a.model || '-')}</span>
                             <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${bulanNama[a.bulan] || '?'} ${a.tahun}</span>
-                            <span class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">${escapeHtml(a.mode || '-')}</span>
+                            ${archiveModeChip(a.mode)}
                             ${a.auto ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">🤖 Otomatis · ${escapeHtml(a.versionLabel || 'V1.0')}</span>` : '<span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">✋ Manual</span>'}
                         </div>
                         <div class="text-[11px] text-gray-500 mt-1"><b class="text-gray-700">${a.data.length}</b> item · hanya lihat, Master Data tidak berubah</div>
