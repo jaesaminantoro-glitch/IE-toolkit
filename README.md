@@ -44,17 +44,16 @@ Mode dipilih dari halaman awal. Setiap mode punya data sendiri-sendiri.
 - Baris baru otomatis menjadi **Sub Mesin berikutnya** (misalnya 1, 2 menjadi 3; "Mesin 1" menjadi "Mesin 2"), jadi tidak bentrok dengan baris asal. Total Kapasitas kelompok langsung ikut bertambah.
 - Setelah diduplikat, ubah angkanya sesuai kebutuhan.
 
-### Salin dan tempel (mode Mesin)
+### Time study ulang (Mesin, Siklus, Elemen)
 
-- **Pilih sel:** seret mouse di atas sel, atau klik satu sel lalu **Shift+klik** sel lain. Sel yang dipilih berwarna biru. Esc membatalkan pilihan.
-- **Salin:** **Ctrl+C** menyalin sel terpilih dalam format Excel (dipisah tab). Tombol **📋 Salin** melakukan hal yang sama dan, kalau belum ada sel yang dipilih, menyalin seluruh tabel beserta judul kolom.
-- **Tempel:** salin data dari Excel, klik sel tujuan atau pilih sel awal, lalu **Ctrl+V**. Data ditempel ke bawah dan ke kanan mulai dari sel itu. Menempel dari dalam kotak edit sel juga bisa.
-  - Satu nilai yang ditempel ke banyak sel terpilih akan mengisi semuanya.
-  - Kolom yang bisa diubah lewat tempel: **S1–Sn, NG%, Gerakan, Jml Mesin**. Kolom lain dilewati, begitu juga angka yang tidak valid.
-  - Siklus ditempel berurutan: S3 hanya bisa terisi kalau S1 dan S2 sudah ada.
-  - Tombol **📝 Tempel** membuka kotak untuk menempel teks (berguna di HP/tablet yang tidak punya Ctrl+V).
-- **Urungkan:** setelah menempel muncul tombol **↩️ Urungkan** selama 15 detik.
-- Kalau perangkat lain sempat menambah siklus pada baris yang sama, hanya sel yang Anda edit yang berubah, tambahan dari perangkat lain tidak ditimpa.
+- Tombol **🔁 Ulang** di kolom Aksi tabel Data (di mode Elemen: **🔁 Ulang SOP**, untuk seluruh elemen SOP itu) membuka tab **Input** dengan line, model, dan mesin/SOP yang sudah terisi. Di mode Mesin, nilai No, NG%, Gerakan, dan Jml Mesin juga terisi dari data lama.
+- Sebuah banner kuning "Time study ulang" muncul di tab Input. Klik **Batalkan** kalau tidak jadi.
+- Rekam siklus seperti biasa, lalu klik simpan. Aplikasi menawarkan dua pilihan:
+  - **🔁 Ganti data lama**: siklus lama diganti hasil baru (jumlah sesi kembali ke 1).
+  - **➕ Gabungkan ke data lama**: siklus baru ditambahkan ke siklus yang sudah ada.
+- Pada mode Elemen, hanya elemen yang ikut direkam yang diganti.
+- Data **preinstallasi** tidak bisa diulang dari tombol ini (ulangi lewat mode Preinstall).
+- Arsip otomatis membuat versi baru (V1.1, dst.) untuk perubahan di hari berikutnya, jadi kondisi sebelum time study ulang tetap ada di versi lama. Kalau time study ulang dilakukan di hari yang sama dengan versi arsip terakhir, versi hari itu ikut diperbarui. Untuk menyimpan kondisi sebelumnya, klik **ARSIP** manual dulu.
 
 ## Penyimpanan dan sinkronisasi
 
