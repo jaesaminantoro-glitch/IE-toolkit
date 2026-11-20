@@ -54,7 +54,7 @@ Mode dipilih dari halaman awal. Setiap mode punya data sendiri-sendiri.
   - **➕ Gabungkan ke data lama**: siklus baru ditambahkan ke siklus yang sudah ada.
 - Pada mode Elemen, hanya elemen yang ikut direkam yang diganti.
 - Data **preinstallasi** tidak bisa diulang dari tombol ini (ulangi lewat mode Preinstall).
-- Arsip otomatis membuat versi baru (V1.1, dst.) untuk perubahan di hari berikutnya, jadi kondisi sebelum time study ulang tetap ada di versi lama. Kalau time study ulang dilakukan di hari yang sama dengan versi arsip terakhir, versi hari itu ikut diperbarui. Untuk menyimpan kondisi sebelumnya, klik **ARSIP** manual dulu.
+- Pilihan **Ganti data lama** menimpa siklus lama. Kalau ingin menyimpan kondisi sebelumnya, buat arsip dulu lewat **Arsipkan Data Sekarang** (tab Arsip).
 
 ## Penyimpanan dan sinkronisasi
 
@@ -70,20 +70,24 @@ Data disimpan di dua tempat: **localStorage** browser (offline) dan **Firebase**
 
 ## Arsip
 
-- **Arsip otomatis berversi per hari** (label 🤖 Otomatis dan nomor versi, misalnya `V1.0`): setiap data berubah, salinan terbaru disimpan ke tab Arsip untuk tiap mode + line + model.
-  - Perubahan di **hari yang sama** memperbarui versi hari itu.
-  - Perubahan di **hari berikutnya** membuat versi baru (`V1.0` → `V1.1` → `V1.2` ...). Versi lama tetap utuh sebagai riwayat.
-  - Kalau tidak ada perubahan isi, tidak ada versi baru.
-  - Master Data tidak berubah. Nama file Excel/CSV yang diunduh memuat nomor versinya.
-- **Nama arsip:** setiap arsip punya nama, ditampilkan di barisnya dengan ikon 📄. Nama otomatis berbentuk `Time Study Mesin TAC607 Digibaby-S3 V1.1` (arsip manual: `... Manual 14 Nov 2026`). Klik ✏️ di samping nama untuk menggantinya sendiri (kosongkan untuk kembali ke nama otomatis). Nama ini juga dipakai sebagai nama file saat unduh Excel/CSV.
-- **👁️ Buka** pada kartu arsip menampilkan isi arsip (siklus S1..Sn, rata-rata, kapasitas/UPH) tanpa mengubah Master Data. Ada kolom pencarian, dan dari tampilan itu Anda bisa langsung unduh Excel/CSV atau Restore.
-- **Arsip manual** (tombol **ARSIP** di tab Data): memindahkan data ke Arsip dan **menghapusnya** dari Master Data.
-- **Restore** arsip otomatis hanya menambahkan baris yang belum ada di Master Data (tidak menggabung siklus yang sudah ada, supaya tidak dobel). Restore arsip manual menggabungkan siklus ke data yang sudah ada.
-- **Menghapus data (tombol Hapus per baris atau Reset)** menampilkan dua pilihan:
-  - **✅ Hapus data saja**: data hilang dari Master Data, tetapi tetap ada di arsip otomatis. Baris itu terus dipertahankan walau data lain berubah (kartu arsip menampilkan label 🔒 *N dipertahankan*).
-  - **🧹 Hapus juga dari Arsip otomatis**: baris ikut hilang dari versi arsip otomatis **terbaru**. Versi yang lebih lama tidak diubah. Kalau isi versi terbaru habis, versi itu ikut dihapus.
-  - **Arsip manual tidak pernah terpengaruh** oleh penghapusan di Master Data.
-- Riwayat arsip otomatis dicatat per hari (bukan per perubahan). Untuk pengaman tambahan, gunakan **Backup**.
+Arsip dibuat **manual**. Tidak ada lagi arsip otomatis.
+
+- **ARSIP** (tab Data) memindahkan data ke Arsip dan menghapusnya dari Master Data. **Arsipkan Data Sekarang** (tab Arsip) menyalin data ke Arsip tanpa menghapusnya.
+- **Versi arsip:** setiap arsip baru diberi nomor versi per **Mode + Line + Model**: arsip pertama `V1.0`, berikutnya `V1.1`, `V1.2`, dan seterusnya. Nomor berlanjut dari versi tertinggi yang sudah ada (termasuk arsip lama berlabel 🤖 Otomatis) dan tidak pernah menimpa arsip sebelumnya. Versi tampil sebagai label ungu di barisnya dan menjadi bagian dari nama arsip dan nama file unduhan. Arsip yang dibuat sebelum ada nomor versi tetap memakai nama bertanggal (`... Manual 21 Sep 2026`). Nomor ini juga dipakai saat memilih **Arsipkan dulu** ketika menghapus data.
+- **Nama arsip:** setiap arsip punya nama, ditampilkan di barisnya dengan ikon 📄 (mis. `Time Study Mesin TAC607 Digibaby-S3 Manual 14 Nov 2026`). Klik ✏️ di samping nama untuk menggantinya sendiri (kosongkan untuk kembali ke nama otomatis). Nama ini juga dipakai sebagai nama file saat unduh Excel/CSV.
+- **👁️ Buka** pada baris arsip menampilkan isi arsip (siklus S1..Sn, rata-rata, kapasitas/UPH) tanpa mengubah Master Data. Ada kolom pencarian, dan dari tampilan itu Anda bisa langsung unduh Excel/CSV atau Restore.
+- **Restore** mengembalikan isi arsip ke Master Data. Untuk arsip yang dibuat oleh versi aplikasi sebelumnya (berlabel 🤖 Otomatis dan nomor versi seperti `V1.0`), baris yang sudah ada di Master Data dilewati, bukan digabung, supaya tidak dobel. Arsip lama itu tetap tersimpan, hanya tidak ada yang baru dibuat.
+- Arsip ditata dalam **folder** Line → Model → Mode (🔧 Mesin, 🔄 Siklus, 📋 Elemen). Klik folder untuk membuka/menutup (status buka/tutup diingat). Ada tombol *Buka semua* / *Tutup semua*, dan saat filter aktif semua folder otomatis terbuka.
+
+### Menghapus data (Hapus per baris dan Reset)
+
+Saat menghapus, aplikasi memeriksa apakah datanya **sudah ada di arsip** (isi barisnya sama persis dengan yang tersimpan di arsip mana pun pada mode yang sama):
+
+- **Semua sudah ada di arsip:** data langsung dihapus, **tanpa peringatan**.
+- **Ada yang belum masuk arsip** (belum pernah diarsipkan, atau berubah sejak diarsipkan, termasuk time study yang baru): muncul peringatan dengan jumlahnya dan dua pilihan:
+  - **📦 Arsipkan dulu, lalu hapus**: yang belum masuk arsip disimpan ke Arsip, lalu data dihapus.
+  - **🗑️ Hapus tanpa diarsipkan**: data yang belum diarsipkan hilang (hanya bisa dipulihkan dari **Backup**).
+  - **Batal** membatalkan penghapusan.
 
 ## Backup
 
