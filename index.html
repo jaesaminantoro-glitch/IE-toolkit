@@ -298,9 +298,17 @@
             .modal-content { max-width: 100%; border-radius: 20px 20px 0 0; max-height: 92vh; max-height: 92dvh; padding-bottom: env(safe-area-inset-bottom, 0px); }
             .modal-bg.active .modal-content { animation: sheetUp .22s ease-out; }
             .modal-content button { min-height: 44px; }
-            .line-model-body .lm-row { padding: 10px; font-size: 14px; }
-            .line-model-body .lm-row button { min-width: 40px; min-height: 40px; padding: 4px 8px; font-size: 14px; }
+            .line-model-body .lm-row { padding: 7px 10px; font-size: 12.5px; }
+            .line-model-body .lm-row button { min-width: 36px; min-height: 36px; padding: 3px 6px; font-size: 12.5px; }
+            .line-model-body .lm-uph { font-size: 10px; padding: 1px 6px; }
             .line-model-body #lineListContainer, .line-model-body #modelListContainer { max-height: 38vh; }
+            /* modal Line & Model: huruf dan tombol lebih kecil di HP */
+            #lineModal h3 { font-size: 15px; }
+            #lineModal p, #lineModal .text-xs { font-size: 11px; }
+            #lineModal input, #lineModal .text-sm { font-size: 12.5px; }
+            #lineModal .modal-content button { min-height: 38px; }
+            #lineModal .lm-search { padding: 7px 10px; }
+            #lineModal .modal-footer-sticky button { font-size: 13px; padding-top: 10px; padding-bottom: 10px; }
         }
         @media (min-width: 768px) {
             #tabBtn-more, #moreSheet { display: none !important; }
@@ -399,6 +407,7 @@
         <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
             <span>1️⃣ Nama Line</span><span>UPH</span>
         </div>
+        <input type="search" id="lineSearchInput" oninput="renderLineList()" onkeydown="if(event.key==='Enter'){event.preventDefault();lmSearchEnter('line')}" placeholder="🔍 Cari line..." autocomplete="off" class="lm-search w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
                         <div class="flex gap-1 mb-2">
                             <button onclick="forceReloadLineList()" class="flex-1 text-[9px] md:text-[10px] bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-700 font-bold px-1.5 py-1.5 rounded whitespace-nowrap">🔄 Refresh</button>
                             <button onclick="recoverLineFromActive()" class="flex-1 text-[9px] md:text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-700 font-bold px-1.5 py-1.5 rounded whitespace-nowrap">♻️ Pulihkan</button>
@@ -418,6 +427,7 @@
                         <div class="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase border-b pb-1 mb-2">
                             <span>2️⃣ Pilih Model / Type</span><span>Aksi</span>
                         </div>
+                        <input type="search" id="modelSearchInput" oninput="renderModelList()" onkeydown="if(event.key==='Enter'){event.preventDefault();lmSearchEnter('model')}" placeholder="🔍 Cari model..." autocomplete="off" class="lm-search w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
                         <div id="modelListContainer" class="space-y-2"></div>
                         <div class="border-t border-gray-200 pt-3 mt-3">
                             <div class="flex gap-2">
@@ -2381,10 +2391,28 @@
         // ============================================================
         // LINE
         // ============================================================
+        // Pencarian Line / Model: tidak peka huruf besar-kecil dan mengabaikan spasi/tanda baca ("tac 601" cocok dengan TAC601)
+        function lmNorm(s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+        function lmFilter(list, inputId) {
+            const el = document.getElementById(inputId);
+            const raw = el ? el.value.trim() : '';
+            const q = lmNorm(raw);
+            return { q: raw, list: q ? list.filter(x => lmNorm(x.name).includes(q)) : list };
+        }
+        function lmSearchEnter(kind) {
+            const r = kind === 'line' ? lmFilter(lineList, 'lineSearchInput') : lmFilter(modelList, 'modelSearchInput');
+            if (r.list.length === 1) { if (kind === 'line') selectLineTemp(r.list[0].name); else selectModelTemp(r.list[0].name); }
+            else if (r.list.length === 0) showToast((kind === 'line' ? 'Line' : 'Model') + ' tidak ditemukan', 'warning');
+        }
+        function lmClearSearch() {
+            ['lineSearchInput', 'modelSearchInput'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+        }
         function renderLineList() {
             const c = document.getElementById('lineListContainer'); if (!c) return;
             if (lineList.length === 0) { c.innerHTML = `<div class="text-xs text-gray-400 italic text-center py-3">Belum ada line.<br><span class="text-[10px] text-blue-600">Klik "🔄 Refresh dari Firebase"</span></div>`; return; }
-            c.innerHTML = lineList.map(l => {
+            const fr = lmFilter(lineList, 'lineSearchInput');
+            if (fr.list.length === 0) { c.innerHTML = `<div class="text-xs text-gray-400 italic text-center py-3">Tidak ada line yang cocok dengan "${escapeHtml(fr.q)}"</div>`; return; }
+            c.innerHTML = fr.list.map(l => {
                 const safeName = encodeURIComponent(l.name);
                 const sel = tempSelectedLine === l.name;
                 return `
@@ -2430,6 +2458,7 @@ function switchLineModelTab(tab) {
 }
         function openLineModal() {
     tempSelectedLine = activeLine || ''; tempSelectedModel = activeModel || '';
+    lmClearSearch();
     renderLineList(); renderModelList();
     document.getElementById('newLineInput').value = '';
     document.getElementById('newLineUph').value = '500';
@@ -2447,7 +2476,7 @@ function switchLineModelTab(tab) {
             if (lineList.find(l => l.name === v)) { showToast('Line sudah ada!', 'warning'); return; }
             lineList.push({ name: v, uph: u }); lineList.sort((a, b) => a.name.localeCompare(b.name));
             lsSave(LS_KEY_LINE_LIST, lineList); saveLineListToFirebase();
-            tempSelectedLine = v; renderLineList();
+            tempSelectedLine = v; lmClearSearch(); renderLineList();
             inp.value = ''; ui.value = '500';
             showToast('✅ Line ditambahkan', 'success');
         }
@@ -2550,7 +2579,9 @@ function switchLineModelTab(tab) {
         function renderModelList() {
     const c = document.getElementById('modelListContainer'); if (!c) return;
     if (modelList.length === 0) { c.innerHTML = '<div class="text-xs text-gray-400 italic text-center py-3">Belum ada model. Tambahkan di bawah.</div>'; return; }
-    c.innerHTML = modelList.map(m => {
+    const fr = lmFilter(modelList, 'modelSearchInput');
+    if (fr.list.length === 0) { c.innerHTML = `<div class="text-xs text-gray-400 italic text-center py-3">Tidak ada model yang cocok dengan "${escapeHtml(fr.q)}"</div>`; return; }
+    c.innerHTML = fr.list.map(m => {
         const safeName = encodeURIComponent(m.name);
         const sel = tempSelectedModel === m.name;
         return `
@@ -2568,7 +2599,7 @@ function switchLineModelTab(tab) {
             if (!v) { showToast('Ketik nama model!', 'error'); return; }
             if (modelList.find(m => m.name === v)) { showToast('Model sudah ada!', 'warning'); return; }
             modelList.push({ name: v }); modelList.sort((a, b) => a.name.localeCompare(b.name));
-            saveModelListToFirebase(); tempSelectedModel = v; renderModelList();
+            saveModelListToFirebase(); tempSelectedModel = v; lmClearSearch(); renderModelList();
             inp.value = ''; showToast('✅ Model ditambahkan', 'success');
         }
         function updateModelDisplay() {
