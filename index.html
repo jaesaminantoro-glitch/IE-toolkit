@@ -2871,9 +2871,9 @@ function switchLineModelTab(tab) {
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'TimeStudy ' + tgl);
             const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            const { lineName, modelName } = getExportNameParts();
+            const { modelName } = getExportNameParts();
             const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            if (downloadBlob(blob, `TS-${modelName}-${lineName}.xlsx`)) showToast(`📗 Export: ${groups.length} SOP · ${f.length} elemen`, 'success');
+            if (downloadBlob(blob, `Time Study Elemen ${modelName} ${tgl}.xlsx`)) showToast(`📗 Export: ${groups.length} SOP · ${f.length} elemen`, 'success');
         }
         // Baca satu sheet format di atas. Sel yang di-merge diisi dari sel kiri-atasnya; sel A/B yang kosong
         // (merge sudah dilepas) mengikuti SOP di atasnya. Baris judul (kalau ada) dan baris tanpa elemen dilewati.
@@ -3003,18 +3003,47 @@ function switchLineModelTab(tab) {
             resetElemenRows(3);
             document.getElementById('editElemenModal').classList.add('active');
         }
+        // Edit satu SOP: semua elemen SOP itu tampil sekaligus (ubah nama, tambah, hapus, atur urutan)
+        let editingElemenGroup = null;
+        function applyElemenGroupEdit(list, group, ns, nS, items) {
+            const idSet = new Set(group.ids);
+            const originals = list.filter(x => idSet.has(x.id));
+            if (originals.length === 0) return { error: 'Data SOP sudah berubah, buka ulang jendela edit.' };
+            if (list.some(x => !idSet.has(x.id) && x.line === group.line && (x.model || '-') === group.model && x.noSop === ns && x.namaSop === nS))
+                return { error: 'No. SOP + Nama SOP itu sudah dipakai SOP lain.' };
+            const byId = new Map(originals.map(o => [o.id, o]));
+            const rebuilt = items.map(it => {
+                const o = it.id ? byId.get(it.id) : null;
+                return o ? { ...o, noSop: ns, namaSop: nS, elemen: it.val }
+                         : { id: generateId('el_'), line: group.line, model: group.model, noSop: ns, namaSop: nS, elemen: it.val };
+            });
+            const out = []; let placed = false;
+            list.forEach(x => { if (idSet.has(x.id)) { if (!placed) { out.push(...rebuilt); placed = true; } return; } out.push(x); });
+            const added = rebuilt.filter(r => !byId.has(r.id)).length;
+            const removed = originals.filter(o => !rebuilt.some(r => r.id === o.id)).length;
+            return { list: out, added, removed };
+        }
         function openEditElemenModal(id) {
             const e = elemenMasterList.find(x => x.id === id); if (!e) return;
+            const model = e.model || '-';
+            const group = elemenMasterList.filter(x => x.line === e.line && (x.model || '-') === model && x.noSop === e.noSop && x.namaSop === e.namaSop);
             isAddModeElemen = false; editingElemenId = id;
-            document.getElementById('editElemenModalTitle').innerText = '✏️ Edit Elemen';
+            editingElemenGroup = { line: e.line, model, noSop: e.noSop, namaSop: e.namaSop, ids: group.map(x => x.id) };
+            document.getElementById('editElemenModalTitle').innerText = `✏️ Edit SOP (${group.length} elemen)`;
             document.getElementById('editElemenNoSop').value = e.noSop || '';
             document.getElementById('editElemenNamaSop').value = e.namaSop || '';
             document.getElementById('editElemenName').value = e.elemen || '';
-            document.getElementById('editElemenMultiWrap').classList.add('hidden');
-            document.getElementById('editElemenSingleWrap').classList.remove('hidden');
+            document.getElementById('editElemenSingleWrap').classList.add('hidden');
+            document.getElementById('editElemenMultiWrap').classList.remove('hidden');
+            const box = document.getElementById('elemenRows'); box.innerHTML = '';
+            let focusRow = null;
+            group.forEach(x => { const r = addElemenRow(x.elemen, false); if (r) { r.dataset.id = x.id; if (x.id === id) focusRow = r; } });
+            renumberElemenRows();
             document.getElementById('editElemenModal').classList.add('active');
+            // elemen yang diklik langsung disorot supaya mudah dicari
+            if (focusRow) setTimeout(() => { const inp = focusRow.querySelector('.elemen-row-input'); try { focusRow.scrollIntoView({ block: 'nearest' }); } catch (err) {} inp.focus(); inp.select(); }, 80);
         }
-        function closeEditElemenModal() { document.getElementById('editElemenModal').classList.remove('active'); editingElemenId = null; isAddModeElemen = false; }
+        function closeEditElemenModal() { document.getElementById('editElemenModal').classList.remove('active'); editingElemenId = null; editingElemenGroup = null; isAddModeElemen = false; }
         function saveEditedElemen() {
             const ns = document.getElementById('editElemenNoSop').value.trim();
             const nS = document.getElementById('editElemenNamaSop').value.trim();
@@ -3034,14 +3063,20 @@ function switchLineModelTab(tab) {
                 if (added === 0) { showToast('⚠️ Semua elemen sudah ada!', 'warning'); return; }
                 showToast(`✅ ${added} elemen ditambahkan` + (skipped ? ` (${skipped} sudah ada, dilewati)` : ''), 'success');
             } else {
-                const el = document.getElementById('editElemenName').value.trim();
-                if (!ns || !nS || !el) { showToast('⚠️ Semua field wajib!', 'error'); return; }
-                if (!editingElemenId) return;
-                const e = elemenMasterList.find(x => x.id === editingElemenId);
-                if (e) { e.noSop = ns; e.namaSop = nS; e.elemen = el; }
-                showToast('✅ Diperbarui', 'success');
+                if (!editingElemenGroup) return;
+                if (!ns || !nS) { showToast('⚠️ No. SOP dan Nama SOP wajib!', 'error'); return; }
+                const items = [];
+                document.querySelectorAll('#elemenRows .elemen-row').forEach(r => {
+                    const v = r.querySelector('.elemen-row-input').value.trim();
+                    if (v) items.push({ id: r.dataset.id || '', val: v });
+                });
+                if (items.length === 0) { showToast('⚠️ Isi minimal satu elemen! (untuk menghapus SOP, tutup jendela ini lalu hapus elemennya)', 'error'); return; }
+                const res = applyElemenGroupEdit(elemenMasterList, editingElemenGroup, ns, nS, items);
+                if (res.error) { showToast('⚠️ ' + res.error, 'error'); return; }
+                elemenMasterList = res.list;
+                showToast('✅ SOP diperbarui' + (res.added ? ` · +${res.added} elemen` : '') + (res.removed ? ` · −${res.removed} elemen` : ''), 'success');
             }
-            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (firebaseReady) saveElemenMasterToFirebase();
+            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); saveElemenMasterToFirebase();
             renderElemenMasterTable(); renderSopDropdownList();
             if (typeof updateCounters === 'function') updateCounters();
             closeEditElemenModal();
