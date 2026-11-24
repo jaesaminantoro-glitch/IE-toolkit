@@ -918,7 +918,7 @@
                         <div class="flex gap-2 flex-wrap">
                             <button onclick="openAddElemenModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">➕ Tambah</button>
                             <button onclick="openElemenImportModal()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📥 Import</button>
-                            <button onclick="exportElemenCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
+                            <button onclick="exportElemenXLSX()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-sm">📄 Export</button>
                             <button onclick="clearAllElemen()" class="bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg border border-red-200">Reset</button>
                         </div>
                     </div>
@@ -1111,12 +1111,13 @@
             </div>
             <div class="p-4 space-y-3">
                 <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-800">
-                    <div class="font-bold mb-1">Format (3 kolom): Nomor SOP | Nama SOP | Process Description</div>
+                    <div class="font-bold mb-1">Format Excel (.xlsx), 3 kolom, tanpa baris judul</div>
+                    <div>Kolom <b>A</b> = No. SOP · <b>B</b> = Nama SOP · <b>C</b> = Elemen</div>
+                    <div class="mt-1">Sel A dan B yang di-merge per SOP terbaca otomatis.</div>
                     <div class="mt-1">💡 Line: <b id="elemenImportLine">-</b> · Model: <b id="elemenImportModel">-</b></div>
                 </div>
-                <input type="file" id="elemenFileInput" accept=".csv,.txt,.xlsx,.xls" class="w-full text-sm border border-gray-300 rounded-lg p-2">
-                <div class="text-center text-xs text-gray-400">— ATAU —</div>
-                <textarea id="elemenPasteArea" rows="8" placeholder="1.0&#9;Pemasangan battery&#9;Ambil battery" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs font-mono"></textarea>
+                <input type="file" id="elemenFileInput" accept=".xlsx,.xls" onchange="onElemenImportFile(this)" class="w-full text-sm border border-gray-300 rounded-lg p-2">
+                <div id="elemenImportPreview" class="hidden"></div>
                 <div class="flex items-center gap-2"><input type="checkbox" id="elemenReplaceExisting" class="rounded"><label for="elemenReplaceExisting" class="text-xs text-gray-700">Ganti semua elemen Line+Model ini</label></div>
             </div>
             <div class="p-4 border-t border-gray-200 flex gap-2">
@@ -2831,15 +2832,108 @@ function switchLineModelTab(tab) {
             renderElemenMasterTable(); renderSopDropdownList(); updateCounters();
             showToast(`✅ ${willDelete} elemen dihapus`, 'warning');
         }
-        function exportElemenCSV() {
-            if (elemenMasterList.length === 0) { showToast('Belum ada elemen!', 'error'); return; }
-            const esc = (v) => { const s = String(v == null ? '' : v); return s.includes(',') || s.includes('"') ? '"' + s.replace(/"/g, '""') + '"' : s; };
-            const rows = [['Line', 'Model', 'No. SOP', 'Nama SOP', 'Elemen']];
-            elemenMasterList.forEach(e => rows.push([e.line, e.model || '-', e.noSop, e.namaSop, e.elemen]));
-            const csv = rows.map(r => r.map(esc).join(',')).join('\r\n');
-            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-            const { lineName, modelName, dateStr } = getExportNameParts();
-            if (downloadBlob(blob, `Master_Elemen_${lineName}_${modelName}_${dateStr}.csv`)) showToast('📄 di-export', 'success');
+        // ============================================================
+        // IMPORT / EXPORT ELEMEN: satu format, yaitu Excel 3 kolom tanpa baris judul
+        //   A = No. SOP (di-merge per SOP) · B = Nama SOP (di-merge per SOP) · C = Elemen
+        // ============================================================
+        function exportElemenXLSX() {
+            if (typeof XLSX === 'undefined') { showToast('❌ Library Excel belum ke-load.', 'error'); return; }
+            if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
+            let f = elemenMasterList.filter(e => e.line === activeLine);
+            if (activeModel && activeModel !== '-') f = f.filter(e => (e.model || '-') === activeModel);
+            if (f.length === 0) { showToast('Belum ada elemen untuk Line/Model ini!', 'error'); return; }
+            // kelompokkan per SOP (urutan kemunculan) supaya sel No. SOP dan Nama SOP bisa di-merge
+            const groups = [], idx = new Map();
+            f.forEach(e => {
+                const k = e.noSop + '\u0001' + e.namaSop;
+                let g = idx.get(k);
+                if (!g) { g = { no: e.noSop, nama: e.namaSop, items: [] }; idx.set(k, g); groups.push(g); }
+                g.items.push(e.elemen);
+            });
+            const edge = { style: 'thin', color: { rgb: '000000' } };
+            const border = { top: edge, bottom: edge, left: edge, right: edge };
+            const font = { name: 'Arial Narrow', sz: 11 };
+            const stHead = { font: { ...font, bold: true }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+            const stElem = { font, border };
+            const ws = {}, merges = [];
+            const put = (r, c, v, st) => { ws[XLSX.utils.encode_cell({ r, c })] = { t: 's', v: (v === undefined || v === null) ? '' : String(v), s: st }; };
+            let r = 0;
+            groups.forEach(g => {
+                const start = r;
+                g.items.forEach((el, i) => { put(r, 0, i === 0 ? g.no : '', stHead); put(r, 1, i === 0 ? g.nama : '', stHead); put(r, 2, el, stElem); r++; });
+                if (g.items.length > 1) merges.push({ s: { r: start, c: 0 }, e: { r: r - 1, c: 0 } }, { s: { r: start, c: 1 }, e: { r: r - 1, c: 1 } });
+            });
+            ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: r - 1, c: 2 } });
+            ws['!merges'] = merges;
+            ws['!cols'] = [{ wch: 8 }, { wch: 53 }, { wch: 60 }];
+            const d = new Date();
+            const tgl = String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + d.getFullYear();
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'TimeStudy ' + tgl);
+            const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const { lineName, modelName } = getExportNameParts();
+            const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            if (downloadBlob(blob, `TS-${modelName}-${lineName}.xlsx`)) showToast(`📗 Export: ${groups.length} SOP · ${f.length} elemen`, 'success');
+        }
+        // Baca satu sheet format di atas. Sel yang di-merge diisi dari sel kiri-atasnya; sel A/B yang kosong
+        // (merge sudah dilepas) mengikuti SOP di atasnya. Baris judul (kalau ada) dan baris tanpa elemen dilewati.
+        let elemenImportParsed = null;
+        function parseElemenSheet(ws) {
+            const out = { rows: [], blank: 0, filledFromMerge: 0, sops: 0 };
+            if (!ws || !ws['!ref']) return out;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const mergeTop = new Map();
+            (ws['!merges'] || []).forEach(m => { for (let r = m.s.r; r <= m.e.r; r++) for (let c = m.s.c; c <= m.e.c; c++) mergeTop.set(r + ',' + c, { r: m.s.r, c: m.s.c }); });
+            const raw = (r, c) => { const cell = ws[XLSX.utils.encode_cell({ r, c })]; return (!cell || cell.v === undefined || cell.v === null) ? '' : String(cell.v).trim(); };
+            const val = (r, c) => {
+                const own = raw(r, c); if (own) return own;
+                const top = mergeTop.get(r + ',' + c);
+                if (top && (top.r !== r || top.c !== c)) { const v = raw(top.r, top.c); if (v) { out.filledFromMerge++; return v; } }
+                return '';
+            };
+            let prevNo = '', prevNama = '', first = true;
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                let no = val(r, 0), nama = val(r, 1);
+                const el = val(r, 2);
+                if (!no && !nama && !el) continue;
+                if (first) {
+                    first = false;
+                    if (/^(no\.?|nomor)(\s*sop)?$/i.test(no) || /^(elemen|process description|deskripsi proses)/i.test(el)) continue;   // baris judul
+                }
+                if (!el) { out.blank++; continue; }
+                if (!no && !nama) { no = prevNo; nama = prevNama; }
+                if (!no) no = '-';
+                if (!nama) nama = '-';
+                prevNo = no; prevNama = nama;
+                out.rows.push({ noSop: no, namaSop: nama, elemen: el });
+            }
+            out.sops = new Set(out.rows.map(x => x.noSop + '\u0001' + x.namaSop)).size;
+            return out;
+        }
+        function onElemenImportFile(input) {
+            const pv = document.getElementById('elemenImportPreview');
+            elemenImportParsed = null;
+            const show = (html, ok) => { pv.className = 'text-xs rounded-lg p-3 border ' + (ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-700'); pv.innerHTML = html; };
+            const f = input.files && input.files[0];
+            if (!f) { pv.className = 'hidden'; pv.innerHTML = ''; return; }
+            if (typeof XLSX === 'undefined') { show('Library Excel belum ke-load.', false); return; }
+            if (!/\.xlsx?$/i.test(f.name)) { show('Format file harus Excel (.xlsx).', false); return; }
+            const fr = new FileReader();
+            fr.onload = (e) => {
+                try {
+                    const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    let res = null, sheetName = '';
+                    for (const n of wb.SheetNames) { const r = parseElemenSheet(wb.Sheets[n]); if (r.rows.length) { res = r; sheetName = n; break; } }
+                    if (!res) { show('Tidak ada elemen yang terbaca. Pastikan kolom A = No. SOP, B = Nama SOP, C = Elemen.', false); return; }
+                    elemenImportParsed = res;
+                    const names = [...new Set(res.rows.map(x => x.noSop + ' · ' + x.namaSop))];
+                    show(`✅ Sheet <b>${escapeHtml(sheetName)}</b>: <b>${res.sops}</b> SOP · <b>${res.rows.length}</b> elemen` +
+                        (res.filledFromMerge ? ` · ${res.filledFromMerge} sel merge terbaca` : '') +
+                        (res.blank ? ` · ${res.blank} baris tanpa elemen dilewati` : '') +
+                        `<div class="mt-1 text-[11px] opacity-80">${names.slice(0, 3).map(escapeHtml).join('<br>')}${names.length > 3 ? '<br>…' : ''}</div>`, true);
+                } catch (err) { show('Gagal membaca file: ' + escapeHtml(err.message), false); }
+            };
+            fr.readAsArrayBuffer(f);
         }
         function splitElemenLines(t) {
             return String(t || '').split(/\r?\n/).map(l => l.split('\t')[0].trim()).filter(Boolean);
@@ -2955,7 +3049,7 @@ function switchLineModelTab(tab) {
         function openElemenImportModal() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); openLineModal(); return; }
             document.getElementById('elemenFileInput').value = '';
-            document.getElementById('elemenPasteArea').value = '';
+            elemenImportParsed = null; const pv = document.getElementById('elemenImportPreview'); if (pv) { pv.className = 'hidden'; pv.innerHTML = ''; }
             document.getElementById('elemenReplaceExisting').checked = false;
             const el = document.getElementById('elemenImportLine'); if (el) el.innerText = activeLine;
             const em = document.getElementById('elemenImportModel'); if (em) em.innerText = activeModel || '-';
@@ -2964,43 +3058,27 @@ function switchLineModelTab(tab) {
         function closeElemenImportModal() { document.getElementById('elemenImportModal').classList.remove('active'); }
         function processElemenImport() {
             if (!activeLine) { showToast('⚠️ Pilih Line dulu!', 'error'); return; }
-            const fi = document.getElementById('elemenFileInput'); const pa = document.getElementById('elemenPasteArea'); const re = document.getElementById('elemenReplaceExisting').checked;
-            const cl = activeLine; const cm = activeModel || '-';
-            const pr = (rows) => {
-                try {
-                    if (!rows || rows.length === 0) { showToast('Data kosong!', 'error'); return; }
-                    let si = 0;
-                    for (let i = 0; i < rows.length; i++) { const r = rows[i].map(c => String(c == null ? '' : c).trim().toLowerCase()); if (r[0] && (r[0].includes('nomor sop') || r[0] === 'no sop')) { si = i + 1; break; } }
-                    const ni = [];
-                    for (let i = si; i < rows.length; i++) {
-                        const cs = rows[i].map(c => String(c == null ? '' : c).trim());
-                        if (cs.length < 3 || !cs[2]) continue;
-                        ni.push({ id: generateId('e_'), line: cl, model: cm, noSop: cs[0] || '-', namaSop: cs[1] || '-', elemen: cs[2] });
-                    }
-                    if (ni.length === 0) { showToast('❌ Tidak ada data valid', 'error'); return; }
-                    if (re) elemenMasterList = elemenMasterList.filter(e => !(e.line === cl && (e.model || '-') === cm)).concat(ni);
-                    else elemenMasterList = elemenMasterList.concat(ni);
-                    lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); if (firebaseReady) saveElemenMasterToFirebase();
-                    renderSopDropdownList(); renderElemenMasterTable(); updateCounters();
-                    closeElemenImportModal(); showToast(`✅ ${ni.length} di-import`, 'success');
-                } catch (e) { showToast('❌ Gagal: ' + e.message, 'error'); }
-            };
-            const ht = (text) => {
-                const ls = text.split(/\r?\n/).filter(l => l.trim());
-                if (ls.length === 0) { showToast('Data kosong!', 'error'); return; }
-                const d = ls[0].includes('\t') ? '\t' : ',';
-                pr(ls.map(l => l.split(d).map(c => c.trim().replace(/^"|"$/g, ''))));
-            };
-            const f = fi.files[0];
-            if (f) {
-                const fn = f.name.toLowerCase();
-                if (fn.endsWith('.xlsx') || fn.endsWith('.xls')) {
-                    const r = new FileReader();
-                    r.onload = (e) => { try { const d = new Uint8Array(e.target.result); const wb = XLSX.read(d, { type: 'array' }); const ws = wb.Sheets[wb.SheetNames[0]]; pr(XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false })); } catch (err) { showToast('❌ Gagal', 'error'); } };
-                    r.readAsArrayBuffer(f);
-                } else { const r = new FileReader(); r.onload = (e) => ht(e.target.result); r.readAsText(f); }
-            } else if (pa.value.trim()) ht(pa.value);
-            else showToast('Pilih file atau paste!', 'error');
+            if (!elemenImportParsed || elemenImportParsed.rows.length === 0) { showToast('Pilih file Excel dulu!', 'error'); return; }
+            const re = document.getElementById('elemenReplaceExisting').checked;
+            const cl = activeLine, cm = activeModel || '-';
+            if (re) elemenMasterList = elemenMasterList.filter(e => !(e.line === cl && (e.model || '-') === cm));
+            // tanpa "ganti": baris yang sudah ada (No. SOP + Nama SOP + Elemen sama) dilewati supaya tidak dobel
+            const have = new Map();
+            if (!re) elemenMasterList.forEach(e => {
+                if (e.line === cl && (e.model || '-') === cm) { const k = e.noSop + '\u0001' + e.namaSop + '\u0001' + e.elemen; have.set(k, (have.get(k) || 0) + 1); }
+            });
+            const ni = []; let dup = 0;
+            elemenImportParsed.rows.forEach(r => {
+                const k = r.noSop + '\u0001' + r.namaSop + '\u0001' + r.elemen;
+                const n = have.get(k) || 0;
+                if (n > 0) { have.set(k, n - 1); dup++; return; }
+                ni.push({ id: generateId('e_'), line: cl, model: cm, noSop: r.noSop, namaSop: r.namaSop, elemen: r.elemen });
+            });
+            if (ni.length === 0) { showToast(`ℹ️ Semua ${dup} elemen sudah ada, tidak ada yang ditambahkan`, 'info'); return; }
+            elemenMasterList = elemenMasterList.concat(ni);
+            lsSave(LS_KEY_ELEMEN_MASTER, elemenMasterList); saveElemenMasterToFirebase();
+            renderSopDropdownList(); renderElemenMasterTable(); updateCounters();
+            closeElemenImportModal(); showToast(`✅ ${ni.length} elemen di-import` + (dup ? ` (${dup} sudah ada)` : ''), 'success');
         }
 
         // ============================================================
